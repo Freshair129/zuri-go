@@ -8,8 +8,6 @@ status: proposed
 
 Plan and run campaigns and their content: an objective and targets per campaign, content items and where/when they publish, and the gate-based decisions that say whether to keep an offer or add budget.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `core` · role `business`.
-
 ## Language
 - Campaign
 - Objective
@@ -42,11 +40,13 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
 
+**Classification** — subdomain `core` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
+
 **Owned features**
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-002](../../features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | live |
+| [FEAT-002](../../features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | implemented |
 
 **Participating cross-domain features** — none.
 

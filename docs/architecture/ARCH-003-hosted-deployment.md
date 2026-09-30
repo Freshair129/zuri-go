@@ -1,7 +1,7 @@
 ---
 id: ARCH-003
 title: Zuri-Go PostgreSQL on Vercel
-status: approved
+status: proposed
 version: 0.3.0
 date: 2026-09-30
 relations:

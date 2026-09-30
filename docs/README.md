@@ -4,6 +4,8 @@ The structure follows the standards in [governance/standards/](governance/standa
 
 **Conformance: phase 1.** Layout, identifiers, ownership metadata and the registry are in place. Requirements are not yet decomposed into FR / NFR / AC / TC files, and no validation or view-generation tooling exists yet. The decisions behind this are in [ADR-001](governance/decisions.md); the remaining work is in [PLAN-001](governance/plans/PLAN-001-document-standard-adoption.md).
 
+**Delivery status.** Every feature below is deployed to production — each `feature.md` cites the evidence under “Delivery evidence” — but none is `live` in the sense of [STD-001 R7](governance/standards/STD-001-DOCUMENT-ARTIFACT-STANDARD.md), which requires FR / AC / TC files first. They are therefore recorded as `implemented`.
+
 ## Reading order
 
 1. [Root README](../README.md) — commands, layout, database and credential custody
@@ -23,23 +25,26 @@ The structure follows the standards in [governance/standards/](governance/standa
 | `services/SRV-<nnn>-<slug>/` | one `SERVICE.md` per deployable | STD-003 R4 |
 | `operations/` | runbooks RB-* | STD-003 R1 |
 | `governance/` | standards, procedures, decisions and plans | STD-003 R1 |
-| `templates/` | copy-and-fill templates for new artifacts; excluded from artifact scanning because they use placeholder IDs such as `FEAT-<nnn>` | STD-003 R7 |
+| `templates/` | copy-and-fill templates for new artifacts; they use placeholder IDs such as `FEAT-<nnn>` and are not artifacts themselves | STD-003 R7 |
 | `../registry/` | domain and service registers, crosswalk from pre-standard IDs | STD-003 R5 |
 | `history/` · `migrations/` · `releases/` | evidence, see below | not artifacts (STD-001 R1) |
+
+<!-- BEGIN GENERATED: doc-map -->
+_Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11): the tables below are views of `feature.md`, `SERVICE.md` and [registry/domains.yaml](../registry/domains.yaml), which remain the only places these values are written._
 
 ## Features
 
 | ID | Feature | Owner | Delivery | Folder |
 |---|---|---|---|---|
-| [FEAT-001](features/FEAT-001-business-overview/feature.md) | Business Overview | DOM-BIZ | live | `features/FEAT-001-business-overview/` |
-| [FEAT-002](features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | DOM-CAM | live | `features/FEAT-002-campaign-mission-control/` |
-| [FEAT-003](features/FEAT-003-metrics-map/feature.md) | Marketing Metrics Map and Graph View | DOM-MET | live | `features/FEAT-003-metrics-map/` |
+| [FEAT-001](features/FEAT-001-business-overview/feature.md) | Business Overview | DOM-BIZ | implemented | `features/FEAT-001-business-overview/` |
+| [FEAT-002](features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | DOM-CAM | implemented | `features/FEAT-002-campaign-mission-control/` |
+| [FEAT-003](features/FEAT-003-metrics-map/feature.md) | Marketing Metrics Map and Graph View | DOM-MET | implemented | `features/FEAT-003-metrics-map/` |
 | [FEAT-004](features/FEAT-004-meeting-task-manager/feature.md) | Meeting & Task Manager | DOM-WRK | implemented | `features/FEAT-004-meeting-task-manager/` |
-| [FEAT-005](features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | DOM-IAM | live | `features/FEAT-005-guest-access/` |
-| [FEAT-006](features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | DOM-IAM | live | `features/FEAT-006-member-identity/` |
-| [FEAT-007](features/FEAT-007-single-code-login/feature.md) | Single-code login | DOM-IAM | live | `features/FEAT-007-single-code-login/` |
-| [FEAT-008](features/FEAT-008-unified-site/feature.md) | Unified site | DOM-PLT | live | `features/FEAT-008-unified-site/` |
-| [FEAT-009](features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | DOM-BRN | live | `features/FEAT-009-logo-placement/` |
+| [FEAT-005](features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | DOM-IAM | implemented | `features/FEAT-005-guest-access/` |
+| [FEAT-006](features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | DOM-IAM | implemented | `features/FEAT-006-member-identity/` |
+| [FEAT-007](features/FEAT-007-single-code-login/feature.md) | Single-code login | DOM-IAM | implemented | `features/FEAT-007-single-code-login/` |
+| [FEAT-008](features/FEAT-008-unified-site/feature.md) | Unified site | DOM-PLT | implemented | `features/FEAT-008-unified-site/` |
+| [FEAT-009](features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | DOM-BRN | implemented | `features/FEAT-009-logo-placement/` |
 
 ## Domains
 
@@ -59,10 +64,11 @@ The structure follows the standards in [governance/standards/](governance/standa
 |---|---|---|
 | [SRV-001](services/SRV-001-hosted/SERVICE.md) | Hosted site and API (Vercel + Neon PostgreSQL) | Vercel project `zuri-metrics-map` — package `build/vercel`, binding `scripts/deploy/project.json` |
 | [SRV-002](services/SRV-002-local/SERVICE.md) | Local operator runtime (Node server + Docker PostgreSQL) | `apps/api/server.mjs` on `127.0.0.1:4319` and Docker container `zuri-go-postgres`, started by `scripts/local/start.ps1` (`npm start`) |
+<!-- END GENERATED -->
 
 ## Evidence (not artifacts)
 
-- `history/` — per-review evidence: screenshots, JSON checks, version diffs and each review's verification report.
+- `history/` — per-review evidence: screenshots, JSON checks and version diffs; four reviews (`zuri-go-review`, `zuri-go-cloud-review`, `zuri-go-guest-review`, `zuri-go-member-review`) also keep a verification report.
 - `migrations/` — the project-extraction plan and its provenance. `scripts/site/verify_extraction.py` reads and writes here and `scripts/metrics/verify_metrics_map_static.py` writes here, so the folder stays in place.
 - `releases/<version>/` — deployment records for each release.
 

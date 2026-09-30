@@ -4,7 +4,7 @@ title: Campaign Mission Control
 type: domain-feature
 owner: DOM-CAM
 runtime: SRV-001
-delivery: live
+delivery: implemented
 status: proposed
 legacy: []
 relations:
@@ -22,8 +22,8 @@ A campaign workspace that shows where each campaign stands against its target, w
 - Date / offer / channel filters, original-source inspector, scoped JSON export, full local backup and reviewed restore.
 
 ## Ownership
-- Feature owner: [DOM-CAM](../../domains/campaign/README.md) — Campaign & content. Type: domain feature, no cross-domain participants.
-- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
+- Feature owner: [DOM-CAM](../../domains/campaign/README.md) — Campaign & content. Type: domain feature. Provisional: saving a campaign also writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`, `apps/api/workspace.mjs`), which is DOM-WRK data, so the feature may be cross-domain under STD-001 R4 — open in PLAN-001 WI-14 (question 7).
+- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
 | File | Role | Original location | Version |
@@ -40,7 +40,8 @@ Text inside these documents may still name a sibling by its original file name; 
 FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, WI-08): the approved requirements remain in the documents above. Acceptance scenarios `AC-01`–`AC-18`: [spec.md](spec.md) §10; trace in [verification.md](verification.md). These labels are local to the document and do not follow the STD-002 AC grammar.
 
 ## Delivery evidence
-- Review evidence: `docs/history/campaign-mission-control-review/` (screenshots and browser results).
+- Delivered locally in 0.2.0: [verification.md](verification.md), with evidence in `docs/history/campaign-mission-control-review/`. That verification states that no production deployment was used or verified.
+- In production since the unified-site release, which opened the dashboard on the production origin: [FEAT-008 verification](../FEAT-008-unified-site/verification.md), “Production”. Campaign records were later imported into production PostgreSQL in 0.3.0: [history/zuri-go-cloud-review](../../history/zuri-go-cloud-review/verification.md).
 
 ## Notes
 - Served from the unified site ([FEAT-008](../FEAT-008-unified-site/feature.md)); the documents describe the feature as delivered in 0.2.0 and their file paths describe the original repository.

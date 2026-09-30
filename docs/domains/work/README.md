@@ -8,8 +8,6 @@ status: proposed
 
 Turn decisions and meetings into owned, prioritised, evidenced work: tasks with RACI and a MoSCoW priority per week, weekly plans, meeting intake through reviewed FUNG transcripts, and evidence attachments.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `supporting` · role `business`.
-
 ## Language
 - Task
 - RACI (R / A / C / I)
@@ -46,6 +44,8 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
+
+**Classification** — subdomain `supporting` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
 
 **Owned features**
 

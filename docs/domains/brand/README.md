@@ -8,8 +8,6 @@ status: proposed
 
 Brand rules and approved assets for Zuri-Go: the wordmark and logo lockups, palette tokens, and the Zuri and น้องวางใจ mascots.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `supporting` · role `business`.
-
 ## Language
 - Brand profile
 - Logo lockup
@@ -31,11 +29,13 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
 
+**Classification** — subdomain `supporting` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
+
 **Owned features**
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-009](../../features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | live |
+| [FEAT-009](../../features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | implemented |
 
 **Participating cross-domain features** — none.
 

@@ -8,8 +8,6 @@ status: proposed
 
 Who may read, who may write, and who did it: public Guest reads, Member sign-in for writes, and an audit actor derived on the server.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `generic` · role `foundation`.
-
 ## Language
 - Guest
 - Member
@@ -23,7 +21,7 @@ Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdom
 ## Owned data
 - `members` (including the immutable `pid`)
 - `member_credentials`
-- `team_login_limits` (persistent sign-in rate-limit counters)
+- `team_login_limits` (persistent sign-in rate-limit counters; defined in [ARCH-003](../../architecture/ARCH-003-hosted-deployment.md), “Authentication data model amendment”)
 - Table definitions: [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) and `apps/api/migrations/`.
 
 ## Business rules
@@ -40,15 +38,17 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
 
+**Classification** — subdomain `generic` · role `foundation`, from [registry/domains.yaml](../../../registry/domains.yaml).
+
 **Owned features**
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-005](../../features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | live |
-| [FEAT-006](../../features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | live |
-| [FEAT-007](../../features/FEAT-007-single-code-login/feature.md) | Single-code login | live |
+| [FEAT-005](../../features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | implemented |
+| [FEAT-006](../../features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | implemented |
+| [FEAT-007](../../features/FEAT-007-single-code-login/feature.md) | Single-code login | implemented |
 
 **Participating cross-domain features** — none.
 
-**Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md)
+**Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md). Its features are realised by SRV-001; SRV-002 keeps its data for the trusted local operator (see the runtime line of each feature).
 <!-- END GENERATED -->

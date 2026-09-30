@@ -8,8 +8,6 @@ status: proposed
 
 The shared vocabulary and arithmetic of marketing metrics — definitions, formulas, observations and targets — and the Metrics Map guide and Graph View that teach them.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `core` · role `business`.
-
 ## Language
 - Metric definition
 - Metric series
@@ -44,11 +42,13 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
 
+**Classification** — subdomain `core` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
+
 **Owned features**
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-003](../../features/FEAT-003-metrics-map/feature.md) | Marketing Metrics Map and Graph View | live |
+| [FEAT-003](../../features/FEAT-003-metrics-map/feature.md) | Marketing Metrics Map and Graph View | implemented |
 
 **Participating cross-domain features** — none.
 

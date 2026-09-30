@@ -19,7 +19,7 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 | WI-02 | Registry: `registry/domains.yaml`, `registry/services.yaml` | done | Domain classification is proposed (ADR-001 D4) |
 | WI-03 | Crosswalk from pre-standard IDs and paths | done | `registry/crosswalk/ZGO.csv` |
 | WI-04 | Identifiers and ownership metadata on FEAT, DOM, SRV, ARCH, SDD and RB documents | done | STD-002 R5 frontmatter; original descriptive metadata kept |
-| WI-05 | Templates and product-level drafts | done | `docs/templates/`; BRD-001 (draft, success measures and stakeholders not recorded) and PRD-001 |
+| WI-05 | Templates and product-level drafts | done | `docs/templates/`; BRD-001 (draft: success measures not recorded, stakeholders only as named in existing documents) and PRD-001 |
 
 ## Phase 2 — requirements, design, contracts, tooling (open)
 
@@ -27,7 +27,7 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 |---|---|---|---|
 | WI-06 | Decompose each feature's requirements into FR / NFR / AC files (and parts when cross-domain); old labels (`MT-01`–`MT-29`, `AC-01`–`AC-18`) go to `legacy:` | STD-001 R5, STD-003 R3 | Smallest first: FEAT-007, 005, 009, 006, 008, 001, 002, 003, 004. One feature per change, owner-reviewed |
 | WI-07 | SDD with an `## Interfaces` section for features that persist data or call outside systems | STD-001 R5, STD-005 R2 | SDD-004 exists but has no `## Interfaces` |
-| WI-08 | Bind TC headings in each `verification.md` to the tests that prove them | STD-001 R7 | Tests: `apps/api/test/`, `tests/campaign/`, `apps/web/src/content/meeting/model.test.mjs` |
+| WI-08 | Bind TC headings in each `verification.md` to the tests that prove them | STD-001 R7 | Tests: `apps/api/test/`, `tests/campaign/`, `apps/web/src/content/meeting/model.test.mjs`. Three existing `verification.md` files are pre-standard reports (ADR-001 D5); a feature can become `live` only after this item |
 | WI-09 | Declare API- / EVT- contracts (`/api/zuri-go/v1`, the FUNG connector) | STD-001 R1 | Today outlined in ARCH-001 §3 and the feature specs |
 | WI-10 | Promote the rules now written in AGENTS.md and the specs to BR- / SEC- / NFR- artifacts; record system ADRs in `architecture/decisions.md` | STD-001 R1, STD-003 R1 | See the “Business rules” section of each domain README |
 | WI-11 | Tooling: `next-id`, `validate-docs`, `generate-views` | STD-002 R8, STD-003 R2 | Until then the domain README feature index is maintained by hand |
@@ -45,6 +45,8 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 4. **Placement of shared tables**: `channel_accounts` and `change_events` are assigned to DOM-BIZ; `members` to DOM-IAM.
 5. **Metrics Map** sits in DOM-MET with the metric vocabulary; it could be a separate knowledge domain.
 6. **DOM-BRN** has one feature today; merge into another domain or keep?
+7. **Campaign Workboard tasks**: saving a campaign in FEAT-002 writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`), which is DOM-WRK data. Declare FEAT-002 cross-domain, or move the Workboard into the task domain?
+8. **RB-002** records the one-off creation of the GitHub repository rather than a procedure. Keep it as a runbook and add the repository procedures, or move it to `history/` as evidence?
 
 ## Acceptance for closing the plan
 

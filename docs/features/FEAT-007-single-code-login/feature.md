@@ -4,7 +4,7 @@ title: Single-code login
 type: domain-feature
 owner: DOM-IAM
 runtime: SRV-001
-delivery: live
+delivery: implemented
 status: proposed
 legacy: [ZGO-AUTH-003]
 relations:
@@ -23,8 +23,8 @@ The sign-in modal has one masked field, **รหัสระบุตัวต�
 - Input validation, same-origin checks, persistent rate limits, signed HttpOnly/Secure/SameSite cookies, expiry and the credential-version recheck are unchanged.
 
 ## Ownership
-- Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature, no cross-domain participants.
-- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
+- Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature.
+- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md). The local runtime [SRV-002](../../services/SRV-002-local/SERVICE.md) is a trusted operator workspace without Guest mode or Member sign-in; this feature does not run there.
 
 ## Documents
 | File | Role | Original location | Version |

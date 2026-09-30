@@ -1,7 +1,7 @@
 ---
 id: RB-002
 title: GitHub repository
-status: approved
+status: proposed
 relations:
   relates_to: [RB-001]
 ---

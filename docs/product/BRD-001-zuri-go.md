@@ -31,8 +31,8 @@ As recorded: the business owner; campaign owners, marketing, sales and product /
 
 As recorded in existing documents:
 
-- Public Guest reading with authenticated writes ([PRD-001](PRD-001-zuri-go.md), rules 1 and 3).
-- Runs as a hosted site on Vercel with Neon PostgreSQL and as a local operator runtime ([SRV-001](../services/SRV-001-hosted/SERVICE.md), [SRV-002](../services/SRV-002-local/SERVICE.md)).
+- Public Guest reading with authenticated writes ([PRD-001](PRD-001-zuri-go.md), rule 1).
+- Credentials and secrets are never exposed to users ([PRD-001](PRD-001-zuri-go.md), rule 3).
 - Brand rules and approved assets apply; brand promotion is human-only ([DOM-BRN](../domains/brand/README.md)).
 - Figures are never fabricated: plan figures are labelled as plan, and actuals are entered, not invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 

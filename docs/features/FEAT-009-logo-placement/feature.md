@@ -4,7 +4,7 @@ title: Zuri-Go logo placement
 type: domain-feature
 owner: DOM-BRN
 runtime: SRV-001
-delivery: live
+delivery: implemented
 status: proposed
 legacy: []
 relations:
@@ -21,8 +21,8 @@ The Zuri-Go logo is shown from the unchanged Main Logo region of the approved br
 - Keep the source and byte-identical copies; do not create a new logo master or promote draft assets.
 
 ## Ownership
-- Feature owner: [DOM-BRN](../../domains/brand/README.md) — Brand. Type: domain feature, no cross-domain participants.
-- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
+- Feature owner: [DOM-BRN](../../domains/brand/README.md) — Brand. Type: domain feature.
+- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
 | File | Role | Original location | Version |

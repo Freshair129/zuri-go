@@ -22,4 +22,4 @@ Static site (`build/site`) plus one same-origin API function (`api/index.mjs` â†
 - Release sequence and rollback: [RB-001](../../operations/RB-001-runbook.md); hosted architecture: [ARCH-003](../../architecture/ARCH-003-hosted-deployment.md).
 
 ## Hosts and implements
-Hosts every domain listed in the frontmatter and realises every feature in it ([STD-003 R4](../../governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md)). The `hosts` / `implements` lists are service-level declarations; they are not graph edges (ADR-001 D7).
+Hosts every domain listed in the frontmatter and realises every feature in its `implements` list ([STD-003 R4](../../governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md)). The `hosts` / `implements` lists are service-level declarations; they are not graph edges (ADR-001 D7).

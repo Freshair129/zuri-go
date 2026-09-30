@@ -4,7 +4,7 @@ title: Business Overview
 type: domain-feature
 owner: DOM-BIZ
 runtime: SRV-001
-delivery: live
+delivery: implemented
 status: proposed
 legacy: [ZGO-OVERVIEW-001]
 relations:
@@ -22,8 +22,8 @@ A one-page business view across all campaigns: what is running, how far each wee
 - Product name **Zuri-Go** with the tagline **Let’s Go to Market. Together**.
 
 ## Ownership
-- Feature owner: [DOM-BIZ](../../domains/business/README.md) — Business workspace. Type: domain feature, no cross-domain participants.
-- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
+- Feature owner: [DOM-BIZ](../../domains/business/README.md) — Business workspace. Type: domain feature. Provisional: goal setup and actual entry write DOM-MET data (`goals`, `metric_observations`) and the content list writes DOM-CAM data (`content_items`), which would make this a cross-domain feature under STD-001 R4 — open in PLAN-001 WI-14 (question 3).
+- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
 | File | Role | Original location | Version |
@@ -35,7 +35,7 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 
 ## Delivery evidence
 - Delivered locally in 0.2.0: [history/zuri-go-review](../../history/zuri-go-review/verification.md).
-- Delivered to production in 0.3.0: [history/zuri-go-cloud-review](../../history/zuri-go-cloud-review/verification.md).
+- In production since 0.3.0 — Overview checked in the production browser: [history/zuri-go-cloud-review](../../history/zuri-go-cloud-review/verification.md).
 
 ## Notes
 - Section 4 of the spec defines the product-wide navigation tabs; [PRD-001](../../product/PRD-001-zuri-go.md) indexes them.

@@ -8,8 +8,6 @@ status: proposed
 
 One site, one origin, one deployment: navigation across the surfaces, the Data App shell, build and packaging, and the two runtimes.
 
-Classification ([registry/domains.yaml](../../../registry/domains.yaml)): subdomain `generic` · role `platform`.
-
 ## Language
 - Site
 - Origin
@@ -33,11 +31,13 @@ Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
 
+**Classification** — subdomain `generic` · role `platform`, from [registry/domains.yaml](../../../registry/domains.yaml).
+
 **Owned features**
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-008](../../features/FEAT-008-unified-site/feature.md) | Unified site | live |
+| [FEAT-008](../../features/FEAT-008-unified-site/feature.md) | Unified site | implemented |
 
 **Participating cross-domain features** — none.
 

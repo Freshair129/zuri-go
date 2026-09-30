@@ -23,8 +23,8 @@ Weekly To-do / Kanban / List / RACI, a simple Member registry, manual tasks, MoS
 - Combined Backup v2 with v1 compatibility.
 
 ## Ownership
-- Feature owner: [DOM-WRK](../../domains/work/README.md) — Work (tasks & meetings). Type: domain feature, no cross-domain participants.
-- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
+- Feature owner: [DOM-WRK](../../domains/work/README.md) — Work (tasks & meetings). Type: domain feature. Provisional: the Member registry writes DOM-IAM data (`members`), which would make this a cross-domain feature under STD-001 R4 — open in PLAN-001 WI-14 (question 2).
+- Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
 | File | Role | Original location | Version |
@@ -42,8 +42,8 @@ Text inside these documents may still name a sibling by its original file name; 
 FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, WI-08): the approved requirements remain in the documents above. Requirement register `MT-01`–`MT-29`: [spec.md](spec.md) §5; trace in [verification.md](verification.md).
 
 ## Delivery evidence
+- In production since the unified-site release, where the task manager reloaded with its five-task Kanban on the production origin ([FEAT-008 verification](../FEAT-008-unified-site/verification.md), “Production”). In 0.3.0 Weekly To-do showed the 11 imported tasks in the production browser ([history/zuri-go-cloud-review](../../history/zuri-go-cloud-review/verification.md)).
 - Acceptance of the installed FUNG desktop, real audio and model inference is NOT_RUN: see [verification.md](verification.md), “Remaining acceptance”.
 
 ## Notes
 - The v0.3.0 documents describe browser storage (IndexedDB); the current system persists the same entities in PostgreSQL ([ARCH-002 §5–6](../../architecture/ARCH-002-postgresql-data-model.md)).
-- The Member registry uses data owned by DOM-IAM; whether this feature becomes cross-domain is an open question (PLAN-001 WI-14).
