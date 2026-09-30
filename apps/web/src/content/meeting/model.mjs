@@ -92,7 +92,8 @@ export function isBatchStale(s,batch){const meeting=s.meetings.find(m=>m.id===ba
 // Only that marker relaxes the segment and quote check; a normal revision is checked as before.
 export const isWithheld=doc=>doc?.withheld===true;
 const keptLocal=()=>fail('transcript ของประชุมลับเก็บไว้ที่เครื่องที่บันทึกการประชุม ใช้งานต่อบนเครื่องนั้น หรืออัปโหลดพร้อมเหตุผลก่อน');
-export function validateEvidence(review,evidence){if(!Array.isArray(evidence)||!evidence.length)fail('งานจากประชุมต้องมีหลักฐาน');for(const e of evidence){if(isWithheld(review)){if(typeof e.segmentId!=='string'||!e.segmentId||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');continue;}const seg=review.segments.find(seg=>seg.segmentId===e.segmentId);if(!seg||!text(e.quote)||!seg.text.includes(e.quote)||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.startMs<seg.startMs||e.endMs>seg.endMs||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');}}
+// spans: evidence that came from a stub batch has no quote (its span only); a task reference may keep it after the transcript is uploaded (PLAN-002 WI-09).
+export function validateEvidence(review,evidence,{spans=false}={}){if(!Array.isArray(evidence)||!evidence.length)fail('งานจากประชุมต้องมีหลักฐาน');for(const e of evidence){if(isWithheld(review)){if(typeof e.segmentId!=='string'||!e.segmentId||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');continue;}const seg=review.segments.find(seg=>seg.segmentId===e.segmentId);if(!seg||(spans&&e.quote===undefined?false:!text(e.quote)||!seg.text.includes(e.quote))||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.startMs<seg.startMs||e.endMs>seg.endMs||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');}}
 export function addBatch(s,meetingId,response){
   const meeting=s.meetings.find(m=>m.id===meetingId),review=s.reviews.find(r=>r.id===meeting?.reviewId),source=s.sources.find(src=>src.id===meeting?.sourceId);
   if(!review||review.id!==response.reviewRevisionId||review.reviewHash!==response.reviewHash||source.contentHash!==response.sourceHash)fail('ผลร่างอ้างฉบับเก่า กรุณาตรวจใหม่');
@@ -102,18 +103,30 @@ export function addBatch(s,meetingId,response){
   const old=s.batches.find(b=>b.id===response.draftBatchId);if(old)return old.id;
   const batch={...structuredClone(response),id:required(response.draftBatchId,'batch ID'),meetingId,sourceId:source.id};s.batches.push(batch);return batch.id;
 }
-export function commitBatch(s,batchId,choices,payloadHash=null){
+// `update` writes meeting text into an existing task, so a restricted meeting may update only a restricted task whose named people are all participants.
+function widerThan(task,audience){
+  const named=[task.responsibleId,task.accountableId,...(task.consultedIds||[]),...(task.informedIds||[]),...(task.viewerIds||[])].filter(Boolean);
+  if(task.visibility!=='restricted'||named.some(id=>!audience.viewerIds.includes(id)))throw Object.assign(Error('งานเดิมมีผู้เห็นกว้างกว่าผู้เข้าร่วมประชุมลับ อัปเดตจากประชุมนี้ไม่ได้ (ผูกงานแทนได้)'),{code:'AUDIENCE_WIDER'});
+}
+// Choices in a fixed order and key order, so the same choices always give the same string (FR-011-009, SDD-004 WI-09).
+const sorted=v=>Array.isArray(v)?v.map(sorted):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sorted(v[k])])):v;
+export const canonicalChoices=choices=>JSON.stringify(sorted([...choices].sort((a,b)=>String(a?.proposalId)<String(b?.proposalId)?-1:String(a?.proposalId)>String(b?.proposalId)?1:0)));
+// audience: {visibility,viewerIds} from the meeting (restricted meetings only); allowStub: the server commits a stub review on its spans. The audience is given to every task this commit creates and never changes an existing task's audience.
+export function commitBatch(s,batchId,choices,payloadHash=null,{audience=null,allowStub=false}={}){
   const batch=s.batches.find(b=>b.id===batchId);if(!batch)fail('ไม่พบร่างงาน');
   if(!Array.isArray(choices)||new Set(choices.map(c=>c.proposalId)).size!==choices.length)fail('รายการที่เลือกซ้ำหรือไม่ถูกต้อง');
   const payload=JSON.stringify(choices),receipt=s.receipts.find(r=>r.batchId===batchId);
-  if(receipt){if(receipt.payload!==payload)fail('Conflict: ร่างนี้เคยบันทึกแล้วด้วยรายละเอียดต่างกัน');return receipt.taskIds;}
+  // A receipt written by the server keeps the canonical form; one from the old client keeps the plain one.
+  if(receipt){if(receipt.payload!==payload&&!(receipt.origin==='server'&&receipt.payload===canonicalChoices(choices)))fail('Conflict: ร่างนี้เคยบันทึกแล้วด้วยรายละเอียดต่างกัน');return receipt.taskIds;}
   if(isBatchStale(s,batch))fail('ร่างเก่าใช้สร้างงานไม่ได้ กรุณาตรวจฉบับใหม่');
   const taskIds=[],review=s.reviews.find(r=>r.id===batch.reviewRevisionId),meeting=s.meetings.find(m=>m.id===batch.meetingId);
-  if(isWithheld(review))keptLocal();
+  // A stub review (transcript kept on the recording machine) is refused on the client; the server commits it on its spans (allowStub), validateEvidence relaxing only for it.
+  if(isWithheld(review)&&!allowStub)keptLocal();
+  if(audience&&!audience.viewerIds?.length)fail('ประชุมลับนี้ไม่มีผู้เข้าร่วม จึงสร้างงานไม่ได้');
   for(const choice of choices){if(choice.mode==='skip')continue;const item=batch.items.find(i=>i.proposalId===choice.proposalId);if(!item)fail('ไม่พบรายการร่าง');validateEvidence(review,item.evidence);
     const ref={meetingId:batch.meetingId,sourceId:batch.sourceId,reviewRevisionId:review.id,proposalId:item.proposalId,evidence:item.evidence};let id;
     if(choice.mode==='link'){const t=s.tasks.find(t=>t.id===choice.taskId);if(!t)fail('กรุณาเลือกงานที่ต้องการผูก');checkVersion(t,choice.taskVersion);if(!t.sourceRefs.some(r=>r.proposalId===item.proposalId&&r.reviewRevisionId===review.id))t.sourceRefs.push(ref);t.version++;event(s,'source-linked',t.id,ref);id=t.id;if(choice.week)setPriority(s,id,choice.week,choice.priority??null,choice.priorityNote);}
-    else {if(!['create','update'].includes(choice.mode))fail('วิธีสร้างงานไม่ถูกต้อง');if(!choice.responsibleId)fail('เลือกรายชื่อ R ก่อนสร้างงานจากประชุม');const old=choice.mode==='update'?s.tasks.find(t=>t.id===choice.taskId):null;if(choice.mode==='update'&&!old)fail('ไม่พบงานที่จะอัปเดต');id=saveTask(s,{...(old?{id:old.id,version:choice.taskVersion}:{}),title:choice.title,description:choice.description,deliverable:item.deliverable,responsibleId:choice.responsibleId,accountableId:choice.accountableId||null,dueDate:choice.dueDate||null,sourceKind:'meeting',sourceRefs:[ref]},{week:choice.week,priority:choice.priority??null,priorityNote:choice.priorityNote});if(old)s.tasks.find(t=>t.id===id).sourceRefs.push(ref);}
+    else {if(!['create','update'].includes(choice.mode))fail('วิธีสร้างงานไม่ถูกต้อง');if(!choice.responsibleId)fail('เลือกรายชื่อ R ก่อนสร้างงานจากประชุม');const old=choice.mode==='update'?s.tasks.find(t=>t.id===choice.taskId):null;if(choice.mode==='update'&&!old)fail('ไม่พบงานที่จะอัปเดต');if(old&&audience)widerThan(old,audience);id=saveTask(s,{...(old?{id:old.id,version:choice.taskVersion}:{}),title:choice.title,description:choice.description,deliverable:item.deliverable,responsibleId:choice.responsibleId,accountableId:choice.accountableId||null,dueDate:choice.dueDate||null,sourceKind:'meeting',sourceRefs:[ref],...(!old&&audience?{visibility:audience.visibility,viewerIds:audience.viewerIds}:{})},{week:choice.week,priority:choice.priority??null,priorityNote:choice.priorityNote});if(old)s.tasks.find(t=>t.id===id).sourceRefs.push(ref);}
     taskIds.push(id);
   }
   if(!taskIds.length)fail('กรุณาเลือกรายการที่จะสร้างหรือผูกงาน');const selected=choices.filter(c=>c.mode!=='skip');s.receipts.push({id:uid(),batchId,idempotencyKey:[meeting.sourceInstanceId,meeting.projectId,meeting.recordingId,review.id,review.reviewHash,batchId].join(':'),payloadHash,payload,taskIds,mappings:selected.map((c,i)=>({proposalId:c.proposalId,taskId:taskIds[i]})),committedAt:now()});return taskIds;
@@ -133,7 +146,7 @@ export function validateState(s){
   for(const r of s.reviews)if(!s.sources.some(src=>src.id===r.sourceId&&src.meetingId===r.meetingId)||!Array.isArray(r.segments))fail('Review ไม่ตรง source');
   for(const m of s.meetings){if(!text(m.title)||![m.sourceId,m.latestSourceId].every(id=>s.sources.some(src=>src.id===id&&src.meetingId===m.id))||(m.reviewId&&!s.reviews.some(r=>r.id===m.reviewId&&r.meetingId===m.id)))fail('Meeting อ้างฉบับที่ไม่มีอยู่');if(m.channels&&(!Array.isArray(m.channels)||m.channels.some(c=>!['file','mic','system'].includes(c))))fail('ช่องเสียงไม่ถูกต้อง');}
   for(const doc of [...s.sources,...s.reviews])for(const seg of doc.segments){if(typeof seg.segmentId!=='string'||typeof seg.text!=='string'||!Number.isFinite(seg.startMs)||!Number.isFinite(seg.endMs)||seg.startMs<0||seg.endMs<seg.startMs)fail('Segment ไม่ถูกต้อง');optionalText(seg,['speakerLabel']);}
-  for(const t of s.tasks)for(const ref of t.sourceRefs){const review=s.reviews.find(r=>r.id===ref.reviewRevisionId&&r.meetingId===ref.meetingId&&r.sourceId===ref.sourceId);if(!review)fail('งานอ้างฉบับประชุมที่ไม่มีอยู่');validateEvidence(review,ref.evidence);}
+  for(const t of s.tasks)for(const ref of t.sourceRefs){const review=s.reviews.find(r=>r.id===ref.reviewRevisionId&&r.meetingId===ref.meetingId&&r.sourceId===ref.sourceId);if(!review)fail('งานอ้างฉบับประชุมที่ไม่มีอยู่');if(ref.evidence?.withheld===true)continue;validateEvidence(review,ref.evidence,{spans:true});}
   for(const b of s.batches)if(!s.reviews.some(r=>r.id===b.reviewRevisionId&&r.sourceId===b.sourceId)||!Array.isArray(b.items))fail('Batch ไม่ตรง review');
   for(const r of s.receipts)if(!s.batches.some(b=>b.id===r.batchId)||!Array.isArray(r.taskIds)||r.taskIds.some(id=>!taskIds.has(id)))fail('Receipt ไม่ตรง task');
   return s;

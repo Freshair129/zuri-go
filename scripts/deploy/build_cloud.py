@@ -22,7 +22,7 @@ def copy(source, relative):
 site = ROOT / 'build/site'
 for path in json.loads((site / 'site-build.json').read_text())['files']:
     copy('build/site/' + path, 'public/' + path)
-for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs','viewer.mjs','audience.mjs','teams.mjs','tasks.mjs','projects.mjs','campaign-tasks.mjs']:
+for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs','viewer.mjs','audience.mjs','teams.mjs','tasks.mjs','projects.mjs','campaign-tasks.mjs','meeting-commit.mjs']:
     copy('apps/api/' + path, 'apps/api/' + path)
 for path in ['shared/model.mjs','shared/visibility.mjs','shared/task-rules.mjs','meeting/model.mjs','business/model.mjs']:
     relative = 'apps/web/src/content/' + path
@@ -30,7 +30,7 @@ for path in ['shared/model.mjs','shared/visibility.mjs','shared/task-rules.mjs',
 (OUT / 'api').mkdir(exist_ok=True)
 (OUT / 'api/index.mjs').write_text("export {default} from '../apps/api/cloud.mjs';\n")
 package = json.loads((ROOT / 'apps/api/package.json').read_text())
-package.update(name='zuri-go-cloud', scripts={}, version='0.4.2', engines={'node':'24.x'})
+package.update(name='zuri-go-cloud', scripts={}, version='0.5.0', engines={'node':'24.x'})
 (OUT / 'package.json').write_text(json.dumps(package, indent=2)+'\n')
 copy('apps/api/package-lock.json', 'package-lock.json')
 configuration = {'version':2,'outputDirectory':'public','buildCommand':'','regions':['sin1'],

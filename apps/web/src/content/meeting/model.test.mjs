@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {empty,hash,seedWorkspace,saveMember,saveTask,setPriority,weekOf,weeklyRows,weeklySummary,membership,validateState,addSource,saveReview,reviewHash,addBatch,commitBatch,isBatchStale,validateEvidence} from './model.mjs';
+import {empty,hash,canonicalChoices,seedWorkspace,saveMember,saveTask,setPriority,weekOf,weeklyRows,weeklySummary,membership,validateState,addSource,saveReview,reviewHash,addBatch,commitBatch,isBatchStale,validateEvidence} from './model.mjs';
 import {parseConnection,createFungClient} from './fung-client.mjs';
 const seed=JSON.parse(await readFile(new URL('./seed.json',import.meta.url),'utf8'));
 const fresh=()=>{const s=empty();seedWorkspace(s,seed);return s;};
@@ -49,4 +49,58 @@ test('withheld revisions cannot be reviewed, drafted or committed on this side',
   assert.throws(()=>addBatch(s,meetingId,{draftBatchId:'batch-2',reviewRevisionId:reviewId,reviewHash:'review-hash',sourceHash:'source-1',items:[]}),/เก็บไว้ที่เครื่องที่บันทึก/);
   const fresh=meetingFixture();for(const r of fresh.s.reviews)r.withheld=true;assert.throws(()=>commitBatch(fresh.s,'batch-1',fresh.choices),/เก็บไว้ที่เครื่องที่บันทึก/);
   assert.equal(meeting.reviewId,reviewId);
+});
+
+// ---- WI-09 (SDD-004 amendment): canonical choices, audience and the server's use of commitBatch --------------------------------------
+test('canonicalChoices gives the same string for any key or choice order, and a different one for other content',()=>{
+  const {choices}=meetingFixture(),a=choices[0],b={...a,proposalId:'proposal-0',mode:'skip'};
+  const shuffled=Object.fromEntries(Object.entries(a).reverse());
+  assert.equal(canonicalChoices([a,b]),canonicalChoices([b,shuffled]),'key order and choice order do not matter');
+  assert.notEqual(canonicalChoices([a]),canonicalChoices([{...a,dueDate:'2026-10-09'}]),'holdout: a different dueDate is a different payload');
+  assert.notEqual(canonicalChoices([a]),canonicalChoices([{...a,week:'2026-10-05'}]));
+  const input=[b,a];canonicalChoices(input);assert.deepEqual(input,[b,a],'the input is not reordered in place');
+});
+test('commitBatch with an audience gives every created task that audience; without one the task carries none (holdout)',()=>{
+  const plain=meetingFixture();commitBatch(plain.s,'batch-1',plain.choices);
+  const open=plain.s.tasks.at(-1);assert.equal(open.visibility,undefined);assert.equal(open.viewerIds,undefined);
+  const {s,choices}=meetingFixture(),people=s.members.slice(0,3).map(m=>m.id),ids=commitBatch(s,'batch-1',choices,null,{audience:{visibility:'restricted',viewerIds:people}});
+  const made=s.tasks.find(t=>t.id===ids[0]);assert.equal(made.visibility,'restricted');assert.deepEqual(made.viewerIds,people);
+  const empty=meetingFixture();assert.throws(()=>commitBatch(empty.s,'batch-1',empty.choices,null,{audience:{visibility:'restricted',viewerIds:[]}}),/ไม่มีผู้เข้าร่วม/);assert.equal(empty.s.receipts.length,0);
+});
+test('link never changes the audience of a task; update needs a restricted task named only by participants (AUDIENCE_WIDER)',()=>{
+  const people=fresh().members.slice(0,3).map(m=>m.id),audience=people=>({visibility:'restricted',viewerIds:people});
+  const link=meetingFixture(),target=structuredClone(link.s.tasks[0]);
+  commitBatch(link.s,'batch-1',[{...link.choices[0],mode:'link',taskId:target.id,taskVersion:target.version}],null,{audience:audience(link.s.members.slice(0,3).map(m=>m.id))});
+  const linked=link.s.tasks[0];assert.equal(linked.visibility,target.visibility);assert.deepEqual(linked.viewerIds,target.viewerIds);assert.equal(linked.sourceRefs.length,1);
+  const wide=meetingFixture(),old=wide.s.tasks[0];
+  assert.throws(()=>commitBatch(wide.s,'batch-1',[{...wide.choices[0],mode:'update',taskId:old.id,taskVersion:old.version}],null,{audience:audience(wide.s.members.slice(0,3).map(m=>m.id))}),e=>e.code==='AUDIENCE_WIDER');
+  assert.equal(wide.s.receipts.length,0);assert.equal(wide.s.tasks[0].title,old.title,'a refused update changes nothing');
+  const narrow=meetingFixture(),ids=narrow.s.members.slice(0,3).map(m=>m.id);
+  saveTask(narrow.s,{id:narrow.s.tasks[0].id,responsibleId:ids[0],accountableId:ids[1],consultedIds:[],informedIds:[],visibility:'restricted',viewerIds:[ids[2]]});
+  const restricted=narrow.s.tasks[0];
+  commitBatch(narrow.s,'batch-1',[{...narrow.choices[0],mode:'update',taskId:restricted.id,taskVersion:restricted.version,title:'ปรับจากประชุม'}],null,{audience:audience(ids)});
+  assert.equal(narrow.s.tasks[0].title,'ปรับจากประชุม');assert.equal(narrow.s.tasks[0].visibility,'restricted');assert.deepEqual(narrow.s.tasks[0].viewerIds,[ids[2]]);
+  const outside=meetingFixture(),some=outside.s.members.slice(0,2).map(m=>m.id);
+  saveTask(outside.s,{id:outside.s.tasks[0].id,responsibleId:outside.s.members[3].id,visibility:'restricted',viewerIds:[some[0]]});
+  const named=outside.s.tasks[0];assert.throws(()=>commitBatch(outside.s,'batch-1',[{...outside.choices[0],mode:'update',taskId:named.id,taskVersion:named.version}],null,{audience:audience(some)}),e=>e.code==='AUDIENCE_WIDER','a named R outside the participants widens it');
+});
+test('a stub review commits only when the caller allows it (the server), on its spans',()=>{
+  const {s,choices}=meetingFixture();for(const r of s.reviews){r.segments=[];r.withheld=true;}
+  assert.throws(()=>commitBatch(s,'batch-1',choices),/เก็บไว้ที่เครื่องที่บันทึก/);
+  const ids=commitBatch(s,'batch-1',choices,null,{allowStub:true});assert.equal(ids.length,1);
+  const bad=meetingFixture();for(const r of bad.s.reviews){r.segments=[];r.withheld=true;}bad.s.batches[0].items[0].evidence[0].reviewRevisionId='other';
+  assert.throws(()=>commitBatch(bad.s,'batch-1',bad.choices,null,{allowStub:true}),/ไม่ตรงฉบับตรวจ/,'a span of another review is refused');
+});
+test('a receipt from the server replays by the canonical payload; one from the old client by the plain payload',()=>{
+  const {s,choices}=meetingFixture(),ids=commitBatch(s,'batch-1',choices);
+  assert.deepEqual(commitBatch(s,'batch-1',choices),ids,'old receipt, same plain payload');
+  const reordered=Object.fromEntries(Object.entries(choices[0]).reverse());
+  assert.throws(()=>commitBatch(s,'batch-1',[reordered]),/Conflict/,'an old receipt still compares the plain string');
+  Object.assign(s.receipts[0],{origin:'server',payload:canonicalChoices(choices)});
+  assert.deepEqual(commitBatch(s,'batch-1',[reordered]),ids,'a server receipt ignores key order');assert.throws(()=>commitBatch(s,'batch-1',[{...choices[0],title:'อื่น'}]),/Conflict/);
+});
+test('a task reference whose evidence is withheld validates; a missing reference target still does not',()=>{
+  const {s,choices}=meetingFixture();commitBatch(s,'batch-1',choices);const t=s.tasks.at(-1);
+  t.sourceRefs[0].evidence={withheld:true};assert.doesNotThrow(()=>validateState(s));
+  t.sourceRefs[0].reviewRevisionId='missing';assert.throws(()=>validateState(s),/ฉบับประชุม/);
 });

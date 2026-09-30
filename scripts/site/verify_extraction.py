@@ -44,8 +44,9 @@ for path in (ROOT / 'build/vercel').rglob('*'):
     assert all(secret.encode() not in data for secret in secrets), 'Private value in package'
     count += 1
 # 46 files at extraction + viewer.mjs, audience.mjs, teams.mjs and shared/visibility.mjs (FEAT-011 P1)
-# + tasks.mjs, projects.mjs, campaign-tasks.mjs and shared/task-rules.mjs (FEAT-010 P2).
-assert count == 54, count
+# + tasks.mjs, projects.mjs, campaign-tasks.mjs and shared/task-rules.mjs (FEAT-010 P2)
+# + meeting-commit.mjs (PLAN-002 WI-09).
+assert count == 55, count
 build = json.loads((ROOT / 'apps/web/dist/data-app-build.json').read_text())
 snapshot = json.loads((ROOT / 'apps/web/dist' / build['snapshot']['path']).read_text(encoding='utf-8'))
 assert snapshot['id'] == 'dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1'

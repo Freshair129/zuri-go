@@ -14,9 +14,10 @@ import {authorizeWrite} from '../member-auth.mjs';
 import {passwordHash} from '../team-auth.mjs';
 import {snapshot} from '../service.mjs';
 import {readLegacy,saveLegacy,uploadTranscript} from '../workspace.mjs';
+import {commitMeeting} from '../meeting-commit.mjs';
 import {attachmentAction} from '../attachments.mjs';
 import {listTeams,saveTeam} from '../teams.mjs';
-import {empty,seedWorkspace,saveTask,addSource,saveReview,addBatch,commitBatch,validateState,reviewHash} from '../../web/src/content/meeting/model.mjs';
+import {empty,seedWorkspace,saveTask,addSource,saveReview,addBatch,validateState,reviewHash} from '../../web/src/content/meeting/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
 const admin=new pg.Client({connectionString:config().adminUrl});await admin.connect();
 after(async()=>{await admin.end();await pool.end();});
@@ -28,6 +29,8 @@ const as=(who,fn)=>transaction(b,principal(who),fn);
 // Writes by a Member go through authorizeWrite, as the API does.
 const write=(who,fn)=>transaction(b,principal(who),async c=>{if(who!=='operator')await authorizeWrite(c,b);return fn(c);});
 const titles=ws=>ws.meetingTaskManager.tasks.map(t=>t.title).sort();
+// The meeting commit belongs to the server (PLAN-002 WI-09): a client save no longer carries a receipt, so these tests commit through the endpoint's function.
+const commitAs=(who,d,mid,choices,patch={})=>{const batch=d.batches.find(x=>x.meetingId===mid);return write(who,c=>commitMeeting(c,b,{meetingId:mid,batchId:batch.id,reviewRevisionId:batch.reviewRevisionId,reviewHash:batch.reviewHash,sourceHash:batch.sourceHash,choices,...patch},c.zuriViewer));};
 
 // Four seeded Members: m0 accounting (A of the restricted task), m1 sales, m2 named viewer, m3 Business admin.
 let domain=empty();seedWorkspace(domain,seed);
@@ -128,14 +131,13 @@ test('restricted meetings: participants only, hidden references and receipts are
  const src={sourceInstanceId:'qa-visibility',projectId:'p',recordingId:randomUUID(),contentHash:'h-'+randomUUID(),sourceMode:'native',segments:[{segmentId:'s1',startMs:0,endMs:500,text:'งบเงินเดือน'}]};
  const mid=addSource(d,src,{title:'ประชุมลับ HR'}),sourceId=d.meetings.find(m=>m.id===mid).sourceId,rid=saveReview(d,{sourceId,segments:src.segments,reviewHash:'rh-'+mid});
  addBatch(d,mid,{draftBatchId:'batch-'+mid,reviewRevisionId:rid,reviewHash:'rh-'+mid,sourceHash:src.contentHash,items:[{proposalId:'p1',kind:'task',title:'ปรับเงินเดือน',evidence:[{segmentId:'s1',startMs:0,endMs:500,quote:'งบเงินเดือน',reviewRevisionId:rid}]}]});
- commitBatch(d,'batch-'+mid,[{proposalId:'p1',mode:'create',title:'ปรับเงินเดือน',responsibleId:m2.legacy,week:seed.weekStart}]);
  Object.assign(d.meetings.find(m=>m.id===mid),{visibility:'restricted',participantIds:[m0.legacy],organizerId:m0.legacy});
- const task=d.tasks.find(t=>t.title==='ปรับเงินเดือน');Object.assign(task,{visibility:'restricted',viewerIds:[m2.legacy]});
  read=await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
- // FR-011-009 (P3): the task the commit created is restricted with the meeting's participant m0 as a viewer. Removing m0 from an
- // existing task is an ordinary edit, which restores the P1 scenario below (a receipt that names a task m0 cannot read).
+ await commitAs('operator',d,mid,[{proposalId:'p1',mode:'create',title:'ปรับเงินเดือน',responsibleId:m2.legacy,week:seed.weekStart}]);
+ // FR-011-009 (P3, WI-09): the task the server's commit created is restricted with the meeting's participant m0 as a viewer; m2 is named as R.
+ // Removing m0 from an existing task is an ordinary edit, which restores the P1 scenario below (a receipt that names a task m0 cannot read).
  const created=await as('operator',c=>readLegacy(c,b)),made=created.meetingTaskManager.tasks.find(t=>t.title==='ปรับเงินเดือน');
- assert.deepEqual([...made.viewerIds].sort(),[m0.legacy,m2.legacy].sort());
+ assert.deepEqual([...made.viewerIds].sort(),[m0.legacy]);assert.equal(made.responsibleId,m2.legacy);
  made.viewerIds=[m2.legacy];read=await write('operator',c=>saveLegacy(c,b,{version:created.version,meetingTaskManager:created.meetingTaskManager}));
  const m0view=await as(m0,c=>readLegacy(c,b)),m1view=await as(m1,c=>readLegacy(c,b)),m2view=await as(m2,c=>readLegacy(c,b));
  assert.ok(m0view.meetingTaskManager.meetings.some(m=>m.id===mid));assert.equal(m1view.meetingTaskManager.meetings.some(m=>m.id===mid),false);
@@ -167,8 +169,10 @@ const taskOf=title=>owner("SELECT id,visibility FROM zuri_go.tasks WHERE busines
 // What the recording machine keeps after a Member saves the meeting to the hosted API: a participant saves a new restricted meeting.
 async function savedByMember(label,people=[m0,m1],{commit=false}={}){
  let read=await as(people[0],c=>readLegacy(c,b));const d=read.meetingTaskManager,made=await addMeeting(d,label,restricted(...people));
- const full=made.pick();if(commit)commitBatch(d,'batch-'+made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุม '+label,responsibleId:people[0].legacy,accountableId:people[0].legacy,week:seed.weekStart}]);
+ const full=made.pick();
  read=await write(people[0],c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
+ // The server commits on the stubs it stored: spans only, no quote text (WI-09).
+ if(commit)read=(await commitAs(people[0],d,made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุม '+label,responsibleId:people[0].legacy,accountableId:people[0].legacy,week:seed.weekStart}])).workspace;
  return {...made,full,read};
 }
 const everywhere=(value,text)=>JSON.stringify(value).includes(text);
@@ -176,9 +180,9 @@ const everywhere=(value,text)=>JSON.stringify(value).includes(text);
 test('a task created from a restricted meeting is restricted with its participants as viewers, whatever the client sent (FR-011-009)',async()=>{
  let read=await as('operator',c=>readLegacy(c,b));const d=read.meetingTaskManager;
  const made=await addMeeting(d,'FR009',restricted(m0,m1,m2));
- commitBatch(d,'batch-'+made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุมลับ FR009',responsibleId:m3.legacy,accountableId:m0.legacy,week:seed.weekStart}]);
- Object.assign(d.tasks.find(t=>t.title==='งานจากประชุมลับ FR009'),{visibility:'business',viewerIds:[]});// the client asks for a wider audience
  read=await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
+ // The request carries choices only; an audience it claims anyway (here a wider one) is ignored.
+ read=(await commitAs('operator',d,made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุมลับ FR009',responsibleId:m3.legacy,accountableId:m0.legacy,week:seed.weekStart,visibility:'business',viewerIds:[]}],{visibility:'business',viewerIds:[]})).workspace;
  const row=await taskOf('งานจากประชุมลับ FR009'),id=read.meetingTaskManager.tasks.find(t=>t.title==='งานจากประชุมลับ FR009').id;
  assert.equal(row.visibility,'restricted');
  const viewers=(await owner('SELECT member_id FROM zuri_go.task_viewers WHERE business_id=$1 AND task_id=$2',[b,row.id])).rows.map(r=>r.member_id).sort();
@@ -197,13 +201,31 @@ test('a task created from a restricted meeting is restricted with its participan
  assert.equal(everywhere(await as(m1,c=>readLegacy(c,b)),made.quote),true,'the meeting audience still reads the quote');
  // /state returns task rows with their metadata: the quotes copied there follow the meeting too (RCA zuri-go-meeting-quotes-outside-meeting-audience).
  for(const who of ['guest',m3])assert.equal(everywhere(await as(who,c=>snapshot(c,b)),made.quote),false);
- assert.equal(everywhere(await as(m1,c=>snapshot(c,b)),made.quote),true);
+ // WI-09: a task created by the server's commit keeps no quote in its row at all (they live in meeting_task_links); the audience reads them through the meeting (asserted above).
+ assert.equal(everywhere(await as(m1,c=>snapshot(c,b)),made.quote),false);
+});
+test('a direct query finds no quote text in the task row or the links for someone outside the meeting (WI-09, NFR-011-001)',async()=>{
+ let read=await as('operator',c=>readLegacy(c,b));const d=read.meetingTaskManager;
+ const made=await addMeeting(d,'WI09-direct',restricted(m0,m1));
+ await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
+ await commitAs('operator',d,made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุมลับ WI09',responsibleId:m3.legacy,accountableId:m0.legacy,week:seed.weekStart}]);
+ const query=who=>as(who,async c=>({tasks:(await c.query('SELECT legacy_metadata FROM tasks WHERE business_id=$1',[b])).rows,links:(await c.query('SELECT evidence FROM meeting_task_links WHERE business_id=$1',[b])).rows}));
+ // m3 is named R, so the task row is readable to them, and it holds no quote (AC-011-009-02); the link rows follow the meeting and are not readable at all.
+ const outside=await query(m3);assert.ok(outside.tasks.some(r=>r.legacy_metadata.title==='งานจากประชุมลับ WI09'),'the task row is readable');
+ assert.equal(everywhere(outside.tasks,made.quote),false);assert.equal(everywhere(outside.links,made.quote),false);assert.equal(outside.links.length,0);
+ const inside=await query(m1);assert.equal(everywhere(inside.tasks,made.quote),false,'no quote in the task row for anyone');assert.equal(everywhere(inside.links,made.quote),true,'the meeting audience finds it in the links');
+ const task=(await owner("SELECT legacy_metadata FROM zuri_go.tasks WHERE business_id=$1 AND legacy_metadata->>'title'='งานจากประชุมลับ WI09'",[b])).rows[0].legacy_metadata;
+ assert.equal(task.sourceRefs.length,1);assert.equal(task.sourceRefs[0].evidence,undefined,'the reference is stored without evidence');assert.equal(task.sourceRefs[0].proposalId,'p1');
+ // A client save cannot put the quote back into the task row.
+ const view=await as(m1,c=>readLegacy(c,b));assert.equal(everywhere(view.meetingTaskManager.tasks.find(t=>t.title==='งานจากประชุมลับ WI09').sourceRefs,made.quote),true,'the participant reads the evidence re-attached');
+ await write(m1,c=>saveLegacy(c,b,{version:view.version,meetingTaskManager:view.meetingTaskManager}));
+ assert.equal(everywhere((await owner("SELECT legacy_metadata FROM zuri_go.tasks WHERE business_id=$1 AND legacy_metadata->>'title'='งานจากประชุมลับ WI09'",[b])).rows,made.quote),false);
 });
 test('a task from a business meeting keeps the level the client chose (FR-011-009, holdout)',async()=>{
  let read=await as('operator',c=>readLegacy(c,b));const d=read.meetingTaskManager;
  const made=await addMeeting(d,'FR009-open',{visibility:'business'});
- commitBatch(d,'batch-'+made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุมทั่วไป',responsibleId:m3.legacy,week:seed.weekStart}]);
  await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
+ await commitAs('operator',d,made.mid,[{proposalId:'p1',mode:'create',title:'งานจากประชุมทั่วไป',responsibleId:m3.legacy,week:seed.weekStart}]);
  assert.equal((await taskOf('งานจากประชุมทั่วไป')).visibility,'business');
 });
 test('a Member saves a restricted meeting as stubs; the operator keeps full content (FR-011-010, AC-011-010-01)',async()=>{

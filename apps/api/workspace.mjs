@@ -7,7 +7,7 @@ import {visibilityChange,meetingAudience,DEFAULT_VISIBILITY} from '../web/src/co
 import {viewerOf,taskNames,meetingNames,readable,withholdQuotes} from './audience.mjs';
 import {projectCampaignTask,writeWorkboardEntry} from './campaign-tasks.mjs';
 const APP_ID='dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1';
-const safeId=(b,kind,id)=>{const s=createHash('sha256').update([b,kind,id].join(':')).digest('hex');return s.slice(0,8)+'-'+s.slice(8,12)+'-4'+s.slice(13,16)+'-a'+s.slice(17,20)+'-'+s.slice(20,32);};
+export const safeId=(b,kind,id)=>{const s=createHash('sha256').update([b,kind,id].join(':')).digest('hex');return s.slice(0,8)+'-'+s.slice(8,12)+'-4'+s.slice(13,16)+'-a'+s.slice(17,20)+'-'+s.slice(20,32);};
 const iso=v=>v?new Date(v).toISOString():null;
 const M_FIELDS={displayName:'display_name',fullName:'full_name',nickname:'nickname',team:'team',position:'position',email:'email',phone:'phone',notes:'notes',status:'status'};
 const T_FIELDS={title:'title',description:'description',deliverable:'deliverable',status:'status',statusConfirmed:'status_confirmed',dueDate:'due_date',acceptance:'acceptance',acceptanceProposed:'acceptance_proposed',evidence:'evidence',blocker:'blocker',project:'project_label',dependency:'dependency_note',kpi:'kpi_note',recheckDate:'recheck_date',sourceUrl:'source_url'};
@@ -37,7 +37,8 @@ export async function readLegacy(c,b,viewer=viewerOf(c)){
  // Only what this viewer may read (FR-011-004…008); row-level security applies the same rule.
  const tasks=readable(viewer,allTasks,await taskNames(c,b)),visibleIds=new Set(tasks.map(t=>t.id)),roles=allRoles.filter(r=>visibleIds.has(r.task_id)),entries=allEntries.filter(e=>visibleIds.has(e.task_id)),viewerRows=(await all(c,b,'task_viewers')).filter(v=>visibleIds.has(v.task_id));
  const meetingRows=readable(viewer,await all(c,b,'meetings'),await meetingNames(c,b)),meetingIds=new Set(meetingRows.map(r=>r.id)),visibleMeetings=new Set(meetingRows.map(r=>r.legacy_metadata.id)),participants=(await all(c,b,'meeting_participants')).filter(p=>meetingIds.has(p.meeting_id));
- const legacyId=row=>row.legacy_metadata?.id||row.id;
+ // Evidence quotes live in meeting_task_links (FR-011-009), which follow the meeting; a task row keeps only the reference.
+ const links=new Map((await all(c,b,'meeting_task_links')).map(l=>[l.task_id+':'+l.proposal_id,l.evidence])),legacyId=row=>row.legacy_metadata?.id||row.id;
  const memberMap=new Map(members.map(m=>[m.id,legacyId(m)])),campaignMap=new Map(campaignRows.map(r=>[r.id,r.id]));
  // Campaign tasks are projected from the task records and their details (FR-010-015); the R's name stands in for the owner text.
  const details=new Map((await all(c,b,'campaign_task_details')).map(d=>[d.task_id,d])),rName=t=>{const r=roles.find(x=>x.task_id===t.id&&x.role==='R');return r?members.find(m=>m.id===r.member_id)?.display_name||'':'';};
@@ -48,7 +49,7 @@ export async function readLegacy(c,b,viewer=viewerOf(c)){
  const rowOf=new Map(tasks.map(t=>[legacyId(t),t]));
  for(const t of domain.tasks){const row=rowOf.get(t.id);t.visibility=row.visibility;t.teamId=row.team_id||null;t.viewerIds=viewerRows.filter(v=>v.task_id===row.id).map(v=>memberMap.get(v.member_id));delete t.visibilityReason;delete t.sourceRefsWithheld;
   // References to meetings this viewer cannot read are withheld here and kept on save.
-  const refs=t.sourceRefs.filter(ref=>visibleMeetings.has(ref.meetingId));if(refs.length!==t.sourceRefs.length){t.sourceRefs=refs;t.sourceRefsWithheld=true;}}
+  const refs=t.sourceRefs.filter(ref=>visibleMeetings.has(ref.meetingId)).map(ref=>Array.isArray(ref.evidence)?ref:{...ref,evidence:links.get(row.id+':'+ref.proposalId)||{withheld:true}});if(refs.length!==t.sourceRefs.length)t.sourceRefsWithheld=true;t.sourceRefs=refs;}
  const taskMap=new Map(tasks.map(t=>[t.id,legacyId(t)]));// Entries keep the order the client saved (weekly_plans.legacy_metadata), not the physical row order.
  const saved=w=>(w.legacy_metadata?.entries||[]).map(e=>e.taskId),position=(w,id)=>{const i=saved(w).indexOf(id);return i<0?Infinity:i;};
  domain.weeks=weeks.map(w=>({weekStart:w.week_start,timezone:w.timezone,entries:entries.filter(e=>e.weekly_plan_id===w.id).map(e=>({taskId:taskMap.get(e.task_id),priority:e.priority,priorityNote:e.priority_note})).sort((x,y)=>position(w,x.taskId)-position(w,y.taskId))}));
@@ -79,7 +80,7 @@ async function writeCampaigns(c,b,ws,initial=false){
 }
 export const CHANGE_ERRORS={WIDEN_DENIED:['เฉพาะผู้รับผิดชอบหลัก (A) หรือผู้จัดประชุมขยายการมองเห็นได้',403],REASON_REQUIRED:['ระบุเหตุผลที่ขยายการมองเห็น',422],TEAM_REQUIRED:['เลือกฝ่ายสำหรับการมองเห็นระดับฝ่าย',422],NAMED_REQUIRED:['รายการที่จำกัดการมองเห็นต้องมีผู้มองเห็นอย่างน้อยหนึ่งคน',422],SELF_EXCLUDED:['เพิ่มตัวเองเป็นผู้มองเห็นก่อนจำกัดการมองเห็น',422],LEVEL_INVALID:['ระดับการมองเห็นไม่ถูกต้อง',422]};
 // Only what this viewer may read is required, compared or rewritten; hidden items are never touched (SDD-011 "Write paths").
-async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
+export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c),{refuseNewReceipts=false}={}){
  validateState(state);const existingTasks=readable(viewer,await all(c,b,'tasks'),await taskNames(c,b)),existingMembers=await all(c,b,'members'),id=(kind,value)=>value?safeId(b,kind,value):null;
  const existingRoles=await all(c,b,'task_roles'),existingViewers=await all(c,b,'task_viewers'),existingMeetings=readable(viewer,await all(c,b,'meetings'),await meetingNames(c,b)),existingParticipants=await all(c,b,'meeting_participants');
  const visibleMeetingIds=new Set(existingMeetings.map(r=>r.id)),oldBatches=(await all(c,b,'meeting_draft_batches')).filter(r=>visibleMeetingIds.has(r.meeting_id)),stateTasks=new Set(state.tasks.map(t=>t.id)),stateMeetings=new Set(state.meetings.map(m=>m.id));
@@ -88,6 +89,8 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
  const receiptOf=(batch,prior)=>state.receipts.find(r=>r.batchId===batch.id)||(prior?.legacy_metadata.receipt?.taskIds.some(t=>!stateTasks.has(t))?prior.legacy_metadata.receipt:undefined);
  for(const batch of state.batches){
    const prior=oldBatches.find(r=>r.id===id('batch',batch.id)),review=state.reviews.find(r=>r.id===batch.reviewRevisionId),source=state.sources.find(r=>r.id===batch.sourceId),receipt=receiptOf(batch,prior);
+   // A receipt is issued only by the server's meeting commit; a client save may carry one that is already stored (WI-09).
+   if(refuseNewReceipts&&receipt&&!prior?.legacy_metadata.receipt)throw Object.assign(Error('ใบยืนยันการสร้างงานจากประชุมออกโดย server เท่านั้น ใช้ปุ่มสร้างและมอบหมายงาน'),{status:422,code:'RECEIPT_SERVER_OWNED'});
    if(batch.reviewHash!==review.reviewHash||batch.sourceHash!==source.contentHash)fail('Batch hash ไม่ตรงหลักฐาน');
    for(const item of batch.items)validateEvidence(review,item.evidence);
    if(prior&&![batch,custodyBatch(batch,custodyFor(id('meeting',batch.meetingId)))].some(v=>hash(v)===hash(prior.legacy_metadata.batch)))fail('ห้ามเขียนทับร่างงานเดิม');
@@ -97,6 +100,9 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
  }
  const memberId=value=>existingMembers.find(m=>m.id===value||m.legacy_metadata?.id===value)?.id||id('member',value);
  const taskId=value=>existingTasks.find(t=>t.id===value||t.legacy_metadata?.id===value)?.id||id('task',value);
+ // A task reference keeps no quote text once meeting_task_links holds it (stored or written by this save); a task written before WI-09 keeps its inline evidence.
+ const linked=new Set([...(await all(c,b,'meeting_task_links')).map(l=>l.task_id+':'+l.proposal_id),...state.receipts.flatMap(r=>(r.mappings||[]).map(m=>taskId(m.taskId)+':'+m.proposalId))]);
+ const bare=(tid,ref,old)=>{const stored=(old?.legacy_metadata?.sourceRefs||[]).find(r=>r.proposalId===ref.proposalId&&r.reviewRevisionId===ref.reviewRevisionId&&Array.isArray(r.evidence));if(stored)return ref.evidence?.withheld===true?stored:ref;const {evidence,...rest}=ref;return evidence?.withheld===true||linked.has(tid+':'+ref.proposalId)?rest:ref;};
  const peopleOf=(m,mid)=>{const oldPeople=existingParticipants.filter(p=>p.meeting_id===mid),oldOrganizer=oldPeople.find(p=>p.role==='organizer')?.member_id||null,organizer=m.participantIds===undefined?oldOrganizer:m.organizerId?memberId(m.organizerId):null;return {oldPeople,oldOrganizer,organizer,people:m.participantIds===undefined?oldPeople.map(p=>p.member_id).sort():[...new Set([...m.participantIds.map(memberId),...(organizer?[organizer]:[])])].sort()};};
  // FR-011-009: a new task that comes from a restricted meeting is restricted with the meeting's participants as viewers, whatever the client sent.
  const audiences=new Map(state.meetings.map(m=>{const mid=id('meeting',m.id),old=existingMeetings.find(r=>r.id===mid);return [m.id,meetingAudience({visibility:m.visibility??old?.visibility??DEFAULT_VISIBILITY},peopleOf(m,mid).people)];}));
@@ -120,7 +126,7 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
    const viewers=[...new Set([...(t.viewerIds===undefined?oldViewers:t.viewerIds.map(memberId)),...(audience?.viewerIds||[])])].sort(),named=[...[t.responsibleId,t.accountableId,...t.consultedIds,...t.informedIds].filter(Boolean).map(memberId),...viewers];
    const a=await access('task_visibility',tid,old&&{visibility:old.visibility,team_id:old.team_id},t,named,existingRoles.find(r=>r.task_id===tid&&r.role==='A')?.member_id||(t.accountableId?memberId(t.accountableId):null));
    // Keep references to meetings this viewer cannot read (withheld by readLegacy).
-   const hiddenRefs=(old?.legacy_metadata?.sourceRefs||[]).filter(ref=>!stateMeetings.has(ref.meetingId)),metadata=withoutAccess({...t,sourceRefs:[...hiddenRefs,...t.sourceRefs]},['visibility','teamId','viewerIds','visibilityReason','sourceRefsWithheld']);
+   const hiddenRefs=(old?.legacy_metadata?.sourceRefs||[]).filter(ref=>!stateMeetings.has(ref.meetingId)),metadata=withoutAccess({...t,sourceRefs:[...hiddenRefs,...t.sourceRefs.map(ref=>bare(tid,ref,old))]},['visibility','teamId','viewerIds','visibilityReason','sourceRefsWithheld']);
    await writeItem(c,b,'tasks',tid,{...translated(t,T_FIELDS),code:old?.code||await allocate(c,b,'tasks'),source_kind:t.sourceKind||'manual',campaign_id:campaignId(t.campaignId),legacy_metadata:metadata,visibility:a.visibility,team_id:a.team_id},!!old);
    if(hash(viewers)!==hash(oldViewers)){await c.query('DELETE FROM task_viewers WHERE business_id=$1 AND task_id=$2',[b,tid]);for(const v of viewers)await c.query('INSERT INTO task_viewers(business_id,task_id,member_id,added_by_member_id) VALUES($1,$2,$3,$4)',[b,tid,v,c.zuriActor?.memberId||null]);await audit(c,b,'task_viewers',tid,old?{viewerIds:oldViewers}:null,{viewerIds:viewers});}
    await c.query('DELETE FROM task_roles WHERE business_id=$1 AND task_id=$2',[b,taskId(t.id)]);
@@ -157,7 +163,7 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
 export async function saveLegacy(c,b,input){
  const current=(await c.query('SELECT * FROM businesses WHERE id=$1 FOR UPDATE',[b])).rows[0];if(Number(input.version)!==Number(current.domain_revision))fail('ข้อมูลถูกแก้แล้ว กรุณาโหลด workspace ใหม่',409);
  let map=new Map();if(input.campaignWorkspace)map=await writeCampaigns(c,b,input.campaignWorkspace);
- if(input.meetingTaskManager)await writeDomain(c,b,input.meetingTaskManager,map);
+ if(input.meetingTaskManager)await writeDomain(c,b,input.meetingTaskManager,map,viewerOf(c),{refuseNewReceipts:true});
  await audit(c,b,'workspace',b,null,{domains:[...(input.campaignWorkspace?['campaigns']:[]),...(input.meetingTaskManager?['meetings_tasks_members']:[])]},'save');
  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);const result=await readLegacy(c,b);if(input.campaignWorkspace?.selected)result.campaignWorkspace.selected=map.get(input.campaignWorkspace.selected)||result.campaignWorkspace.selected;return result;
 }

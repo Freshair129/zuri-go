@@ -1,6 +1,7 @@
 import pg from 'pg';
 import {sessionToken,sessionCookie} from '../team-auth.mjs';
-import {saveTask} from '../../web/src/content/meeting/model.mjs';
+import {saveTask,addSource,saveReview,addBatch,commitBatch,reviewHash} from '../../web/src/content/meeting/model.mjs';
+import {readFile} from 'node:fs/promises';
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -57,6 +58,35 @@ test('the transcript upload route needs a signed-in Member and reaches the meeti
  const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
  assert.equal((await call(route,{method:'POST',cookie,body:{reason:'x'}})).status,404,'an unknown or hidden meeting answers 404');
  assert.equal((await call('businesses/'+business+'/meetings/'+randomUUID()+'/transcript',{method:'PATCH',cookie,body:{}})).status,404,'only POST uploads');
+});
+test('the meeting commit on the hosted API: Guest 401, a Member commits and replays, PUT refuses a receipt, the package carries the module (WI-09)',async()=>{
+ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password1'}}),cookie=login.headers['Set-Cookie'],base='businesses/'+business,route=base+'/meeting-commits';
+ assert.equal((await call(route,{method:'POST',body:{meetingId:'x',batchId:'y',choices:[]}})).status,401,'a Guest cannot commit');
+ assert.equal((await call(route,{method:'POST',cookie,body:{meetingId:'x',batchId:'y',choices:[]}})).status,404,'an unknown or hidden meeting answers 404');
+ assert.equal((await call(route,{method:'POST',cookie,body:{}})).status,422,'the body is checked');
+ assert.equal((await call(route+'/'+randomUUID(),{method:'POST',cookie,body:{}})).status,404,'only the collection route commits');
+ // A Member saves a meeting with a draft batch; the client cannot turn it into tasks by sending a receipt.
+ const workspace=(await call(base+'/workspace',{cookie})).body,d=workspace.meetingTaskManager;
+ const src={sourceInstanceId:'qa-cloud',projectId:'p',recordingId:randomUUID(),contentHash:'h-'+randomUUID(),sourceMode:'native',segments:[{segmentId:'s1',startMs:0,endMs:500,text:'ตรวจหน้าเว็บ'}]};
+ const mid=addSource(d,src,{title:'QA hosted meeting'}),sourceId=d.meetings.find(m=>m.id===mid).sourceId,review=randomUUID(),rid=saveReview(d,{id:review,sourceId,segments:src.segments,reviewHash:await reviewHash(review,src.segments)});
+ addBatch(d,mid,{draftBatchId:'batch-'+mid,reviewRevisionId:rid,reviewHash:d.reviews.find(r=>r.id===rid).reviewHash,sourceHash:src.contentHash,items:[{proposalId:'p1',kind:'task',title:'ตรวจหน้าเว็บ',evidence:[{segmentId:'s1',startMs:0,endMs:500,quote:'ตรวจหน้าเว็บ',reviewRevisionId:rid}]}]});
+ const saved=await call(base+'/workspace',{method:'PUT',cookie,body:{version:workspace.version,meetingTaskManager:d}});assert.equal(saved.status,200,JSON.stringify(saved.body));
+ const choices=[{proposalId:'p1',mode:'create',title:'ตรวจหน้าเว็บ (hosted)',responsibleId:members[1].id,week:'2026-09-28',priority:'must'}],forged=structuredClone(saved.body.meetingTaskManager);
+ commitBatch(forged,'batch-'+mid,choices);
+ const refused=await call(base+'/workspace',{method:'PUT',cookie,body:{version:saved.body.version,meetingTaskManager:forged}});assert.equal(refused.status,422);assert.equal(refused.body.code,'RECEIPT_SERVER_OWNED');
+ assert.equal((await asOwner("SELECT count(*)::int n FROM zuri_go.tasks WHERE business_id=$1 AND title='ตรวจหน้าเว็บ (hosted)'",[business])).rows[0].n,0);
+ const batch=saved.body.meetingTaskManager.batches.find(x=>x.id==='batch-'+mid),body={meetingId:mid,batchId:batch.id,reviewRevisionId:batch.reviewRevisionId,reviewHash:batch.reviewHash,sourceHash:batch.sourceHash,choices};
+ const first=await call(route,{method:'POST',cookie,body});assert.equal(first.status,200,JSON.stringify(first.body));assert.equal(first.body.replayed,false);assert.equal(first.body.receipt.taskIds.length,1);
+ assert.ok(first.body.workspace.meetingTaskManager.tasks.some(t=>t.title==='ตรวจหน้าเว็บ (hosted)'&&/^TSK-/.test(t.code||'TSK-')),'the response carries the viewer-scoped workspace');
+ const again=await call(route,{method:'POST',cookie:(await call('login',{method:'POST',body:{password:'isolated-qa-team-password2'}})).headers['Set-Cookie'],body});assert.equal(again.body.replayed,true);assert.deepEqual(again.body.receipt.taskIds,first.body.receipt.taskIds);
+ const stale=await call(base+'/workspace',{method:'PUT',cookie,body:{version:saved.body.version,meetingTaskManager:saved.body.meetingTaskManager}});assert.equal(stale.status,409,'a client save from before the commit is refused');
+ // The hosted package lists the module and every module it imports (the package copies only named files).
+ const builder=await readFile(new URL('../../../scripts/deploy/build_cloud.py',import.meta.url),'utf8'),listOf=start=>[...builder.split(/\r?\n/).find(l=>l.startsWith(start)).matchAll(/'([^']+)'/g)].map(x=>x[1]);
+ const listed=new Set(listOf("for path in ['api.mjs'")),shared=new Set(listOf("for path in ['shared/model.mjs'"));
+ assert.ok(listed.has('meeting-commit.mjs'));
+ for(const file of listed){const source=await readFile(new URL('../'+file,import.meta.url),'utf8');
+  for(const [,target] of source.matchAll(/from '\.\/([a-z-]+\.mjs)'/g))assert.ok(listed.has(target),file+' imports '+target+' which the package lacks');
+  for(const [,target] of source.matchAll(/from '\.\.\/web\/src\/content\/([a-z\/-]+\.mjs)'/g))assert.ok(shared.has(target)||shared.has(target.replace(/^\.\//,'')),file+' imports '+target+' which the package lacks');}
 });
 test('attachments persist bytes, follow their task visibility, enforce bounds and become unavailable after removal',async()=>{
  const task=randomUUID();await transaction(business,c=>c.query('INSERT INTO tasks(id,business_id,code,title) VALUES($1,$2,$3,$4)',[task,business,task,'QA ONLY attachment test']));

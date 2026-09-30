@@ -12,6 +12,8 @@ export function openServerRepository(business){
  async function readAll(){workspace=await scoped(business,'/workspace');return workspace;}
  return {server:true,business,init:async()=>{await readAll();return workspace.meetingTaskManager;},read:async()=>{await readAll();return workspace.meetingTaskManager;},campaign:()=>workspace?{...workspace.campaignWorkspace,serverVersion:workspace.version}:null,
   async mutate(fn){await readAll();const next=structuredClone(workspace.meetingTaskManager),result=fn(next);if(result&&typeof result.then==='function')throw Error('Mutation must be synchronous');workspace=await scoped(business,'/workspace','PUT',{version:workspace.version,meetingTaskManager:next});notify();channel?.postMessage('changed');return {state:workspace.meetingTaskManager,result};},
+  // The meeting commit runs on the server (PLAN-002 WI-09); the client sends choices and takes the workspace it returns.
+  async commit(input){const out=await scoped(business,'/meeting-commits','POST',input);workspace=out.workspace;notify();channel?.postMessage('changed');return {state:workspace.meetingTaskManager,result:out};},
   subscribe(fn){listeners.add(fn);return()=>listeners.delete(fn);},close(){closed=true;channel?.close();listeners.clear();}
  };
 }
