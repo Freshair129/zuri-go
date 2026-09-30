@@ -2,16 +2,17 @@ import {randomUUID,createHash} from 'node:crypto';
 import {rows,hashable} from './db.mjs';
 import {overview,summaryFacts,validateSummarySelection,periodFor,midnight} from '../web/src/content/business/model.mjs';
 import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.mjs';
-import {viewerOf,taskNames,meetingNames,readable,withholdQuotes} from './audience.mjs';
+import {viewerOf,taskNames,meetingNames,projectNames,readable,withholdQuotes} from './audience.mjs';
 export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
 export function fail(message,status=422){throw Object.assign(Error(message),{status});}
-export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks'];
+export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks','projects','campaign_task_details'];
 // Only the viewer's tasks, with their roles and weekly entries (FR-011-007, FR-011-008).
 export async function snapshot(c,b,viewer=viewerOf(c)){
  const business=(await c.query('SELECT * FROM businesses WHERE id=$1',[b])).rows[0];if(!business)fail('ไม่พบธุรกิจ',404);
  const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);
  result.tasks=readable(viewer,result.tasks,await taskNames(c,b));const ids=new Set(result.tasks.map(t=>t.id));
- for(const t of ['task_roles','weekly_plan_tasks'])result[t]=result[t].filter(r=>ids.has(r.task_id));
+ for(const t of ['task_roles','weekly_plan_tasks','campaign_task_details'])result[t]=result[t].filter(r=>ids.has(r.task_id));
+ result.projects=readable(viewer,result.projects,await projectNames(c,b));
  // Meeting quotes copied into task metadata follow the meeting, not the task (FR-011-009; .brain/rca/zuri-go-meeting-quotes-outside-meeting-audience.md).
  const meetings=new Set(readable(viewer,await rows(c,'meetings',b),await meetingNames(c,b)).map(m=>m.legacy_metadata?.id||m.id));
  result.tasks=result.tasks.map(t=>({...t,legacy_metadata:withholdQuotes(t.legacy_metadata,meetings)}));
@@ -32,7 +33,7 @@ const CONFIG={
 export async function audit(c,b,type,id,before,after,event='update'){
  await c.query('INSERT INTO change_events(business_id,entity_type,entity_id,event_type,before_data,after_data,actor_kind,actor_subject,request_id,actor_member_id,actor_pid) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[b,type,id,event,before,after,c.zuriActor?'authenticated':'local_operator',c.zuriActor?.pid||null,randomUUID(),c.zuriActor?.memberId||null,c.zuriActor?.pid||null]);
 }
-export async function allocate(c,b,kind){const field={campaigns:'next_campaign_no',content_items:'next_content_no',tasks:'next_task_no'}[kind];const row=(await c.query(`UPDATE businesses SET ${field}=${field}+1 WHERE id=$1 RETURNING ${field}-1 AS n`,[b])).rows[0];return ({campaigns:'CAM',content_items:'CNT',tasks:'TSK'}[kind])+'-'+String(row.n).padStart(4,'0');}
+export async function allocate(c,b,kind){const field={campaigns:'next_campaign_no',content_items:'next_content_no',tasks:'next_task_no',projects:'next_project_no'}[kind];const row=(await c.query(`UPDATE businesses SET ${field}=${field}+1 WHERE id=$1 RETURNING ${field}-1 AS n`,[b])).rows[0];return ({campaigns:'CAM',content_items:'CNT',tasks:'TSK',projects:'PRJ'}[kind])+'-'+String(row.n).padStart(4,'0');}
 const clean=v=>typeof v==='string'&&v.trim()===''?null:v;
 function validUrl(value){if(!value)return;let url;try{url=new URL(value);}catch{fail('URL ไม่ถูกต้อง');}if(!['http:','https:'].includes(url.protocol)||url.username||url.password)fail('ใช้ URL http/https ที่ไม่มี credential');}
 export async function save(c,b,resource,input,id=null){

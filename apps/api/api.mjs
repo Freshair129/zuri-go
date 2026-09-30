@@ -6,6 +6,9 @@ import {snapshot,save,observe,brief,fail,audit} from './service.mjs';
 import {overview} from '../web/src/content/business/model.mjs';
 import {importPreview,importCommit,readLegacy,saveLegacy,uploadTranscript} from './workspace.mjs';
 import {listTeams,saveTeam} from './teams.mjs';
+import {listTasks,readTask,createTask,updateTask} from './tasks.mjs';
+import {listProjects,readProject,createProject,updateProject} from './projects.mjs';
+import {saveCampaignTask} from './campaign-tasks.mjs';
 export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
 // principal: OPERATOR on the local server, session(claims) on the hosted API; nothing else selects the viewer (FR-011-003).
@@ -24,6 +27,13 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
     if(method==='GET'&&id)sendAttachment(res,result,url.searchParams.get('preview')==='1');else send(res,200,result);
     return;
    }
+   // Campaign tasks: the task and its campaign details in one transaction (FR-010-012, FR-010-014).
+   const campaignTask=route.match(/^\/businesses\/([a-f0-9-]{36})\/campaigns\/([a-f0-9-]{36})\/tasks(?:\/([a-f0-9-]{36}))?$/);
+   if(campaignTask){
+    const [,b,campaign,task]=campaignTask;if(b!==businessId)fail('Business access denied',403);
+    if(!(method==='POST'&&!task||method==='PATCH'&&task))fail('Not found',404);
+    const input=await body(req);send(res,200,await scopedTransaction(b,c=>saveCampaignTask(c,b,campaign,input,c.zuriViewer,task||null)));return;
+   }
    const match=route.match(/^\/businesses\/([a-f0-9-]{36})(?:\/([a-z-]+))?(?:\/([a-f0-9-]{36}))?(?:\/(commit|transcript))?$/);
    if(!match||match[1]!==businessId)fail('Business access denied',403);
    const [,b,resource,id,action]=match,input=method==='GET'?null:await body(req);
@@ -37,6 +47,13 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
     if(resource==='teams'&&method==='GET'&&!id)return listTeams(c,b,c.zuriViewer);
     if(resource==='teams'&&(method==='POST'&&!id||method==='PATCH'&&id))return saveTeam(c,b,c.zuriViewer,input,id);
     if(resource==='meetings'&&action==='transcript'&&method==='POST'&&id)return uploadTranscript(c,b,id,input);
+    // Task Manager for every department (FR-010-003, FR-010-005, FR-010-009); every read is for the viewer's audience.
+    if(resource==='tasks'&&method==='GET')return id?readTask(c,b,id,c.zuriViewer):listTasks(c,b,Object.fromEntries(url.searchParams),c.zuriViewer);
+    if(resource==='tasks'&&method==='POST'&&!id)return createTask(c,b,input,c.zuriViewer);
+    if(resource==='tasks'&&method==='PATCH'&&id)return updateTask(c,b,id,input,c.zuriViewer);
+    if(resource==='projects'&&method==='GET')return id?readProject(c,b,id,c.zuriViewer):listProjects(c,b,c.zuriViewer);
+    if(resource==='projects'&&method==='POST'&&!id)return createProject(c,b,input,c.zuriViewer);
+    if(resource==='projects'&&method==='PATCH'&&id)return updateProject(c,b,id,input,c.zuriViewer);
     if(resource==='workspace'&&method==='GET')return readLegacy(c,b);
     if(resource==='workspace'&&method==='PUT')return saveLegacy(c,b,input);
     if(method==='POST'&&!id||method==='PATCH'&&id)return save(c,b,resource,input,id);

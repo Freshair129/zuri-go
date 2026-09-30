@@ -16,3 +16,5 @@ export function withholdQuotes(value,visibleMeetings){
  if(copy.meetingId&&copy.evidence&&!visibleMeetings.has(copy.meetingId)){delete copy.evidence;copy.evidenceWithheld=true;}
  return copy;
 }
+// People named on each project: its owner and its listed viewers (owner decision 2026-10-01, FR-011-004).
+export async function projectNames(c,b){const names=collect((await c.query('SELECT project_id,member_id FROM project_viewers WHERE business_id=$1',[b])).rows,'project_id');for(const p of (await c.query('SELECT id,owner_member_id FROM projects WHERE business_id=$1',[b])).rows){if(!names.has(p.id))names.set(p.id,[]);names.get(p.id).push(p.owner_member_id);}return names;}

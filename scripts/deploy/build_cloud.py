@@ -22,9 +22,9 @@ def copy(source, relative):
 site = ROOT / 'build/site'
 for path in json.loads((site / 'site-build.json').read_text())['files']:
     copy('build/site/' + path, 'public/' + path)
-for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs','viewer.mjs','audience.mjs','teams.mjs']:
+for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs','viewer.mjs','audience.mjs','teams.mjs','tasks.mjs','projects.mjs','campaign-tasks.mjs']:
     copy('apps/api/' + path, 'apps/api/' + path)
-for path in ['shared/model.mjs','shared/visibility.mjs','meeting/model.mjs','business/model.mjs']:
+for path in ['shared/model.mjs','shared/visibility.mjs','shared/task-rules.mjs','meeting/model.mjs','business/model.mjs']:
     relative = 'apps/web/src/content/' + path
     copy(relative, relative)
 (OUT / 'api').mkdir(exist_ok=True)

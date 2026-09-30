@@ -130,6 +130,18 @@ test('Guests read public items only on every hosted read path; no operator viewe
  assert.equal((await call('businesses/'+business+'/teams',{method:'POST',cookie,body:{name:'ไม่ใช่ admin'}})).status,403);
  await assert.rejects(transaction(business,OPERATOR,c=>c.query('SELECT 1')),e=>e.code==='VIEWER_OPERATOR_HOSTED');
 });
+test('Task Manager routes on the hosted API: Guest 401 on writes, viewer-filtered reads, attachments still routed (FR-010-009, -010)',async()=>{
+ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password2'}}),cookie=login.headers['Set-Cookie'],base='businesses/'+business;
+ assert.equal((await call(base+'/tasks',{method:'POST',body:{idempotency_key:randomUUID(),title:'x'}})).status,401);
+ const created=await call(base+'/tasks',{method:'POST',cookie,body:{idempotency_key:randomUUID(),title:'งานผ่าน API',visibility:'restricted',roles:{R:members[2].id}}});
+ assert.equal(created.status,200,JSON.stringify(created.body));assert.match(created.body.code,/^TSK-/);
+ assert.equal((await call(base+'/tasks/'+created.body.id)).status,404,'a Guest gets the same 404 as for a missing task');
+ assert.equal((await call(base+'/tasks/'+created.body.id,{cookie})).body.id,created.body.id);
+ assert.ok(!(await call(base+'/tasks')).body.tasks.some(t=>t.id===created.body.id));
+ const project=await call(base+'/projects',{method:'POST',cookie,body:{name:'โปรเจกต์ผ่าน API'}});assert.equal(project.status,200);assert.match(project.body.code,/^PRJ-/);
+ assert.equal((await call(base+'/tasks/'+created.body.id+'/attachments',{cookie})).status,200,'the attachments route is not shadowed');
+ assert.equal((await call(base+'/tasks&board=mine')).status,401);
+});
 test('rate limiting is persisted in PostgreSQL and denies after the per-bucket threshold',async()=>{
  await transaction(business,c=>c.query("INSERT INTO team_login_limits(business_id,bucket,attempts,resets_at) VALUES($1,'global',400,now()+interval '15 minutes') ON CONFLICT(business_id,bucket) DO UPDATE SET attempts=400",[business]));
  const response=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');

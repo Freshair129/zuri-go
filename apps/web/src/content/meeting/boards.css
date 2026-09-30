@@ -1,0 +1,14 @@
+/* FEAT-010 Boards and Projects (PLAN-002 WI-08); lanes and cards reuse the .mt-board / .mt-lane / .mt-task rules of meeting.css */
+.mt-boards,.mt-projects{display:grid;gap:14px}
+.mt-boards-bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}.mt-boards-bar>.mc-field{min-width:200px;max-width:320px}.mt-boards-bar h3 span{font-size:12px;color:var(--secondary);margin-left:10px}.mt-boards-bar .mc-note{margin:0}
+.mt-boards-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-left:auto}
+.mt-bcard .mt-card-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.mt-card-project{color:var(--secondary);font-size:11px;margin:0 0 8px}
+.mt-origin-badge{display:inline-block;border-radius:4px;padding:3px 7px;font-size:10px;line-height:1.5;border:1px solid color-mix(in srgb,#E8820C 35%,var(--border));background:color-mix(in srgb,#E8820C 7%,var(--background));color:var(--text);white-space:nowrap}
+.mt-project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.mt-project{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;background:var(--background);border:1px solid var(--border);border-radius:12px;padding:18px;color:inherit;cursor:pointer;overflow-wrap:anywhere}.mt-project:hover{border-color:#E8820C}.mt-project.archived{opacity:.65}.mt-project h3{font-size:15px;margin:2px 0}.mt-project small{color:var(--secondary);font-size:11px}
+.mt-project .mt-card-top{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:11px;color:var(--secondary)}
+.mt-project-head{background:var(--background);border:1px solid var(--border);border-radius:12px;padding:18px}.mt-project-head h3{margin:8px 0 4px}.mt-project-head p{margin:0 0 6px;color:var(--secondary);white-space:pre-wrap}.mt-project-head small{color:var(--secondary);font-size:12px}
+.mt-counts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid var(--border);border-radius:12px;background:var(--background);overflow:hidden}.mt-counts>div{padding:14px 16px;border-right:1px solid var(--border)}.mt-counts>div:last-child{border:0}.mt-counts strong{display:block;font:700 26px Manrope,sans-serif}.mt-counts span{font-size:12px;color:var(--secondary)}
+.mt-boards .mc-errors button,.mt-projects .mc-errors button{margin-left:8px}
+@media(max-width:650px){.mt-counts{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-counts>div{border-bottom:1px solid var(--border)}.mt-boards-actions{margin-left:0;width:100%}.mt-boards-bar>.mc-field{max-width:none;width:100%}}
