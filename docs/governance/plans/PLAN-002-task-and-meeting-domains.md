@@ -47,7 +47,7 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 | WI-09 | Meeting participants, confidential meetings, transcript custody, server-side meeting commit | P3 | FR-011-009/010 built 2026-10-01 (stubs, audited upload); the server-side commit amendment to SDD-004 approved 2026-10-01 (Q15), **built and released** with 0.5.0 (`POST /businesses/{b}/meeting-commits`; production held 0 meetings, so one release; [verification](../../releases/0.5.0/verification.md)) |
 | WI-10 | Workboard backfill | P4 | `backfill-workboard.mjs` built and rehearsed 2026-10-01; read-only dry runs found 0 Workboard tasks in production and locally, so nothing is moved; **dry run repeated on production schema 7 after the migration on 2026-10-01: 0**, nothing written |
 | WI-11 | ARCH-002 amendment; PRD-001, BRD-001 and AGENTS.md updates | After approval | Done 2026-10-01 for ADR-004 / FEAT-011 and ADR-002/003 / FEAT-010, and updated again for the release (production on schema 7; [verification](../../releases/0.5.0/verification.md)) |
-| WI-12 | FEAT-004 split: FEAT-010 carries the task requirements, and meeting intake moves to DOM-MTG | With WI-05 | Split plan in FEAT-004 `feature.md` approved 2026-10-01 (delegated by the owner), with its open items decided there; the new DOM-MTG feature and its FR files are **still to write** (the follow-up files); no file or ID moved yet |
+| WI-12 | FEAT-004 split: FEAT-010 carries the task requirements, and meeting intake moves to DOM-MTG | With WI-05 | Split plan approved 2026-10-01 (delegated by the owner). Written and approved by the owner 2026-10-01: FEAT-012 Meeting intake (DOM-MTG, FR-012-001…010, NFR-012-001), FR-010-017…023 and FR-006-001…008; FEAT-004 keeps MT-14 and MT-17 and points each MT row to its new file; no file or ID moved |
 
 ## Final state
 
@@ -62,7 +62,7 @@ State after release 0.5.0 (2026-10-01, Bangkok). Production runs application 0.5
 **Remains**
 
 - The owner's hosted checks as a Member and as Business admin: sign in, see all 12 tasks with RACI, weekly MoSCoW and the 2 attachments, create a task and a project, and open a restricted meeting with two participants (release plan, “Hosted checks per viewer kind”). They need a real Member code, which the agent does not use.
-- WI-12 follow-up files: the new DOM-MTG feature and its FR files are still to write.
+- The design gaps recorded in the WI-12 requirement files (approved 2026-10-01): the meeting commit's write path against ADR-002 D2, Inactive Members on the API, who may edit the Member registry, committing without FUNG, R and A being one person, stale Member-screen copy, and PIDs after a restore.
 - Browser visual and interaction checks on production, and a restore drill of the pre-release backup.
 - Q1 follow-up: the same levels for Member profiles and campaign records, which Guests still read.
 

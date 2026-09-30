@@ -4,7 +4,7 @@ The structure follows the standards in [governance/standards/](governance/standa
 
 **Conformance: phase 1.** Layout, identifiers, ownership metadata and the registry are in place. Requirements are not yet decomposed into FR / NFR / AC / TC files, and no validation or view-generation tooling exists yet. The decisions behind this are in [ADR-001](governance/decisions.md); the remaining work is in [PLAN-001](governance/plans/PLAN-001-document-standard-adoption.md).
 
-**Delivery status.** FEAT-001 to FEAT-009 are deployed to production — each `feature.md` cites the evidence under “Delivery evidence” — but none is `live` in the sense of [STD-001 R7](governance/standards/STD-001-DOCUMENT-ARTIFACT-STANDARD.md), which requires FR / AC / TC files first, so they are recorded as `implemented`. FEAT-010 and FEAT-011 are `implemented` and deployed: approved on 2026-10-01 with [ADR-002, ADR-003](architecture/decisions.md) and [ADR-004](architecture/decisions.md), and released to production the same day as application 0.5.0 on PostgreSQL schema 7 ([PLAN-002](governance/plans/PLAN-002-task-and-meeting-domains.md); [verification record](releases/0.5.0/verification.md)). Their hosted Member, participant and Business-admin checks and browser checks on production are not yet run; the record names them.
+**Delivery status.** FEAT-001 to FEAT-009 are deployed to production — each `feature.md` cites the evidence under “Delivery evidence” — but none is `live` in the sense of [STD-001 R7](governance/standards/STD-001-DOCUMENT-ARTIFACT-STANDARD.md), which requires FR / AC / TC files first, so they are recorded as `implemented`. FEAT-010 and FEAT-011 are `implemented` and deployed: approved on 2026-10-01 with [ADR-002, ADR-003](architecture/decisions.md) and [ADR-004](architecture/decisions.md), and released to production the same day as application 0.5.0 on PostgreSQL schema 7 ([PLAN-002](governance/plans/PLAN-002-task-and-meeting-domains.md); [verification record](releases/0.5.0/verification.md)). Their hosted Member, participant and Business-admin checks and browser checks on production are not yet run; the record names them. FEAT-012 (meeting intake, DOM-MTG) was declared on 2026-10-01 from the FEAT-004 split (PLAN-002 WI-12); its requirements were approved the same day, and it is `building` because real audio, transcription and model inference are not yet verified.
 
 ## Reading order
 
@@ -47,6 +47,7 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11): the ta
 | [FEAT-009](features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | DOM-BRN | implemented | `features/FEAT-009-logo-placement/` |
 | [FEAT-010](features/FEAT-010-task-manager/feature.md) | Task Manager for every department | DOM-TSK | implemented | `features/FEAT-010-task-manager/` |
 | [FEAT-011](features/FEAT-011-visibility-and-confidential-meetings/feature.md) | Visibility, teams and confidential meetings | DOM-IAM | implemented | `features/FEAT-011-visibility-and-confidential-meetings/` |
+| [FEAT-012](features/FEAT-012-meeting-intake/feature.md) | Meeting intake | DOM-MTG | building | `features/FEAT-012-meeting-intake/` |
 
 ## Domains
 
@@ -56,7 +57,7 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11): the ta
 | [DOM-CAM](domains/campaign/README.md) | Campaign & content | core / business | FEAT-002 |
 | [DOM-MET](domains/metrics/README.md) | Metrics & goals | core / business | FEAT-003 |
 | [DOM-TSK](domains/tasks/README.md) | Tasks & projects | supporting / business | FEAT-004, FEAT-010 |
-| [DOM-MTG](domains/meetings/README.md) | Meetings | supporting / business | — |
+| [DOM-MTG](domains/meetings/README.md) | Meetings | supporting / business | FEAT-012 |
 | [DOM-IAM](domains/identity-access/README.md) | Identity & access | generic / foundation | FEAT-005, FEAT-006, FEAT-007, FEAT-011 |
 | [DOM-PLT](domains/platform/README.md) | Platform & delivery | generic / platform | FEAT-008 |
 | [DOM-BRN](domains/brand/README.md) | Brand | supporting / business | FEAT-009 |

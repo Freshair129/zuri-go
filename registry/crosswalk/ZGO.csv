@@ -31,3 +31,31 @@ docs/operations/github-repository.md,RB-002,renamed,docs/operations/github-repos
 ZGO-STRUCT-001,,kept-as-evidence,"docs/migrations/001-project-extraction.md stays in place: extraction plan and provenance, not an artifact (ADR-001 D3)"
 DOM-WRK,DOM-TSK,split (approved 2026-10-01),"tasks, task_roles, weekly_plans, weekly_plan_tasks, task_attachments and FEAT-004 go to DOM-TSK (ADR-002); DOM-WRK was never adopted and is not reused"
 DOM-WRK,DOM-MTG,split (approved 2026-10-01),"meetings, meeting_revisions, meeting_draft_batches and meeting_task_links go to DOM-MTG (ADR-002)"
+FEAT-004 MT-02,FR-010-017,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-04,FR-010-018,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-21,FR-010-019,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-26,FR-010-020,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-27,FR-010-021,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-28,FR-010-022,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-29,FR-010-023,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-05,FR-012-001,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-06,FR-012-002,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-07,FR-012-003,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-08,FR-012-004,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-09,FR-012-005,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-10,FR-012-006,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-11,FR-012-007,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-12,FR-012-008,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-13,FR-012-009,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-15,NFR-012-001,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-18,FR-012-010,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-20,FR-006-001,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-22,FR-006-002,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-22,FR-006-003,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-22,FR-006-004,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-23,FR-006-005,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-23,FR-006-006,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-24,FR-006-007,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-24,FR-006-008,split (approved 2026-10-01),PLAN-002 WI-12; requirement files approved 2026-10-01; origin recorded in each file's notes
+FEAT-004 MT-14,FEAT-004,kept,PLAN-002 WI-12: backup and UI/brand stay with the umbrella record
+FEAT-004 MT-17,FEAT-004,kept,PLAN-002 WI-12: backup and UI/brand stay with the umbrella record
