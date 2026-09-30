@@ -3,7 +3,7 @@ id: FEAT-010-P01
 title: Task Manager for every department — Tasks & projects
 owner: DOM-TSK
 runtime: SRV-001
-delivery: building
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-010]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-010-P01 — Task records, projects, contexts, boards and the task API
 
-Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Approved 2026-10-01; P2 built locally (API), UI in progress.
+Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Approved 2026-10-01; P2 released to production on 2026-10-01 with 0.5.0 ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Scope
 - Tasks with contexts, projects, boards, the completion rule, owner labels and the per-task API.

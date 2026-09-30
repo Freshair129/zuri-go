@@ -20,7 +20,7 @@ Migration source is `apps/api/migrations/`; five historical SQL migrations were 
 ## Build and deploy
 `npm run build` verifies the copied Data App with the installed Data plugin, builds the guide, assembles static content and creates the allowlisted Vercel package. Do not hand-edit generated files. `npm test` includes PostgreSQL tests that create isolated QA Businesses and requires the local server on 4319 for HTTP checks.
 
-Durable project binding is `scripts/deploy/project.json`, copied by the packager into `build/vercel/.vercel/project.json`: project `zuri-metrics-map`, scope `pornpons-projects`, project ID `prj_8f3zf1qaZnRcAvWabOv1PWAPIABG`. It was copied from the verified existing binding. `npm run deploy` invokes Vercel CLI 61.1.0 for production only when the operator requests deployment. No new Vercel project or provider is needed. The packager restores this binding when regenerating build output and refuses to overwrite a conflicting binding; never silently create a new project.
+Durable project binding is `scripts/deploy/project.json`, copied by the packager into `build/vercel/.vercel/project.json`: project `zuri-metrics-map`, scope `pornpons-projects`, project ID `prj_8f3zf1qaZnRcAvWabOv1PWAPIABG`. It was copied from the verified existing binding. `npm run deploy` invokes Vercel CLI 61.1.0 for production only when the operator requests deployment; it runs `deploy --prod --yes` **without** `--skip-domain`, so it moves the public domain at once. For a staged release use the procedure below. No new Vercel project or provider is needed. The packager restores this binding when regenerating build output and refuses to overwrite a conflicting binding; never silently create a new project.
 
 Production environment: ZURI_GO_DATABASE_URL, ZURI_GO_BUSINESS_ID, ZURI_GO_SESSION_SECRET, ZURI_GO_PUBLIC_ORIGIN. Individual credential hashes live in PostgreSQL; there is no shared-password fallback.
 
@@ -34,7 +34,7 @@ For rollback, stop only the identified new Zuri-Go listener and run the previous
 
 ## Visibility and teams (FEAT-011, schema 6)
 
-Migration `006_visibility.sql` adds teams, the Business-admin flag, visibility levels, task viewers and meeting participants, with row-level security that reads the viewer from `zuri_go.viewer_kind` and `zuri_go.viewer_member`. It is additive: existing tasks and meetings become `business`. It was applied to the local database on 2026-10-01 after `npm run backup`; production is still schema 5 and needs its own authorization, a backup first, and the release that carries the matching code.
+Migration `006_visibility.sql` adds teams, the Business-admin flag, visibility levels, task viewers and meeting participants, with row-level security that reads the viewer from `zuri_go.viewer_kind` and `zuri_go.viewer_member`. It is additive: existing tasks and meetings become `business`. It was applied to the local database on 2026-10-01 after `npm run backup`, and to production on 2026-10-01 with release 0.5.0 (backup first, then the matching code; see [Production release procedure](#production-release-procedure-used-for-050) and the [verification record](../releases/0.5.0/verification.md)).
 
 - **Restart after migrating.** A server started before schema 6 sets no viewer, so the database treats it as a Guest and it shows no business work. Stop only the identified Zuri-Go listener on 4319 and run `npm start`.
 - **Business admin.** `npm run members -- --admin ZGO-Pnnnn` grants it and `--no-admin ZGO-Pnnnn` removes it (add `--cloud` for production). Each change is audited; the runtime role cannot change the flag. An admin manages teams but reads nothing extra.
@@ -42,12 +42,29 @@ Migration `006_visibility.sql` adds teams, the Business-admin flag, visibility l
 
 ## Task Manager (FEAT-010, schema 7)
 
-Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign_task_details` and, on `tasks`, `project_id`, `owner_label`, `completion_rule` and the idempotency columns. It is additive: existing rows keep their values, and `completion_rule` reads `standard` until the backfill (PLAN-002 P4). It was applied to the local database on 2026-10-01 after `npm run backup`; production is still schema 5, and a release must apply 006 and 007 together with their code.
+Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign_task_details` and, on `tasks`, `project_id`, `owner_label`, `completion_rule` and the idempotency columns. It is additive: existing rows keep their values, and `completion_rule` reads `standard` until the backfill (PLAN-002 P4). It was applied to the local database on 2026-10-01 after `npm run backup`, and to production on 2026-10-01 together with 006 and their code (release 0.5.0, [verification](../releases/0.5.0/verification.md)).
 
 - **Restart after migrating**, as for schema 6.
 - **Moving a Workboard task to Done** now needs an R and the standard completion rule; tasks already Done keep their state.
 - **Rollback.** Code from before FEAT-010 ignores the new columns and tables; plan it together with FEAT-011's rollback note above.
-- **Workboard backfill (FR-010-016).** `node apps/api/backfill-workboard.mjs` is a read-only dry run of the local Business (`--cloud` for production); it prints counts and writes the full report to `.local/backfill/`. `--run` writes, reconciles and needs schema 7; a production run also needs `--production-authorized`, a backup first and the owner's specific authorization. The dry run of 2026-10-01 found 0 Workboard tasks in production.
+- **Workboard backfill (FR-010-016).** `node apps/api/backfill-workboard.mjs` is a read-only dry run of the local Business (`--cloud` for production); it prints counts and writes the full report to `.local/backfill/`. `--run` writes, reconciles and needs schema 7; a production run also needs `--production-authorized`, a backup first and the owner's specific authorization. The dry run of 2026-10-01 found 0 Workboard tasks in production on schema 5 and again after the migration on schema 7, so nothing was moved and no real run was needed.
+
+## Production release procedure (used for 0.5.0)
+
+Used for release 0.5.0 on 2026-10-01 (Bangkok); the record is [docs/releases/0.5.0/verification.md](../releases/0.5.0/verification.md). Each step needs the owner's authorization for that release (AGENTS.md); no step prints or stores a secret in the repository, and every connection string is passed only through the environment of the one process that needs it.
+
+1. **Build and test** the release commit: `npm run build`, `npm test`.
+2. **Read-only production checks:** the schema version, the row counts of every table of the Business, the meetings count (WI-09 staging decision) and `node apps/api/backfill-workboard.mjs --cloud` (dry run).
+3. **Production backup** with `pg_dump` 18 run from the local `postgres:18` Docker image (the local container is older than the Neon major, so a matching-major client is needed). The connection is passed only through the environment, never on the command line. The image has no root certificates: mount a root CA bundle into the container and set `PGSSLROOTCERT`, so that certificate verification stays on. Use `--no-owner --no-privileges`. Check the dump is complete (the trailer is present, the expected number of `COPY` sections) and keep it privately under `.local/backups/`. A restore was not exercised.
+4. **Staged deployment:** `vercel deploy --prod --skip-domain` (from `build/vercel`, project `zuri-metrics-map`, scope `pornpons-projects`). The public domain does not move. Verify the unique URL with `vercel curl` (authenticated Vercel access).
+5. **Production migration:** run `apps/api/migrate.mjs` with `ZURI_GO_ADMIN_URL` set to the production admin connection for that one process. `migrate.mjs` has no `--cloud` flag and, without the variable, reads `.local/config.json`, which is the **local** database: check the host of the connection first, and confirm the schema before and after. Apply the migration after the staged deployment and before promotion, because code and schema must match.
+6. **Hosted checks on the unique deployment**, then `vercel promote` to the public domain, then the same checks on the public URL, the production counts against the pre-migration counts, and the backfill dry run on the new schema. Record the deployment ID, the URLs, the HTML digest and what was not run.
+
+Between the migration and the promotion the public site runs the previous code on the new schema. Code from before FEAT-011 sets no viewer and reads as a Guest, so the window shows no business work; keep it short.
+
+**Rollback.** There is no down-migration. Promoting the previous deployment does not restore the previous behavior on a migrated schema (it reads as a Guest). The fallback chosen for 0.5.0 is to fix forward on schema 7; restoring the backup would discard later writes and needs its own authorization.
+
+After 0.5.0, the Business-admin flag was set for the owner's Member (`npm run members -- --admin <PID> --cloud`, one audit event; see the verification record). **Left to the owner:** the hosted Member, restricted-meeting participant and Business-admin checks (they need a real Member code), browser checks on production and a restore drill.
 
 ## Identity-code login (0.4.2)
 

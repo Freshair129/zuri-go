@@ -26,6 +26,7 @@ The system SHALL provide per-task operations to create a task with an idempotenc
 ## Implementation
 - Built locally 2026-10-01: `idempotency_key` / `idempotency_hash` with a unique partial index; `idempotencyOutcome`; `row_version` compared before every update, which raises it by exactly one; one transaction per request.
 - Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (hosted routes). AC-010-009-05 waits for the server-side meeting commit (WI-09).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - The whole-workspace save stays for compatibility (FR-010-011).

@@ -26,6 +26,7 @@ The system SHALL return to a Guest only items whose visibility is `public`, on e
 - Tests: `apps/api/test/cloud-handler.test.mjs` (Guest read paths, 404 for attachments). The Guest notice was not browser-checked (it needs the hosted site).
 - Read paths today: `apps/api/api.mjs:15-16` (session, bootstrap), `:17-24` (attachments), `:30` (state), `:31` (overview), `:35` (workspace); the hosted handler lets every GET through (`apps/api/cloud.mjs:27`).
 - Campaign records and Member profiles are outside this requirement; applying the same levels to them follows (PLAN-002 Q1).
+- Released to production on 2026-10-01 with 0.5.0. Hosted Guest checks passed on the unique deployment and on the public URL: `/workspace`, `/state` and `/tasks` returned 0 tasks, 0 meetings, 0 receipts and 0 history events while the Business holds 12 tasks, `/overview` named no task, and Guest writes answered 401 ([verification](../../../releases/0.5.0/verification.md)). Guests still read the 4 Member profiles and the 1 campaign, as PLAN-002 Q1 defers those levels. Not browser-checked.
 
 ## Notes
 - Amends FEAT-005, where a Guest reads the whole workspace.

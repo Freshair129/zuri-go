@@ -24,6 +24,7 @@ The system SHALL allow a new completion only for a task that has an R, a confirm
 ## Implementation
 - Built locally 2026-10-01: `completionError` and `saveError` (`shared/task-rules.mjs`); column `tasks.completion_rule`; a Workboard task Done before the change counts as `workboard` until the backfill (`present` in `apps/api/tasks.mjs`, `writeWorkboardEntry` in `apps/api/campaign-tasks.mjs`).
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - Decided — PLAN-002 Q7 (owner, 2026-10-01): yes, as the campaign Workboard requires a due date before Done today (`apps/web/src/content/shared/model.mjs:90`).

@@ -25,6 +25,7 @@ The system SHALL show a campaign’s Workboard and its “งานที่ต�
 ## Implementation
 - Backend built locally 2026-10-01: `campaign.tasks` is projected from the task records (`projectCampaignTask`), and Workboard edits land on the same record with their details (`writeWorkboardEntry`).
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`. UI: the campaign Workboard counts five lanes with the Backlog/Ready badge (`apps/web/src/content/dashboard/DashboardContent.jsx`).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - FEAT-002 keeps its approved text until these FR files supersede it; its Workboard views are delivered by FEAT-010-P02.

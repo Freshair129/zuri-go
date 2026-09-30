@@ -24,6 +24,7 @@ The system SHALL store a visibility level and a participant list on every meetin
 - Built locally 2026-10-01: columns `visibility`, `team_id`, `transcript_custody` on `meetings`; table `meeting_participants`; `participantIds` and `organizerId` on the meeting payload (`apps/api/workspace.mjs`); meeting form in `apps/web/src/content/meeting/Meetings.jsx`. `project_id` follows with FEAT-010.
 - Tests: `apps/api/test/visibility-db.test.mjs` (restricted meetings). The meeting form was not browser-checked (no local meetings).
 - Planned table `meeting_participants`; planned columns `visibility`, `team_id` and `project_id` on `meetings`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - Production held no meetings at the latest record (member review, 2026-09-30).

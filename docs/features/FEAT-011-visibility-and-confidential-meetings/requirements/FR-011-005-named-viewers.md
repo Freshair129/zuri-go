@@ -24,3 +24,4 @@ The system SHALL treat the R, A, C and I of a task, with its explicit viewers, a
 - Built locally 2026-10-01: table `task_viewers`; `viewerIds` on the task payload, written with an audit event (`task_viewers`) in `apps/api/workspace.mjs`.
 - Tests: `apps/api/test/visibility-db.test.mjs`.
 - Planned table `task_viewers`; RACI stays in `task_roles`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).

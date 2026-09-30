@@ -23,6 +23,7 @@ The system SHALL show the owner text of a Workboard task as an owner label until
 ## Implementation
 - Built locally 2026-10-01: column `tasks.owner_label`, written from the Workboard owner text by `writeWorkboardEntry`; never matched to a Member.
 - Tests: `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - ADR-003 D6; ARCH-001 §5, step 8, forbids guessing owners.

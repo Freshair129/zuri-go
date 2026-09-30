@@ -21,8 +21,9 @@ The system SHALL let a signed-in Member create a task in any department from a t
 - AC-010-001-04 — Given a Guest, when they try to create a task, then it is refused with 401 (FR-010-010).
 
 ## Implementation
-- Built locally 2026-10-01 (schema 7, not deployed): `createTask` / `updateTask` in `apps/api/tasks.mjs`, routes `POST /tasks` and `PATCH /tasks/:id` in `apps/api/api.mjs`; `TSK-nnnn` from `allocate`.
+- Built 2026-10-01 (schema 7): `createTask` / `updateTask` in `apps/api/tasks.mjs`, routes `POST /tasks` and `PATCH /tasks/:id` in `apps/api/api.mjs`; `TSK-nnnn` from `allocate`.
 - Tests: `apps/api/test/tasks-api.test.mjs` (create from a title, fill in later, Guest 401).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - A department is a team context of the task (FR-010-002), so “in any department” is satisfied by giving the team at creation or later; it is never required.

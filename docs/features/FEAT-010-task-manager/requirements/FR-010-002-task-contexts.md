@@ -26,6 +26,7 @@ The system SHALL let a task link to a campaign, a project, a team, a content ite
 ## Implementation
 - Built locally 2026-10-01: context columns checked by `checkContexts` (`apps/api/tasks.mjs`) and `contextError` (`apps/web/src/content/shared/task-rules.mjs`); a hidden project is served without code and name (`loadTasks`).
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - `tasks.team_id` is the team context of the task and is also the team that FR-011-004 uses for visibility `team`. One column serves both (SDD-010 Data); FEAT-011 already owns its meaning.

@@ -22,6 +22,7 @@ The system SHALL keep accepting `PUT /workspace` from a client that does not kno
 ## Implementation
 - Built locally 2026-10-01: new columns stay outside `T_FIELDS`; `writeCampaigns` saves each Workboard entry through `writeWorkboardEntry`, which finds the existing record (never a duplicate) and keeps its project, owner label, details and marker.
 - Tests: `apps/api/test/tasks-api.test.mjs`. AC-010-011-03 belongs to P3.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - What `PUT /workspace` answers once it no longer writes tasks is decided with WI-09 in P3; AC-010-011-03 holds either way.

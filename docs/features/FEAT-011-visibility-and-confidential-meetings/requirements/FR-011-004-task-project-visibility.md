@@ -25,6 +25,7 @@ The system SHALL store one visibility level on every task and project — `publi
 - Built locally 2026-10-01: columns `visibility`, `team_id` on `tasks`; `canRead` in `apps/web/src/content/shared/visibility.mjs`; application filter `apps/api/audience.mjs`; row-level security `audience_read` in `006_visibility.sql`; UI `VisibilityFields` in the task form. `projects` follows with FEAT-010.
 - Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/visibility-db.test.mjs`.
 - Planned columns `visibility` and `team_id` on `tasks`, and on `projects` when FEAT-010 adds them.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - The people named on a task are defined in FR-011-005.

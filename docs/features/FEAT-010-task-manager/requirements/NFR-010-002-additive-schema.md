@@ -21,6 +21,7 @@ The schema change of FEAT-010 SHALL only add tables, columns, indexes and polici
 ## Implementation
 - Built: `apps/api/migrations/007_tasks_projects.sql` contains no DROP, TRUNCATE, DELETE, UPDATE of existing rows or type change (reviewed 2026-10-01).
 - Measured on the local database 2026-10-01 after a backup: counts equal before and after (non-QA Businesses: tasks 17, task_roles 86, weekly_plan_tasks 17, change_events 73, members 8); the previous release's `npm test` passed on schema 7 (121 tests, Python, metrics, extraction). Production not migrated.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - An NFR carries a measurement, not AC IDs: STD-002 R1 defines AC IDs under an FR only.

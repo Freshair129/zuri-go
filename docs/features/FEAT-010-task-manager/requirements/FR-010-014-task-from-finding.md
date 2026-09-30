@@ -22,6 +22,7 @@ The system SHALL let a person create a task from a metric finding with the campa
 ## Implementation
 - Built locally 2026-10-01: `saveCampaignTask` creates the task and its details in one transaction with an idempotency key; the existing finding flow (Workboard entry through `PUT /workspace`) also writes the details in one transaction and finds its record on a repeat.
 - Tests: `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - The finding itself stays campaign data; only the task it produces is a task record.

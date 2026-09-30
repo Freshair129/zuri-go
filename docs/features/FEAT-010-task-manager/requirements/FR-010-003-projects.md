@@ -27,6 +27,7 @@ The system SHALL let a signed-in Member create, change and archive projects that
 ## Implementation
 - Built locally 2026-10-01: table `projects` and `project_viewers` (`apps/api/migrations/007_tasks_projects.sql`), `apps/api/projects.mjs` (list, page with counts, create, update), routes `/projects`; `PRJ-nnnn` from `allocate`.
 - Tests: `apps/api/test/tasks-api.test.mjs`. UI: Projects view and project page in `apps/web/src/content/meeting/Boards.jsx`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - **Progress** is the task count per status (AC-010-003-05); no percentage (SDD-010 Decisions, P2 default).

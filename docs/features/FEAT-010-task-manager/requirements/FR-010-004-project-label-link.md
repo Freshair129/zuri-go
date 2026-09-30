@@ -22,6 +22,7 @@ The system SHALL keep showing a task’s `project_label` text until a person lin
 ## Implementation
 - Built locally 2026-10-01: `project_label` is never read to link a project; linking sets `project_id` only (`updateTask`).
 - Tests: `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - The same rule — nothing is matched or converted automatically — is applied to owner text in FR-010-008 (precedent: `005_member_identity.sql:22`).

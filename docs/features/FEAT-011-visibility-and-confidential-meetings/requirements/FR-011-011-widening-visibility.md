@@ -22,6 +22,7 @@ The system SHALL let only a task’s A, or a project’s owner, widen its visibi
 ## Implementation
 - Built locally 2026-10-01: `visibilityChange` (`shared/visibility.mjs`) applied on save in `apps/api/workspace.mjs`, audited as `task_visibility` / `meeting_visibility` with the reason; the reason is never stored on the item.
 - Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/visibility-db.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - Meetings follow the same rule through their organizer (FR-011-006).

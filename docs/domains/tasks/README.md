@@ -33,7 +33,7 @@ The work of every department — sales, production, accounting, HR and marketing
 - `weekly_plans`
 - `weekly_plan_tasks`
 - `task_attachments`
-- Built locally, not in production ([ADR-003](../../architecture/decisions.md), [ADR-004](../../architecture/decisions.md); schema 6 and 7): `projects`, `project_viewers`, `task_viewers`; on `tasks`: `project_id`, `team_id`, `visibility`, `owner_label`, `completion_rule`, `idempotency_key`, `idempotency_hash`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7; [verification](../../releases/0.5.0/verification.md)) ([ADR-003](../../architecture/decisions.md), [ADR-004](../../architecture/decisions.md); schema 6 and 7): `projects`, `project_viewers`, `task_viewers`; on `tasks`: `project_id`, `team_id`, `visibility`, `owner_label`, `completion_rule`, `idempotency_key`, `idempotency_hash`.
 - `campaign_task_details` (schema 7) holds the campaign-only fields of a campaign task; it belongs to [DOM-CAM](../campaign/README.md) and is written in the same transaction as the task ([ADR-003](../../architecture/decisions.md) D4).
 - Table definitions: [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) and `apps/api/migrations/`.
 
@@ -41,12 +41,12 @@ The work of every department — sales, production, accounting, HR and marketing
 - A task can be created from a name alone; details and RACI are filled in later ([FEAT-004 brief](../../features/FEAT-004-meeting-task-manager/brief.md)).
 - MoSCoW priority is per task and week; Won’t is shelved, not Done, and unprioritised tasks are shown separately ([FEAT-004 guide](../../features/FEAT-004-meeting-task-manager/guide.md)).
 - Evidence files: at most 5 active files per task and 2 MiB each ([FEAT-005 spec](../../features/FEAT-005-guest-access/spec.md)).
-- Approved 2026-10-01, phase P2 built locally (schema 7), not released: every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
-- Approved 2026-10-01, phase P1 built locally (schema 6), not released: a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)). Until it is released the interim rule of ADR-004 D9 applies: no confidential content in production.
+- Approved 2026-10-01, phase P2 released to production the same day with 0.5.0 (schema 7): every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
+- Approved 2026-10-01, phase P1 released to production the same day with 0.5.0 (schema 6 and 7): a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)). Guests now read public items only, so the interim rule of ADR-004 D9 (no confidential content in production) ended for tasks on 2026-10-01 ([verification](../../releases/0.5.0/verification.md)); it still applies to Member profiles and campaign records, which Guests still read.
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. An outline of the per-task API, approved with [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed) and built locally in phase P2, declares no API- artifact.
+Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. An outline of the per-task API, approved with [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed) and released in phase P2 (0.5.0), declares no API- artifact.
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
@@ -58,11 +58,11 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 | Feature | Title | Delivery |
 |---|---|---|
 | [FEAT-004](../../features/FEAT-004-meeting-task-manager/feature.md) | Meeting & Task Manager | implemented |
-| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | building — phase P2 built locally, not released (approved; design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
+| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | implemented — phase P2 released to production 2026-10-01 with 0.5.0 (approved; design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
 
 The server-side meeting commit, an amendment to the design of FEAT-004 ([SDD-004](../../features/FEAT-004-meeting-task-manager/design.md)), was approved on 2026-10-01 (PLAN-002 WI-09, Q15). It changes how a meeting creates tasks and calls the idempotent create of FR-010-009; no FEAT-004 file is moved or renumbered.
 
-**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003; delivery as in the [FEAT-010 index](../../features/FEAT-010-task-manager/feature.md#requirement-index), built locally and not released. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
+**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003; delivery as in the [FEAT-010 index](../../features/FEAT-010-task-manager/feature.md#requirement-index), released to production on 2026-10-01 with 0.5.0. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
 
 | Requirement | Part | Title | Delivery |
 |---|---|---|---|
@@ -86,7 +86,7 @@ The campaign half of FEAT-010 (FR-010-012…016, part [FEAT-010-P02](../../featu
 
 | Feature | Part | Role | Delivery |
 |---|---|---|---|
-| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P02](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P02-tasks.md) | Visibility of tasks and projects, and of their attachments and history | building |
+| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P02](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P02-tasks.md) | Visibility of tasks and projects, and of their attachments and history | implemented |
 
 **Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md)
 <!-- END GENERATED -->

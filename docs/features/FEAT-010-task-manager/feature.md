@@ -11,7 +11,7 @@ participants:
   - domain: DOM-CAM
     part: FEAT-010-P02
     role: Campaign task details and the campaign Workboard as a view of the task records
-delivery: building
+delivery: implemented
 status: approved
 legacy: []
 relations:
@@ -22,7 +22,7 @@ relations:
 
 # FEAT-010 — Task Manager for every department
 
-> **Approved 2026-10-01; phase P2 is being built.** Declared by [ADR-002, ADR-003](../../architecture/decisions.md), approved by the owner with the requirements and the design [SDD-010](design.md). The delivery plan is [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md).
+> **Approved 2026-10-01; phase P2 released to production the same day with 0.5.0 (schema 7; [verification](../../releases/0.5.0/verification.md)).** Declared by [ADR-002, ADR-003](../../architecture/decisions.md), approved by the owner with the requirements and the design [SDD-010](design.md). The delivery plan is [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md).
 
 One place for the work of every department — sales, production, accounting, HR and marketing. A task starts from a name, is assigned with RACI, moves through the same five statuses, gets a MoSCoW priority per week, and can be linked to a campaign, a project, a team, several of these or none. The campaign Workboard becomes the same board filtered to one campaign, and projects gather work that is not part of a campaign.
 
@@ -45,7 +45,7 @@ One place for the work of every department — sales, production, accounting, HR
 | [FEAT-010-P02](parts/P02-campaign.md) | [DOM-CAM](../../domains/campaign/README.md) | Campaign task details and the campaign Workboard as a view of the task records |
 
 ## Requirement index
-Approved by the owner on 2026-10-01, with ADR-002, ADR-003 and PLAN-002 Q6–Q11 as recommended (Q12 is asked again at P4); each file holds the requirement and its acceptance criteria. The design is [SDD-010](design.md), which also outlines the API contract. Visibility of tasks and projects is [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)’s, already built locally; these files refer to [FR-011-004](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-004-task-project-visibility.md) instead of restating it.
+Approved by the owner on 2026-10-01, with ADR-002, ADR-003 and PLAN-002 Q6–Q11 as recommended (Q12 is asked again at P4); each file holds the requirement and its acceptance criteria. The design is [SDD-010](design.md), which also outlines the API contract. Visibility of tasks and projects is [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)’s, released in the same version; these files refer to [FR-011-004](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-004-task-project-visibility.md) instead of restating it.
 
 | ID | Requirement | Part | Delivery |
 |---|---|---|---|
@@ -71,7 +71,8 @@ Approved by the owner on 2026-10-01, with ADR-002, ADR-003 and PLAN-002 Q6–Q11
 The ten proposals of the earlier draft map to these files: create from a title (001), contexts (002), projects (003, 004), boards (005), moving and the blocked reason (006), completion (007), owner text (008), the campaign Workboard and finding (012–015), the API (009–011) and the move of existing Workboard tasks (016).
 
 ## Delivery evidence
-- Local only (2026-10-01): migration 007 applied to the local database after a backup (counts reconciled); `npm test` passed end to end (140 Node tests, Python packaging, metrics and extraction checks, 54 packaged files) and `npm run build` passed. The UI passed an independent verify gate after two fixes; a browser check on the local server (operator) showed the “Task Manager” and “Meetings” menu, the Boards view with its five lanes and the Projects view with its form, with no console errors. Not browser-checked: drag and drop, the task editor's saves, Guest and Member sessions (hosted only). Production is unchanged (schema 5).
+- Local only (2026-10-01): migration 007 applied to the local database after a backup (counts reconciled); `npm test` passed end to end (140 Node tests, Python packaging, metrics and extraction checks, 54 packaged files) and `npm run build` passed. The UI passed an independent verify gate after two fixes; a browser check on the local server (operator) showed the “Task Manager” and “Meetings” menu, the Boards view with its five lanes and the Projects view with its form, with no console errors. Not browser-checked: drag and drop, the task editor's saves, Guest and Member sessions (hosted only). Production was unchanged at that point (schema 5).
+- Released to production (2026-10-01, 0.5.0, code commit `7bb538c`): production backed up, then migrated from schema 5 to schema 7 (migrations 006 and 007; every pre-existing table kept its row count) and the new deployment promoted to https://zuri-metrics-map.vercel.app/. Hosted Guest checks passed: no task is visible to a Guest (production tasks are all `business`), and Guest task, project and meeting-commit writes answer 401. The Workboard backfill dry run on schema 7 found 0 Workboard tasks, so nothing was moved (FR-010-016). Not run: Member checks on the hosted site (creating a task and a project, the 12 existing tasks with RACI, MoSCoW and attachments), which need the owner's Member code, and browser checks on production. Record: [verification](../../releases/0.5.0/verification.md).
 
 ## Notes
 - Proposed split of [FEAT-004](../FEAT-004-meeting-task-manager/feature.md): this feature would carry its task-manager requirements, and its meeting intake would move to DOM-MTG. The plan, which moves and renumbers nothing, is in the FEAT-004 feature file ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-12).

@@ -25,7 +25,8 @@ The system SHALL move the existing Workboard tasks into the new model by a revie
 ## Implementation
 - Built 2026-10-01: `apps/api/backfill-workboard.mjs` (operator CLI, never packaged). Dry run by default in a read-only transaction; `--run` writes details, the owner label, the Done marker and empty mapped columns of existing rows, reconciles the counts and rolls back on any difference; a production run also needs `--production-authorized`. The full report stays private under `.local/backfill/`.
 - Rehearsed: `apps/api/test/backfill.test.mjs` on a QA Business (dry run writes nothing; the run matches it; IDs, codes, `legacy_metadata`, snapshots and counts unchanged; the owner text is not bound; a replay changes nothing).
-- **Recorded counts, 2026-10-01 (dry runs, read-only):** production (schema 5) holds **0** Workboard tasks — no `campaign-legacy` rows and no tasks inside `campaign_states` — among 12 tasks (7 manual, 5 weekly-plan); the local Business also holds 0. There is nothing to move today; the dry run is repeated after the release migrates production, before any run.
+- **Recorded counts, 2026-10-01 (dry runs, read-only):** production (then schema 5) holds **0** Workboard tasks — no `campaign-legacy` rows and no tasks inside `campaign_states` — among 12 tasks (7 manual, 5 weekly-plan); the local Business also holds 0. There is nothing to move today; the dry run is repeated after the release migrates production, before any run.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7). The dry run was repeated on production after the migration: 0 Workboard tasks, nothing to write, no real run needed ([verification](../../../releases/0.5.0/verification.md), [database-preservation.json](../../../releases/0.5.0/database-preservation.json)).
 
 ## Notes
 - Delivered in PLAN-002 P4 (WI-10). Deployment is not a database migration or rollback authorization (AGENTS.md).

@@ -26,6 +26,7 @@ The system SHALL check the task rules on the server for every write, take the ac
 ## Implementation
 - Built locally 2026-10-01: `cleanInput` refuses unknown fields and ignores `actor`, `memberId`, `pid`; writes need a Member (401); unreadable tasks answer 404; one audit event per create or update; visibility changes follow FR-011-011.
 - Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - “Guest 401” is for writes. A Guest’s reads are allowed and return public items only (FR-011-007).

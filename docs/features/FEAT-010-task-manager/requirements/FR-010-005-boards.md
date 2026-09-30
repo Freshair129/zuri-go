@@ -27,6 +27,7 @@ The system SHALL show the task records as boards of the five existing lanes — 
 ## Implementation
 - API built locally 2026-10-01: `listTasks` with `board=all|campaign|project|team|unlinked|mine` (`apps/api/tasks.mjs`), `onBoard` (`shared/task-rules.mjs`); “mine” is R or A.
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`. UI: Boards view (all, campaign, project, team, unlinked, mine for a signed-in Member) in `apps/web/src/content/meeting/Boards.jsx`; Weekly To-do, List and RACI unchanged.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - Decided — PLAN-002 Q9 (owner, 2026-10-01): the site menu names are “Task Manager” and “Meetings”.

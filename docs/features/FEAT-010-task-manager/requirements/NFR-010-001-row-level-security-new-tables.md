@@ -23,6 +23,7 @@ The database SHALL enforce, with row-level security on `projects` and `campaign_
 ## Implementation
 - Built locally 2026-10-01: `project_audience` and restrictive policies on `projects`, `signed_in` on `project_viewers`, `follows_task` on `campaign_task_details`, `follows_project` on `change_events` (`007_tasks_projects.sql`).
 - Measured: `apps/api/test/tasks-api.test.mjs` (direct queries as owner, listed viewer, outsider, admin, Guest and operator).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - An NFR carries a measurement, not AC IDs: STD-002 R1 defines AC IDs under an FR only.

@@ -25,6 +25,7 @@ The system SHALL keep a campaign task’s gate, offer, hypothesis, action, estim
 ## Implementation
 - Built locally 2026-10-01: table `campaign_task_details`; `saveCampaignTask` and routes `POST /campaigns/:id/tasks`, `PATCH /campaigns/:id/tasks/:taskId` (`apps/api/campaign-tasks.mjs`); details follow the task's audience (row-level security).
 - Tests: `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - When a task’s campaign link is removed, its details row is kept and no longer shown, so re-linking restores it (SDD-010 Decisions, P2 default).

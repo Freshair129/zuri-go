@@ -9,7 +9,7 @@ relations:
 
 # SDD-011 — Visibility, teams and confidential meetings — design
 
-> **Approved by the owner on 2026-10-01, not built.** Designs the approved requirements [FR-011-001…012 and NFR-011-001](feature.md#requirement-index) under [ADR-004](../../architecture/decisions.md) (approved). Nothing here is built yet; the schema change (migration 006) and any production change each need their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+> **Approved by the owner on 2026-10-01; built and released to production the same day with 0.5.0 ([verification](../../releases/0.5.0/verification.md)).** Designs the approved requirements [FR-011-001…012 and NFR-011-001](feature.md#requirement-index) under [ADR-004](../../architecture/decisions.md) (approved). The schema change (migration 006) and the production change each needed their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)); both were given and applied on 2026-10-01.
 
 ## Scope and delivery
 
@@ -18,7 +18,7 @@ relations:
 | P1 — Visibility | FR-011-001…008, FR-011-011, FR-011-012, NFR-011-001 | FR-011-006 in full: visibility, team and participants of meetings |
 | P3 — Meetings | FR-011-009, FR-011-010 | Delivered with the server-side meeting commit (PLAN-002 WI-09), which changes FEAT-004 |
 
-- **Before P3 the hosted API fails closed.** It refuses transcript revisions and draft batches for a `restricted` meeting (see Failure modes). A restricted meeting can therefore exist in production only with its title, date and participants.
+- **Before P3 the hosted API fails closed.** It refuses transcript revisions and draft batches for a `restricted` meeting (see Failure modes). A restricted meeting can therefore exist in production only with its title, date and participants. P3 is released (0.5.0), so the hosted API now stores a stub instead.
 - **Projects come later.** FEAT-010 creates the `projects` table (WI-06). This design fixes that table's visibility columns and policy now, so FR-011-004 applies to projects the day the table exists.
 - **Campaign records and Member profiles are out of scope** (FR-011-007, PLAN-002 Q1). Campaign tasks are not: they are `tasks` rows, so they follow the rule below (see Data).
 
@@ -212,7 +212,7 @@ Both are `STABLE` and `SECURITY INVOKER`. Migration 005 had to disable row-level
 | Before P3, a transcript or draft batch arrives on the hosted API for a restricted meeting | Superseded by P3: a Member's save stores stubs for a `local_only` meeting (see "Changes found while building P3") |
 | An error on a restricted item | The logs hold the error code and IDs only (`api.mjs:9` already logs only `e.code \|\| e.name`); request bodies are never logged (AC-011-008-05) |
 | The source is rolled back after migration 006 | Old code ignores the new columns and shows everything to Guests again. A rollback therefore reopens the exposure and needs its own decision (AGENTS.md) |
-| Performance | Every visible row costs a few `EXISTS` lookups on indexed membership tables. Production holds 11 tasks and no meetings |
+| Performance | Every visible row costs a few `EXISTS` lookups on indexed membership tables. Production held 11 tasks (12 at the 0.5.0 release) and no meetings |
 
 ## Interfaces
 
@@ -275,7 +275,7 @@ These refine the approved design without changing a requirement; the owner revie
 
 ## Changes found while building P3 (2026-10-01)
 
-These refine the approved design without changing a requirement; the owner reviews them with the P3 change. FR-011-009 and FR-011-010 are built locally and are not deployed.
+These refine the approved design without changing a requirement; the owner reviews them with the P3 change. FR-011-009 and FR-011-010 were released to production with 0.5.0 on 2026-10-01.
 
 - **Built without WI-09.** The meeting commit still runs in the client (FEAT-004). The server enforces the audience of FR-011-009 and the custody of FR-011-010 when that client saves, so moving the commit to the server (PLAN-002 WI-09) is not needed for them. The failure-mode row “Before P3 … 422” no longer applies: the hosted API stores a stub instead of refusing.
 - **The marker.** A stub revision carries `withheld: true` next to its unchanged `contentHash` or `reviewHash`, with `segments: []`. `validateEvidence` relaxes the segment and quote check only for a revision carrying it; a normal revision is checked as before. A draft-batch row holds `withheld: true` next to `batch` and `receipt`. `custodyRevision` takes the stored row shape (`{…, segments, legacy_metadata}`).
@@ -292,4 +292,4 @@ These refine the approved design without changing a requirement; the owner revie
 
 - **Guests and the people on public tasks.** Guests see public tasks without their RACI (row-level security design), as approved with this SDD. Showing those names to Guests later needs another shape for the L0 policy.
 - **API-/EVT- contracts.** STD-001 R5 asks for them at each domain boundary; here they are in-process calls (PLAN-001 WI-09).
-- **Before building the schema:** migration 006 needs its own authorization, locally and again for production.
+- **Before building the schema:** migration 006 needs its own authorization, locally and again for production. Done: applied locally and to production on 2026-10-01.

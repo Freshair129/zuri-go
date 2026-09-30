@@ -3,7 +3,7 @@ id: FEAT-011-P01
 title: Visibility, teams and confidential meetings — Identity & access
 owner: DOM-IAM
 runtime: SRV-001
-delivery: building
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-011-P01 — Teams, Business admin, viewer identity and the Guest rule
 
-Part of [FEAT-011](../feature.md), owned by [DOM-IAM](../../../domains/identity-access/README.md). Approved 2026-10-01; built locally for P1, not deployed.
+Part of [FEAT-011](../feature.md), owned by [DOM-IAM](../../../domains/identity-access/README.md). Approved 2026-10-01; released to production on 2026-10-01 with 0.5.0 ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Scope
 - Teams and team membership; a minimal Business-admin capability that manages teams without reading restricted items.

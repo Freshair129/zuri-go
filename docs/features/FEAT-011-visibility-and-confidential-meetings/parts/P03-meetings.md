@@ -3,7 +3,7 @@ id: FEAT-011-P03
 title: Visibility, teams and confidential meetings — Meetings
 owner: DOM-MTG
 runtime: SRV-001
-delivery: building
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-011-P03 — Visibility, participants and transcript custody of meetings
 
-Part of [FEAT-011](../feature.md), owned by [DOM-MTG](../../../domains/meetings/README.md). Approved 2026-10-01; built locally for P1, not deployed.
+Part of [FEAT-011](../feature.md), owned by [DOM-MTG](../../../domains/meetings/README.md). Approved 2026-10-01; released to production on 2026-10-01 with 0.5.0 ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Scope
 - Meeting visibility and participants; confidential meetings restricted to their participants.

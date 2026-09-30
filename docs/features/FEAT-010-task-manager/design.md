@@ -9,7 +9,7 @@ relations:
 
 # SDD-010 — Task Manager for every department — design
 
-> **Approved by the owner on 2026-10-01; phase P2 is being built.** Designs the approved requirements [FR-010-001…016 and NFR-010-001, NFR-010-002](feature.md#requirement-index) under [ADR-002 and ADR-003](../../architecture/decisions.md). Code cited below exists today unless it is marked *proposed*; line numbers refer to the baseline commit `d57cd9f`. The migration needs its own authorization locally and again for production.
+> **Approved by the owner on 2026-10-01; phase P2 released to production the same day with 0.5.0 ([verification](../../releases/0.5.0/verification.md)).** Designs the approved requirements [FR-010-001…016 and NFR-010-001, NFR-010-002](feature.md#requirement-index) under [ADR-002 and ADR-003](../../architecture/decisions.md). Code cited below exists today unless it is marked *proposed*; line numbers refer to the baseline commit `d57cd9f`. The migration needed its own authorization locally and again for production; it was applied to production on 2026-10-01.
 
 ## Scope and delivery
 
@@ -19,7 +19,7 @@ relations:
 | P3 — Meetings | FR-010-009 AC-010-009-05, FR-010-011 AC-010-011-03 | The server-side meeting commit (WI-09) calls the same create operation; the whole-workspace save stops writing tasks in the same release |
 | P4 — Workboard consolidation | FR-010-016 | WI-10; owner authorization for production |
 
-- **Visibility is FEAT-011’s and already built locally.** This design reuses `canRead`, `visibilityChange`, the `visibility` and `team_id` columns of `tasks` and the layered policies of `006_visibility.sql`; it restates none of them ([FR-011-004](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-004-task-project-visibility.md)). It only adds the same columns and policy to `projects`, as [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) reserved.
+- **Visibility is FEAT-011’s and released with it.** This design reuses `canRead`, `visibilityChange`, the `visibility` and `team_id` columns of `tasks` and the layered policies of `006_visibility.sql`; it restates none of them ([FR-011-004](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-004-task-project-visibility.md)). It only adds the same columns and policy to `projects`, as [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) reserved.
 - **Decisions** taken with the approval are listed under “Decisions (2026-10-01)” below.
 - **Campaign records, Member profiles and the meeting pipeline are out of scope** beyond the task contract they call.
 
@@ -232,4 +232,4 @@ Taken by the owner with the approval, or, where marked *default*, taken for P2 a
 ## Open items
 
 - **API- / EVT- contracts.** The boundaries are in-process calls within SRV-001; their declarations wait for PLAN-001 WI-09.
-- **Before building the schema:** the migration needs its own authorization, locally and again for production; the production backfill needs another (PLAN-002 Q12).
+- **Before building the schema:** the migration needs its own authorization, locally and again for production; the production backfill needs another (PLAN-002 Q12). Done: migration 007 was applied locally and to production (2026-10-01); the production backfill was not needed (dry run: 0 Workboard tasks).

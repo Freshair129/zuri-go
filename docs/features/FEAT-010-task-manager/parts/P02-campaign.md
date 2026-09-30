@@ -3,7 +3,7 @@ id: FEAT-010-P02
 title: Task Manager for every department — Campaign & content
 owner: DOM-CAM
 runtime: SRV-001
-delivery: building
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-010]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-010-P02 — Campaign task details and the campaign Workboard as a view of the task records
 
-Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). Approved 2026-10-01; P2 built locally (API), UI in progress.
+Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). Approved 2026-10-01; P2 released to production on 2026-10-01 with 0.5.0 ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Scope
 - Campaign-only fields of a task (gate, offer, hypothesis, action, estimate, outcome, Low/Medium/High priority, original Workboard status).

@@ -25,6 +25,7 @@ The system SHALL build each campaign’s `tasks` array from the task records and
 ## Implementation
 - Built locally 2026-10-01: `projectCampaignTask` in `apps/api/campaign-tasks.mjs`, used by `readLegacy`; before the backfill a Workboard task without details keeps its legacy entry with the record's fields laid over it; a restored backup becomes records with details.
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - Stored snapshots are data the change must not rewrite (ADR-003 D9).

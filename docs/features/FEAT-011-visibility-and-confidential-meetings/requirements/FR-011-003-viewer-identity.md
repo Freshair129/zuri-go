@@ -25,6 +25,7 @@ The system SHALL resolve, for every request including reads, one viewer — Gues
 - Built locally 2026-10-01: `apps/api/viewer.mjs` (`resolveViewer`, `viewerSettings`); `transaction(businessId, principal, fn)` in `apps/api/db.mjs` sets `zuri_go.viewer_kind` and `zuri_go.viewer_member`; `cloud.mjs` passes `session(claims)` on every request, `server.mjs` passes `OPERATOR`.
 - Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (operator refused on the hosted runtime).
 - Today reads do not resolve the Member: `authorizeWrite` sets the actor for writes only (`apps/api/member-auth.mjs:26-31`, `apps/api/api.mjs:12`), and `transaction()` sets only the Business (`apps/api/db.mjs:6`).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - A viewer never widens because of a request parameter.

@@ -24,6 +24,7 @@ The system SHALL mark Business admins on their Member record, set only through t
 - Built locally 2026-10-01: `members.is_business_admin`, guarded by the trigger `members_admin_guard` (only the table owner may change it) in `006_visibility.sql`; operator flags `--admin <PID>` and `--no-admin <PID>` in `apps/api/provision-members.mjs`, each with an audit event.
 - Tests: `apps/api/test/visibility-db.test.mjs` (admin reads nothing extra; runtime role refused).
 - Operator path: an extension of `apps/api/provision-members.mjs`, which today supports `--cloud`, `--reset`, `--disable` and `--enable`; no browser endpoint grants admin.
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed. After the release the operator set the flag for the owner's Member (PLAN-002 Q3; one `admin_granted` audit event, no credential changed); the hosted checks as that Member, and the browser checks, are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - FEAT-006 left granular roles out of scope; this adds one capability, not a role system.

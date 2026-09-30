@@ -433,7 +433,7 @@ The owner answered the open questions of this amendment as recommended (PLAN-002
 5. **Transcript upload.** Built in P3 as its own endpoint (FR-011-010, `POST /businesses/:b/meetings/:id/transcript`, SDD-011 “Changes found while building P3”); WI-09 does not change it. Stub batches keep span-only evidence after an upload.
 6. **Decisions** stay inside the stored batch items, as today; no decision record.
 7. **Who may commit.** Anyone who can read the meeting (for a restricted meeting, a participant).
-8. **Staging.** One release when production still holds no meetings at release time (checked read-only before the release); otherwise Release A, then Release B.
+8. **Staging.** One release when production still holds no meetings at release time (checked read-only before the release); otherwise Release A, then Release B. Applied: production held 0 meetings on 2026-10-01 (04:54, Bangkok), so WI-09 shipped in the one release 0.5.0 ([verification](../../releases/0.5.0/verification.md)).
 
 ### Open questions (answered)
 
@@ -451,7 +451,7 @@ Kept as asked; the answers are in “Decisions” above.
 
 ### Changes found while building WI-09 (2026-10-01)
 
-These refine the approved amendment without changing a decision; the owner reviews them with the WI-09 change. The endpoint is built locally and not deployed (PLAN-002 P5 owns the release).
+These refine the approved amendment without changing a decision; the owner reviews them with the WI-09 change. The endpoint was released to production on 2026-10-01 with 0.5.0 (PLAN-002 P5; [verification](../../releases/0.5.0/verification.md)): the hosted Guest meeting-commit write answers 401 and the route is in the package; a Member's commit and the restricted-meeting checks are not yet run hosted.
 
 - **The commit writes through `writeDomain`.** `commitMeeting` (`apps/api/meeting-commit.mjs`) reads the viewer's workspace (`readLegacy`), runs `commitBatch` on that copy and stores the result with the same `writeDomain` a `PUT` uses, so a created task looks like every other task (TSK code, roles, viewers, week entry, history, links, the batch's `commit_key` and payload hash). The write therefore covers the viewer's whole readable state, like a `PUT`, and `writeDomain` adds its own audit events (for example the viewers of a new task) next to the one `commit` event on the meeting. `writeDomain` is exported and takes `{refuseNewReceipts}`; only `saveLegacy` sets it.
 - **`commitBatch` options.** `{audience, allowStub}`: `allowStub` lets the server commit a stub review on its spans, while the client still refuses a stub (`keptLocal`, existing test). `AUDIENCE_WIDER` is thrown by the pure function with `code`. A restricted meeting with no participants is refused there too.
@@ -467,4 +467,4 @@ These refine the approved amendment without changing a decision; the owner revie
 
 - **An inactive participant blocks a commit.** The viewers of a created task pass through `saveTask`'s person check, so a participant who is inactive makes the commit answer 422. Dropping such a person from the viewers is a product choice and is not made here.
 - **History events still carry quotes.** The `task-created` and `source-linked` events hold the task snapshot with its references, as for a `PUT`; `withholdQuotes` removes the quotes on read, but a direct query of `change_events` by someone who can read the task still finds them.
-- **The UI.** `Meetings.jsx` calling the endpoint and showing the returned state was built but not checked in a browser.
+- **The UI.** `Meetings.jsx` calling the endpoint and showing the returned state was built but not checked in a browser (released in 0.5.0; production browser checks are not yet run).

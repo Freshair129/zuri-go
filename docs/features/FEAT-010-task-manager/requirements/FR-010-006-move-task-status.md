@@ -24,6 +24,7 @@ The system SHALL let a person move a task between `planned`, `doing`, `blocked`,
 ## Implementation
 - API built locally 2026-10-01: every save passes `saveError` / `moveError` on the server; a stale `row_version` answers 409.
 - Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`. UI: drag and a per-card status select both send one `PATCH`; a failure restores the card, a 409 reloads, Blocked asks for the blocker (`Boards.jsx`).
+- Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - A Workboard task that is Blocked today has no blocker text (the Workboard has no such field, `apps/web/src/content/dashboard/Forms.jsx:39`). It stays valid after the change; the blocker is required only when a person moves a task into Blocked (SDD-010 Decisions, P2 default).
