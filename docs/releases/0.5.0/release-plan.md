@@ -9,6 +9,8 @@ relations:
 
 # Zuri-Go 0.5.0 — release plan (PLAN-002 phase P5, preparation only)
 
+> **Executed on 2026-10-01 (Bangkok).** Release 0.5.0 was carried out under the owner's authorization of phase P5 and is live in production; the record of what was actually run, and what was not, is [verification.md](verification.md) (with [stage.json](stage.json), [production.json](production.json) and [database-preservation.json](database-preservation.json)). The text below is the plan as written before the release and is kept unchanged; where it says production is still 0.4.2 on schema 5, it describes the time of writing.
+
 **Nothing is released, migrated or deployed by this document.** Production is still application 0.4.2 on PostgreSQL schema 5. The owner has authorized neither the production migration nor the deployment; each step that needs an authorization is listed in [Authorizations](#authorizations-the-owner-gives-separately) and waits for it. This plan records the rehearsal that was run on a scratch database, the scope, the ordered runbook and the rollback assessment, so that the owner can decide with the facts in hand.
 
 Phase P5 of [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) is C-2 / HIGH. Active source: `D:/workspace/zuri-go`. Baseline when this was written: commit `ddce3af` plus uncommitted documentation and the WI-09 work in progress.

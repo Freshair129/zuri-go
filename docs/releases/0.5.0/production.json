@@ -1,0 +1,41 @@
+{
+  "mode": "production",
+  "url": "https://zuri-metrics-map.vercel.app",
+  "version": "0.5.0",
+  "checks": {
+    "guestSession": "200, not authenticated",
+    "guestWorkspace": {
+      "tasks": 0,
+      "meetings": 0,
+      "receipts": 0,
+      "weeksEntries": 0,
+      "events": 0,
+      "members": 4,
+      "campaigns": 1
+    },
+    "guestState": {
+      "tasks": 0,
+      "task_roles": 0,
+      "task_attachments": null,
+      "meetings": null
+    },
+    "guestOverviewStatus": 200,
+    "guestTaskList": {
+      "status": 200,
+      "tasks": 0
+    },
+    "guestWritesDenied": {
+      "createTask": 401,
+      "createProject": 401,
+      "meetingCommit": 401,
+      "saveWorkspace": 401,
+      "team": 401
+    },
+    "crossOriginWrite": 403,
+    "htmlMatchesBuild": true,
+    "htmlSha256": "aa2f233b01f4726958ff5068808d861ec70fec66812e2ae734d9d5013f1e75dd"
+  },
+  "memberChecks": "NOT_RUN by the agent - Member, participant and Business-admin checks need a real Member code and are the owner's",
+  "browserVisual": "NOT_RUN",
+  "at": "2026-09-30T22:00:07.674Z"
+}
