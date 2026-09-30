@@ -1,0 +1,40 @@
+---
+id: FR-012-008
+title: Idempotent meeting commit with a receipt
+delivery: implemented
+status: approved
+legacy: []
+relations:
+  specified_by: [SDD-004]
+  decided_by: [ADR-002, ADR-004]
+  relates_to: [FR-010-009, FR-011-009, FR-011-010]
+---
+
+# FR-012-008 — Idempotent meeting commit with a receipt
+
+The system SHALL commit the user’s choices on a stored draft batch through one server operation that derives the idempotency key, the new task IDs, the audience and the receipt itself, SHALL return the same tasks and receipt when the same choices are sent again, and SHALL refuse other choices for a batch that has already been committed.
+
+The operation is `POST /api/zuri-go/v1/businesses/{businessId}/meeting-commits` with `meetingId`, `batchId`, `reviewRevisionId`, `reviewHash`, `sourceHash` and `choices` (each choice: `proposalId`, `mode` of `create`, `link`, `update` or `skip`, and the fields of FR-012-007).
+
+## Acceptance criteria
+- AC-012-008-01 — Given a signed-in Member on the hosted site, or the local operator, and a batch on a meeting they can read, when they send choices, then the server creates, links or updates the tasks, stores a receipt — ID, batch ID, idempotency key `sourceInstanceId:projectId:recordingId:reviewId:reviewHash:batchId`, payload hash, task IDs, the proposal-to-task mappings, `committedAt` and `origin` `server` — and answers 200 with `replayed` false, the receipt and the viewer’s workspace; the request supplies no key, task ID, audience, receipt or hash, and the server derives them from what it stored.
+- AC-012-008-02 — Given the same choices again, in any key or choice order, then the answer is 200 with `replayed` true, the same receipt and the same task IDs, and no task, link, history event, week entry, audit event or Business revision is added; given two identical requests at the same time, then one set of tasks exists and the second replays.
+- AC-012-008-03 — Given the same batch with other choices (another title, or an extra choice), then the answer is 409 `COMMIT_CONFLICT` “ร่างนี้เคยบันทึกแล้วด้วยรายละเอียดต่างกัน” and nothing changes.
+- AC-012-008-04 — Given a `reviewRevisionId`, `reviewHash` or `sourceHash` that differs from the stored batch, or a batch whose meeting has a newer review or source, then the answer is 409 `STALE_BATCH` “ร่างเก่าใช้สร้างงานไม่ได้ กรุณาตรวจฉบับใหม่” and no task is created; a changed transcript is offered as a comparison (FR-012-004) and never creates tasks silently.
+- AC-012-008-05 — Given a meeting that already has tasks, then the batch form says “ประชุมนี้มี N งานแล้ว ตรวจรายการเดิมและเลือก ผูก / อัปเดต / สร้างใหม่ ทีละรายการเพื่อกันงานซ้ำ” and every item starts as “ไม่สร้าง”.
+- AC-012-008-06 — Given a Guest, then the answer is 401 `AUTH_REQUIRED`; given a meeting or batch the viewer cannot read, then it is 404 “ไม่พบประชุม” or “ไม่พบร่างงาน”, the same as for one that does not exist; a replay shows the viewer only the task IDs and mappings they can read.
+- AC-012-008-07 — Given a receipt made by the browser before this operation existed (no `origin`), then the same choices replay by comparing its stored plain payload and other choices conflict; and given a whole-workspace save that carries a receipt the server did not store, then it is refused with 422 `RECEIPT_SERVER_OWNED`.
+
+## Implementation
+- `apps/api/meeting-commit.mjs`: `commitMeeting` (the order of checks: lock the Business, find the stored receipt, replay or conflict, stale check, targets, `commitBatch` with the audience and `allowStub`, `writeDomain`, one `commit` audit event, revision bump); route `meeting-commits` in `apps/api/api.mjs` (retries a serialization failure up to twice, so the second of two parallel requests replays); the module is in the hosted package list `scripts/deploy/build_cloud.py`.
+- `apps/web/src/content/meeting/model.mjs`: `commitBatch` (the pure rules shared with the client), `canonicalChoices` (sorted keys and choices; the payload hash is `hash(JSON.parse(canonicalChoices(choices)))` from `apps/api/service.mjs`), `isBatchStale`.
+- `apps/api/workspace.mjs`: `writeDomain` with `refuseNewReceipts` (set only by `saveLegacy`; AC-012-008-07) stores the receipt, the batch’s `commit_key` and `commit_payload_hash`, and the `meeting_task_links` rows.
+- `apps/web/src/content/meeting/Meetings.jsx`: `commit` calls the endpoint through `serverCommit` and replaces its state from the returned workspace; `ActionBatch` (AC-012-008-05); `apps/web/src/content/business/api.mjs`: `commit` posts to `/meeting-commits`.
+- Tests: `apps/api/test/meeting-commit.test.mjs` — “five viewers …” (AC-012-008-01, -06), “a replay returns the same task IDs and writes nothing …” and “two identical requests at once …” (AC-012-008-02, -06), “the same batch with other choices conflicts (409) …” (AC-012-008-03), “a stale batch or stale hashes give 409 STALE_BATCH …” (AC-012-008-04), “PUT /workspace refuses a receipt the server did not write …” and “a receipt made by the old client replays …” (AC-012-008-07); `apps/web/src/content/meeting/model.test.mjs` — “batch replay gives same IDs; changed payload conflicts”, “a receipt from the server replays by the canonical payload; one from the old client by the plain payload”, “commit receipt binds canonical payload and proposal-to-task mapping”. AC-012-008-05 has no test. The server tests run against local PostgreSQL; the release record of 0.5.0 reports 160 Node tests passing on the release commit.
+
+## Notes
+- Origin: FEAT-004 MT-12, DOM-MTG side; the task side is [FR-010-009](../../FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) (AC-010-009-05 names this replay). The audience given to the created tasks and the quotes kept out of the task row are [FR-011-009](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md); a commit on a meeting whose transcript stays on the recording machine is [FR-011-010](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md). Neither is restated here.
+- Design and decisions: [SDD-004 amendment](../../FEAT-004-meeting-task-manager/design.md#proposed-amendment--server-side-meeting-commit-plan-002-wi-09), its [Decisions](../../FEAT-004-meeting-task-manager/design.md#decisions-owner-2026-10-01) (who may commit, staging) and [Changes found while building WI-09](../../FEAT-004-meeting-task-manager/design.md#changes-found-while-building-wi-09-2026-10-01). Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest write answered 401 and the route is in the package; a Member’s commit on the hosted site and the commit in a browser are not yet run ([verification](../../../releases/0.5.0/verification.md)).
+- The commit writes the tasks through `writeDomain`, the write path of the whole-workspace save, and not through the per-task create of FR-010-009, so the “same operation” wording of AC-010-009-05 and ADR-002 D2 (“through the task domain’s contract”) does not describe how it works today; the owner decides whether this in-process call counts as that contract.
+- Current client behavior: `Meetings.commit` first reads the FUNG snapshot and stops with “เชื่อมต่อ FUNG เพื่อตรวจฉบับต้นทางก่อนสร้างงาน” when FUNG is not connected, and with “ต้นทางเปลี่ยนแล้ว ตรวจฉบับใหม่ก่อนสร้างงาน” when its hash differs; the server cannot reach FUNG, so this comparison stays advisory and in the client (SDD-004 amendment). Without a server workspace (the browser-storage mode of the 0.3.0 build, still in the code) the client runs `commitBatch` itself and gets none of the server guarantees above.
+- Decisions of a batch stay inside the stored items; no decision record exists (SDD-004 amendment, Decision 6).

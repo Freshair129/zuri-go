@@ -39,7 +39,7 @@ The work of every department — sales, production, accounting, HR and marketing
 
 ## Business rules
 - A task can be created from a name alone; details and RACI are filled in later ([FEAT-004 brief](../../features/FEAT-004-meeting-task-manager/brief.md)).
-- MoSCoW priority is per task and week; Won’t is shelved, not Done, and unprioritised tasks are shown separately ([FEAT-004 guide](../../features/FEAT-004-meeting-task-manager/guide.md)).
+- MoSCoW priority is per task and week; Won’t is shelved, not Done, and unprioritised tasks are shown separately ([FEAT-004 guide](../../features/FEAT-004-meeting-task-manager/guide.md)). Written as requirements FR-010-020…022 (approved 2026-10-01).
 - Evidence files: at most 5 active files per task and 2 MiB each ([FEAT-005 spec](../../features/FEAT-005-guest-access/spec.md)).
 - Approved 2026-10-01, phase P2 released to production the same day with 0.5.0 (schema 7): every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
 - Approved 2026-10-01, phase P1 released to production the same day with 0.5.0 (schema 6 and 7): a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)). Guests now read public items only, so the interim rule of ADR-004 D9 (no confidential content in production) ended for tasks on 2026-10-01 ([verification](../../releases/0.5.0/verification.md)); it still applies to Member profiles and campaign records, which Guests still read.
@@ -62,7 +62,7 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 
 The server-side meeting commit, an amendment to the design of FEAT-004 ([SDD-004](../../features/FEAT-004-meeting-task-manager/design.md)), was approved on 2026-10-01 (PLAN-002 WI-09, Q15). It changes how a meeting creates tasks and calls the idempotent create of FR-010-009; no FEAT-004 file is moved or renumbered.
 
-**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003; delivery as in the [FEAT-010 index](../../features/FEAT-010-task-manager/feature.md#requirement-index), released to production on 2026-10-01 with 0.5.0. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
+**Requirements** — FR-010-001…016 and both NFRs approved on 2026-10-01 with ADR-002 and ADR-003; FR-010-017…023, written from FEAT-004 the same day, were approved the same day; delivery as in the [FEAT-010 index](../../features/FEAT-010-task-manager/feature.md#requirement-index), released to production on 2026-10-01 with 0.5.0. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
 
 | Requirement | Part | Title | Delivery |
 |---|---|---|---|
@@ -77,10 +77,17 @@ The server-side meeting commit, an amendment to the design of FEAT-004 ([SDD-004
 | [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | FEAT-010-P01 | Task API — idempotent create and versioned update | implemented |
 | [FR-010-010](../../features/FEAT-010-task-manager/requirements/FR-010-010-task-api-rules-identity.md) | FEAT-010-P01 | Task API — rules, identity and audience on the server | implemented |
 | [FR-010-011](../../features/FEAT-010-task-manager/requirements/FR-010-011-workspace-save-compatible.md) | FEAT-010-P01 | The whole-workspace save stays compatible | implemented |
+| [FR-010-017](../../features/FEAT-010-task-manager/requirements/FR-010-017-weekly-seed.md) | FEAT-010-P01 | Weekly seed of 28 September – 4 October 2026 | implemented |
+| [FR-010-018](../../features/FEAT-010-task-manager/requirements/FR-010-018-raci-rules.md) | FEAT-010-P01 | RACI rules — one R, one A, Members only | implemented |
+| [FR-010-019](../../features/FEAT-010-task-manager/requirements/FR-010-019-assign-by-member.md) | FEAT-010-P01 | Assigning people to a task by Member | implemented |
+| [FR-010-020](../../features/FEAT-010-task-manager/requirements/FR-010-020-moscow-values.md) | FEAT-010-P01 | One MoSCoW scale | implemented |
+| [FR-010-021](../../features/FEAT-010-task-manager/requirements/FR-010-021-priority-views-wont.md) | FEAT-010-P01 | Priority views and the Won’t shelf | implemented |
+| [FR-010-022](../../features/FEAT-010-task-manager/requirements/FR-010-022-priority-per-week.md) | FEAT-010-P01 | Priority per week and carry-over | implemented |
+| [FR-010-023](../../features/FEAT-010-task-manager/requirements/FR-010-023-details-priority-persistence.md) | FEAT-010-P01 | Details and priority survive a backup and restore | implemented |
 | [NFR-010-001](../../features/FEAT-010-task-manager/requirements/NFR-010-001-row-level-security-new-tables.md) | FEAT-010-P01 | Row-level security covers the new task tables | implemented |
 | [NFR-010-002](../../features/FEAT-010-task-manager/requirements/NFR-010-002-additive-schema.md) | FEAT-010-P01 | The schema change is additive and reconcilable | implemented |
 
-The campaign half of FEAT-010 (FR-010-012…016, part [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md)) is owned by [DOM-CAM](../campaign/README.md). The visibility requirements of tasks and projects (FR-011-004, -005, -008, -009, -011, -012) are in FEAT-011-P02 below. FEAT-004 would hand its task requirements to FEAT-010 (see its “Proposed split”).
+The campaign half of FEAT-010 (FR-010-012…016, part [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md)) is owned by [DOM-CAM](../campaign/README.md). The visibility requirements of tasks and projects (FR-011-004, -005, -008, -009, -011, -012) are in FEAT-011-P02 below. FEAT-004 hands its task requirements MT-02, 04, 21, 26, 27, 28 and 29 to FEAT-010 as FR-010-017…023 (see its “Proposed split”); FEAT-004 keeps its files and its MT register.
 
 **Participating cross-domain features**
 
