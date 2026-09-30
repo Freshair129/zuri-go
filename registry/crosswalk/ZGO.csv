@@ -1,0 +1,31 @@
+legacy_id,new_id,disposition,note
+ZGO-ARCH-001,ARCH-001,renamed,docs/architecture/architecture.md -> docs/architecture/ARCH-001-baseline-architecture.md; dropped frontmatter parent ZGO-OVERVIEW-001 is now relates_to FEAT-001; document_id ZGO-ARCH-001 kept as legacy
+ZGO-DATA-001,ARCH-002,renamed,docs/architecture/data-model.md -> docs/architecture/ARCH-002-postgresql-data-model.md; dropped frontmatter parent ZGO-OVERVIEW-001 is now relates_to FEAT-001; document_id ZGO-DATA-001 kept as legacy
+docs/architecture/cloud-deployment-spec.md,ARCH-003,renamed,docs/architecture/cloud-deployment-spec.md -> docs/architecture/ARCH-003-hosted-deployment.md
+ZGO-OVERVIEW-001,FEAT-001,moved,docs/architecture/overview-spec.md -> docs/features/FEAT-001-business-overview/spec.md; role: Feature specification “Business Overview”; document_id ZGO-OVERVIEW-001 kept as legacy
+docs/architecture/guest-access-spec.md,FEAT-005,moved,docs/architecture/guest-access-spec.md -> docs/features/FEAT-005-guest-access/spec.md; role: Specification (0.3.1) with the 0.4.0 and 0.4.2 amendment notes
+ZGO-AUTH-002,FEAT-006,moved,docs/architecture/member-identity-spec.md -> docs/features/FEAT-006-member-identity/spec.md; role: Approved contract “Member PID and individual sign-in”; document_id ZGO-AUTH-002 kept as legacy
+ZGO-AUTH-003,FEAT-007,moved,docs/architecture/identity-code-login-spec.md -> docs/features/FEAT-007-single-code-login/spec.md; role: Approved change “เข้าสู่ระบบด้วยรหัสระบุตัวตนช่องเดียว”; document_id ZGO-AUTH-003 kept as legacy
+docs/architecture/logo-correction-spec.md,FEAT-009,moved,docs/architecture/logo-correction-spec.md -> docs/features/FEAT-009-logo-placement/spec.md; role: Logo contract (0.2.1 logo correction)
+docs/architecture/verification.md,,moved,docs/architecture/verification.md -> docs/history/zuri-go-review/verification.md
+docs/product/campaign-mission-control-brief.md,FEAT-002,moved,"docs/product/campaign-mission-control-brief.md -> docs/features/FEAT-002-campaign-mission-control/brief.md; role: Design brief (intent, confirmed direction)"
+docs/product/campaign-mission-control-spec.md,FEAT-002,moved,docs/product/campaign-mission-control-spec.md -> docs/features/FEAT-002-campaign-mission-control/spec.md; role: Requirements and decision design
+docs/product/campaign-mission-control-wireframes.md,FEAT-002,moved,docs/product/campaign-mission-control-wireframes.md -> docs/features/FEAT-002-campaign-mission-control/wireframes.md; role: Screen blueprint
+docs/product/campaign-mission-control-user-guide.md,FEAT-002,moved,docs/product/campaign-mission-control-user-guide.md -> docs/features/FEAT-002-campaign-mission-control/guide.md; role: User guide
+docs/product/campaign-mission-control-verification.md,FEAT-002,moved,docs/product/campaign-mission-control-verification.md -> docs/features/FEAT-002-campaign-mission-control/verification.md; role: Delivery verification and acceptance trace
+docs/product/campaign-01-brief.md,FEAT-003,moved,"docs/product/campaign-01-brief.md -> docs/features/FEAT-003-metrics-map/brief.md; role: Brief — “Marketing metrics, mapped” (REV 04)"
+docs/product/campaign-01_metrics-map-update-spec.md,FEAT-003,moved,"docs/product/campaign-01_metrics-map-update-spec.md -> docs/features/FEAT-003-metrics-map/spec-content.md; role: Content update specification (REV 02, with REV 02.1–02.3 addenda)"
+docs/product/campaign-01_metrics-graph-spec.md,FEAT-003,moved,docs/product/campaign-01_metrics-graph-spec.md -> docs/features/FEAT-003-metrics-map/spec-graph.md; role: Interactive graph specification (REV 03 / REV 04)
+docs/product/campaign-01_metrics-map-qc.md,FEAT-003,moved,docs/product/campaign-01_metrics-map-qc.md -> docs/features/FEAT-003-metrics-map/qc.md; role: QC report and version diff (REV 02.5)
+docs/product/campaign-01-image-prompt.md,FEAT-003,moved,docs/product/campaign-01-image-prompt.md -> docs/features/FEAT-003-metrics-map/image-prompts.md; role: Mascot image prompts and generation record
+docs/product/meeting-task-manager-brief.md,FEAT-004,moved,"docs/product/meeting-task-manager-brief.md -> docs/features/FEAT-004-meeting-task-manager/brief.md; role: Domain brief (confirmed direction, approval record)"
+docs/product/meeting-task-manager-spec.md,FEAT-004,moved,docs/product/meeting-task-manager-spec.md -> docs/features/FEAT-004-meeting-task-manager/spec.md; role: Specification with requirement register MT-01 – MT-29
+docs/product/meeting-task-manager-architecture.md,SDD-004,renamed,docs/product/meeting-task-manager-architecture.md -> docs/features/FEAT-004-meeting-task-manager/design.md; role: Architecture and connector contract — **SDD-004**; dropped frontmatter parent meeting-task-manager-spec.md is now the same feature folder
+docs/product/meeting-task-manager-guide.md,FEAT-004,moved,docs/product/meeting-task-manager-guide.md -> docs/features/FEAT-004-meeting-task-manager/guide.md; role: User guide
+docs/product/meeting-task-manager-verification.md,FEAT-004,moved,docs/product/meeting-task-manager-verification.md -> docs/features/FEAT-004-meeting-task-manager/verification.md; role: Implementation verification and requirement trace
+docs/product/weekly-kanban-2026-09-28.md,FEAT-004,moved,docs/product/weekly-kanban-2026-09-28.md -> docs/features/FEAT-004-meeting-task-manager/weekly-kanban-2026-09-28.md; role: Weekly Kanban + RACI — source of the weekly seed
+docs/product/unified-site-spec.md,FEAT-008,moved,docs/product/unified-site-spec.md -> docs/features/FEAT-008-unified-site/spec.md; role: Specification “รวม Mission Control และ Marketing Metrics Map เป็นเว็บไซต์เดียว”
+docs/product/unified-site-verification.md,FEAT-008,moved,docs/product/unified-site-verification.md -> docs/features/FEAT-008-unified-site/verification.md; role: Verification and production release
+docs/operations/runbook.md,RB-001,renamed,docs/operations/runbook.md -> docs/operations/RB-001-runbook.md
+docs/operations/github-repository.md,RB-002,renamed,docs/operations/github-repository.md -> docs/operations/RB-002-github-repository.md
+ZGO-STRUCT-001,,kept-as-evidence,"docs/migrations/001-project-extraction.md stays in place: extraction plan and provenance, not an artifact (ADR-001 D3)"

@@ -1,0 +1,79 @@
+# Zuri-Go documentation map
+
+The structure follows the standards in [governance/standards/](governance/standards/) — chiefly [STD-003](governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md): an artifact has one canonical location, and its relationships live in metadata and generated views rather than in folder nesting, so ownership can move without moving files. Artifact types and ownership rules are in [STD-001](governance/standards/STD-001-DOCUMENT-ARTIFACT-STANDARD.md); identifiers and relations are in [STD-002](governance/standards/STD-002-IDENTITY-AND-TRACEABILITY.md).
+
+**Conformance: phase 1.** Layout, identifiers, ownership metadata and the registry are in place. Requirements are not yet decomposed into FR / NFR / AC / TC files, and no validation or view-generation tooling exists yet. The decisions behind this are in [ADR-001](governance/decisions.md); the remaining work is in [PLAN-001](governance/plans/PLAN-001-document-standard-adoption.md).
+
+## Reading order
+
+1. [Root README](../README.md) — commands, layout, database and credential custody
+2. [AGENTS.md](../AGENTS.md) — working rules for this repository
+3. [Architecture index](architecture/README.md) — which contract wins when documents disagree (later amendments supersede earlier text)
+4. [PRD-001](product/PRD-001-zuri-go.md) — surfaces and product-wide rules, then the feature folder you are changing (`features/FEAT-nnn-…/feature.md`)
+5. [RB-001](operations/RB-001-runbook.md) — operating, deploying and rolling back
+
+## Layout
+
+| Path | Holds | Standard |
+|---|---|---|
+| `product/` | BRD-001 and PRD-001 (product level) | STD-003 R1 |
+| `domains/<slug>/` | one folder per domain: purpose, language, owned data, rules, and a view of its features | STD-003 R2 |
+| `features/<FEAT-ID>-<slug>/` | every feature: `feature.md` plus its specification, design and verification documents | STD-003 R3 |
+| `architecture/` | ARCH-* documents and the authority-order index | STD-003 R1 |
+| `services/SRV-<nnn>-<slug>/` | one `SERVICE.md` per deployable | STD-003 R4 |
+| `operations/` | runbooks RB-* | STD-003 R1 |
+| `governance/` | standards, procedures, decisions and plans | STD-003 R1 |
+| `templates/` | copy-and-fill templates for new artifacts; excluded from artifact scanning because they use placeholder IDs such as `FEAT-<nnn>` | STD-003 R7 |
+| `../registry/` | domain and service registers, crosswalk from pre-standard IDs | STD-003 R5 |
+| `history/` · `migrations/` · `releases/` | evidence, see below | not artifacts (STD-001 R1) |
+
+## Features
+
+| ID | Feature | Owner | Delivery | Folder |
+|---|---|---|---|---|
+| [FEAT-001](features/FEAT-001-business-overview/feature.md) | Business Overview | DOM-BIZ | live | `features/FEAT-001-business-overview/` |
+| [FEAT-002](features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | DOM-CAM | live | `features/FEAT-002-campaign-mission-control/` |
+| [FEAT-003](features/FEAT-003-metrics-map/feature.md) | Marketing Metrics Map and Graph View | DOM-MET | live | `features/FEAT-003-metrics-map/` |
+| [FEAT-004](features/FEAT-004-meeting-task-manager/feature.md) | Meeting & Task Manager | DOM-WRK | implemented | `features/FEAT-004-meeting-task-manager/` |
+| [FEAT-005](features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | DOM-IAM | live | `features/FEAT-005-guest-access/` |
+| [FEAT-006](features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | DOM-IAM | live | `features/FEAT-006-member-identity/` |
+| [FEAT-007](features/FEAT-007-single-code-login/feature.md) | Single-code login | DOM-IAM | live | `features/FEAT-007-single-code-login/` |
+| [FEAT-008](features/FEAT-008-unified-site/feature.md) | Unified site | DOM-PLT | live | `features/FEAT-008-unified-site/` |
+| [FEAT-009](features/FEAT-009-logo-placement/feature.md) | Zuri-Go logo placement | DOM-BRN | live | `features/FEAT-009-logo-placement/` |
+
+## Domains
+
+| Code | Domain | Subdomain / role | Features |
+|---|---|---|---|
+| [DOM-BIZ](domains/business/README.md) | Business workspace | supporting / foundation | FEAT-001 |
+| [DOM-CAM](domains/campaign/README.md) | Campaign & content | core / business | FEAT-002 |
+| [DOM-MET](domains/metrics/README.md) | Metrics & goals | core / business | FEAT-003 |
+| [DOM-WRK](domains/work/README.md) | Work (tasks & meetings) | supporting / business | FEAT-004 |
+| [DOM-IAM](domains/identity-access/README.md) | Identity & access | generic / foundation | FEAT-005, FEAT-006, FEAT-007 |
+| [DOM-PLT](domains/platform/README.md) | Platform & delivery | generic / platform | FEAT-008 |
+| [DOM-BRN](domains/brand/README.md) | Brand | supporting / business | FEAT-009 |
+
+## Services
+
+| ID | Service | Deploy unit |
+|---|---|---|
+| [SRV-001](services/SRV-001-hosted/SERVICE.md) | Hosted site and API (Vercel + Neon PostgreSQL) | Vercel project `zuri-metrics-map` — package `build/vercel`, binding `scripts/deploy/project.json` |
+| [SRV-002](services/SRV-002-local/SERVICE.md) | Local operator runtime (Node server + Docker PostgreSQL) | `apps/api/server.mjs` on `127.0.0.1:4319` and Docker container `zuri-go-postgres`, started by `scripts/local/start.ps1` (`npm start`) |
+
+## Evidence (not artifacts)
+
+- `history/` — per-review evidence: screenshots, JSON checks, version diffs and each review's verification report.
+- `migrations/` — the project-extraction plan and its provenance. `scripts/site/verify_extraction.py` reads and writes here and `scripts/metrics/verify_metrics_map_static.py` writes here, so the folder stays in place.
+- `releases/<version>/` — deployment records for each release.
+
+Evidence is cited but never traced to. Paths inside it describe where files lived when they were verified; the restructure changed only the link targets that pointed at moved documents.
+
+## Finding a document by its old name
+
+[registry/crosswalk/ZGO.csv](../registry/crosswalk/ZGO.csv) maps every pre-standard document ID and path to its new ID and location.
+
+## Notes on moved documents
+
+- File paths, repository names and infrastructure statements inside older feature documents describe their original version (the former `D:/zuri-brand-kit` checkout). Current build, start and deploy commands are in the [root README](../README.md).
+- The 0.4.1 extraction changed source layout and operational paths only; it did not reinterpret KPI formulas, targets, RACI, MoSCoW, Guest policy or Member identity.
+- Approved text was not edited to follow the rename: a moved document may still name a sibling by its former file name (for example `campaign-mission-control-verification.md`). The Documents table of each `feature.md` and the crosswalk map old names to current files.

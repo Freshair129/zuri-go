@@ -42,4 +42,4 @@ Date: 2026-09-30. Approved contract: [ZGO-STRUCT-001](001-project-extraction.md)
 
 [Relocation source diff](version-diff.patch) · [Changed source mapping](changed-files.json) · [Extraction checks](verification/extraction.json)
 
-The new request for a single “รหัสระบุตัวตน” input is a separate proposed [0.4.2 authentication amendment](../architecture/identity-code-login-spec.md), not implemented or deployed as part of this path-only extraction.
+The new request for a single “รหัสระบุตัวตน” input is a separate proposed [0.4.2 authentication amendment](../features/FEAT-007-single-code-login/spec.md), not implemented or deployed as part of this path-only extraction.

@@ -43,7 +43,8 @@ npm start
 - `assets/`, `brand/`: source logo และกติกาแบรนด์; assets ใน UI/guide เป็นสำเนาที่ใช้งานจริง
 - `scripts/`: local startup, metrics generator, site/deploy packagers และ root command runner
 - `tests/campaign/`: campaign model regression suite; meeting suite อยู่กับ authored model
-- `docs/`: current architecture, product contracts, operations, migration evidence และประวัติรุ่นก่อน
+- `docs/`: เอกสารตามมาตรฐาน docs/governance/standards — features/, domains/, architecture/, services/, operations/ พร้อมหลักฐานใน history/, migrations/, releases/; เริ่มที่ docs/README.md
+- `registry/`: ทะเบียน domain/service และ crosswalk จากรหัสเอกสารเดิม (STD-003)
 - `build/site/`: static files สำหรับ local; `build/vercel/`: deploy package ที่สร้างจาก allowlist
 - `.local/`: config, private member handovers, backups, import staging และ logs — ไม่เข้า Git หรือ deploy
 
@@ -57,4 +58,4 @@ Connection ของเครื่องนี้อยู่ `.local/config.js
 
 UI JSON backup ยังเป็น export แคมเปญ/งาน ไม่รวม attachment bytes และ business-domain ทุกตาราง ใช้ full SQL backup สำหรับสำรองครบ ห้าม reset/reimport ฐานเพื่อแก้ปัญหา path
 
-ดู [สถาปัตยกรรมปัจจุบัน](docs/architecture/README.md), [การดูแลระบบ](docs/operations/runbook.md), [ผลตรวจการย้ายและ version diff](docs/migrations/verification.md)
+ดู [แผนที่เอกสาร](docs/README.md), [สถาปัตยกรรมปัจจุบัน](docs/architecture/README.md), [การดูแลระบบ](docs/operations/RB-001-runbook.md), [ผลตรวจการย้ายและ version diff](docs/migrations/verification.md)

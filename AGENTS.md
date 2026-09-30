@@ -6,7 +6,7 @@
 - Product: **Zuri-Go** — **Let’s Go to Market. Together.** Marketing made simple: business overview, campaign KPIs, metrics guide/graph, and Meeting & Task Manager.
 - GitHub: https://github.com/Freshair129/zuri-go — private repository, default branch `main`.
 - Production: https://zuri-metrics-map.vercel.app/ — Vercel project `zuri-metrics-map`, scope `pornpons-projects`.
-- Read [README](README.md) and [architecture index](docs/architecture/README.md) first. Follow the user's current instructions, approved parent/peer contracts, and applicable nested AGENTS.md. Historical documents are evidence, not newer requirements.
+- Read [README](README.md), the [documentation map](docs/README.md) and the [architecture index](docs/architecture/README.md) first. Follow the user's current instructions, approved parent/peer contracts, and applicable nested AGENTS.md. Historical documents are evidence, not newer requirements.
 - Baseline at this update: application 0.4.2, PostgreSQL schema 5. Read `package.json`, migration files and release evidence for later versions; verify live deployment rather than assuming this baseline is current forever.
 
 ## Working method
@@ -28,19 +28,20 @@
 | `assets/`, `brand/` | Approved logo sources and brand rules. |
 | `scripts/` | Local startup, metrics generation, site assembly and Vercel packaging. |
 | `tests/campaign/` | Campaign regression tests; meeting tests also live with authored models. |
-| `docs/architecture/`, `docs/product/`, `docs/operations/` | Current contracts, product requirements and operator instructions. |
+| `docs/features/`, `docs/domains/`, `docs/architecture/`, `docs/services/`, `docs/operations/`, `docs/product/`, `docs/templates/`, `registry/` | Current contracts, product requirements, ownership metadata and operator instructions, structured by the governance standards: one canonical location per artifact, stable IDs, ownership in metadata. Start at [docs/README.md](docs/README.md); add or move documents by [STD-003 R7](docs/governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md) and never change an ID. |
+| `docs/governance/` | Standards (STD), procedures (PROC), governance decisions and adoption plans. Change only through a governance decision. |
 | `docs/history/`, `docs/migrations/`, `docs/releases/` | Historical evidence, extraction provenance and versioned verification. |
 | `build/site/`, `build/vercel/`, `apps/web/dist/` | Generated output; rebuild rather than hand-edit. |
 | `.local/` | Private configuration, member-code handovers, backups, logs and test payloads; never commit or deploy. |
 
 Preserve the Data App protected runtime, integrity manifests, stable app ID and existing user layout. Editable boundaries are defined by `apps/web/AGENTS.md` and `protected-runtime.json`; never weaken a check or manually rewrite a manifest to make a build pass. Historical copy verification must not be mistaken for a freeze on approved authored content.
 
-For visual work, read `brand/brand-profile.md` and [logo contract](docs/architecture/logo-correction-spec.md). Use existing approved Zuri-Go assets and the documented Zuri / น้องวางใจ designs. Do not redraw logos or invent brand tokens, names or taglines. Brand promotion remains human-only. Keep Thai user-facing copy and existing English technical/product labels.
+For visual work, read `brand/brand-profile.md` and [logo contract](docs/features/FEAT-009-logo-placement/spec.md). Use existing approved Zuri-Go assets and the documented Zuri / น้องวางใจ designs. Do not redraw logos or invent brand tokens, names or taglines. Brand promotion remains human-only. Keep Thai user-facing copy and existing English technical/product labels.
 
 ## Identity and data custody
 
 - Production opens in **Guest mode**, read-only. A write attempt prompts login; API authorization must enforce writes independently of UI state.
-- Login has one masked field labelled **รหัสระบุตัวตน**, transported as `{password}`. No PID input is required. Follow [single-code login](docs/architecture/identity-code-login-spec.md) and [Member identity](docs/architecture/member-identity-spec.md).
+- Login has one masked field labelled **รหัสระบุตัวตน**, transported as `{password}`. No PID input is required. Follow [single-code login](docs/features/FEAT-007-single-code-login/spec.md) and [Member identity](docs/features/FEAT-006-member-identity/spec.md).
 - Resolve exactly one matching credential across the Business, including disabled/inactive candidates when detecting ambiguity, then require an active/enabled owner. Caller PID/memberId must never select the authenticated actor.
 - PID remains a stable public Member identifier; UUID remains PK/FK and canonical actor identity. Preserve versioned signed sessions, credential rechecks, origin checks, persistent rate limits, RLS and audit attribution. Do not restore shared-password fallback.
 - Local access is a trusted operator on `127.0.0.1:4319`; do not claim it is an authenticated Member session.
@@ -51,7 +52,7 @@ For visual work, read `brand/brand-profile.md` and [logo contract](docs/architec
 
 ## Commands and verification
 
-Run from the project root. See [runbook](docs/operations/runbook.md) for prerequisites and custody details.
+Run from the project root. See [runbook](docs/operations/RB-001-runbook.md) for prerequisites and custody details.
 
 | Command | Meaning |
 |---|---|
@@ -71,7 +72,7 @@ Run checks appropriate to changed behavior. A documentation-only change needs li
 ## GitHub and Vercel
 
 - Inspect `git status` and preserve unrelated edits. Before staging, confirm `.local/`, `.env*`, dependencies, generated builds and logs remain ignored; review the staged diff for private data. A private repository is not a secret store.
-- Keep the existing `origin` and repository visibility unless the user requests a change. GitHub setup is documented in [repository operations](docs/operations/github-repository.md).
+- Keep the existing `origin` and repository visibility unless the user requests a change. GitHub setup is documented in [repository operations](docs/operations/RB-002-github-repository.md).
 - Git push does not itself prove deployment. GitHub-to-Vercel automatic deployment was not configured during repository creation; verify any later integration before relying on it.
 - Durable Vercel binding is `scripts/deploy/project.json`; the packager restores it under `build/vercel/.vercel/`. Do not create another Vercel project or silently replace a conflicting binding.
 - For an authorized release: build and run relevant tests, deploy the existing package with `--prod --skip-domain`, verify the unique deployment using authenticated Vercel access where required, then promote and verify the public production URL. Use CLI/version instructions from the runbook and current tooling.
@@ -82,3 +83,5 @@ Run checks appropriate to changed behavior. A documentation-only change needs li
 ## Documentation update record
 
 2026-09-30: expanded the post-extraction instructions for the private GitHub repository, 0.4.2 single-code login, source ownership, data custody, verification and staged Vercel releases. Documentation-only; no application version, database or deployment change.
+
+2026-10-01: restructured `docs/` to the governance standards STD-001–STD-003 (decisions in `docs/governance/decisions.md`, remaining work in `docs/governance/plans/`): features, architecture, operations, domains and services now sit at canonical locations with stable IDs and ownership metadata; added `registry/` and `docs/templates/`. Moved specifications keep their text — only link targets changed. Documentation-only; no application version, database or deployment change. Requirement decomposition (FR/AC/TC) and validation tooling are pending.

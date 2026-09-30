@@ -1,0 +1,13 @@
+# Service registry (STD-003 R5): SRV id <-> deploy unit <-> code roots.
+# One entry per deployable (STD-001 R1). Descriptions live in docs/services/<id>-<slug>/SERVICE.md.
+services:
+  - id: SRV-001
+    slug: hosted
+    name: Hosted site and API (Vercel + Neon PostgreSQL)
+    deploy_unit: "Vercel project zuri-metrics-map — package build/vercel, binding scripts/deploy/project.json"
+    code_roots: [apps/api, apps/web, apps/metrics, scripts/metrics, scripts/site, scripts/deploy]
+  - id: SRV-002
+    slug: local
+    name: Local operator runtime (Node server + Docker PostgreSQL)
+    deploy_unit: "apps/api/server.mjs on 127.0.0.1:4319 and Docker container zuri-go-postgres, started by scripts/local/start.ps1 (npm start)"
+    code_roots: [apps/api, scripts/local]

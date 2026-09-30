@@ -1,0 +1,40 @@
+# Domain registry (STD-003 R5) — the only place a domain's classification is written.
+# code: frozen identity (STD-002 R3); slug and name may change.
+# subdomain: core | supporting | generic      role: foundation | business | platform
+# Classification below is proposed — see ADR-001 (docs/governance/decisions.md).
+domains:
+  - code: DOM-BIZ
+    slug: business
+    name: Business workspace
+    subdomain: supporting
+    role: foundation
+  - code: DOM-CAM
+    slug: campaign
+    name: Campaign & content
+    subdomain: core
+    role: business
+  - code: DOM-MET
+    slug: metrics
+    name: Metrics & goals
+    subdomain: core
+    role: business
+  - code: DOM-WRK
+    slug: work
+    name: Work (tasks & meetings)
+    subdomain: supporting
+    role: business
+  - code: DOM-IAM
+    slug: identity-access
+    name: Identity & access
+    subdomain: generic
+    role: foundation
+  - code: DOM-PLT
+    slug: platform
+    name: Platform & delivery
+    subdomain: generic
+    role: platform
+  - code: DOM-BRN
+    slug: brand
+    name: Brand
+    subdomain: supporting
+    role: business
