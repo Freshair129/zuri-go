@@ -3,8 +3,8 @@ id: FR-010-012
 title: Campaign task details
 part: FEAT-010-P02
 owner: DOM-CAM
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-002, ADR-003]
@@ -23,8 +23,8 @@ The system SHALL keep a campaign task’s gate, offer, hypothesis, action, estim
 - AC-010-012-05 — Given a body sent to the general task operation (FR-010-009) that carries a campaign-only field, then it is refused and nothing changes.
 
 ## Implementation
-- Not built. Today these fields live in `legacy_metadata` of the `campaign-legacy` row (`apps/api/workspace.mjs:68`); their form is `apps/web/src/content/dashboard/Forms.jsx:39` and `:54`; the Low/Medium/High scale is not MoSCoW (FEAT-004 spec, MoSCoW section).
-- Planned table `campaign_task_details`, owned by DOM-CAM (ADR-002 D4, ADR-003 D4); SDD-010 Data.
+- Built locally 2026-10-01: table `campaign_task_details`; `saveCampaignTask` and routes `POST /campaigns/:id/tasks`, `PATCH /campaigns/:id/tasks/:taskId` (`apps/api/campaign-tasks.mjs`); details follow the task's audience (row-level security).
+- Tests: `apps/api/test/tasks-api.test.mjs`.
 
 ## Notes
-- Open — what happens to a task’s details when its campaign link is removed (SDD-010 Open items).
+- When a task’s campaign link is removed, its details row is kept and no longer shown, so re-linking restores it (SDD-010 Decisions, P2 default).

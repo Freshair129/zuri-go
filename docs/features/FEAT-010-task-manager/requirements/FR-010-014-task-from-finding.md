@@ -3,8 +3,8 @@ id: FR-010-014
 title: Create a task from a metric finding
 part: FEAT-010-P02
 owner: DOM-CAM
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -20,8 +20,8 @@ The system SHALL let a person create a task from a metric finding with the campa
 - AC-010-014-03 — Given that the details cannot be saved, then no task is created.
 
 ## Implementation
-- Not built as one save. The seed of the form is built in `apps/web/src/content/dashboard/DashboardContent.jsx:108` (`onTask` → `{gate, title, offer, hypothesis, …}`) and saved as a campaign record.
-- Depends on FR-010-009 and FR-010-012.
+- Built locally 2026-10-01: `saveCampaignTask` creates the task and its details in one transaction with an idempotency key; the existing finding flow (Workboard entry through `PUT /workspace`) also writes the details in one transaction and finds its record on a repeat.
+- Tests: `apps/api/test/tasks-api.test.mjs`.
 
 ## Notes
 - The finding itself stays campaign data; only the task it produces is a task record.

@@ -33,7 +33,7 @@ Plan and run campaigns and their content: an objective and targets per campaign,
 - Normal-price sale comes first; a conditional package release needs enough data, and a week change is a review checkpoint, never an automatic approval ([FEAT-002 brief](../../features/FEAT-002-campaign-mission-control/brief.md)).
 - Scheduling a publication records a plan; nothing is posted automatically ([ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) implementation notes).
 - Plan figures are labelled plan/scenario; actuals and benchmarks are never invented ([FEAT-002 brief](../../features/FEAT-002-campaign-mission-control/brief.md)).
-- Proposed: the Workboard shows the campaign’s tasks from the task records of DOM-TSK, and creating a task from a metric finding writes the task and its campaign details in one step ([ADR-003](../../architecture/decisions.md)).
+- Approved 2026-10-01, being built: the Workboard shows the campaign’s tasks from the task records of DOM-TSK, and creating a task from a metric finding writes the task and its campaign details in one step ([ADR-003](../../architecture/decisions.md)).
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
@@ -54,9 +54,9 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 
 | Feature | Part | Role | Delivery |
 |---|---|---|---|
-| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Campaign task details and the campaign Workboard as a view of the task records | declared |
+| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Campaign task details and the campaign Workboard as a view of the task records | building |
 
-**Requirements** — proposed on 2026-10-01, `delivery: declared`; ADR-002 and ADR-003 are not approved.
+**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003.
 
 | Requirement | Part | Title |
 |---|---|---|

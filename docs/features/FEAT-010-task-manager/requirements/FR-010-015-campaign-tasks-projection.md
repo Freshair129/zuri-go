@@ -3,8 +3,8 @@ id: FR-010-015
 title: campaign.tasks stays complete as a projection
 part: FEAT-010-P02
 owner: DOM-CAM
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -23,8 +23,8 @@ The system SHALL build each campaign’s `tasks` array from the task records and
 - AC-010-015-05 — Given a viewer who may not read some campaign tasks (FR-011-007), then their projection omits those tasks.
 
 ## Implementation
-- Not built. Today the array is rebuilt from `legacy_metadata` (`apps/api/workspace.mjs:37`) and written back by `writeCampaigns` (`:68`); snapshots copy `c.tasks` into `records` (`apps/web/src/content/shared/model.mjs:233`) and the summary counts open and closed tasks (`:244`); frozen snapshots sit in the campaign state JSON, which never holds `tasks` itself (SDD-011 Data).
-- Restore goes through `importCommit` (`workspace.mjs:158`).
+- Built locally 2026-10-01: `projectCampaignTask` in `apps/api/campaign-tasks.mjs`, used by `readLegacy`; before the backfill a Workboard task without details keeps its legacy entry with the record's fields laid over it; a restored backup becomes records with details.
+- Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`.
 
 ## Notes
 - Stored snapshots are data the change must not rewrite (ADR-003 D9).

@@ -5,7 +5,7 @@ System-level ADRs ([STD-003 R1](../governance/standards/STD-003-REPOSITORY-DOCUM
 ### ADR-002 — Split DOM-WRK into two domains for every department: DOM-TSK (tasks and projects) and DOM-MTG (meetings)
 Relations: relates_to: ADR-001, ADR-003, ADR-004, FEAT-004, FEAT-010, FEAT-011, PLAN-002
 
-**Status:** proposed — for owner review. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH for the delivery it leads to; this change is documentation only.
+**Status:** approved — by the owner, 2026-10-01. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH for the delivery it leads to; this change is documentation only.
 
 **Context.**
 
@@ -45,7 +45,7 @@ Relations: relates_to: ADR-001, ADR-003, ADR-004, FEAT-004, FEAT-010, FEAT-011, 
 ### ADR-003 — Every task is one record in DOM-TSK; campaign, project and team are contexts of a task
 Relations: relates_to: ADR-002, ADR-004, FEAT-002, FEAT-004, FEAT-010, ARCH-002, PLAN-002
 
-**Status:** proposed — for owner review. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (schema, API and a backfill of existing tasks).
+**Status:** approved — by the owner, 2026-10-01. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (schema, API and a backfill of existing tasks).
 
 **Context.**
 

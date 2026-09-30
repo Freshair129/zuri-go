@@ -4,7 +4,7 @@ title: Moving the existing Workboard tasks
 part: FEAT-010-P02
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -28,4 +28,4 @@ The system SHALL move the existing Workboard tasks into the new model by a revie
 
 ## Notes
 - Delivered in PLAN-002 P4 (WI-10). Deployment is not a database migration or rollback authorization (AGENTS.md).
-- Open — how a Blocked Workboard task with no blocker text is treated (FR-010-006 Notes).
+- A Blocked Workboard task with no blocker text stays valid (FR-010-006 Notes).

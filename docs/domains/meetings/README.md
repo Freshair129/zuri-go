@@ -8,7 +8,7 @@ relations:
 
 # DOM-MTG — Meetings
 
-> **Proposed** by [ADR-002](../../architecture/decisions.md): together with the other half of the split it replaces DOM-WRK.
+> **Adopted** with [ADR-002](../../architecture/decisions.md), approved 2026-10-01: together with the other half of the split it replaces DOM-WRK.
 
 Meetings of every department turned into a reviewed record and owned work: recordings and transcripts from FUNG, reviewed revisions, and drafts of tasks, decisions and questions with quoted evidence — including confidential meetings seen only by their participants.
 
@@ -36,7 +36,7 @@ Meetings of every department turned into a reviewed record and owned work: recor
 ## Business rules
 - A task created from a transcript comes from a reviewed revision and is idempotent: replaying the same request leaves one task ([FEAT-004 verification](../../features/FEAT-004-meeting-task-manager/verification.md)).
 - Sending a transcript to the cloud sends its content to a new destination: the user chooses and sees the scope first ([ARCH-001 §5](../../architecture/ARCH-001-baseline-architecture.md)).
-- Proposed: a meeting creates tasks only through the task records’ contract ([ADR-002](../../architecture/decisions.md)); the contract is the idempotent create of [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) (proposed, [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed)), and tasks from a confidential meeting follow [FR-011-009](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md).
+- Approved 2026-10-01: a meeting creates tasks only through the task records’ contract ([ADR-002](../../architecture/decisions.md)); the contract is the idempotent create of [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) ([SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed)), and tasks from a confidential meeting follow [FR-011-009](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md).
 - Approved 2026-10-01, being built: a confidential meeting is `restricted` to its participants, and its transcript stays on the recording machine unless someone uploads it by an explicit, audited choice ([ADR-004](../../architecture/decisions.md)).
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
@@ -58,7 +58,7 @@ None yet. Proposed, not declared: the meeting intake that would leave FEAT-004 b
 |---|---|---|
 | [FR-011-006](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-006-meeting-visibility.md) | approved, implemented locally | Visibility and participants of meetings |
 | [FR-011-010](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md) | approved, declared | Custody of confidential transcripts |
-| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | proposed, declared | Task API — idempotent create (consumed by the meeting commit) |
+| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | approved, implemented | Task API — idempotent create (consumed by the meeting commit) |
 
 **Participating cross-domain features**
 

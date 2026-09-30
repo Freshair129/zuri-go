@@ -7,7 +7,7 @@
 - GitHub: https://github.com/Freshair129/zuri-go — private repository, default branch `main`.
 - Production: https://zuri-metrics-map.vercel.app/ — Vercel project `zuri-metrics-map`, scope `pornpons-projects`.
 - Read [README](README.md), the [documentation map](docs/README.md) and the [architecture index](docs/architecture/README.md) first. Follow the user's current instructions, approved parent/peer contracts, and applicable nested AGENTS.md. Historical documents are evidence, not newer requirements.
-- Baseline at this update: application 0.4.2; PostgreSQL schema 5 in production and schema 6 on the local database (migration `006_visibility.sql`, FEAT-011 phase P1, built locally and not released). Read `package.json`, migration files and release evidence for later versions; verify live deployment rather than assuming this baseline is current forever.
+- Baseline at this update: application 0.4.2; PostgreSQL schema 5 in production and schema 7 on the local database (migrations `006_visibility.sql`, FEAT-011, and `007_tasks_projects.sql`, FEAT-010 phase P2; built locally and not released). Read `package.json`, migration files and release evidence for later versions; verify live deployment rather than assuming this baseline is current forever.
 
 ## Working method
 
@@ -90,3 +90,5 @@ Run checks appropriate to changed behavior. A documentation-only change needs li
 2026-10-01: restructured `docs/` to the governance standards STD-001–STD-003 (decisions in `docs/governance/decisions.md`, remaining work in `docs/governance/plans/`): features, architecture, operations, domains and services now sit at canonical locations with stable IDs and ownership metadata; added `registry/` and `docs/templates/`. Moved specifications keep their text — only link targets changed, and six documents that became artifacts (ARCH-001–003, SDD-004, RB-001, RB-002) gained STD-002 frontmatter. Documentation-only; no application version, database or deployment change. Requirement decomposition (FR/AC/TC) and validation tooling are pending.
 
 2026-10-01: recorded the approval of ADR-004 and FEAT-011 and the local build of phase P1 (schema 6, migration `006_visibility.sql`, local database only; production still schema 5 and not deployed): baseline, viewer and row-level security facts, local server restart after migrating, the operator-only Business-admin flag, and the Guest rule that still reads the whole workspace until release (interim rule ADR-004 D9). ARCH-002 gained a schema 6 amendment; PRD-001 and BRD-001 reflect the approval. ADR-002 and ADR-003 remain proposed. Documentation-only; no application version, database or deployment change.
+
+2026-10-01: recorded the approval of ADR-002, ADR-003 and FEAT-010 and the local build of phase P2 (schema 7, migration `007_tasks_projects.sql`, local database only; production still schema 5, not deployed): baseline and the Task Manager runbook section. Application version unchanged.

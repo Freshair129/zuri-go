@@ -21,7 +21,7 @@ This is the product-level index: it says which surfaces exist and which feature 
 | Content list and calendar | `tab=content` | FEAT-001 | DOM-BIZ |
 | Goals (weekly / monthly, actual vs target) | `tab=goals` | FEAT-001 | DOM-BIZ |
 | Campaign workspace: Overview, Performance, Plan & Gates, Workboard, Review & Decisions | `tab=campaign-overview&campaign=<id>` and the campaign tabs | [FEAT-002](../features/FEAT-002-campaign-mission-control/feature.md) | DOM-CAM |
-| Meeting & Task Manager | `/?view=1&tab=meeting-task-manager` | [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) | DOM-TSK (proposed, ADR-002) |
+| Meeting & Task Manager | `/?view=1&tab=meeting-task-manager` | [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) | DOM-TSK (ADR-002) |
 | ความรู้ Metrics (guide) | `/metrics/#overview` | [FEAT-003](../features/FEAT-003-metrics-map/feature.md) | DOM-MET |
 | Graph View | `/metrics/#metrics-graph` | FEAT-003 | DOM-MET |
 | Guest mode, sign-in modal, Member badge | upper-right toolbar; write-intent modal | [FEAT-005](../features/FEAT-005-guest-access/feature.md), [FEAT-006](../features/FEAT-006-member-identity/feature.md), [FEAT-007](../features/FEAT-007-single-code-login/feature.md) | DOM-IAM |
@@ -55,9 +55,9 @@ Until PLAN-002 phase P1 is released to production, the interim rule of ADR-004 D
 
 ## Proposed changes (not approved)
 
-[ADR-002 and ADR-003](../architecture/decisions.md) and [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) remain proposed, for the owner's review:
+[ADR-002 and ADR-003](../architecture/decisions.md) were approved on 2026-10-01; phase P2 of [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) is being built:
 
-- **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md)). Boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; a Projects view; and the campaign Workboard as a view of the same tasks. The site menu would name it “Task Manager” next to “Meetings” (PLAN-002 Q9).
+- **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md)). Boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; a Projects view; and the campaign Workboard as a view of the same tasks. The site menu names it “Task Manager” next to “Meetings” (PLAN-002 Q9, decided 2026-10-01).
 
 ## Document notes
 

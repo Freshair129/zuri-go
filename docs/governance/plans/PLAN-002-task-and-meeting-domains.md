@@ -36,10 +36,10 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 | WI-02 | Migration: teams, team members, admin flag, visibility, task viewers, meeting participants, row-level security viewer policies | P1 | `006_visibility.sql`; applied locally 2026-10-01 after a backup (counts reconciled); production not migrated |
 | WI-03 | Viewer-aware reads: `/state`, `/overview`, `/workspace`, attachments, history, AI-summary input, backups | P1 | Built locally 2026-10-01; `apps/api/test/visibility-db.test.mjs` covers all five viewer kinds |
 | WI-04 | UI: visibility and team pickers, team management, a sign-in prompt for Guests where work is hidden | P1 | Built 2026-10-01 (`meeting/Visibility.jsx`); partly browser-checked locally — see FEAT-011 delivery evidence |
-| WI-05 | FR / AC files for FEAT-010; SDD-010; API contract | P2 | Written 2026-10-01 as proposed (FR-010-001…016, NFR-010-001/002, SDD-010 with an API contract section); needs ADR-002/003 and FR approval |
-| WI-06 | Migration: projects; `project_id`, `team_id`, `owner_label`, `completion_rule` and `idempotency_key` on tasks; `campaign_task_details` | P2 | Additive |
-| WI-07 | Task API, shared task rules, deployment allowlist | P2 | `scripts/deploy/build_cloud.py:25` |
-| WI-08 | Boards, Projects view, context pickers, Workboard as a view | P2 | |
+| WI-05 | FR / AC files for FEAT-010; SDD-010; API contract | P2 | FR-010-001…016, NFR-010-001/002 and SDD-010 (with the API contract) approved by the owner 2026-10-01 |
+| WI-06 | Migration: projects; `project_id`, `team_id`, `owner_label`, `completion_rule` and `idempotency_key` on tasks; `campaign_task_details` | P2 | `007_tasks_projects.sql` (plus `project_viewers`; `team_id` exists since 006); applied locally 2026-10-01 after a backup, counts reconciled; production not migrated |
+| WI-07 | Task API, shared task rules, deployment allowlist | P2 | Built locally 2026-10-01: `tasks.mjs`, `projects.mjs`, `campaign-tasks.mjs`, `shared/task-rules.mjs`; allowlist 54 files |
+| WI-08 | Boards, Projects view, context pickers, Workboard as a view | P2 | Built 2026-10-01 (`meeting/Boards.jsx`, Workboard five lanes, “Task Manager” / “Meetings” menu); passed a verify gate; partly browser-checked locally |
 | WI-09 | Meeting participants, confidential meetings, transcript custody, server-side meeting commit | P3 | FR-011-009/010 built locally 2026-10-01 (stubs, audited upload); server-side commit designed as a proposed amendment to SDD-004, not built |
 | WI-10 | Workboard backfill | P4 | Owner authorization for production |
 | WI-11 | ARCH-002 amendment; PRD-001, BRD-001 and AGENTS.md updates | After approval | Done 2026-10-01 for ADR-004 / FEAT-011 (schema 6 local only); ADR-002/003 parts wait for their approval |
@@ -63,7 +63,7 @@ Nothing runs in production until P5; the interim rule above still applies.
 
 ## Decisions needed
 
-Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day; ADR-002 and ADR-003 remain `proposed`, and Q6–Q12 are still open.
+Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day. ADR-002, ADR-003, FEAT-010, its requirements and SDD-010 were approved later on 2026-10-01, with Q6–Q11 as recommended and part of Q16; Q12 is asked again at P4.
 
 | # | Question | Recommendation |
 |---|---|---|
@@ -72,14 +72,14 @@ Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was ap
 | Q3 | Who is the Business admin, managing teams? | **Decided (owner, 2026-10-01):** the owner's own Member, to start |
 | Q4 | May a confidential meeting's transcript ever be uploaded to the cloud? | **Decided (owner, 2026-10-01):** not by default; only as an explicit, audited choice |
 | Q5 | Visibility of the 11 tasks already in production | **Decided (owner, 2026-10-01):** `business` — Guests no longer see them (applied in P1, not before) |
-| Q6 | Can a task belong to a campaign and a project at once? | Yes (ADR-003 D2) |
-| Q7 | Must a campaign task have a due date before Done? | Yes for tasks with a campaign context, as FEAT-002 AC-13 requires today |
-| Q8 | Workboard Backlog and Ready | Map to `planned`, with the original status shown as a badge |
-| Q9 | Names in the site menu | “Task Manager” and “Meetings” |
-| Q10 | Drag to reorder cards within a lane | Later |
-| Q11 | Domain codes DOM-TSK and DOM-MTG | Adopt; they freeze once adopted |
+| Q6 | Can a task belong to a campaign and a project at once? | **Decided (owner, 2026-10-01):** yes (ADR-003 D2) |
+| Q7 | Must a campaign task have a due date before Done? | **Decided (owner, 2026-10-01):** yes for tasks with a campaign context, as FEAT-002 AC-13 requires today |
+| Q8 | Workboard Backlog and Ready | **Decided (owner, 2026-10-01):** map to `planned`, with the original status shown as a badge |
+| Q9 | Names in the site menu | **Decided (owner, 2026-10-01):** “Task Manager” and “Meetings” |
+| Q10 | Drag to reorder cards within a lane | **Decided (owner, 2026-10-01):** later |
+| Q11 | Domain codes DOM-TSK and DOM-MTG | **Decided (owner, 2026-10-01):** adopt; they freeze once adopted |
 | Q12 | Production backfill of Workboard tasks (P4) | Asked again at P4, with the dry-run report |
 | Q13 | Do evidence quotes kept inside a task's `sourceRefs`, and meeting text copied into a task description, count as transcript under FR-011-010? | Today they are withheld only from readers who cannot read the meeting; WI-09 proposes keeping quotes only in `meeting_task_links` |
 | Q14 | When a restricted meeting is widened, does its transcript custody return to `cloud` automatically? | No — stays `local_only` until an explicit, audited upload |
 | Q15 | The WI-09 open questions (update/link of existing tasks, `team` meetings, viewer snapshot, quote spans, who may commit, release staging) | See the proposed amendment at the end of SDD-004 |
-| Q16 | FEAT-010 open items (people named on a project, project progress, “my tasks”, blocked Workboard tasks without blocker text) | See SDD-010 Open items |
+| Q16 | FEAT-010 open items (people named on a project, project progress, “my tasks”, blocked Workboard tasks without blocker text) | **Decided (owner, 2026-10-01):** a project’s owner and its listed viewers are named on it, and a project must have an owner; “my tasks” are those whose R or A is the Member. The remaining items are P2 defaults in SDD-010 “Decisions”, for confirmation |

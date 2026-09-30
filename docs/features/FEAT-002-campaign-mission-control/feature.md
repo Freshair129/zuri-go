@@ -45,4 +45,4 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 
 ## Notes
 - Served from the unified site ([FEAT-008](../FEAT-008-unified-site/feature.md)); the documents describe the feature as delivered in 0.2.0 and their file paths describe the original repository.
-- Proposed ([ADR-003](../../architecture/decisions.md)): the Workboard becomes a view of the task records, delivered by part P02 of [FEAT-010](../FEAT-010-task-manager/feature.md); the approved text here stays until FR files supersede it.
+- Approved 2026-10-01, being built ([ADR-003](../../architecture/decisions.md)): the Workboard becomes a view of the task records, delivered by part P02 of [FEAT-010](../FEAT-010-task-manager/feature.md); the approved text here stays until FR files supersede it.

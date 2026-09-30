@@ -3,8 +3,8 @@ id: FR-010-009
 title: Task API — idempotent create and versioned update
 part: FEAT-010-P01
 owner: DOM-TSK
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -24,9 +24,8 @@ The system SHALL provide per-task operations to create a task with an idempotenc
 - AC-010-009-07 — Given a create that fails after the task row is written — on its RACI, viewers or contexts — then no part of the task remains (FEAT-004 MT-13).
 
 ## Implementation
-- Not built; there is no task endpoint. Tasks are written only by replacing the workspace (`PUT /workspace`, `apps/api/api.mjs:40`; `saveLegacy`, `apps/api/workspace.mjs:141`) under one Business-wide revision.
-- Patterns to follow: the `publications` idempotency key (`001_core.sql:51-53`, `UNIQUE(business_id,idempotency_key)`), the row-version check in `save` (`apps/api/service.mjs:35`), and the unknown-field refusal in the same function.
-- Contract outline: SDD-010 “API contract (proposed)”.
+- Built locally 2026-10-01: `idempotency_key` / `idempotency_hash` with a unique partial index; `idempotencyOutcome`; `row_version` compared before every update, which raises it by exactly one; one transaction per request.
+- Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (hosted routes). AC-010-009-05 waits for the server-side meeting commit (WI-09).
 
 ## Notes
 - The whole-workspace save stays for compatibility (FR-010-011).

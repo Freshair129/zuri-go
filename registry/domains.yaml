@@ -1,8 +1,8 @@
 # Domain registry (STD-003 R5) — the only place a domain's classification is written.
 # code: frozen identity (STD-002 R3); slug and name may change.
 # subdomain: core | supporting | generic      role: foundation | business | platform
-# Classification below is proposed — see ADR-001 (docs/governance/decisions.md) and, for DOM-TSK / DOM-MTG,
-# ADR-002 (docs/architecture/decisions.md). A superseded code stays listed so it is never reused.
+# Classification below is proposed — see ADR-001 (docs/governance/decisions.md) — except DOM-TSK / DOM-MTG, adopted with
+# ADR-002 (docs/architecture/decisions.md), approved 2026-10-01; their codes are frozen. A superseded code stays listed so it is never reused.
 domains:
   - code: DOM-BIZ
     slug: business

@@ -3,8 +3,8 @@ id: FR-010-007
 title: Completion rule
 part: FEAT-010-P01
 owner: DOM-TSK
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -19,12 +19,12 @@ The system SHALL allow a new completion only for a task that has an R, a confirm
 - AC-010-007-02 — Given a task that names a KPI, or whose campaign details name a gate, and has no recheck date, when it is moved to `done`, then the move is refused.
 - AC-010-007-03 — Given a Workboard task that is Done before the change, then it is still Done after it, carries the marker `workboard`, and is not re-checked against the new rule.
 - AC-010-007-04 — Given a task marked `workboard`, when it is moved out of `done` and back, then the new completion must satisfy AC-010-007-01 and AC-010-007-02 and the marker becomes `standard`.
-- AC-010-007-05 — Given a task with a campaign context and no due date, when it is moved to `done`, then the move is refused (assumption — PLAN-002 Q7, open).
+- AC-010-007-05 — Given a task with a campaign context and no due date, when it is moved to `done`, then the move is refused (PLAN-002 Q7, decided 2026-10-01).
 
 ## Implementation
-- Not built as one rule. The Meeting & Task Manager rule is in `saveTask` (`apps/web/src/content/meeting/model.mjs:52-54`): R, confirmed A, confirmed acceptance, evidence, and a recheck date when `kpi` is set. The Workboard rule is different (`apps/web/src/content/shared/model.mjs:89-90`): evidence, acceptance, an owner as text, a due date and a recheck date.
-- The marker is the planned `tasks.completion_rule` (SDD-010 Data).
+- Built locally 2026-10-01: `completionError` and `saveError` (`shared/task-rules.mjs`); column `tasks.completion_rule`; a Workboard task Done before the change counts as `workboard` until the backfill (`present` in `apps/api/tasks.mjs`, `writeWorkboardEntry` in `apps/api/campaign-tasks.mjs`).
+- Tests: `apps/api/test/task-rules.test.mjs`, `apps/api/test/tasks-api.test.mjs`.
 
 ## Notes
-- Assumption — PLAN-002 Q7 recommends “yes” because FEAT-002 AC-13 needs a due date on closing a campaign task today; AC-010-007-05 stands or falls with that answer.
+- Decided — PLAN-002 Q7 (owner, 2026-10-01): yes, as the campaign Workboard requires a due date before Done today (`apps/web/src/content/shared/model.mjs:90`).
 - ADR-003 D7 keeps the gate and KPI recheck of the Workboard rule; the recheck date is the same field in both (`tasks.recheck_date`).

@@ -3,8 +3,8 @@ id: FR-010-003
 title: Projects
 part: FEAT-010-P01
 owner: DOM-TSK
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -25,11 +25,10 @@ The system SHALL let a signed-in Member create, change and archive projects that
 - AC-010-003-07 — Given a Guest, when they try to create or change a project, then it is refused with 401.
 
 ## Implementation
-- Not built: there is no `projects` table. The `project_label` text on a task (`apps/api/migrations/001_core.sql:95`) is the only trace of a project today (FR-010-004).
-- Codes follow the existing counters: `allocate` (`apps/api/service.mjs:32`) gains `projects`.
-- Visibility and widening of a project are FR-011-004 and FR-011-011, which already name projects; this file does not restate them.
+- Built locally 2026-10-01: table `projects` and `project_viewers` (`apps/api/migrations/007_tasks_projects.sql`), `apps/api/projects.mjs` (list, page with counts, create, update), routes `/projects`; `PRJ-nnnn` from `allocate`.
+- Tests: `apps/api/test/tasks-api.test.mjs`. UI: Projects view and project page in `apps/web/src/content/meeting/Boards.jsx`.
 
 ## Notes
-- **Open — progress.** ADR-003 D3 lists “progress” among a project’s fields but no approved document says how it is computed. This requirement shows counts per status (AC-010-003-05) and leaves any percentage to the owner (SDD-010 Open items).
-- **Open — who is named on a restricted project.** FR-011-004 lets “the people named on it” read a `team` or `restricted` item, but FR-011-005 names people on tasks only. Until the owner decides, the `projects` audience policy cannot be written (SDD-010 Open items).
+- **Progress** is the task count per status (AC-010-003-05); no percentage (SDD-010 Decisions, P2 default).
+- **Named on a project** (owner, 2026-10-01): its owner and its listed viewers (`project_viewers`); a project must have an owner Member.
 - Creating a project from a name alone follows the rule of FR-010-001 by analogy; the owner may require an owner Member at creation.

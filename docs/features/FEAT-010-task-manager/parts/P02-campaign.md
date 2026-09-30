@@ -3,8 +3,8 @@ id: FEAT-010-P02
 title: Task Manager for every department — Campaign & content
 owner: DOM-CAM
 runtime: SRV-001
-delivery: declared
-status: proposed
+delivery: building
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-002, ADR-003]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-010-P02 — Campaign task details and the campaign Workboard as a view of the task records
 
-Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). Proposed, not built.
+Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). Approved 2026-10-01; P2 built locally (API), UI in progress.
 
 ## Scope
 - Campaign-only fields of a task (gate, offer, hypothesis, action, estimate, outcome, Low/Medium/High priority, original Workboard status).
@@ -26,7 +26,7 @@ Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/
 Writes a task only through the FEAT-010-P01 contract, in the same transaction as its detail row.
 
 ## Requirements
-Proposed on 2026-10-01; none is approved (ADR-002 and ADR-003 are `proposed`).
+Approved by the owner on 2026-10-01.
 - [FR-010-012](../requirements/FR-010-012-campaign-task-details.md) — Campaign task details
 - [FR-010-013](../requirements/FR-010-013-workboard-as-view.md) — The Workboard as a view of the task records
 - [FR-010-014](../requirements/FR-010-014-task-from-finding.md) — Create a task from a metric finding

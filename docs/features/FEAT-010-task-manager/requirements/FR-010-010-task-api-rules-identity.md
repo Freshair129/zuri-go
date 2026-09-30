@@ -3,8 +3,8 @@ id: FR-010-010
 title: Task API — rules, identity and audience on the server
 part: FEAT-010-P01
 owner: DOM-TSK
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -24,8 +24,8 @@ The system SHALL check the task rules on the server for every write, take the ac
 - AC-010-010-06 — Given a change of visibility or team through the API, then FR-011-011 decides whether it is allowed and how it is audited.
 
 ## Implementation
-- Not built for tasks. Guest writes are already refused before the handler (`apps/api/cloud.mjs:28`) and `authorizeWrite` takes the actor from the viewer that `transaction()` resolved (`apps/api/member-auth.mjs:27`); reads are already filtered by `canRead` (`apps/web/src/content/shared/visibility.mjs:13`) and row-level security (FEAT-011, built locally).
-- The rules exist only in the browser today (`apps/web/src/content/meeting/model.mjs:35-57`); moving them into a module shared by the API and the UI is SDD-010 Components.
+- Built locally 2026-10-01: `cleanInput` refuses unknown fields and ignores `actor`, `memberId`, `pid`; writes need a Member (401); unreadable tasks answer 404; one audit event per create or update; visibility changes follow FR-011-011.
+- Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs`.
 
 ## Notes
 - “Guest 401” is for writes. A Guest’s reads are allowed and return public items only (FR-011-007).

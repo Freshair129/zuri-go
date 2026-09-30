@@ -1,7 +1,7 @@
 ---
 id: SDD-010
 title: Task Manager for every department — design
-status: proposed
+status: approved
 relations:
   decided_by: [ADR-002, ADR-003]
   relates_to: [SDD-011, SDD-004, PLAN-002]
@@ -9,7 +9,7 @@ relations:
 
 # SDD-010 — Task Manager for every department — design
 
-> **Proposed, not built.** Designs the proposed requirements [FR-010-001…016 and NFR-010-001, NFR-010-002](feature.md#requirement-index). [ADR-002 and ADR-003](../../architecture/decisions.md) are still `proposed`, so this design, the requirements and the feature wait for the owner’s approval; nothing here is approved, and the schema change and any production change each need their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)). The code cited below exists today unless it is marked *proposed*; line numbers refer to the baseline commit `d57cd9f`.
+> **Approved by the owner on 2026-10-01; phase P2 is being built.** Designs the approved requirements [FR-010-001…016 and NFR-010-001, NFR-010-002](feature.md#requirement-index) under [ADR-002 and ADR-003](../../architecture/decisions.md). Code cited below exists today unless it is marked *proposed*; line numbers refer to the baseline commit `d57cd9f`. The migration needs its own authorization locally and again for production.
 
 ## Scope and delivery
 
@@ -20,7 +20,7 @@ relations:
 | P4 — Workboard consolidation | FR-010-016 | WI-10; owner authorization for production |
 
 - **Visibility is FEAT-011’s and already built locally.** This design reuses `canRead`, `visibilityChange`, the `visibility` and `team_id` columns of `tasks` and the layered policies of `006_visibility.sql`; it restates none of them ([FR-011-004](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-004-task-project-visibility.md)). It only adds the same columns and policy to `projects`, as [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) reserved.
-- **No product decision is taken here.** Where the approved documents are silent, the question is listed in Open items; answers marked “assumption” follow the recommendations of PLAN-002 Q6–Q12, which are open.
+- **Decisions** taken with the approval are listed under “Decisions (2026-10-01)” below.
 - **Campaign records, Member profiles and the meeting pipeline are out of scope** beyond the task contract they call.
 
 ## Components
@@ -82,7 +82,7 @@ ARCH-001 §5 and ARCH-002 §5.1 ask for a mapping manifest before legacy fields 
 |---|---|---|
 | `id` | `legacy_metadata.id`, unchanged | The row ID is already derived from it (`safeId`, `workspace.mjs:9`) |
 | `title`, `description` | `tasks.title`, `tasks.description` | Already written (`:68`) |
-| `status` | `tasks.status` (Backlog and Ready → `planned`) and `campaign_task_details.original_status` | FR-010-013 shows the original as a badge (assumption — Q8) |
+| `status` | `tasks.status` (Backlog and Ready → `planned`) and `campaign_task_details.original_status` | FR-010-013 shows the original as a badge (Q8, decided 2026-10-01) |
 | `owner` | `tasks.owner_label` | No Member is bound (FR-010-008) |
 | `due` | `tasks.due_date` | Already written (`:68`) |
 | `priority` | `campaign_task_details.priority` | Never converted to MoSCoW |
@@ -127,14 +127,14 @@ An outline for review, not a declaration: API- artifacts wait for PLAN-001 WI-09
 | Request | Purpose | Who | Answer |
 |---|---|---|---|
 | `GET /tasks?board=all\|campaign\|project\|team\|unlinked\|mine&campaign_id=&project_id=&team_id=&status=` | Tasks of a board, readable by the viewer | Guest (public only), Member, operator | `{tasks}`; `board=mine` needs a Member, else 401 |
-| `GET /tasks/:id` | One task with roles, viewers, contexts and, for a campaign task, its details | as above | `{task}`; 404 when unreadable |
-| `POST /tasks` | Create. Body: `idempotency_key` (uuid, required), `title` (required) and any of `description`, `deliverable`, `due_date`, `acceptance`, `evidence`, `blocker`, `kpi_note`, `recheck_date`, `status`, `campaign_id`, `project_id`, `team_id`, `content_item_id`, `goal_id`, `visibility`, `viewer_ids`, `roles` (`R`, `A`, `A_confirmed`, `C[]`, `I[]`) | Member, operator | `{task}`; a replay returns the same `{task}` |
-| `PATCH /tasks/:id` | Update, including a status move. Body: `row_version` (required) and the fields above, plus `visibility_reason` (sent once, never stored) | Member, operator | `{task}`; 409 when stale; 422 `BLOCKER_REQUIRED` etc. |
-| `GET /projects`, `GET /projects/:id` | Projects readable by the viewer; the page adds task counts per status | as for tasks | `{projects}`, `{project, counts}` |
-| `POST /projects`, `PATCH /projects/:id` | Create with `name` (required) and optional `description`, `status`, `owner_member_id`, `team_id`, `planned_start`, `planned_end`, `visibility`; update with `row_version` | Member, operator | `{project}` |
-| `POST /campaigns/:campaignId/tasks`, `PATCH /campaigns/:campaignId/tasks/:taskId` | Campaign task: the task fields above plus `details` (`gate`, `offer`, `hypothesis`, `action`, `estimate`, `priority`, `original_status`, `outcome`), written together | Member, operator | `{task}` with `details` |
+| `GET /tasks/:id` | One task with roles, viewers, contexts and, for a campaign task, its details | as above | the task object; 404 when unreadable |
+| `POST /tasks` | Create. Body: `idempotency_key` (uuid, required), `title` (required) and any of `description`, `deliverable`, `due_date`, `acceptance`, `evidence`, `blocker`, `kpi_note`, `recheck_date`, `status`, `campaign_id`, `project_id`, `team_id`, `content_item_id`, `goal_id`, `visibility`, `viewer_ids`, `roles` (`R`, `A`, `A_confirmed`, `C[]`, `I[]`) | Member, operator | the task object; a replay returns the same task |
+| `PATCH /tasks/:id` | Update, including a status move. Body: `row_version` (required) and the fields above, plus `visibility_reason` (sent once, never stored) | Member, operator | the task object; 409 when stale; 422 `BLOCKER_REQUIRED` etc. |
+| `GET /projects`, `GET /projects/:id` | Projects readable by the viewer; the page adds task counts per status | as for tasks | `{projects}`; `{project, tasks, counts}` |
+| `POST /projects`, `PATCH /projects/:id` | Create with `name` (required) and optional `description`, `status`, `owner_member_id`, `team_id`, `planned_start`, `planned_end`, `visibility`; update with `row_version` | Member, operator | the project object |
+| `POST /campaigns/:campaignId/tasks`, `PATCH /campaigns/:campaignId/tasks/:taskId` | Campaign task: the task fields above plus `details` (`gate`, `offer`, `hypothesis`, `action`, `estimate`, `priority`, `original_status`, `outcome`), written together | Member, operator | the task object with `details` |
 
-- **Rule codes** (422) come from `task-rules.mjs`: `TITLE_REQUIRED`, `STATUS_INVALID`, `BLOCKER_REQUIRED`, `R_REQUIRED`, `A_UNCONFIRMED`, `ACCEPTANCE_UNCONFIRMED`, `EVIDENCE_REQUIRED`, `RECHECK_REQUIRED`, `DUE_REQUIRED` (assumption — Q7), `CONTEXT_CONFLICT`. The visibility errors keep their FEAT-011 codes and statuses (`CHANGE_ERRORS`, `workspace.mjs:72`).
+- **Rule codes** (422) come from `task-rules.mjs`: `TITLE_REQUIRED`, `STATUS_INVALID`, `BLOCKER_REQUIRED`, `R_REQUIRED`, `A_UNCONFIRMED`, `ACCEPTANCE_UNCONFIRMED`, `EVIDENCE_REQUIRED`, `RECHECK_REQUIRED`, `DUE_REQUIRED` (Q7, decided 2026-10-01), `CONTEXT_CONFLICT`. The visibility errors keep their FEAT-011 codes and statuses (`CHANGE_ERRORS`, `workspace.mjs:72`).
 - **Unknown fields** are refused with 422; `actor`, `memberId` and `pid` are ignored (FR-010-010).
 - **Campaign-only fields** sent to `/tasks` are refused; they are accepted only under `/campaigns/…` (FR-010-012).
 - **Compatibility.** `GET` and `PUT /workspace` are unchanged in shape (FR-010-011).
@@ -165,7 +165,7 @@ Signatures marked **pure** have no I/O; each lists acceptance examples and holdo
   - holdout: a blocker present, moved to `blocked` → null; `toStatus = 'archived'` → `STATUS_INVALID`; moved to `done` without evidence → the code of `completionError`.
 - **FR-010-007** · `shared/task-rules.mjs` · `completionError(task) → code | null` — **pure**, *proposed*.
   - acceptance: R, confirmed A, confirmed acceptance and evidence present → null; evidence empty → `EVIDENCE_REQUIRED`.
-  - holdout: `kpi` set and no recheck date → `RECHECK_REQUIRED`; a campaign gate set and no recheck date → `RECHECK_REQUIRED`; a campaign context and no due date → `DUE_REQUIRED` (assumption — Q7); A present but not confirmed → `A_UNCONFIRMED`.
+  - holdout: `kpi` set and no recheck date → `RECHECK_REQUIRED`; a campaign gate set and no recheck date → `RECHECK_REQUIRED`; a campaign context and no due date → `DUE_REQUIRED` (Q7, decided 2026-10-01); A present but not confirmed → `A_UNCONFIRMED`.
 - **FR-010-002** · `shared/task-rules.mjs` · `contextError(task, {contentItem, goal}) → code | null` — **pure**, *proposed*.
   - acceptance: task campaign B with a content item of campaign A → `CONTEXT_CONFLICT`; no contexts → null.
   - holdout: a goal of campaign A and the task in campaign A → null; content item and goal of different campaigns → `CONTEXT_CONFLICT`.
@@ -203,18 +203,33 @@ TC IDs are not assigned yet (PLAN-001 WI-08); these are the planned tests and th
 5. A migration and backfill rehearsal on a QA Business: equal counts before and after the migration; dry run, run, second run (FR-010-016).
 6. The UI (boards, pickers, Workboard view): checked with approved browser tools, or reported as not run.
 
+## Decisions (2026-10-01)
+
+Taken by the owner with the approval, or, where marked *default*, taken for P2 as the reversible, conservative reading, for the owner to confirm.
+
+- **PLAN-002 Q6–Q11 as recommended:** a task may have a campaign and a project at once; a task with a campaign context needs a due date before Done; Backlog and Ready become `planned` with the original status as a badge; menu names “Task Manager” and “Meetings”; no reordering within a lane yet; DOM-TSK and DOM-MTG are adopted and frozen. Q12 is asked again at P4.
+- **People named on a project (owner):** its owner and an explicit viewers list, `project_viewers`, like `task_viewers`. A project must have an owner Member.
+- **“My tasks” (owner):** tasks whose R or A is the Member.
+- **Project progress (*default*):** task counts per status, as FR-010-003 states; no percentage.
+- **Blocked Workboard tasks without a blocker (*default*):** kept valid; the blocker is required only when a person moves a task into Blocked.
+- **Backlog and Ready on the campaign form (*default*, as built):** the Workboard form keeps its six statuses, which map onto the five lanes (Backlog and Ready → `planned`, kept as the badge); the Workboard counts and filters by the five lanes.
+- **Removing a campaign link from a task with details (*default*):** the details row is kept and no longer shown, so re-linking restores it; nothing is deleted.
+- **Before the backfill (P4) (*design change*):** a campaign task without a details row is projected from its `legacy_metadata`, not omitted, so the Workboard keeps every task until FR-010-016 runs.
+- **`PUT /workspace` after P3:** decided with WI-09, not in P2.
+
+## Changes found while building P2 (2026-10-01)
+
+- **Done Workboard tasks before the backfill.** The new column defaults to `standard` and the migration may not rewrite rows (NFR-010-002), so a campaign-legacy task that is Done and has no details row is served and saved as `workboard` until P4 records it (AC-010-007-03).
+- **Workboard saves write details.** `writeWorkboardEntry` gives a Workboard task its details row and owner label the first time it is saved, the same values the backfill would write; untouched tasks wait for P4.
+- **A new completion from the Workboard follows the standard rule.** Moving a Workboard task to Done through `PUT /workspace` now needs an R, a confirmed A, acceptance and evidence (FR-010-007); Workboard users bind an R first.
+- **Tasks created in the Task Manager for a campaign** appear in its Workboard (`campaign.tasks`) and a Workboard save lands on the same record; its `source_kind` and metadata are kept.
+- **One UPDATE per task write.** The people are written first and the fields and new audience in one `UPDATE`, so `row_version` rises by one; removing oneself while restricting is refused (`SELF_EXCLUDED`).
+- **Idempotent campaign creates** store details only when none exist, so a replay never changes them.
+- **History of projects** uses a new restrictive policy `follows_project` beside `follows_entity`, which stays unchanged (additive migration).
+- **Response shapes** (as built): a single task or project is returned as the object itself; lists are `{tasks}` and `{projects}`; a project page is `{project, tasks, counts}`.
+- **Hosted query parameters** reach the handler through the rewrite's query string (`route=…&board=…`).
+
 ## Open items
 
-These need the owner before the requirements are approved; none is decided here.
-
-- **ADR-002 and ADR-003 are not approved.** PLAN-002 Q6–Q12 are open: Q6 project and campaign together, Q7 due date before Done, Q8 Backlog and Ready, Q9 menu names, Q10 reordering, Q11 domain codes, Q12 the production backfill.
-- **Who is named on a restricted or team project.** FR-011-004 lets “people named on it” read such an item; only tasks have RACI and viewers (FR-011-005). Options: the owner only; or a named-viewers list for projects like `task_viewers`. The `projects` policy waits for this.
-- **Progress of a project.** ADR-003 D3 names it, no document defines it. The requirements show counts per status only (FR-010-003).
-- **What “my tasks” includes.** The R only, the R and A, or all four RACI roles (FR-010-005).
-- **Blocked Workboard tasks with no blocker.** Whether editing one, without a status change, needs a blocker (FR-010-006, FR-010-016).
-- **Backlog and Ready on the campaign form.** Whether the Workboard form still lets a person choose them (FR-010-013).
-- **Removing a campaign link from a task that has details.** Keep, hide or delete the details row (FR-010-012).
-- **`PUT /workspace` after P3.** A refusal, or a success that reports ignored tasks (FR-010-011).
-- **Whether a project may be created without an owner Member** (FR-010-003); without one only the operator can widen it (FR-011-011).
 - **API- / EVT- contracts.** The boundaries are in-process calls within SRV-001; their declarations wait for PLAN-001 WI-09.
 - **Before building the schema:** the migration needs its own authorization, locally and again for production; the production backfill needs another (PLAN-002 Q12).

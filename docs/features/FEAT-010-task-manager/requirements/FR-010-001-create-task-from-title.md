@@ -3,8 +3,8 @@ id: FR-010-001
 title: Create a task from a title alone
 part: FEAT-010-P01
 owner: DOM-TSK
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-003]
@@ -21,8 +21,8 @@ The system SHALL let a signed-in Member create a task in any department from a t
 - AC-010-001-04 — Given a Guest, when they try to create a task, then it is refused with 401 (FR-010-010).
 
 ## Implementation
-- Not built as a per-task operation. Today a task is created by replacing the whole workspace: `saveTask` (`apps/web/src/content/meeting/model.mjs:35`) requires only the title (`required(input.title…,'ชื่องาน')`), defaults the status to `planned`, and `writeDomain` (`apps/api/workspace.mjs:74`) allocates the code through `allocate` (`apps/api/service.mjs:32`).
-- The per-task operation is FR-010-009.
+- Built locally 2026-10-01 (schema 7, not deployed): `createTask` / `updateTask` in `apps/api/tasks.mjs`, routes `POST /tasks` and `PATCH /tasks/:id` in `apps/api/api.mjs`; `TSK-nnnn` from `allocate`.
+- Tests: `apps/api/test/tasks-api.test.mjs` (create from a title, fill in later, Guest 401).
 
 ## Notes
 - A department is a team context of the task (FR-010-002), so “in any department” is satisfied by giving the team at creation or later; it is never required.

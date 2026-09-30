@@ -40,6 +40,14 @@ Migration `006_visibility.sql` adds teams, the Business-admin flag, visibility l
 - **Business admin.** `npm run members -- --admin ZGO-Pnnnn` grants it and `--no-admin ZGO-Pnnnn` removes it (add `--cloud` for production). Each change is audited; the runtime role cannot change the flag. An admin manages teams but reads nothing extra.
 - **Rollback.** Code from before FEAT-011 on a schema-6 database reads as a Guest and shows no business work. Plan a rollback together with the schema; there is no down-migration.
 
+## Task Manager (FEAT-010, schema 7)
+
+Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign_task_details` and, on `tasks`, `project_id`, `owner_label`, `completion_rule` and the idempotency columns. It is additive: existing rows keep their values, and `completion_rule` reads `standard` until the backfill (PLAN-002 P4). It was applied to the local database on 2026-10-01 after `npm run backup`; production is still schema 5, and a release must apply 006 and 007 together with their code.
+
+- **Restart after migrating**, as for schema 6.
+- **Moving a Workboard task to Done** now needs an R and the standard completion rule; tasks already Done keep their state.
+- **Rollback.** Code from before FEAT-010 ignores the new columns and tables; plan it together with FEAT-011's rollback note above.
+
 ## Identity-code login (0.4.2)
 
 Members enter their existing personal code in the single masked field **รหัสระบุตัวตน**; no PID input is needed. PID remains on Member records and in operator reset commands. An ambiguous code is denied even if another matching credential is disabled; only an explicitly authorized operator reset can resolve it. No code rotation or migration is needed for this release. Login evaluates all credentials within the Business (currently four scrypt checks); rate limits remain enabled.

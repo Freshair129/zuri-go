@@ -3,8 +3,8 @@ id: FEAT-010-P01
 title: Task Manager for every department — Tasks & projects
 owner: DOM-TSK
 runtime: SRV-001
-delivery: declared
-status: proposed
+delivery: building
+status: approved
 relations:
   specified_by: [SDD-010]
   decided_by: [ADR-002, ADR-003]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-010-P01 — Task records, projects, contexts, boards and the task API
 
-Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Proposed, not built.
+Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Approved 2026-10-01; P2 built locally (API), UI in progress.
 
 ## Scope
 - Tasks with contexts, projects, boards, the completion rule, owner labels and the per-task API.
@@ -26,7 +26,7 @@ Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/REA
 Exposes the task contract. FEAT-010-P02 and meeting commits write tasks only through it.
 
 ## Requirements
-Proposed on 2026-10-01; none is approved (ADR-002 and ADR-003 are `proposed`).
+Approved by the owner on 2026-10-01.
 - [FR-010-001](../requirements/FR-010-001-create-task-from-title.md) — Create a task from a title alone
 - [FR-010-002](../requirements/FR-010-002-task-contexts.md) — Contexts of a task
 - [FR-010-003](../requirements/FR-010-003-projects.md) — Projects

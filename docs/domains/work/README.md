@@ -6,7 +6,7 @@ status: superseded
 
 # DOM-WRK — Work (tasks & meetings)
 
-**Superseded (proposed) by [DOM-TSK](../tasks/README.md), [DOM-MTG](../meetings/README.md)** — [ADR-002](../../architecture/decisions.md). This domain was proposed by ADR-001 D4 and never adopted. The file stays so that the code is never reused (STD-002 R3); if ADR-002 is rejected, this domain returns as it was.
+**Superseded by [DOM-TSK](../tasks/README.md), [DOM-MTG](../meetings/README.md)** — [ADR-002](../../architecture/decisions.md). This domain was proposed by ADR-001 D4 and never adopted; ADR-002 was approved on 2026-10-01. The file stays so that the code is never reused (STD-002 R3).
 
 ## Former scope
 Turn decisions and meetings into owned, prioritised, evidenced work: tasks with RACI and a MoSCoW priority per week, weekly plans, meeting intake through reviewed FUNG transcripts, and evidence attachments.

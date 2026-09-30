@@ -8,7 +8,7 @@ relations:
 
 # DOM-TSK — Tasks & projects
 
-> **Proposed** by [ADR-002](../../architecture/decisions.md): together with the other half of the split it replaces DOM-WRK.
+> **Adopted** with [ADR-002](../../architecture/decisions.md), approved 2026-10-01: together with the other half of the split it replaces DOM-WRK.
 
 The work of every department — sales, production, accounting, HR and marketing — as one set of tasks: created from a name, assigned with RACI, prioritised per week, tracked to Done with evidence, and grouped by campaign, project or team. Projects gather work that is not part of a campaign.
 
@@ -40,7 +40,7 @@ The work of every department — sales, production, accounting, HR and marketing
 - A task can be created from a name alone; details and RACI are filled in later ([FEAT-004 brief](../../features/FEAT-004-meeting-task-manager/brief.md)).
 - MoSCoW priority is per task and week; Won’t is shelved, not Done, and unprioritised tasks are shown separately ([FEAT-004 guide](../../features/FEAT-004-meeting-task-manager/guide.md)).
 - Evidence files: at most 5 active files per task and 2 MiB each ([FEAT-005 spec](../../features/FEAT-005-guest-access/spec.md)).
-- Proposed: every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its proposed requirements are listed under “Requirements” below; none is approved.
+- Approved 2026-10-01, being built: every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
 - Approved 2026-10-01, being built: a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)).
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
@@ -57,9 +57,9 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 | Feature | Title | Delivery |
 |---|---|---|
 | [FEAT-004](../../features/FEAT-004-meeting-task-manager/feature.md) | Meeting & Task Manager | implemented |
-| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | declared (proposed; design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
+| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | building (design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
 
-**Requirements** — proposed on 2026-10-01, `delivery: declared`; ADR-002 and ADR-003 are not approved. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
+**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
 
 | Requirement | Part | Title |
 |---|---|---|
