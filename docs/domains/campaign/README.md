@@ -56,5 +56,15 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 |---|---|---|---|
 | [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Campaign task details and the campaign Workboard as a view of the task records | declared |
 
+**Requirements** — proposed on 2026-10-01, `delivery: declared`; ADR-002 and ADR-003 are not approved.
+
+| Requirement | Part | Title |
+|---|---|---|
+| [FR-010-012](../../features/FEAT-010-task-manager/requirements/FR-010-012-campaign-task-details.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Campaign task details |
+| [FR-010-013](../../features/FEAT-010-task-manager/requirements/FR-010-013-workboard-as-view.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | The Workboard as a view of the task records |
+| [FR-010-014](../../features/FEAT-010-task-manager/requirements/FR-010-014-task-from-finding.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Create a task from a metric finding |
+| [FR-010-015](../../features/FEAT-010-task-manager/requirements/FR-010-015-campaign-tasks-projection.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | campaign.tasks stays complete as a projection |
+| [FR-010-016](../../features/FEAT-010-task-manager/requirements/FR-010-016-move-workboard-tasks.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Moving the existing Workboard tasks |
+
 **Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md)
 <!-- END GENERATED -->

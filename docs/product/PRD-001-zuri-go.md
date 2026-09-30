@@ -3,7 +3,8 @@ id: PRD-001
 title: Zuri-Go — product requirements (product level)
 status: proposed
 relations:
-  relates_to: [BRD-001]
+  decided_by: [ADR-004]
+  relates_to: [BRD-001, FEAT-011]
 ---
 
 # PRD-001 — Zuri-Go: product requirements (product level)
@@ -41,16 +42,22 @@ Every row belongs to exactly one Business, and a session reads the one configure
 4. User-facing copy is Thai with the existing English technical and product labels; the brand rules and approved assets govern visuals ([DOM-BRN](../domains/brand/README.md), [FEAT-009](../features/FEAT-009-logo-placement/feature.md)).
 5. Plan and scenario figures are labelled as such; actuals and benchmarks are never invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 6. Navigation, deployment and repository-layout changes do not reinterpret KPI definitions, formulas, targets, RACI, MoSCoW, Guest policy or Member identity ([FEAT-008 spec](../features/FEAT-008-unified-site/spec.md); [migration record](../migrations/verification.md)).
+7. Content is shown only to its audience, and the API and the database both enforce it ([ADR-004](../architecture/decisions.md), approved 2026-10-01; [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). This rule is built locally but **not yet in force in production**: until FEAT-011 is released, rule 1 still lets Guests read the whole workspace and the interim rule below applies.
+
+## Approved, built locally, not released
+
+[ADR-004](../architecture/decisions.md) and [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) were approved by the owner on 2026-10-01. [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) phase P1 is built locally (PostgreSQL schema 6, migration `006_visibility.sql` on the local database only); production is still schema 5 and nothing is released.
+
+- **Visibility, teams and confidential meetings.** Tasks and meetings carry a level — `public`, `business`, `team` or `restricted` — and named people. Guests would see public items only, and a confidential meeting only its participants. Teams are managed by a Business admin, a flag set by the operator only ([ARCH-002](../architecture/ARCH-002-postgresql-data-model.md), schema 6 amendment).
+- **Product-wide rule 7** above comes from this decision.
+
+Until PLAN-002 phase P1 is released to production, the interim rule of ADR-004 D9 applies: no HR, accounting, salary, customer-personal or other confidential content in production, because Guests can read it today.
 
 ## Proposed changes (not approved)
 
-[ADR-002 to ADR-004](../architecture/decisions.md) and [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) propose, for the owner's review:
+[ADR-002 and ADR-003](../architecture/decisions.md) and [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) remain proposed, for the owner's review:
 
 - **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md)). Boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; a Projects view; and the campaign Workboard as a view of the same tasks. The site menu would name it “Task Manager” next to “Meetings” (PLAN-002 Q9).
-- **Visibility, teams and confidential meetings** ([FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). Tasks, projects and meetings would be `public`, `business`, `team` or `restricted`. Guests would see public items only, and confidential meetings only their participants.
-- **A seventh product-wide rule.** Content is shown only to its audience, and the API and the database both enforce it (ADR-004).
-
-Until PLAN-002 phase P1 is live, the interim rule of ADR-004 D9 applies: no HR, accounting, salary, customer-personal or other confidential content in production.
 
 ## Document notes
 

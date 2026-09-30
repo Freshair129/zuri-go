@@ -25,7 +25,7 @@ relations:
 
 # FEAT-011 — Visibility, teams and confidential meetings
 
-> **Approved 2026-10-01; phase P1 built locally (schema 6), not deployed.** Declared by [ADR-004](../../architecture/decisions.md); the delivery plan is [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md).
+> **Approved 2026-10-01; phase P1 and requirements FR-011-009 and FR-011-010 built locally (schema 6), not deployed.** Declared by [ADR-004](../../architecture/decisions.md); the delivery plan is [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md).
 
 Every department can use the workspace without exposing its work. Tasks, projects and meetings carry a visibility level — public, business, team or restricted — which the API and row-level security both enforce. Guests see only public items; confidential meetings are seen only by their participants, and their transcripts stay on the recording machine unless someone chooses to upload them.
 
@@ -61,11 +61,13 @@ Approved by the owner on 2026-10-01; each file holds the requirement and its acc
 | [FR-011-006](requirements/FR-011-006-meeting-visibility.md) | Visibility and participants of meetings | FEAT-011-P03 | implemented |
 | [FR-011-007](requirements/FR-011-007-guest-public-only.md) | Guests read public items only | FEAT-011-P01 | implemented |
 | [FR-011-008](requirements/FR-011-008-content-follows-item.md) | Content follows its item | FEAT-011-P02 | implemented |
-| [FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) | Tasks from a confidential meeting | FEAT-011-P02 | declared |
-| [FR-011-010](requirements/FR-011-010-transcript-custody.md) | Custody of confidential transcripts | FEAT-011-P03 | declared |
+| [FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) | Tasks from a confidential meeting | FEAT-011-P02 | implemented |
+| [FR-011-010](requirements/FR-011-010-transcript-custody.md) | Custody of confidential transcripts | FEAT-011-P03 | implemented |
 | [FR-011-011](requirements/FR-011-011-widening-visibility.md) | Widening the visibility of a task or project | FEAT-011-P02 | implemented |
 | [FR-011-012](requirements/FR-011-012-existing-data.md) | Visibility of data that exists before the change | FEAT-011-P02 | implemented |
 | [NFR-011-001](requirements/NFR-011-001-row-level-security.md) | Row-level security enforces the same audiences | FEAT-011-P01 | implemented |
 
 ## Delivery evidence
-- Local only (2026-10-01): migration 006 applied to the local database after a backup; `npm test` passed (108 Node tests, Python, metrics and extraction checks); `npm run build` passed. Browser check on the local server (operator): the teams panel and the task visibility picker render and respond; the Guest notice, visibility badges and the meeting form were not browser-checked. Production is unchanged (schema 5).
+- Local only (2026-10-01): migration 006 applied to the local database after a backup; the Node suites (108 tests), Python packaging tests and metrics check passed and `npm run build` passed, but the last `npm test` step, `scripts/site/verify_extraction.py`, failed (it expected 46 packaged files; P1 made it 50) — this was misreported as a full pass at the time and corrected on 2026-10-01 below. Browser check on the local server (operator): the teams panel and the task visibility picker render and respond; the Guest notice, visibility badges and the meeting form were not browser-checked. Production is unchanged (schema 5).
+- Local only (2026-10-01, FR-011-009 and FR-011-010): the Node suites passed (121 tests, including the new custody and upload tests against local PostgreSQL), as did the Python packaging tests and the metrics check; `npm run build` passed. `npm test` then failed at `scripts/site/verify_extraction.py` (46 expected, 50 packaged since P1). The transcript notice and the upload form were built and compiled but not browser-checked. Production is unchanged (schema 5).
+- Integration (2026-10-01): `verify_extraction.py` now expects the 50 packaged files (the 46 at extraction plus `viewer.mjs`, `audience.mjs`, `teams.mjs` and `shared/visibility.mjs`); meeting quotes copied into task metadata are withheld from `/state` too ([RCA](../../../.brain/rca/zuri-go-meeting-quotes-outside-meeting-audience.md)). Full `npm test` passed end to end (121 Node tests, Python packaging, metrics and extraction checks, 50 packaged files) and `npm run build` passed. Production is unchanged (schema 5).

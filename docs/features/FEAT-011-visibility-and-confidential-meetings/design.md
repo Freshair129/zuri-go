@@ -209,7 +209,7 @@ Both are `STABLE` and `SECURITY INVOKER`. Migration 005 had to disable row-level
 | A read path forgets to filter | Row-level security still returns only the viewer's rows (NFR-011-001) |
 | A widening request without the A or the organizer, or without a reason | 403 `VISIBILITY_WIDEN_DENIED` or 422 `REASON_REQUIRED`; nothing changes |
 | `team` without a team, `restricted` with nobody named, or the actor locked out | 422, backed for `team` by the database `CHECK` |
-| Before P3, a transcript or draft batch arrives on the hosted API for a restricted meeting | 422: the hosted API fails closed |
+| Before P3, a transcript or draft batch arrives on the hosted API for a restricted meeting | Superseded by P3: a Member's save stores stubs for a `local_only` meeting (see "Changes found while building P3") |
 | An error on a restricted item | The logs hold the error code and IDs only (`api.mjs:9` already logs only `e.code \|\| e.name`); request bodies are never logged (AC-011-008-05) |
 | The source is rolled back after migration 006 | Old code ignores the new columns and shows everything to Guests again. A rollback therefore reopens the exposure and needs its own decision (AGENTS.md) |
 | Performance | Every visible row costs a few `EXISTS` lookups on indexed membership tables. Production holds 11 tasks and no meetings |
@@ -272,6 +272,21 @@ These refine the approved design without changing a requirement; the owner revie
 - **Admin guard.** A trigger lets only the table owner (the operator path) change `members.is_business_admin`; the runtime role gets `42501`.
 - **`transaction(businessId, fn)`** without a principal runs as a Guest; service code and tests that need the whole database pass `OPERATOR`.
 - **The client refreshes on sign-in and sign-out** (`zuri-go-viewer-changed`), because a Guest no longer sees the same data as a Member.
+
+## Changes found while building P3 (2026-10-01)
+
+These refine the approved design without changing a requirement; the owner reviews them with the P3 change. FR-011-009 and FR-011-010 are built locally and are not deployed.
+
+- **Built without WI-09.** The meeting commit still runs in the client (FEAT-004). The server enforces the audience of FR-011-009 and the custody of FR-011-010 when that client saves, so moving the commit to the server (PLAN-002 WI-09) is not needed for them. The failure-mode row “Before P3 … 422” no longer applies: the hosted API stores a stub instead of refusing.
+- **The marker.** A stub revision carries `withheld: true` next to its unchanged `contentHash` or `reviewHash`, with `segments: []`. `validateEvidence` relaxes the segment and quote check only for a revision carrying it; a normal revision is checked as before. A draft-batch row holds `withheld: true` next to `batch` and `receipt`. `custodyRevision` takes the stored row shape (`{…, segments, legacy_metadata}`).
+- **Who is bound.** Only the local operator keeps full content; every other viewer kind is bound, so a Member’s save of a `local_only` meeting is always stubbed. A new revision that claims `withheld` for a meeting that is not `local_only` is refused. Full content sent for a revision that is already stored as a stub is accepted and discarded; only the upload stores it.
+- **When custody starts.** `transcript_custody` becomes `local_only` when a meeting becomes restricted, new or from another level, and stays until an upload; leaving `restricted` does not restore `cloud`. Content stored before that moment is not deleted: only later saves are stubbed.
+- **Working copy.** `workingCopy` (draft transcript text in the meeting metadata) is dropped from the stored meeting for a `local_only` meeting, for everyone but the operator. The meeting payload gains `transcriptCustody`, which the server owns and never stores from a client.
+- **Upload.** `POST /businesses/:b/meetings/:id/transcript` takes `{reason, sources, reviews, batches}`. The caller must be a participant and give a reason. Every stub of the meeting must be matched by its full content (the stub equals the content with its text removed, a review’s hash is recomputed, and every evidence quote is checked against the review). The server cannot recompute a source’s `contentHash`, because FUNG supplies it. The audit event uses `entity_type` `meetings`, so the history policy follows the meeting. The UI reads the content from a backup file of the recording machine.
+- **Links keep no quote text.** The runtime role cannot update `meeting_task_links`, so `evidence` written for a stubbed batch stays without quote text after an upload. Nothing reads that column today.
+- **Found while building: history leaked quotes.** A task’s history events (`legacy_task_event`) hold the task snapshot, `sourceRefs` and quotes included. Phase P1 returned them to every reader of the task, including one who cannot read the meeting. `readLegacy` now withholds the quotes from the events of a viewer who cannot read the meeting (`withholdQuotes`), so FR-011-009 holds on that path. The `.brain/rca/` record that AGENTS.md asks for is not written by this change.
+
+- **Quotes in task JSON (integration, 2026-10-01).** Meeting quotes copied into a task's metadata and history snapshots follow the meeting, not the task: `withholdQuotes` (`apps/api/audience.mjs`) removes them in `readLegacy` and `snapshot` for a viewer who cannot read the meeting ([RCA](../../../.brain/rca/zuri-go-meeting-quotes-outside-meeting-audience.md)).
 
 ## Open items
 

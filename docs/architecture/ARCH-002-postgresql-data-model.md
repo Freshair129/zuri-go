@@ -6,7 +6,8 @@ version: 0.2.0
 date: 2026-09-30
 legacy: [ZGO-DATA-001]
 relations:
-  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006]
+  decided_by: [ADR-004]
+  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-011]
 legacy_status: implemented-local-verified
 complexity: C-3
 risk: HIGH
@@ -325,3 +326,40 @@ Migration `005_member_identity.sql` preserves all existing UUID PKs and relation
 `member_credentials` has composite PK and Member FK `(business_id,member_id)`, salted `password_hash`, positive `credential_version`, `enabled` and timestamps. Forced Business RLS applies; the runtime role has SELECT only on this table. No public endpoint, Member metadata, or v2 export includes credential records. Only the trusted operator provisions/resets/enables/disables credentials. These operations increment the version, invalidating prior sessions, and serialize with API writes on the Business row.
 
 `change_events.actor_member_id` already existed with its composite Member FK; reuse it and add nullable `actor_pid`. `task_attachments.uploaded_by_member_id` and `deleted_by_member_id` are nullable composite Member FKs. New authenticated mutations obtain these values from validated server session context; pre-existing unknown/shared actors remain unchanged. Local trusted operator writes remain explicitly distinct. See [approved contract](../features/FEAT-006-member-identity/spec.md) and [verification](../history/zuri-go-member-review/verification.md).
+
+## Schema 6 amendment: visibility and teams (FEAT-011 phase P1) — live locally, not in production
+
+Migration `006_visibility.sql` (schema 6) is applied to the **local** PostgreSQL only (2026-10-01, after `npm run backup`). **Production is still schema 5**; the migration, a backup and the matching code release need their own authorization ([RB-001](../operations/RB-001-runbook.md#visibility-and-teams-feat-011-schema-6); [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md)). Decided by [ADR-004](decisions.md) and designed in [SDD-011](../features/FEAT-011-visibility-and-confidential-meetings/design.md) (both approved 2026-10-01). The migration is additive: existing tasks and meetings become `visibility='business'` and meetings `transcript_custody='cloud'`; no existing column, PK or FK changes. There is no down-migration.
+
+**New tables.** Each has forced Business RLS (`business_scope`, as in `001_core.sql`) and composite Business FKs.
+
+| Table | Key and columns |
+|---|---|
+| `teams` | `id uuid` PK, `business_id`, `name text` (1–80 characters after trim), `archived_at?`, `created_at`, `updated_at`, `row_version`; UQ `(business_id,id)`; partial UQ `(business_id,lower(trim(name))) WHERE archived_at IS NULL`; the existing `stamp` trigger |
+| `team_members` | PK `(business_id,team_id,member_id)`; composite FKs to `teams` and `members`; index `(business_id,member_id)` |
+| `task_viewers` | PK `(business_id,task_id,member_id)`; composite FKs to `tasks` and `members`; `added_by_member_id?` composite FK to `members`; index `(business_id,member_id)` |
+| `meeting_participants` | PK `(business_id,meeting_id,member_id)`; composite FKs to `meetings` and `members`; `role` CHECK `organizer`/`participant` (default `participant`); partial UQ `(business_id,meeting_id) WHERE role='organizer'` (one organizer); index `(business_id,member_id)` |
+
+**Added columns.**
+
+- `members.is_business_admin boolean NOT NULL DEFAULT false`. Trigger `members_admin_guard` (function `guard_business_admin`) rejects an insert or a change of this column unless the current user is the owner of `zuri_go.members`, with `42501`. Only the operator path can set it, so the runtime role cannot. The flag grants team management, not extra reading.
+- `tasks.visibility` and `meetings.visibility`: `text NOT NULL DEFAULT 'business'` CHECK `public`/`business`/`team`/`restricted`.
+- `tasks.team_id` and `meetings.team_id`: nullable, composite FK `(business_id,team_id)` → `teams`; CHECK `task_team_required` / `meeting_team_required` require a team when `visibility='team'`.
+- `meetings.transcript_custody text NOT NULL DEFAULT 'cloud'` CHECK `local_only`/`cloud`.
+
+**Viewer settings.** `transaction()` sets `zuri_go.viewer_kind` (`guest`, `member` or `operator`) and `zuri_go.viewer_member` (the Member UUID or empty) per transaction, next to `zuri_go.business_id`. SQL functions `viewer_kind()` (missing or empty reads `guest`) and `viewer_member()` (missing or empty reads NULL) expose them, so a missing setting yields the fewest rows, never more.
+
+**Audience functions.** `task_audience(b,task,level,team)` and `meeting_audience(b,meeting,level,team)` are `STABLE` and read only the membership tables, so no policy refers back to the item tables. The operator reads every level and everyone reads `public`. A signed-in `member` (with a Member UUID) reads `business`; `team` needs membership of the item's team or being named; `restricted` needs being named. For a task, named means a row in `task_roles` (R, A, C, I) or `task_viewers`. For a meeting, named means a row in `meeting_participants`. Being a Business admin adds nothing.
+
+**Restrictive policies** (additive to `business_scope`; PostgreSQL requires every restrictive policy to pass):
+
+| Level | Tables | Rule |
+|---|---|---|
+| L0 — membership | `teams`, `team_members`, `task_roles`, `task_viewers`, `meeting_participants`, `ai_briefs` | policy `signed_in`: `viewer_kind() IN ('member','operator')`, so Guests read and write nothing here |
+| L1 — items | `tasks`, `meetings` | policies `audience_read` (SELECT), `audience_update` (UPDATE, `WITH CHECK (true)`) and `audience_delete` (DELETE) use the audience function. Inserts keep `business_scope` only, so the named people can be written after the row |
+| L2 — content follows its item | `task_attachments`, `weekly_plan_tasks` (visible task); `meeting_revisions`, `meeting_draft_batches` (visible meeting); `meeting_task_links` (visible batch) | policies `follows_task` / `follows_meeting`, each an `EXISTS` through the parent's own policy |
+| L2 — history | `change_events` | SELECT policy `follows_entity`: signed-in viewers only, and task, task-attachment and meeting entity types require the named entity to be visible; other entity types stay readable to signed-in viewers |
+
+The runtime role is granted DELETE on `team_members`, `task_viewers` and `meeting_participants` only (`apps/api/migrate.mjs`); `teams` are archived, not deleted. `ai_briefs` is closed to Guests here; the API additionally filters every read by the viewer. The migration defines no policy for projects, which have no table yet.
+
+**Operating facts.** A server started before schema 6 sets no viewer, reads as a Guest and shows no business work, so restart the local server after migrating. Code from before FEAT-011 on a schema-6 database behaves the same way; plan a rollback together with the schema. See [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) and [ADR-004](decisions.md).

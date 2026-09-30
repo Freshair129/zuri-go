@@ -6,6 +6,7 @@ runtime: SRV-001
 delivery: declared
 status: proposed
 relations:
+  specified_by: [SDD-010]
   decided_by: [ADR-002, ADR-003]
 ---
 
@@ -25,4 +26,17 @@ Part of [FEAT-010](../feature.md), owned by [DOM-TSK](../../../domains/tasks/REA
 Exposes the task contract. FEAT-010-P02 and meeting commits write tasks only through it.
 
 ## Requirements
-Written as FR files once the decisions are approved ([PLAN-002](../../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+Proposed on 2026-10-01; none is approved (ADR-002 and ADR-003 are `proposed`).
+- [FR-010-001](../requirements/FR-010-001-create-task-from-title.md) — Create a task from a title alone
+- [FR-010-002](../requirements/FR-010-002-task-contexts.md) — Contexts of a task
+- [FR-010-003](../requirements/FR-010-003-projects.md) — Projects
+- [FR-010-004](../requirements/FR-010-004-project-label-link.md) — Linking a project label to a project
+- [FR-010-005](../requirements/FR-010-005-boards.md) — Boards for all work, a campaign, a project, a team, unlinked work and my tasks
+- [FR-010-006](../requirements/FR-010-006-move-task-status.md) — Moving a task through the five statuses
+- [FR-010-007](../requirements/FR-010-007-completion-rule.md) — Completion rule
+- [FR-010-008](../requirements/FR-010-008-owner-label.md) — Owner label until a Member is bound
+- [FR-010-009](../requirements/FR-010-009-task-api-create-update.md) — Task API — idempotent create and versioned update
+- [FR-010-010](../requirements/FR-010-010-task-api-rules-identity.md) — Task API — rules, identity and audience on the server
+- [FR-010-011](../requirements/FR-010-011-workspace-save-compatible.md) — The whole-workspace save stays compatible
+- [NFR-010-001](../requirements/NFR-010-001-row-level-security-new-tables.md) — Row-level security covers the new task tables
+- [NFR-010-002](../requirements/NFR-010-002-additive-schema.md) — The schema change is additive and reconcilable

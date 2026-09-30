@@ -6,6 +6,7 @@ runtime: SRV-001
 delivery: declared
 status: proposed
 relations:
+  specified_by: [SDD-010]
   decided_by: [ADR-002, ADR-003]
 ---
 
@@ -25,4 +26,9 @@ Part of [FEAT-010](../feature.md), owned by [DOM-CAM](../../../domains/campaign/
 Writes a task only through the FEAT-010-P01 contract, in the same transaction as its detail row.
 
 ## Requirements
-Written as FR files once the decisions are approved ([PLAN-002](../../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+Proposed on 2026-10-01; none is approved (ADR-002 and ADR-003 are `proposed`).
+- [FR-010-012](../requirements/FR-010-012-campaign-task-details.md) — Campaign task details
+- [FR-010-013](../requirements/FR-010-013-workboard-as-view.md) — The Workboard as a view of the task records
+- [FR-010-014](../requirements/FR-010-014-task-from-finding.md) — Create a task from a metric finding
+- [FR-010-015](../requirements/FR-010-015-campaign-tasks-projection.md) — campaign.tasks stays complete as a projection
+- [FR-010-016](../requirements/FR-010-016-move-workboard-tasks.md) — Moving the existing Workboard tasks
