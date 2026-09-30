@@ -82,15 +82,21 @@ export function addSource(s,snapshot,recording){
 export function adoptSource(s,meetingId,sourceId){const meeting=s.meetings.find(m=>m.id===meetingId);if(!meeting||!s.sources.some(v=>v.meetingId===meetingId&&v.id===sourceId))fail('ไม่พบฉบับต้นทาง');meeting.sourceId=sourceId;}
 export function saveReview(s,input){
   const source=s.sources.find(v=>v.id===input.sourceId),meeting=s.meetings.find(m=>m.id===source?.meetingId);if(!source||meeting.sourceId!==source.id)fail('ต้นฉบับเปลี่ยน กรุณาตรวจใหม่');
+  if(isWithheld(source))keptLocal();
   if(!Array.isArray(input.segments)||input.segments.length!==source.segments.length)fail('จำนวน segment ไม่ตรงกับต้นทาง');
   input.segments.forEach((seg,i)=>{const original=source.segments[i];if(seg.segmentId!==original.segmentId||seg.startMs!==original.startMs||seg.endMs!==original.endMs||typeof seg.text!=='string')fail('ห้ามเปลี่ยน segment หรือ timecode');});
   const review={id:input.id||uid(),meetingId:meeting.id,sourceId:source.id,parentRevisionId:meeting.reviewId||null,segments:structuredClone(input.segments),reviewHash:input.reviewHash,reviewedAt:now()};s.reviews.push(review);meeting.reviewId=review.id;return review.id;
 }
 export function isBatchStale(s,batch){const meeting=s.meetings.find(m=>m.id===batch.meetingId);return !meeting||meeting.reviewId!==batch.reviewRevisionId||meeting.sourceId!==batch.sourceId||meeting.latestSourceId!==batch.sourceId;}
-export function validateEvidence(review,evidence){if(!Array.isArray(evidence)||!evidence.length)fail('งานจากประชุมต้องมีหลักฐาน');for(const e of evidence){const seg=review.segments.find(seg=>seg.segmentId===e.segmentId);if(!seg||!text(e.quote)||!seg.text.includes(e.quote)||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.startMs<seg.startMs||e.endMs>seg.endMs||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');}}
+// A revision whose transcript stays on the recording machine is stored as a stub marked `withheld` (FR-011-010, SDD-011).
+// Only that marker relaxes the segment and quote check; a normal revision is checked as before.
+export const isWithheld=doc=>doc?.withheld===true;
+const keptLocal=()=>fail('transcript ของประชุมลับเก็บไว้ที่เครื่องที่บันทึกการประชุม ใช้งานต่อบนเครื่องนั้น หรืออัปโหลดพร้อมเหตุผลก่อน');
+export function validateEvidence(review,evidence){if(!Array.isArray(evidence)||!evidence.length)fail('งานจากประชุมต้องมีหลักฐาน');for(const e of evidence){if(isWithheld(review)){if(typeof e.segmentId!=='string'||!e.segmentId||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');continue;}const seg=review.segments.find(seg=>seg.segmentId===e.segmentId);if(!seg||!text(e.quote)||!seg.text.includes(e.quote)||!Number.isFinite(e.startMs)||!Number.isFinite(e.endMs)||e.startMs<seg.startMs||e.endMs>seg.endMs||e.endMs<e.startMs||e.reviewRevisionId!==review.id)fail('ข้อความอ้างอิงไม่ตรงฉบับตรวจแล้ว');}}
 export function addBatch(s,meetingId,response){
   const meeting=s.meetings.find(m=>m.id===meetingId),review=s.reviews.find(r=>r.id===meeting?.reviewId),source=s.sources.find(src=>src.id===meeting?.sourceId);
   if(!review||review.id!==response.reviewRevisionId||review.reviewHash!==response.reviewHash||source.contentHash!==response.sourceHash)fail('ผลร่างอ้างฉบับเก่า กรุณาตรวจใหม่');
+  if(isWithheld(review))keptLocal();
   if(!Array.isArray(response.items)||response.items.length>30)fail('รูปแบบร่างงานไม่ถูกต้อง');
   const ids=new Set();for(const item of response.items){if(ids.has(item.proposalId)||!item.proposalId||!text(item.title)||!['task','decision','question'].includes(item.kind))fail('รายการร่างไม่ถูกต้อง');ids.add(item.proposalId);validateEvidence(review,item.evidence);}
   const old=s.batches.find(b=>b.id===response.draftBatchId);if(old)return old.id;
@@ -103,6 +109,7 @@ export function commitBatch(s,batchId,choices,payloadHash=null){
   if(receipt){if(receipt.payload!==payload)fail('Conflict: ร่างนี้เคยบันทึกแล้วด้วยรายละเอียดต่างกัน');return receipt.taskIds;}
   if(isBatchStale(s,batch))fail('ร่างเก่าใช้สร้างงานไม่ได้ กรุณาตรวจฉบับใหม่');
   const taskIds=[],review=s.reviews.find(r=>r.id===batch.reviewRevisionId),meeting=s.meetings.find(m=>m.id===batch.meetingId);
+  if(isWithheld(review))keptLocal();
   for(const choice of choices){if(choice.mode==='skip')continue;const item=batch.items.find(i=>i.proposalId===choice.proposalId);if(!item)fail('ไม่พบรายการร่าง');validateEvidence(review,item.evidence);
     const ref={meetingId:batch.meetingId,sourceId:batch.sourceId,reviewRevisionId:review.id,proposalId:item.proposalId,evidence:item.evidence};let id;
     if(choice.mode==='link'){const t=s.tasks.find(t=>t.id===choice.taskId);if(!t)fail('กรุณาเลือกงานที่ต้องการผูก');checkVersion(t,choice.taskVersion);if(!t.sourceRefs.some(r=>r.proposalId===item.proposalId&&r.reviewRevisionId===review.id))t.sourceRefs.push(ref);t.version++;event(s,'source-linked',t.id,ref);id=t.id;if(choice.week)setPriority(s,id,choice.week,choice.priority??null,choice.priorityNote);}

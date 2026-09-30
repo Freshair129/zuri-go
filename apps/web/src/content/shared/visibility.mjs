@@ -1,5 +1,5 @@
 // Audience rules of FEAT-011 (SDD-011 "Audience rule"), shared by the API and the UI.
-// @trace implements FR-011-004, FR-011-006, FR-011-007, FR-011-011
+// @trace implements FR-011-004, FR-011-006, FR-011-007, FR-011-009, FR-011-011
 export const LEVELS = ['restricted','team','business','public'];
 export const DEFAULT_VISIBILITY = 'business';
 export const VIEWER_KINDS = ['guest','member','operator'];
@@ -36,4 +36,10 @@ export function visibilityChange(viewer, before, after, {accountableId = null, o
   }
   if (!canRead(viewer, after, named)) return {error:'SELF_EXCLUDED'};
   return {ok:true};
+}
+
+// The audience handed to every task created from a meeting (FR-011-009): a restricted meeting gives
+// `restricted` with its participants as viewers; any other meeting gives nothing.
+export function meetingAudience(meeting, participantIds = []) {
+  return levelOf(meeting) === 'restricted' ? {visibility:'restricted', viewerIds:[...new Set(participantIds)]} : null;
 }

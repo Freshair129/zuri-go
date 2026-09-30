@@ -4,7 +4,7 @@ import {body} from './http.mjs';
 import {transaction} from './db.mjs';
 import {snapshot,save,observe,brief,fail,audit} from './service.mjs';
 import {overview} from '../web/src/content/business/model.mjs';
-import {importPreview,importCommit,readLegacy,saveLegacy} from './workspace.mjs';
+import {importPreview,importCommit,readLegacy,saveLegacy,uploadTranscript} from './workspace.mjs';
 import {listTeams,saveTeam} from './teams.mjs';
 export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
@@ -24,7 +24,7 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
     if(method==='GET'&&id)sendAttachment(res,result,url.searchParams.get('preview')==='1');else send(res,200,result);
     return;
    }
-   const match=route.match(/^\/businesses\/([a-f0-9-]{36})(?:\/([a-z-]+))?(?:\/([a-f0-9-]{36}))?(?:\/(commit))?$/);
+   const match=route.match(/^\/businesses\/([a-f0-9-]{36})(?:\/([a-z-]+))?(?:\/([a-f0-9-]{36}))?(?:\/(commit|transcript))?$/);
    if(!match||match[1]!==businessId)fail('Business access denied',403);
    const [,b,resource,id,action]=match,input=method==='GET'?null:await body(req);
    const result=await scopedTransaction(b,async c=>{
@@ -36,6 +36,7 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
     if(resource==='imports'&&method==='POST')return action==='commit'?importCommit(c,b,id,input):importPreview(c,b,input);
     if(resource==='teams'&&method==='GET'&&!id)return listTeams(c,b,c.zuriViewer);
     if(resource==='teams'&&(method==='POST'&&!id||method==='PATCH'&&id))return saveTeam(c,b,c.zuriViewer,input,id);
+    if(resource==='meetings'&&action==='transcript'&&method==='POST'&&id)return uploadTranscript(c,b,id,input);
     if(resource==='workspace'&&method==='GET')return readLegacy(c,b);
     if(resource==='workspace'&&method==='PUT')return saveLegacy(c,b,input);
     if(method==='POST'&&!id||method==='PATCH'&&id)return save(c,b,resource,input,id);

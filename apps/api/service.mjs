@@ -2,7 +2,7 @@ import {randomUUID,createHash} from 'node:crypto';
 import {rows,hashable} from './db.mjs';
 import {overview,summaryFacts,validateSummarySelection,periodFor,midnight} from '../web/src/content/business/model.mjs';
 import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.mjs';
-import {viewerOf,taskNames,readable} from './audience.mjs';
+import {viewerOf,taskNames,meetingNames,readable,withholdQuotes} from './audience.mjs';
 export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
 export function fail(message,status=422){throw Object.assign(Error(message),{status});}
 export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks'];
@@ -12,6 +12,9 @@ export async function snapshot(c,b,viewer=viewerOf(c)){
  const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);
  result.tasks=readable(viewer,result.tasks,await taskNames(c,b));const ids=new Set(result.tasks.map(t=>t.id));
  for(const t of ['task_roles','weekly_plan_tasks'])result[t]=result[t].filter(r=>ids.has(r.task_id));
+ // Meeting quotes copied into task metadata follow the meeting, not the task (FR-011-009; .brain/rca/zuri-go-meeting-quotes-outside-meeting-audience.md).
+ const meetings=new Set(readable(viewer,await rows(c,'meetings',b),await meetingNames(c,b)).map(m=>m.legacy_metadata?.id||m.id));
+ result.tasks=result.tasks.map(t=>({...t,legacy_metadata:withholdQuotes(t.legacy_metadata,meetings)}));
  // A stored week also lists entries (task IDs, priority notes) of tasks the viewer cannot read.
  const shown=new Set(result.tasks.map(t=>t.legacy_metadata?.id||t.id));result.weekly_plans=result.weekly_plans.map(w=>Array.isArray(w.legacy_metadata?.entries)?{...w,legacy_metadata:{...w.legacy_metadata,entries:w.legacy_metadata.entries.filter(e=>shown.has(e.taskId))}}:w);
  return JSON.parse(hashable(result));

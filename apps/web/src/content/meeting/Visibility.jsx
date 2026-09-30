@@ -27,6 +27,29 @@ export function VisibilityFields({value,original,onChange,teams,members,peopleKe
     {hint&&<p className="mc-note">{hint}</p>}
   </fieldset>;
 }
+// The transcript of a restricted meeting stays on the recording machine (FR-011-010). A participant may upload it, with a reason;
+// the content comes from a backup of the recording machine, and the server only accepts what matches the hashes it already holds.
+export function TranscriptCustody({meeting,businessId,participant,onUploaded}){
+  const [open,setOpen]=useState(false),[reason,setReason]=useState(''),[file,setFile]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  async function upload(e){
+    e.preventDefault();setBusy(true);setError('');
+    try{
+      let domain;try{const backup=JSON.parse(await file.text());domain=backup.meetingTaskManager||backup;}catch{throw Error('ไฟล์ backup ไม่ถูกต้อง');}
+      const pick=key=>(domain[key]||[]).filter(x=>x.meetingId===meeting.id);
+      await scoped(businessId,`/meetings/${meeting.id}/transcript`,'POST',{reason,sources:pick('sources'),reviews:pick('reviews'),batches:pick('batches')});
+      setOpen(false);setReason('');setFile(null);await onUploaded();
+    }catch(e){setError(e.message);}finally{setBusy(false);}
+  }
+  return <section className="mt-transcript mt-custody" role="status"><h3>Transcript เก็บไว้ที่เครื่องที่บันทึกการประชุม</h3>
+    <p>ประชุมลับนี้ยังไม่มี transcript บน cloud · ที่นี่มีเฉพาะชื่อประชุม วันที่ ผู้เข้าร่วม และงานที่ยืนยันแล้ว</p>
+    {participant&&businessId?<><Button onClick={()=>setOpen(!open)}>อัปโหลด transcript พร้อมเหตุผล</Button>
+      {open&&<form className="mt-form" onSubmit={upload}>{error&&<p className="mc-errors" role="alert">{error}</p>}
+        <Field label="เหตุผลที่อัปโหลด transcript" type="textarea" value={reason} onChange={setReason} required wide hint="ระบบบันทึกผู้อัปโหลด เวลา และเหตุผลไว้ · หลังอัปโหลดเฉพาะผู้เข้าร่วมประชุมเห็น transcript"/>
+        <label className="mt-upload">เลือกไฟล์ Backup จากเครื่องที่บันทึกการประชุม (.json)<input type="file" accept="application/json,.json" onChange={e=>setFile(e.target.files?.[0]||null)}/></label>
+        <div className="mc-form-actions"><Button type="button" onClick={()=>setOpen(false)}>ยกเลิก</Button><Button className="mc-primary" type="submit" disabled={busy||!file||!reason.trim()}>{busy?'กำลังอัปโหลด…':'ยืนยันอัปโหลด'}</Button></div></form>}</>
+      :<p className="mc-note">เฉพาะผู้เข้าร่วมประชุมอัปโหลด transcript ขึ้น cloud ได้</p>}
+  </section>;
+}
 export function TeamsPanel({businessId,teams,members,canManage,onChanged}){
   const [editing,setEditing]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const name=id=>members.find(m=>m.id===id)?.displayName||'Member';

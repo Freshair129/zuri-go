@@ -36,3 +36,17 @@ test('unauthorized connection remains an error',async()=>{const client=createFun
 test('audio defaults to server channel and import sends safe Unicode filename header',async()=>{const calls=[];const client=createFungClient('http://localhost/#fixture',{fetchImpl:async(url,init)=>{calls.push({url,init});return new Response(JSON.stringify({jobId:'j',recordingId:'r',projectId:'p'}),{status:200});}});await client.audio('rec-live');await client.audio('rec-live','mic');await client.upload(new File(['audio'],'เสียงประชุม.wav',{type:'audio/wav'}));assert.ok(calls[0].url.endsWith('/audio'));assert.ok(calls[1].url.endsWith('/audio?channel=mic'));assert.equal(calls[2].init.headers['X-Fung-Filename'],'meeting-upload.wav');});
 
 test('commit receipt binds canonical payload and proposal-to-task mapping',async()=>{const {s,choices}=meetingFixture();const fingerprint=await hash(choices);const ids=commitBatch(s,'batch-1',choices,fingerprint);assert.equal(s.receipts[0].payloadHash,fingerprint);assert.equal(s.receipts[0].mappings[0].taskId,ids[0]);assert.equal(s.receipts[0].mappings[0].proposalId,choices[0].proposalId);assert.ok(s.receipts[0].idempotencyKey.includes('review-1'));});
+
+// A revision kept on the recording machine is a stub marked `withheld` (FR-011-010, SDD-011 "Meetings (P3)").
+function stubbed(){const f=meetingFixture(),ids=commitBatch(f.s,'batch-1',f.choices),s=structuredClone(f.s);for(const doc of [...s.sources,...s.reviews]){doc.segments=[];doc.withheld=true;}for(const i of s.batches[0].items)i.evidence=i.evidence.map(({quote,...place})=>place);return {...f,s,ids};}
+test('a state of stubs validates, and only the marker allows it',()=>{
+  const {s}=stubbed();assert.doesNotThrow(()=>validateState(s));
+  const unmarked=structuredClone(s);for(const r of unmarked.reviews)delete r.withheld;assert.throws(()=>validateState(unmarked),/ไม่ตรง/,'a task reference to an empty, unmarked review is refused');
+});
+test('withheld revisions cannot be reviewed, drafted or committed on this side',()=>{
+  const {s,sourceId,meetingId,reviewId}=stubbed(),meeting=s.meetings[0];
+  assert.throws(()=>saveReview(s,{sourceId,segments:[],reviewHash:'x'}),/เก็บไว้ที่เครื่องที่บันทึก/);
+  assert.throws(()=>addBatch(s,meetingId,{draftBatchId:'batch-2',reviewRevisionId:reviewId,reviewHash:'review-hash',sourceHash:'source-1',items:[]}),/เก็บไว้ที่เครื่องที่บันทึก/);
+  const fresh=meetingFixture();for(const r of fresh.s.reviews)r.withheld=true;assert.throws(()=>commitBatch(fresh.s,'batch-1',fresh.choices),/เก็บไว้ที่เครื่องที่บันทึก/);
+  assert.equal(meeting.reviewId,reviewId);
+});

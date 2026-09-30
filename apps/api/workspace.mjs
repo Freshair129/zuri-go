@@ -2,9 +2,9 @@ import {createHash,randomUUID} from 'node:crypto';
 import {writeFile,readFile,mkdir} from 'node:fs/promises';
 import {hash,fail,audit,allocate} from './service.mjs';
 import {createCampaign,restoreWorkspace,measure,evaluate} from '../web/src/content/shared/model.mjs';
-import {empty,validateState,validateEvidence,isBatchStale} from '../web/src/content/meeting/model.mjs';
-import {visibilityChange,DEFAULT_VISIBILITY} from '../web/src/content/shared/visibility.mjs';
-import {viewerOf,taskNames,meetingNames,readable} from './audience.mjs';
+import {empty,validateState,validateEvidence,isBatchStale,isWithheld,reviewHash} from '../web/src/content/meeting/model.mjs';
+import {visibilityChange,meetingAudience,DEFAULT_VISIBILITY} from '../web/src/content/shared/visibility.mjs';
+import {viewerOf,taskNames,meetingNames,readable,withholdQuotes} from './audience.mjs';
 const APP_ID='dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1';
 const safeId=(b,kind,id)=>{const s=createHash('sha256').update([b,kind,id].join(':')).digest('hex');return s.slice(0,8)+'-'+s.slice(8,12)+'-4'+s.slice(13,16)+'-a'+s.slice(17,20)+'-'+s.slice(20,32);};
 const iso=v=>v?new Date(v).toISOString():null;
@@ -27,6 +27,10 @@ async function upsert(c,b,table,id,values){
  const keys=Object.keys(values);return(await c.query(`INSERT INTO ${table}(business_id,id,${keys.join(',')}) VALUES($1,$2,${keys.map((_,i)=>'$'+(i+3)).join(',')}) ON CONFLICT(id) DO UPDATE SET ${keys.map(k=>`${k}=EXCLUDED.${k}`).join(',')} WHERE ${table}.business_id=EXCLUDED.business_id RETURNING *`,[b,id,...Object.values(values)])).rows[0];
 }
 function translated(object,fields){return Object.fromEntries(Object.entries(fields).filter(([old])=>object[old]!==undefined).map(([old,key])=>[key,object[old]||object[old]===false?object[old]:null]));}
+// Custody of confidential transcripts (FR-011-010, SDD-011 "Meetings (P3)"). Content of a meeting whose transcript is 'local_only'
+// reaches the hosted API as a stub: same hashes and lineage, no segments and no evidence text, marked withheld.
+export const custodyRevision=(row,custody)=>custody==='local_only'?{...row,segments:[],legacy_metadata:{...row.legacy_metadata,segments:[],withheld:true}}:row;
+export const custodyBatch=(batch,custody)=>custody==='local_only'?{...batch,items:batch.items.map(item=>({...item,evidence:(item.evidence||[]).map(({quote,...place})=>place)}))}:batch;
 export async function readLegacy(c,b,viewer=viewerOf(c)){
  const business=(await c.query('SELECT * FROM businesses WHERE id=$1',[b])).rows[0],campaignRows=await all(c,b,'campaigns'),states=await all(c,b,'campaign_states'),allTasks=await all(c,b,'tasks'),members=await all(c,b,'members'),allRoles=await all(c,b,'task_roles'),weeks=await all(c,b,'weekly_plans'),allEntries=await all(c,b,'weekly_plan_tasks');
  // Only what this viewer may read (FR-011-004…008); row-level security applies the same rule.
@@ -45,12 +49,12 @@ export async function readLegacy(c,b,viewer=viewerOf(c)){
  const taskMap=new Map(tasks.map(t=>[t.id,legacyId(t)]));// Entries keep the order the client saved (weekly_plans.legacy_metadata), not the physical row order.
  const saved=w=>(w.legacy_metadata?.entries||[]).map(e=>e.taskId),position=(w,id)=>{const i=saved(w).indexOf(id);return i<0?Infinity:i;};
  domain.weeks=weeks.map(w=>({weekStart:w.week_start,timezone:w.timezone,entries:entries.filter(e=>e.weekly_plan_id===w.id).map(e=>({taskId:taskMap.get(e.task_id),priority:e.priority,priorityNote:e.priority_note})).sort((x,y)=>position(w,x.taskId)-position(w,y.taskId))}));
- domain.meetings=meetingRows.map(r=>{const people=participants.filter(p=>p.meeting_id===r.id);return {...r.legacy_metadata,campaignId:r.campaign_id||null,visibility:r.visibility,teamId:r.team_id||null,participantIds:people.map(p=>memberMap.get(p.member_id)),organizerId:memberMap.get(people.find(p=>p.role==='organizer')?.member_id)||null};});
+ domain.meetings=meetingRows.map(r=>{const people=participants.filter(p=>p.meeting_id===r.id);return {...r.legacy_metadata,campaignId:r.campaign_id||null,visibility:r.visibility,teamId:r.team_id||null,transcriptCustody:r.transcript_custody,participantIds:people.map(p=>memberMap.get(p.member_id)),organizerId:memberMap.get(people.find(p=>p.role==='organizer')?.member_id)||null};});
  for(const r of (await all(c,b,'meeting_revisions')).filter(r=>meetingIds.has(r.meeting_id)))domain[r.kind==='source'?'sources':'reviews'].push(r.legacy_metadata);
  const shownTasks=new Set(domain.tasks.map(t=>t.id));
  // A receipt that names a task this viewer cannot read is withheld; the stored receipt is kept on save.
  for(const r of (await all(c,b,'meeting_draft_batches')).filter(r=>meetingIds.has(r.meeting_id))){domain.batches.push(r.legacy_metadata.batch);const receipt=r.legacy_metadata.receipt;if(receipt&&receipt.taskIds.every(id=>shownTasks.has(id)))domain.receipts.push(receipt);}
- const events=await c.query("SELECT entity_id,after_data FROM change_events WHERE business_id=$1 AND entity_type='legacy_task_event' ORDER BY occurred_at,id",[b]);domain.events=viewer.kind==='guest'?[]:events.rows.filter(r=>r.entity_id===b||visibleIds.has(r.entity_id)).map(r=>r.after_data);
+ const events=await c.query("SELECT entity_id,after_data FROM change_events WHERE business_id=$1 AND entity_type='legacy_task_event' ORDER BY occurred_at,id",[b]);domain.events=viewer.kind==='guest'?[]:events.rows.filter(r=>r.entity_id===b||visibleIds.has(r.entity_id)).map(r=>withholdQuotes(r.after_data,visibleMeetings));
  const selected=campaigns[0]?.id||null;
  return {schemaVersion:2,appId:APP_ID,version:Number(business.domain_revision),campaignWorkspace:{schemaVersion:1,selected,campaigns},meetingTaskManager:domain};
 }
@@ -75,18 +79,24 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
  validateState(state);const existingTasks=readable(viewer,await all(c,b,'tasks'),await taskNames(c,b)),existingMembers=await all(c,b,'members'),id=(kind,value)=>value?safeId(b,kind,value):null;
  const existingRoles=await all(c,b,'task_roles'),existingViewers=await all(c,b,'task_viewers'),existingMeetings=readable(viewer,await all(c,b,'meetings'),await meetingNames(c,b)),existingParticipants=await all(c,b,'meeting_participants');
  const visibleMeetingIds=new Set(existingMeetings.map(r=>r.id)),oldBatches=(await all(c,b,'meeting_draft_batches')).filter(r=>visibleMeetingIds.has(r.meeting_id)),stateTasks=new Set(state.tasks.map(t=>t.id)),stateMeetings=new Set(state.meetings.map(m=>m.id));
+ // Meetings whose transcript stays on the recording machine; the local operator always keeps full content (FR-011-010).
+ const custody=new Map(existingMeetings.map(r=>[r.id,r.transcript_custody])),custodyFor=mid=>viewer.kind!=='operator'&&custody.get(mid)==='local_only'?'local_only':'cloud';
  const receiptOf=(batch,prior)=>state.receipts.find(r=>r.batchId===batch.id)||(prior?.legacy_metadata.receipt?.taskIds.some(t=>!stateTasks.has(t))?prior.legacy_metadata.receipt:undefined);
  for(const batch of state.batches){
    const prior=oldBatches.find(r=>r.id===id('batch',batch.id)),review=state.reviews.find(r=>r.id===batch.reviewRevisionId),source=state.sources.find(r=>r.id===batch.sourceId),receipt=receiptOf(batch,prior);
    if(batch.reviewHash!==review.reviewHash||batch.sourceHash!==source.contentHash)fail('Batch hash ไม่ตรงหลักฐาน');
    for(const item of batch.items)validateEvidence(review,item.evidence);
-   if(prior&&hash(prior.legacy_metadata.batch)!==hash(batch))fail('ห้ามเขียนทับร่างงานเดิม');
+   if(prior&&![batch,custodyBatch(batch,custodyFor(id('meeting',batch.meetingId)))].some(v=>hash(v)===hash(prior.legacy_metadata.batch)))fail('ห้ามเขียนทับร่างงานเดิม');
    if(prior?.legacy_metadata.receipt&&hash(prior.legacy_metadata.receipt)!==hash(receipt))fail('ห้ามเปลี่ยน receipt ที่ยืนยันแล้ว');
    if(prior&&receipt&&!prior.legacy_metadata.receipt&&isBatchStale(state,batch))fail('ร่างเก่าใช้สร้างงานไม่ได้');
    if(receipt&&(!receipt.mappings?.length||receipt.mappings.some(m=>!receipt.taskIds.includes(m.taskId)||!batch.items.some(i=>i.proposalId===m.proposalId))))fail('Receipt ขาด mapping ของงานและหลักฐาน');
  }
  const memberId=value=>existingMembers.find(m=>m.id===value||m.legacy_metadata?.id===value)?.id||id('member',value);
  const taskId=value=>existingTasks.find(t=>t.id===value||t.legacy_metadata?.id===value)?.id||id('task',value);
+ const peopleOf=(m,mid)=>{const oldPeople=existingParticipants.filter(p=>p.meeting_id===mid),oldOrganizer=oldPeople.find(p=>p.role==='organizer')?.member_id||null,organizer=m.participantIds===undefined?oldOrganizer:m.organizerId?memberId(m.organizerId):null;return {oldPeople,oldOrganizer,organizer,people:m.participantIds===undefined?oldPeople.map(p=>p.member_id).sort():[...new Set([...m.participantIds.map(memberId),...(organizer?[organizer]:[])])].sort()};};
+ // FR-011-009: a new task that comes from a restricted meeting is restricted with the meeting's participants as viewers, whatever the client sent.
+ const audiences=new Map(state.meetings.map(m=>{const mid=id('meeting',m.id),old=existingMeetings.find(r=>r.id===mid);return [m.id,meetingAudience({visibility:m.visibility??old?.visibility??DEFAULT_VISIBILITY},peopleOf(m,mid).people)];}));
+ const taskAudience=t=>{const found=t.sourceRefs.map(ref=>audiences.get(ref.meetingId)).filter(Boolean);return found.length?{visibility:'restricted',viewerIds:[...new Set(found.flatMap(a=>a.viewerIds))]}:null;};
  async function access(kind,itemId,before,input,named,owner){
    const after={visibility:input.visibility??before?.visibility??DEFAULT_VISIBILITY,team_id:input.teamId!==undefined?input.teamId||null:before?.team_id??null};
    const changed=!before||after.visibility!==before.visibility||after.team_id!==before.team_id;
@@ -101,8 +111,9 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
  for(const old of existingTasks.filter(t=>t.source_kind!=='campaign-legacy'&&!t.archived_at))if(!state.tasks.some(t=>t.id===(old.legacy_metadata.id||old.id)))fail('Workspace ขาดงานเดิม กรุณาโหลดข้อมูลล่าสุด',409);
  for(const m of state.members){const metadata={...m};for(const key of ['pid','password','password_hash','passwordHash','credentials','credential_version'])delete metadata[key];await upsert(c,b,'members',memberId(m.id),{...translated(m,M_FIELDS),legacy_metadata:metadata});}
  const campaignId=value=>campaignMap.get(value)||value||null;
- for(const t of state.tasks){const old=existingTasks.find(row=>row.id===taskId(t.id)),tid=taskId(t.id),oldViewers=existingViewers.filter(v=>v.task_id===tid).map(v=>v.member_id).sort();
-   const viewers=t.viewerIds===undefined?oldViewers:[...new Set(t.viewerIds.map(memberId))].sort(),named=[...[t.responsibleId,t.accountableId,...t.consultedIds,...t.informedIds].filter(Boolean).map(memberId),...viewers];
+ for(const given of state.tasks){const old=existingTasks.find(row=>row.id===taskId(given.id)),tid=taskId(given.id),oldViewers=existingViewers.filter(v=>v.task_id===tid).map(v=>v.member_id).sort();
+   const audience=old?null:taskAudience(given),t=audience?{...given,visibility:audience.visibility,teamId:null}:given;
+   const viewers=[...new Set([...(t.viewerIds===undefined?oldViewers:t.viewerIds.map(memberId)),...(audience?.viewerIds||[])])].sort(),named=[...[t.responsibleId,t.accountableId,...t.consultedIds,...t.informedIds].filter(Boolean).map(memberId),...viewers];
    const a=await access('task_visibility',tid,old&&{visibility:old.visibility,team_id:old.team_id},t,named,existingRoles.find(r=>r.task_id===tid&&r.role==='A')?.member_id||(t.accountableId?memberId(t.accountableId):null));
    // Keep references to meetings this viewer cannot read (withheld by readLegacy).
    const hiddenRefs=(old?.legacy_metadata?.sourceRefs||[]).filter(ref=>!stateMeetings.has(ref.meetingId)),metadata=withoutAccess({...t,sourceRefs:[...hiddenRefs,...t.sourceRefs]},['visibility','teamId','viewerIds','visibilityReason','sourceRefsWithheld']);
@@ -115,24 +126,25 @@ async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c)){
  const writableTasks=[...new Set([...existingTasks.map(t=>t.id),...state.tasks.map(t=>taskId(t.id))])],shownTasks=new Set([...existingTasks.map(t=>t.legacy_metadata?.id||t.id),...state.tasks.map(t=>t.id)]),oldWeeks=await all(c,b,'weekly_plans');
  // Entries of tasks this viewer cannot read stay in the stored week (and in weekly_plan_tasks) untouched.
  for(const w of state.weeks){const wid=id('week',w.weekStart),hiddenEntries=(oldWeeks.find(r=>r.id===wid)?.legacy_metadata?.entries||[]).filter(e=>!shownTasks.has(e.taskId));await upsert(c,b,'weekly_plans',wid,{week_start:w.weekStart,timezone:w.timezone||'Asia/Bangkok',legacy_metadata:{...w,entries:[...w.entries,...hiddenEntries]}});await c.query('DELETE FROM weekly_plan_tasks WHERE business_id=$1 AND weekly_plan_id=$2 AND task_id=ANY($3::uuid[])',[b,wid,writableTasks]);for(const e of w.entries)await c.query('INSERT INTO weekly_plan_tasks(business_id,weekly_plan_id,task_id,priority,priority_note) VALUES($1,$2,$3,$4,$5)',[b,wid,taskId(e.taskId),e.priority,e.priorityNote||null]);}
- const restrictedMeetings=new Set();
- for(const m of state.meetings){const mid=id('meeting',m.id),old=existingMeetings.find(r=>r.id===mid),oldPeople=existingParticipants.filter(p=>p.meeting_id===mid),oldOrganizer=oldPeople.find(p=>p.role==='organizer')?.member_id||null;
-   const organizer=m.participantIds===undefined?oldOrganizer:m.organizerId?memberId(m.organizerId):null,people=m.participantIds===undefined?oldPeople.map(p=>p.member_id).sort():[...new Set([...m.participantIds.map(memberId),...(organizer?[organizer]:[])])].sort();
-   const a=await access('meeting_visibility',mid,old&&{visibility:old.visibility,team_id:old.team_id},m,people,oldOrganizer||organizer);if(a.visibility==='restricted')restrictedMeetings.add(m.id);
-   await writeItem(c,b,'meetings',mid,{title:m.title,campaign_id:campaignId(m.campaignId),started_at:m.startedAt||m.meetingStartedAt||null,source_instance_id:m.sourceInstanceId,source_project_id:m.projectId,source_recording_id:m.recordingId,legacy_metadata:withoutAccess(m,['visibility','teamId','participantIds','organizerId','visibilityReason']),visibility:a.visibility,team_id:a.team_id},!!old);
+ for(const m of state.meetings){const mid=id('meeting',m.id),old=existingMeetings.find(r=>r.id===mid),{oldPeople,oldOrganizer,organizer,people}=peopleOf(m,mid);
+   const a=await access('meeting_visibility',mid,old&&{visibility:old.visibility,team_id:old.team_id},m,people,oldOrganizer||organizer);
+   // A meeting that becomes restricted keeps its transcript on the recording machine until a participant uploads it (FR-011-010).
+   const held=a.visibility==='restricted'&&old?.visibility!=='restricted'?'local_only':old?.transcript_custody||'cloud';custody.set(mid,held);
+   await writeItem(c,b,'meetings',mid,{title:m.title,campaign_id:campaignId(m.campaignId),started_at:m.startedAt||m.meetingStartedAt||null,source_instance_id:m.sourceInstanceId,source_project_id:m.projectId,source_recording_id:m.recordingId,legacy_metadata:withoutAccess(m,['visibility','teamId','participantIds','organizerId','visibilityReason','transcriptCustody',...(held==='local_only'&&viewer.kind!=='operator'?['workingCopy']:[])]),visibility:a.visibility,team_id:a.team_id,transcript_custody:held},!!old);
    const before=oldPeople.map(p=>p.member_id+':'+p.role).sort(),after=people.map(p=>p+':'+(p===organizer?'organizer':'participant')).sort();
    if(m.participantIds!==undefined&&hash(before)!==hash(after)){await c.query('DELETE FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2',[b,mid]);for(const p of people)await c.query('INSERT INTO meeting_participants(business_id,meeting_id,member_id,role) VALUES($1,$2,$3,$4)',[b,mid,p,p===organizer?'organizer':'participant']);await audit(c,b,'meeting_participants',mid,old?{participants:before}:null,{participants:after});}
    await setAccess(c,b,'meetings',mid,old,a);
  }
- // Until transcript custody is delivered (FR-011-010, PLAN-002 P3), only the local operator may store transcript content of a restricted meeting.
- const custodyClosed=meetingId=>viewer.kind!=='operator'&&restrictedMeetings.has(meetingId);
- const putRevision=async(r,kind)=>{const rid=id(kind,r.id),prior=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND id=$2',[b,rid])).rows[0];if(prior){if(hash(prior.legacy_metadata)!==hash(r))fail('ห้ามเขียนทับ transcript revision เดิม');return;}
- if(custodyClosed(r.meetingId))fail('ประชุมลับยังบันทึก transcript บน cloud ไม่ได้');
- await upsert(c,b,'meeting_revisions',rid,{meeting_id:id('meeting',r.meetingId),kind,parent_revision_id:kind==='review'?id(r.parentRevisionId?'review':'source',r.parentRevisionId||r.sourceId):null,content_hash:r.contentHash||r.reviewHash,source_revision:r.sourceRevision||null,source_cursor:r.sourceCursor||null,source_mode:r.sourceMode||null,segments:JSON.stringify(r.segments),coverage:r.coverage||null,captured_at:r.capturedAt||r.reviewedAt||new Date().toISOString(),legacy_metadata:r});};
+ // Anyone but the local operator stores a revision or draft batch of a 'local_only' meeting as a stub (FR-011-010); what is already stored is never rewritten.
+ const putRevision=async(r,kind)=>{const rid=id(kind,r.id),mid=id('meeting',r.meetingId),held=custodyFor(mid),prior=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND id=$2',[b,rid])).rows[0];
+ if(prior){if(![r,custodyRevision({legacy_metadata:r},held).legacy_metadata].some(v=>hash(v)===hash(prior.legacy_metadata)))fail('ห้ามเขียนทับ transcript revision เดิม');return;}
+ if(isWithheld(r)&&held!=='local_only')fail('transcript revision นี้ไม่ได้อยู่ในสถานะเก็บไว้ที่เครื่องที่บันทึกการประชุม');
+ const row=custodyRevision({meeting_id:mid,kind,parent_revision_id:kind==='review'?id(r.parentRevisionId?'review':'source',r.parentRevisionId||r.sourceId):null,content_hash:r.contentHash||r.reviewHash,source_revision:r.sourceRevision||null,source_cursor:r.sourceCursor||null,source_mode:r.sourceMode||null,segments:r.segments,coverage:r.coverage||null,captured_at:r.capturedAt||r.reviewedAt||new Date().toISOString(),legacy_metadata:r},held);
+ await upsert(c,b,'meeting_revisions',rid,{...row,segments:JSON.stringify(row.segments)});};
  for(const src of state.sources)await putRevision(src,'source');
  const pending=[...state.reviews];const done=new Set();while(pending.length){const ix=pending.findIndex(r=>!r.parentRevisionId||done.has(r.parentRevisionId));if(ix<0)fail('Review lineage มีวงวน');const [r]=pending.splice(ix,1);await putRevision(r,'review');done.add(r.id);}
- for(const batch of state.batches){const priorBatch=oldBatches.find(r=>r.id===id('batch',batch.id)),receipt=receiptOf(batch,priorBatch);if(!priorBatch&&custodyClosed(batch.meetingId))fail('ประชุมลับยังบันทึกร่างงานบน cloud ไม่ได้');await upsert(c,b,'meeting_draft_batches',id('batch',batch.id),{meeting_id:id('meeting',batch.meetingId),review_revision_id:id('review',batch.reviewRevisionId),request_id:batch.requestId||batch.id,source_hash:batch.sourceHash,review_hash:batch.reviewHash,mode:batch.modelName?'local_ai':'manual',model_ref:batch.modelName||null,items:JSON.stringify(batch.items),generated_at:batch.generatedAt||new Date().toISOString(),committed_at:receipt?.committedAt||null,commit_key:receipt?.idempotencyKey||null,commit_payload_hash:receipt?receipt.payloadHash||hash(receipt.payload):null,legacy_metadata:{batch,receipt}});
-   for(const mapping of receipt?.mappings||[]){const evidence=batch.items.find(i=>i.proposalId===mapping.proposalId)?.evidence;if(!evidence)fail('Receipt ขาด proposal evidence');await c.query('INSERT INTO meeting_task_links(business_id,batch_id,proposal_id,task_id,review_revision_id,evidence,committed_at) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(business_id,batch_id,proposal_id) DO NOTHING',[b,id('batch',batch.id),mapping.proposalId,taskId(mapping.taskId),id('review',batch.reviewRevisionId),JSON.stringify(evidence),receipt.committedAt]);}
+ for(const batch of state.batches){const priorBatch=oldBatches.find(r=>r.id===id('batch',batch.id)),receipt=receiptOf(batch,priorBatch),held=custodyFor(id('meeting',batch.meetingId)),kept=priorBatch?priorBatch.legacy_metadata.batch:custodyBatch(batch,held),stub=priorBatch?priorBatch.legacy_metadata.withheld===true:held==='local_only';await upsert(c,b,'meeting_draft_batches',id('batch',batch.id),{meeting_id:id('meeting',batch.meetingId),review_revision_id:id('review',batch.reviewRevisionId),request_id:batch.requestId||batch.id,source_hash:batch.sourceHash,review_hash:batch.reviewHash,mode:batch.modelName?'local_ai':'manual',model_ref:batch.modelName||null,items:JSON.stringify(kept.items),generated_at:batch.generatedAt||new Date().toISOString(),committed_at:receipt?.committedAt||null,commit_key:receipt?.idempotencyKey||null,commit_payload_hash:receipt?receipt.payloadHash||hash(receipt.payload):null,legacy_metadata:{batch:kept,receipt,...(stub?{withheld:true}:{})}});
+   for(const mapping of receipt?.mappings||[]){const evidence=kept.items.find(i=>i.proposalId===mapping.proposalId)?.evidence;if(!evidence)fail('Receipt ขาด proposal evidence');await c.query('INSERT INTO meeting_task_links(business_id,batch_id,proposal_id,task_id,review_revision_id,evidence,committed_at) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(business_id,batch_id,proposal_id) DO NOTHING',[b,id('batch',batch.id),mapping.proposalId,taskId(mapping.taskId),id('review',batch.reviewRevisionId),JSON.stringify(evidence),receipt.committedAt]);}
  }
  const knownTasks=new Set([...existingTasks.map(t=>t.legacy_metadata?.id||t.id),...state.tasks.map(t=>t.id)]),storedEvents=new Set((await c.query("SELECT id FROM change_events WHERE business_id=$1 AND entity_type='legacy_task_event'",[b])).rows.map(r=>r.id));
  for(const event of state.events){if(event.taskId&&!knownTasks.has(event.taskId)&&!storedEvents.has(id('event',event.id)))fail('ข้อมูลถูกแก้แล้ว กรุณาโหลด workspace ใหม่',409);const stamped=c.zuriActor?{...event,actor:c.zuriActor.displayName+' · '+c.zuriActor.pid,actorMemberId:c.zuriActor.memberId,actorPid:c.zuriActor.pid,at:new Date().toISOString()}:event;await c.query("INSERT INTO change_events(id,business_id,entity_type,entity_id,event_type,after_data,actor_kind,request_id,occurred_at,actor_member_id,actor_pid,actor_subject) VALUES($1,$2,'legacy_task_event',$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(id) DO NOTHING",[id('event',event.id),b,event.taskId?taskId(event.taskId):b,event.type||'legacy',stamped,c.zuriActor?'authenticated':'local_operator',event.id,stamped.at||new Date().toISOString(),c.zuriActor?.memberId||null,c.zuriActor?.pid||null,c.zuriActor?.pid||null]);}
@@ -144,6 +156,32 @@ export async function saveLegacy(c,b,input){
  if(input.meetingTaskManager)await writeDomain(c,b,input.meetingTaskManager,map);
  await audit(c,b,'workspace',b,null,{domains:[...(input.campaignWorkspace?['campaigns']:[]),...(input.meetingTaskManager?['meetings_tasks_members']:[])]},'save');
  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);const result=await readLegacy(c,b);if(input.campaignWorkspace?.selected)result.campaignWorkspace.selected=map.get(input.campaignWorkspace.selected)||result.campaignWorkspace.selected;return result;
+}
+// FR-011-010: a participant's explicit, audited upload of a transcript kept on the recording machine. Every stub must be matched by
+// the full content it came from (the stub equals that content with its text removed), so nothing else can be stored through here.
+export async function uploadTranscript(c,b,ref,input){
+ const viewer=viewerOf(c),names=await meetingNames(c,b),meeting=readable(viewer,await all(c,b,'meetings'),names).find(r=>r.id===ref||r.legacy_metadata?.id===ref);
+ if(!meeting)fail('ไม่พบประชุม',404);
+ if(viewer.kind!=='member'||!(names.get(meeting.id)||[]).includes(viewer.memberId))fail('เฉพาะผู้เข้าร่วมประชุมอัปโหลด transcript ได้',403);
+ const reason=String(input?.reason??'').trim();if(!reason)fail('ระบุเหตุผลที่อัปโหลด transcript',422);
+ if(meeting.transcript_custody!=='local_only')fail('transcript ของประชุมนี้อยู่บน cloud แล้ว',409);
+ const list=v=>new Map((Array.isArray(v)?v:[]).map(d=>[d?.id,d])),sent={source:list(input.sources),review:list(input.reviews)},sentBatches=list(input.batches);
+ const revisions=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND meeting_id=$2',[b,meeting.id])).rows,stubs=revisions.filter(r=>isWithheld(r.legacy_metadata));
+ const stubBatches=(await c.query('SELECT * FROM meeting_draft_batches WHERE business_id=$1 AND meeting_id=$2',[b,meeting.id])).rows.filter(r=>r.legacy_metadata.withheld===true);
+ const mismatch=()=>fail('transcript ที่ส่งมาไม่ตรงกับฉบับที่บันทึกไว้');
+ if(sent.source.size+sent.review.size!==stubs.length||sentBatches.size!==stubBatches.length)mismatch();
+ for(const row of stubs){const doc=sent[row.kind].get(row.legacy_metadata.id);
+  if(!doc||isWithheld(doc)||!Array.isArray(doc.segments)||!doc.segments.length||doc.segments.some(s=>typeof s?.segmentId!=='string'||typeof s.text!=='string'||!Number.isFinite(s.startMs)||!Number.isFinite(s.endMs)||s.startMs<0||s.endMs<s.startMs)||hash(custodyRevision({legacy_metadata:doc},'local_only').legacy_metadata)!==hash(row.legacy_metadata)||(row.kind==='review'&&await reviewHash(doc.id,doc.segments)!==doc.reviewHash))mismatch();}
+ const whole=new Map(revisions.filter(r=>!isWithheld(r.legacy_metadata)).map(r=>[r.legacy_metadata.id,r.legacy_metadata]));
+ for(const row of stubBatches){const doc=sentBatches.get(row.legacy_metadata.batch.id),review=doc&&(sent.review.get(doc.reviewRevisionId)||whole.get(doc.reviewRevisionId));
+  if(!doc||!review||!Array.isArray(doc.items)||hash(custodyBatch(doc,'local_only'))!==hash(row.legacy_metadata.batch))mismatch();
+  try{for(const item of doc.items)validateEvidence(review,item.evidence);}catch{mismatch();}}
+ for(const row of stubs)await c.query('UPDATE meeting_revisions SET segments=$3,legacy_metadata=$4 WHERE business_id=$1 AND id=$2',[b,row.id,JSON.stringify(sent[row.kind].get(row.legacy_metadata.id).segments),sent[row.kind].get(row.legacy_metadata.id)]);
+ for(const row of stubBatches){const doc=sentBatches.get(row.legacy_metadata.batch.id);await c.query('UPDATE meeting_draft_batches SET items=$3,legacy_metadata=$4 WHERE business_id=$1 AND id=$2',[b,row.id,JSON.stringify(doc.items),{batch:doc,receipt:row.legacy_metadata.receipt}]);}
+ await c.query("UPDATE meetings SET transcript_custody='cloud' WHERE business_id=$1 AND id=$2",[b,meeting.id]);
+ await audit(c,b,'meetings',meeting.id,{transcript_custody:'local_only'},{transcript_custody:'cloud',reason,revisionIds:stubs.map(r=>r.legacy_metadata.id),batchIds:stubBatches.map(r=>r.legacy_metadata.batch.id)},'transcript_upload');
+ await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
+ return readLegacy(c,b);
 }
 function decodeBackup(value){if(value.schemaVersion===2){if(value.appId!==APP_ID)fail('Backup เป็นของแอปอื่น');validateCampaignWorkspace(value.campaignWorkspace);if(value.meetingTaskManager?.restoreJournal)fail('Backup มี restore ที่ยังไม่เสร็จ');validateState(value.meetingTaskManager);return value;}return {schemaVersion:2,appId:APP_ID,campaignWorkspace:restoreWorkspace(value),meetingTaskManager:empty()};}
 export async function importPreview(c,b,input){

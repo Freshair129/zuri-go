@@ -14,7 +14,7 @@ export function TeamAccess({children}){
  const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
  const canWrite=local||!!session?.authenticated;
  // Who is reading (FR-011-003): the local operator, a signed-in Member or a Guest. The server decides what each one sees.
- const viewer=local?{kind:'operator',admin:false,teamIds:[]}:session?.authenticated?{kind:'member',memberId:session.member?.memberId,admin:!!session.admin,teamIds:session.teamIds||[]}:{kind:'guest',admin:false,teamIds:[]};
+ const viewer=local?{kind:'operator',admin:false,teamIds:[]}:session?.authenticated?{kind:'member',memberId:session.member?.memberId,pid:session.member?.pid,admin:!!session.admin,teamIds:session.teamIds||[]}:{kind:'guest',admin:false,teamIds:[]};
  async function check(){setLoading(true);try{setSession(await request('/session'));setError('');}catch(e){setError(e.message);}finally{setLoading(false);}}
  useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false,admin:false,teamIds:[]}:old);window.dispatchEvent(new Event('zuri-go-viewer-changed'));setError('กรุณาใส่ รหัสระบุตัวตนเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
  useEffect(()=>{if(canWrite&&pending.current){const action=pending.current;pending.current=null;action();}},[canWrite]);

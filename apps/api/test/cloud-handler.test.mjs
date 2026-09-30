@@ -51,6 +51,13 @@ test('guest write attempts cannot alter state, including attachments and wrong b
  assert.equal((await call('businesses/'+randomUUID()+'/state')).status,403);
  assert.deepEqual((await call('businesses/'+business+'/state')).body,before.body);
 });
+test('the transcript upload route needs a signed-in Member and reaches the meeting lookup (FR-011-010)',async()=>{
+ const route='businesses/'+business+'/meetings/'+randomUUID()+'/transcript';
+ assert.equal((await call(route,{method:'POST',body:{reason:'x'}})).status,401,'a Guest cannot upload');
+ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+ assert.equal((await call(route,{method:'POST',cookie,body:{reason:'x'}})).status,404,'an unknown or hidden meeting answers 404');
+ assert.equal((await call('businesses/'+business+'/meetings/'+randomUUID()+'/transcript',{method:'PATCH',cookie,body:{}})).status,404,'only POST uploads');
+});
 test('attachments persist bytes, follow their task visibility, enforce bounds and become unavailable after removal',async()=>{
  const task=randomUUID();await transaction(business,c=>c.query('INSERT INTO tasks(id,business_id,code,title) VALUES($1,$2,$3,$4)',[task,business,task,'QA ONLY attachment test']));
  const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];

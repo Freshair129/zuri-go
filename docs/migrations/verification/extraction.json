@@ -1,10 +1,10 @@
 {
   "unchangedSourceFilesChecked": 241,
-  "deployFiles": 46,
+  "deployFiles": 50,
   "secretsExcluded": true,
   "standalonePaths": true,
   "appId": "dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1",
   "projectId": "prj_8f3zf1qaZnRcAvWabOv1PWAPIABG",
-  "htmlSha256": "8fd179c7019e8a2b517079ad5676415c5ed6662354d274d02f452da79fd824b8",
+  "htmlSha256": "3de782451f56cad0387b77ccd5338a0fb6b2ecebe3e5f0ccffe6f0dbe163dd2c",
   "runtimeSha256": "9e3ede84b28aded3c7379b6e6a5611f0d95b9977eb0f781e279ceefabfcbd27e"
 }

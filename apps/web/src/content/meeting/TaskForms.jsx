@@ -55,7 +55,7 @@ export function TaskForm({businessId,initialError,task,week,entry,state,campaign
     {draft.kpi&&<Field label="วันตรวจ KPI ซ้ำ" type="date" value={draft.recheckDate} onChange={v=>set('recheckDate',v)}/>}
   </div><div className="mc-form-actions"><Button type="button" onClick={onClose}>ยกเลิก</Button><Button type="submit" className="mc-primary" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึกงาน'}</Button></div></form></fieldset>
     <TaskAttachments businessId={businessId} taskId={task?.id} onEvidence={url=>{if(!draft.evidence)set('evidence',url);}}/>
-    {task?.sourceRefsWithheld&&<p className="mc-note">งานนี้มาจากประชุมที่คุณไม่ได้อยู่ในผู้เข้าร่วม จึงไม่แสดงข้อความอ้างอิงจากประชุม</p>}
+    {task?.sourceRefsWithheld&&<p className="mc-note">งานนี้มีหลักฐานจากประชุมลับที่คุณไม่ได้อยู่ในผู้เข้าร่วม จึงไม่แสดงข้อความอ้างอิงจากประชุม</p>}
     {task?.sourceRefs?.length>0&&<section className="mt-source"><h3>ที่มาจากประชุม</h3>{task.sourceRefs.map((ref,i)=><div key={i}>{ref.evidence?.map((e,j)=><blockquote key={j}>{e.quote}<small>{Math.floor(e.startMs/1000)}s – {Math.floor(e.endMs/1000)}s</small></blockquote>)}<Button onClick={()=>onSource(ref.meetingId)}>เปิดประชุมต้นทาง</Button></div>)}</section>}
     {task?.sourceUrl&&<p><a href={task.sourceUrl} target="_blank" rel="noreferrer">เอกสารต้นทาง ↗</a></p>}
     {task?.id&&<details className="mt-history"><summary>ประวัติการแก้ไข · {task.id.slice(0,8)}</summary>{state.events.filter(e=>e.taskId===task.id).slice().reverse().map(e=><p key={e.id}><b>{e.type==='priority'?`MoSCoW · ${e.detail.weekStart} · ${MOSCOW[e.detail.after.priority]||'ยังไม่จัดลำดับ'}`:e.type}</b><small>{new Date(e.at).toLocaleString('th-TH')} · {e.actor}</small></p>)}</details>}
