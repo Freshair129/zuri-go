@@ -41,7 +41,7 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 | WI-07 | Task API, shared task rules, deployment allowlist | P2 | Built locally 2026-10-01: `tasks.mjs`, `projects.mjs`, `campaign-tasks.mjs`, `shared/task-rules.mjs`; allowlist 54 files |
 | WI-08 | Boards, Projects view, context pickers, Workboard as a view | P2 | Built 2026-10-01 (`meeting/Boards.jsx`, Workboard five lanes, “Task Manager” / “Meetings” menu); passed a verify gate; partly browser-checked locally |
 | WI-09 | Meeting participants, confidential meetings, transcript custody, server-side meeting commit | P3 | FR-011-009/010 built locally 2026-10-01 (stubs, audited upload); server-side commit designed as a proposed amendment to SDD-004, not built |
-| WI-10 | Workboard backfill | P4 | Owner authorization for production |
+| WI-10 | Workboard backfill | P4 | `backfill-workboard.mjs` built and rehearsed 2026-10-01; read-only dry runs found 0 Workboard tasks in production and locally, so nothing is moved; repeat the dry run after the P5 migration |
 | WI-11 | ARCH-002 amendment; PRD-001, BRD-001 and AGENTS.md updates | After approval | Done 2026-10-01 for ADR-004 / FEAT-011 (schema 6 local only); ADR-002/003 parts wait for their approval |
 | WI-12 | FEAT-004 split: FEAT-010 carries the task requirements, and meeting intake moves to DOM-MTG | With WI-05 | Proposed split plan in FEAT-004 `feature.md` (2026-10-01); no file or ID moved |
 
@@ -78,7 +78,7 @@ Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was ap
 | Q9 | Names in the site menu | **Decided (owner, 2026-10-01):** “Task Manager” and “Meetings” |
 | Q10 | Drag to reorder cards within a lane | **Decided (owner, 2026-10-01):** later |
 | Q11 | Domain codes DOM-TSK and DOM-MTG | **Decided (owner, 2026-10-01):** adopt; they freeze once adopted |
-| Q12 | Production backfill of Workboard tasks (P4) | Asked again at P4, with the dry-run report |
+| Q12 | Production backfill of Workboard tasks (P4) | Dry run 2026-10-01: production holds 0 Workboard tasks, so no backfill is needed now; asked again only if a later dry run finds some |
 | Q13 | Do evidence quotes kept inside a task's `sourceRefs`, and meeting text copied into a task description, count as transcript under FR-011-010? | Today they are withheld only from readers who cannot read the meeting; WI-09 proposes keeping quotes only in `meeting_task_links` |
 | Q14 | When a restricted meeting is widened, does its transcript custody return to `cloud` automatically? | No — stays `local_only` until an explicit, audited upload |
 | Q15 | The WI-09 open questions (update/link of existing tasks, `team` meetings, viewer snapshot, quote spans, who may commit, release staging) | See the proposed amendment at the end of SDD-004 |

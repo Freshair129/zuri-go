@@ -47,6 +47,7 @@ Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign
 - **Restart after migrating**, as for schema 6.
 - **Moving a Workboard task to Done** now needs an R and the standard completion rule; tasks already Done keep their state.
 - **Rollback.** Code from before FEAT-010 ignores the new columns and tables; plan it together with FEAT-011's rollback note above.
+- **Workboard backfill (FR-010-016).** `node apps/api/backfill-workboard.mjs` is a read-only dry run of the local Business (`--cloud` for production); it prints counts and writes the full report to `.local/backfill/`. `--run` writes, reconciles and needs schema 7; a production run also needs `--production-authorized`, a backup first and the owner's specific authorization. The dry run of 2026-10-01 found 0 Workboard tasks in production.
 
 ## Identity-code login (0.4.2)
 

@@ -64,7 +64,7 @@ Approved by the owner on 2026-10-01, with ADR-002, ADR-003 and PLAN-002 Q6–Q11
 | [FR-010-013](requirements/FR-010-013-workboard-as-view.md) | The Workboard as a view of the task records | FEAT-010-P02 | implemented |
 | [FR-010-014](requirements/FR-010-014-task-from-finding.md) | Create a task from a metric finding | FEAT-010-P02 | implemented |
 | [FR-010-015](requirements/FR-010-015-campaign-tasks-projection.md) | campaign.tasks stays complete as a projection | FEAT-010-P02 | implemented |
-| [FR-010-016](requirements/FR-010-016-move-workboard-tasks.md) | Moving the existing Workboard tasks | FEAT-010-P02 | declared |
+| [FR-010-016](requirements/FR-010-016-move-workboard-tasks.md) | Moving the existing Workboard tasks | FEAT-010-P02 | implemented |
 | [NFR-010-001](requirements/NFR-010-001-row-level-security-new-tables.md) | Row-level security covers the new task tables | FEAT-010-P01 | implemented |
 | [NFR-010-002](requirements/NFR-010-002-additive-schema.md) | The schema change is additive and reconcilable | FEAT-010-P01 | implemented |
 

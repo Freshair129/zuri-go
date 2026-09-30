@@ -3,7 +3,7 @@ id: FR-010-016
 title: Moving the existing Workboard tasks
 part: FEAT-010-P02
 owner: DOM-CAM
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-010]
@@ -23,8 +23,9 @@ The system SHALL move the existing Workboard tasks into the new model by a revie
 - AC-010-016-06 — Given production, then the backfill runs only after `npm run backup`, with the count of Workboard tasks in production recorded first, and with the owner’s specific authorization (PLAN-002 Q12).
 
 ## Implementation
-- Not built. Workboard tasks are already `tasks` rows with `source_kind = 'campaign-legacy'` (`apps/api/workspace.mjs:68`), so the backfill writes `campaign_task_details`, the owner label and the completion marker for rows that exist; it does not create the rows.
-- How many Workboard tasks production holds was never recorded (ARCH-003).
+- Built 2026-10-01: `apps/api/backfill-workboard.mjs` (operator CLI, never packaged). Dry run by default in a read-only transaction; `--run` writes details, the owner label, the Done marker and empty mapped columns of existing rows, reconciles the counts and rolls back on any difference; a production run also needs `--production-authorized`. The full report stays private under `.local/backfill/`.
+- Rehearsed: `apps/api/test/backfill.test.mjs` on a QA Business (dry run writes nothing; the run matches it; IDs, codes, `legacy_metadata`, snapshots and counts unchanged; the owner text is not bound; a replay changes nothing).
+- **Recorded counts, 2026-10-01 (dry runs, read-only):** production (schema 5) holds **0** Workboard tasks — no `campaign-legacy` rows and no tasks inside `campaign_states` — among 12 tasks (7 manual, 5 weekly-plan); the local Business also holds 0. There is nothing to move today; the dry run is repeated after the release migrates production, before any run.
 
 ## Notes
 - Delivered in PLAN-002 P4 (WI-10). Deployment is not a database migration or rollback authorization (AGENTS.md).
