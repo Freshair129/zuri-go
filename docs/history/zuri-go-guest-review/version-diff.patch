@@ -1,0 +1,648 @@
+--- 0.3.0/.brain/rca/zuri-go-attachment-task-ids.md
++++ 0.3.1/.brain/rca/zuri-go-attachment-task-ids.md
+@@ -0,0 +1,6 @@
++# Attachment task identity — 0.3.1 pre-release review
++Symptom: the first attachment implementation would return 404 for imported tasks.
++Evidence: workspace.mjs readLegacy returns legacy_metadata.id, while writeDomain stores safeId(business, task, legacy ID) as the PostgreSQL task PK. The initial attachment query matched only the PK.
++Root cause: attachment API treated the compatibility-view task ID as a canonical database UUID.
++Why escaped: initial API fixture used a canonical-only task, so round-trip tests did not exercise imported identifiers.
++Prevention: resolve both canonical and legacy task identity inside the scoped Business query, store only canonical FK, and test a legacy ID fixture and cross-Business isolation before deployment promotion.
+--- 0.3.0/output/draft/campaign-mission-control/src/content/business/BusinessWorkspace.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/business/BusinessWorkspace.jsx
+@@ -1,3 +1,4 @@
++import {useWriteAccess} from './TeamAccess.jsx';
+ import {ZuriGoLogo} from '../shared/ZuriGoLogo.jsx';
+ import React,{useEffect,useState,useRef} from 'react';
+ import {Button,DataComponent,useDataApp} from '../../data-app-public.jsx';
+@@ -19,7 +20,9 @@
+ function GoalCard({goal,onRecord,onEdit}){return <div className="zg-goal"><div className="zg-row"><h3>{goal.name}</h3><button className="zg-text-button" onClick={()=>onEdit(goal)}>แก้เป้า</button></div><p>{day(goal.period_start)} – {day(addDays(goal.period_end_exclusive,-1))}</p><div className="zg-goal-value"><strong>{goal.actual===null?'—':fmt(goal.actual)}</strong><span>/ {fmt(goal.target_value)} {goal.metric_code==='net_revenue'?'บาท':goal.metric_code==='published_posts'?'รายการ':'ราย'}</span></div><div className="zg-progress" role="progressbar" aria-label={goal.name} aria-valuenow={goal.barPercent} aria-valuemin="0" aria-valuemax="100"><i style={{width:goal.barPercent+'%'}}/></div><div className="zg-row"><b>{goal.percent==null?'รอข้อมูล':fmt(goal.percent,1)+'%'}</b><span>{goal.remaining==null?'':goal.remaining===0?(goal.quality==='complete'?'ถึงเป้าแล้ว':'รอตรวจข้อมูลครบ'):'เหลือ '+fmt(goal.remaining)}</span></div>{goal.stock!=null&&<p>ผู้ติดตามสะสม {fmt(goal.stock)} บัญชี</p>}<small className={goal.quality==='complete'?'':'zg-warning'}>{goal.quality==='complete'?'ข้อมูลครบขอบเขต':goal.quality==='missing'?'ยังขาดข้อมูลต้นรอบหรือผลล่าสุด':goal.quality==='stale'?'ข้อมูลต้องอัปเดต':'ข้อมูลบางส่วน / เวลาแต่ละช่องทางไม่ตรงกัน'}</small><small>ข้อมูลถึง {time(goal.asOf)}</small>{goal.metric_code!=='published_posts'&&<Button onClick={()=>onRecord(goal)}>อัปเดตผลจริง ↗</Button>}<details><summary>วิธีนับและแหล่งข้อมูล</summary><p>{goal.metric_code==='followers_net'?'ยอดล่าสุด − ยอดต้นรอบ จากบัญชีชุดเดิม ผลรวมข้ามช่องทางไม่ใช่คนที่ไม่ซ้ำ':'ผลจริงเฉพาะช่วงและช่องทางที่เลือก'}</p>{goal.details.map((d,i)=><p key={i}>{d.label||'รายการเผยแพร่'} · {d.reason||fmt(d.value)} · {time(d.effectiveAt)}</p>)}</details></div>;}
+ 
+ export function BusinessWorkspace({view='overview',cloud=false,legacyCampaigns,legacyDomain,onActivateServer,onOpenCampaign,onOpenMeeting}){
+- const shell=useDataApp(),[data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[notice,setNotice]=useState(''),[modal,setModal]=useState(null),[busy,setBusy]=useState(false),[date,setDate]=useState(localDate()),[kind,setKind]=useState('weekly'),[filter,setFilter]=useState('all'),[brief,setBrief]=useState(null),[importReport,setImportReport]=useState(null),[includeTranscript,setIncludeTranscript]=useState(false);
++ const shell=useDataApp(),[data,setData]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[notice,setNotice]=useState(''),[modal,setModalState]=useState(null),[busy,setBusy]=useState(false),[date,setDate]=useState(localDate()),[kind,setKind]=useState('weekly'),[filter,setFilter]=useState('all'),[brief,setBrief]=useState(null),[importReport,setImportReport]=useState(null),[includeTranscript,setIncludeTranscript]=useState(false);
++ const {requestWrite}=useWriteAccess();
++ const setModal=value=>value?requestWrite(()=>setModalState(value)):setModalState(null);
+  const generation=useRef(0),pendingFilter=useRef(null);const [businessId,setBusinessId]=useState(null);
+  async function load(){const version=++generation.current;setLoading(true);setError('');try{const info=await request('/bootstrap'),value=await scoped(info.business.id,'/state');if(version!==generation.current)return;setBusinessId(info.business.id);setData(value);setBrief(null);}catch(e){if(version===generation.current)setError(e.message);}finally{if(version===generation.current)setLoading(false);}}
+  useEffect(()=>{load();return()=>{generation.current++;};},[]);
+@@ -48,7 +51,7 @@
+   {view==='overview'&&<>
+    <section className="zg-stats" aria-label="สถานะการตลาด"><button onClick={()=>go('campaigns','active')}><span>กำลังรัน</span><strong>{fmt(result.counts.active)}<small>แคมเปญ</small></strong><em>ดูแคมเปญ ↗</em></button><button onClick={()=>go('campaigns','queued')}><span>อยู่ในคิว</span><strong>{fmt(result.counts.queued)}<small>แคมเปญ</small></strong><em>เตรียมให้พร้อม ↗</em></button><button onClick={()=>go('content','upcoming')}><span>รอลงตามตาราง · {kind==='weekly'?'สัปดาห์นี้':'เดือนนี้'}</span><strong>{fmt(result.counts.scheduled)}<small>รายการ</small></strong><em>จาก {result.counts.scheduledContents} ชิ้นงาน ↗</em></button><button onClick={()=>go('content')}><span>คอนเทนต์ในแผน · {new Date(date+'T12:00:00').toLocaleDateString('th-TH',{month:'long'})}</span><strong>{fmt(result.counts.contentMonth)}<small>ชิ้นงาน</small></strong><em>ลงแล้วอย่างน้อยหนึ่งช่องทาง {result.counts.publishedContents} ชิ้น ↗</em></button></section>
+    <SourceBlock id="zgo-goals" title="เป้าที่เรากำลังไปด้วยกัน" rows={result.goals} description="เป้ารายสัปดาห์และเดือนแยกกัน ผู้ติดตามเพิ่มสุทธิ = ยอดล่าสุด − ยอดต้นรอบ; ข้อมูลขาดไม่ใช่ศูนย์"><div className="zg-goal-columns">{['weekly','monthly'].map(period=><section key={period}><div className="zg-row"><h2>{period==='weekly'?'Weekly goal':'Monthly goal'}</h2><button className="zg-text-button" onClick={()=>setModal(newGoal(period))}>＋ ตั้งเป้า</button></div>{result.goals.filter(g=>g.period_kind===period).length?result.goals.filter(g=>g.period_kind===period).map(g=><GoalCard key={g.id} goal={g} onEdit={row=>setModal({kind:'goal',row})} onRecord={goal=>setModal({kind:'observation',row:{goal_id:goal.id,series_id:goal.details[0]?.seriesId||''}})}/>):<div className="zg-empty-goal"><span>เริ่มจากเป้าเล็ก ๆ ที่วัดได้</span><p>{period==='weekly'?'เช่น ผู้ติดตามเพิ่มสุทธิ 500 คน':'ตั้งเป้าเดือนนี้แยกจากเป้ารายสัปดาห์'}</p><Button onClick={()=>setModal(newGoal(period))}>ตั้งเป้า{period==='weekly'?'สัปดาห์นี้':'เดือนนี้'} ↗</Button></div>}</section>)}</div></SourceBlock>
+-   <section className="zg-brief"><img src={pairAnalysis} alt="Zuri ช่วยสรุป และน้องวางใจช่วยตรวจสัญญาณ"/><div><div className="zg-row"><h2>Zuri สรุปให้</h2><span className="zg-chip">{activeBrief?.value.mode==='ai'?'AI · โมเดลในเครื่อง':'สรุปจากกติกา'}</span></div><ul>{(activeBrief?.value.summary||rules.length&&rules||[{id:'start',text:'เริ่มจากเพิ่มแคมเปญ วางคอนเทนต์ หรือตั้งเป้าแรกของธุรกิจ',action:'campaigns'}]).map(f=><li key={f.id}><button onClick={()=>go(f.action)}>{f.text} ↗</button></li>)}</ul>{activeBrief&&<small>{time(activeBrief.value.as_of)}{activeBrief.revision!==data.business.row_version?' · ข้อมูลเปลี่ยนแล้ว กรุณาสรุปใหม่':''}</small>}<Button disabled={busy} onClick={generateBrief}>{busy?'กำลังสรุป…':'สรุปข้อมูลล่าสุด'}</Button>{activeBrief&&<details><summary>ดูหลักฐานที่ใช้สรุป</summary><p>ข้อมูลถึง {time(activeBrief.value.as_of)}</p>{activeBrief.value.summary.map(f=><p key={f.id}>{f.id}: {f.text}</p>)}</details>}</div></section>
++   <section className="zg-brief"><img src={pairAnalysis} alt="Zuri ช่วยสรุป และน้องวางใจช่วยตรวจสัญญาณ"/><div><div className="zg-row"><h2>Zuri สรุปให้</h2><span className="zg-chip">{activeBrief?.value.mode==='ai'?'AI · โมเดลในเครื่อง':'สรุปจากกติกา'}</span></div><ul>{(activeBrief?.value.summary||rules.length&&rules||[{id:'start',text:'เริ่มจากเพิ่มแคมเปญ วางคอนเทนต์ หรือตั้งเป้าแรกของธุรกิจ',action:'campaigns'}]).map(f=><li key={f.id}><button onClick={()=>go(f.action)}>{f.text} ↗</button></li>)}</ul>{activeBrief&&<small>{time(activeBrief.value.as_of)}{activeBrief.revision!==data.business.row_version?' · ข้อมูลเปลี่ยนแล้ว กรุณาสรุปใหม่':''}</small>}<Button disabled={busy} onClick={()=>requestWrite(generateBrief)}>{busy?'กำลังสรุป…':'สรุปข้อมูลล่าสุด'}</Button>{activeBrief&&<details><summary>ดูหลักฐานที่ใช้สรุป</summary><p>ข้อมูลถึง {time(activeBrief.value.as_of)}</p>{activeBrief.value.summary.map(f=><p key={f.id}>{f.id}: {f.text}</p>)}</details>}</div></section>
+    <div className="zg-columns"><section className="zg-panel"><div className="zg-row"><h2>วันนี้ควรทำ</h2><span className="zg-chip">น้องวางใจชี้สัญญาณ</span></div>{[[result.overdue.length,'รายการเลยเวลาลง','content','overdue'],[result.pending.length,'ชิ้นรอตรวจคอนเทนต์','content','review'],[result.counts.unconfirmed,'แคมเปญรอยืนยันสถานะ','campaigns','unconfirmed'],[result.taskAttention.length,'งานเลยกำหนด / ติดขัด','meeting-task-manager','all']].filter(x=>x[0]>0).map(([n,label,tab,f])=><button className="zg-attention" key={label} onClick={()=>tab==='meeting-task-manager'?onOpenMeeting():go(tab,f)}><b>{n}</b><span>{label}</span><span>↗</span></button>)}{!result.overdue.length&&!result.pending.length&&!result.counts.unconfirmed&&!result.taskAttention.length&&<p className="zg-empty">ยังไม่มีรายการเร่งด่วนจากข้อมูลที่บันทึก</p>}</section><section className="zg-panel"><div className="zg-row"><h2>กำลังจะลง</h2><button className="zg-text-button" onClick={()=>go('content','upcoming')}>ดูตาราง ↗</button></div>{result.upcoming.slice(0,5).map(p=><button className="zg-upcoming" key={p.id} onClick={()=>setModal({kind:'publication',row:p})}><span>{time(p.scheduled_at)}</span><strong>{data.content_items.find(c=>c.id===p.content_item_id)?.title}</strong><small>{data.channel_accounts.find(a=>a.id===p.channel_account_id)?.display_name}</small></button>)}{!result.upcoming.length&&<div className="zg-empty"><p>คิวยังว่าง วางคอนเทนต์แรกได้เลย</p><Button onClick={()=>go('content')}>วางคอนเทนต์ ↗</Button></div>}</section></div>
+   </>}
+   {(view==='campaigns'||view==='overview')&&<SourceBlock id="zgo-campaigns" title="แคมเปญของธุรกิจ" rows={campaignRows} description="สถานะที่ผู้ใช้ยืนยัน ไม่เดาจากวันที่; ไม่รวม archived"><div className="zg-row"><p>ทุกแคมเปญใน {data.business.name}</p>{view==='campaigns'&&<Field label="กรองสถานะแคมเปญ" value={filter} options={[{value:'all',label:'ทุกสถานะ'},...choices(LIFECYCLE)]} onChange={setFilter}/>}</div>{!campaignRows.length?<p className="zg-empty">ยังไม่มีแคมเปญในขอบเขตนี้</p>:<div className="zg-table-wrap"><table><thead><tr><th>แคมเปญ</th><th>สถานะ</th><th>ช่วงเวลา</th><th>ผู้ดูแล</th><th>ไปต่อ</th></tr></thead><tbody>{campaignRows.map(c=><tr key={c.id}><td><strong>{c.name}</strong><small>{c.code}</small></td><td><span className={'zg-state '+c.lifecycle}>{LIFECYCLE[c.lifecycle]}</span></td><td>{day(c.planned_start)} – {day(c.planned_end)}</td><td>{data.members.find(m=>m.id===c.owner_member_id)?.display_name||'ยังไม่ระบุ'}</td><td><button className="zg-text-button" onClick={()=>setModal({kind:'campaign',row:{...c,channel_ids:data.campaign_channels.filter(x=>x.campaign_id===c.id).map(x=>x.channel_account_id)}})}>จัดการ</button><button className="zg-text-button" onClick={()=>{localStorage.setItem(modeKey(shell.snapshot.id),businessId);onOpenCampaign(c.id,false,businessId);}}>เปิดแคมเปญ ↗</button></td></tr>)}</tbody></table></div>}</SourceBlock>}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx
+@@ -1,19 +1,26 @@
+-import React,{useEffect,useState} from 'react';
++import React,{createContext,useContext,useEffect,useRef,useState} from 'react';
+ import {Button,useDataApp} from '../../data-app-public.jsx';
++import {Modal} from '../dashboard/Forms.jsx';
+ import {ZuriGoLogo} from '../shared/ZuriGoLogo.jsx';
+ import {request} from './api.mjs';
+ import pair from '../assets/metrics-pair-clipboard_gen-80d72fb8.webp';
+ import './team-access.css';
+ 
++const Access=createContext({canWrite:true,requestWrite:action=>action?.()});
++export const useWriteAccess=()=>useContext(Access);
+ export function TeamAccess({children}){
+  const shell=useDataApp();
+  useEffect(()=>{if(shell.appTitle==='Campaign Mission Control')shell.setAppTitle('Zuri-Go');},[shell.appTitle,shell.setAppTitle]);
+- const local=location.hostname==='127.0.0.1', [session,setSession]=useState(local?{storage:'postgresql-local'}:null),[loading,setLoading]=useState(!local),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+- async function check(){setLoading(true);try{setSession(await request('/session'));setError('');}catch(e){setSession(null);if(e.code!=='AUTH_REQUIRED')setError(e.message);}finally{setLoading(false);}}
+- useEffect(()=>{if(local)return;check();const expired=()=>{setSession(null);setError('หมดเวลาเข้าใช้งาน กรุณาใส่รหัสทีมอีกครั้ง');};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
+- async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{password}));setPassword('');}catch(e){setError(e.message);}finally{setBusy(false);}}
+- async function logout(){setBusy(true);try{await request('/logout','POST',{});setSession(null);}catch(e){setError(e.message);}finally{setBusy(false);}}
++ const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
++ const canWrite=local||!!session?.authenticated;
++ async function check(){setLoading(true);try{setSession(await request('/session'));setError('');}catch(e){setError(e.message);}finally{setLoading(false);}}
++ useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false}:old);setError('กรุณาใส่รหัสทีมเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
++ useEffect(()=>{if(canWrite&&pending.current){const action=pending.current;pending.current=null;action();}},[canWrite]);
++ function requestWrite(action){if(canWrite)return action?.();pending.current=action;setError('');setLoginOpen(true);}
++ function close(){if(busy)return;pending.current=null;setLoginOpen(false);setPassword('');setError('');}
++ async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{password}));setPassword('');setLoginOpen(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
++ async function logout(){setBusy(true);try{await request('/logout','POST',{});pending.current=null;setSession(old=>({...old,authenticated:false}));setError('');}catch(e){setError(e.message);}finally{setBusy(false);}}
+  if(loading)return <section className="zg-team-login" aria-busy="true"><ZuriGoLogo/><p>กำลังเปิด workspace ของทีม…</p></section>;
+- if(session)return <>{!local&&<div className="zg-team-bar"><span>ทีม · บันทึกใน PostgreSQL</span><Button onClick={logout} disabled={busy}>ออกจากระบบ</Button>{error&&<span role="alert">{error}</span>}</div>}{children(session)}</>;
+- return <section className="zg-team-login"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><h1>ไปต่อด้วยกัน</h1><p>ใส่รหัสทีมเพื่อเปิดแคมเปญและงานล่าสุด</p><form onSubmit={login}><label htmlFor="team-password">รหัสเข้าทีม</label><input id="team-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button></form><small>ใช้รหัสร่วมกัน · รายชื่อ Member ใช้สำหรับมอบหมายงาน</small></section>;
++ if(!session)return <section className="zg-team-login"><ZuriGoLogo/><p role="alert">{error||'เชื่อมต่อ workspace ไม่สำเร็จ'}</p><Button onClick={check}>ลองโหลดอีกครั้ง</Button></section>;
++ return <Access.Provider value={{canWrite,requestWrite}}>{!local&&<div className="zg-team-bar"><span className={`zg-access-badge ${canWrite?'team':'guest'}`}>{canWrite?'Team mode':'Guest mode'}</span><span>{canWrite?'แก้ไขและบันทึกได้':'ดูได้อย่างเดียว'}</span><Button onClick={canWrite?logout:()=>requestWrite(null)} disabled={busy}>{canWrite?'ออกจากระบบ':'เข้าสู่ระบบเพื่อแก้ไข'}</Button>{error&&!loginOpen&&<span role="alert">{error}</span>}</div>}{children(session)}{loginOpen&&<Modal title="เข้าสู่ระบบเพื่อแก้ไข" onClose={close} wide={false}><section className="zg-team-login zg-team-dialog"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><p>Guest ดูข้อมูลได้ทันที<br/>ใส่รหัสทีมเพื่อสร้าง แก้ไข ลบ หรือแนบไฟล์</p><form onSubmit={login}><label htmlFor="team-password">รหัสเข้าทีม</label><input id="team-password" type="password" autoComplete="current-password" autoFocus required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button><Button type="button" onClick={close} disabled={busy}>ดูต่อใน Guest mode</Button></form></section></Modal>}</Access.Provider>;
+ }
+--- 0.3.0/output/draft/campaign-mission-control/src/content/business/team-access.css
++++ 0.3.1/output/draft/campaign-mission-control/src/content/business/team-access.css
+@@ -1,3 +1,3 @@
+ .zg-team-login{max-width:440px;margin:36px auto;padding:30px;border:1px solid #e8820c40;border-radius:20px;background:#fff8f0;color:#1f2937;text-align:center;box-shadow:0 16px 48px #1f29370d}
+-.zg-team-login .zg-team-pair{display:block;width:150px;height:130px;object-fit:contain;margin:20px auto 10px}.zg-team-login h1{font-size:26px;margin:12px 0}.zg-team-login p{font-size:14px;line-height:1.7}.zg-team-login form{display:grid;gap:10px;text-align:left;margin:22px 0}.zg-team-login label{font-size:13px;font-weight:600}.zg-team-login input{width:100%;min-width:0;border:1px solid #6b728066;border-radius:10px;background:#fff;color:#1f2937;padding:12px;font-size:16px}.zg-team-login form button{background:#1f2937;color:white;min-height:44px}.zg-team-login [role=alert]{color:#9c2f12}.zg-team-login small{font-size:12px;color:#6b7280}.zg-team-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px;padding:8px 0;font-size:12px}.zg-team-bar>span:first-child{margin-right:auto}
++.zg-team-login .zg-team-pair{display:block;width:150px;height:130px;object-fit:contain;margin:20px auto 10px}.zg-team-login h1{font-size:26px;margin:12px 0}.zg-team-login p{font-size:14px;line-height:1.7}.zg-team-login form{display:grid;gap:10px;text-align:left;margin:22px 0}.zg-team-login label{font-size:13px;font-weight:600}.zg-team-login input{width:100%;min-width:0;border:1px solid #6b728066;border-radius:10px;background:#fff;color:#1f2937;padding:12px;font-size:16px}.zg-team-login form button{background:#1f2937;color:white;min-height:44px}.zg-team-login [role=alert]{color:#9c2f12}.zg-team-login small{font-size:12px;color:#6b7280}.zg-team-bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:12px;padding:8px 0;font-size:12px}.zg-access-badge{padding:5px 10px;border-radius:20px;background:#fff0dc;color:#7a4100;font-weight:700}.zg-access-badge.team{background:#e8f3ea;color:#215b32}.zg-team-dialog{margin:0 auto;border:0;box-shadow:none;width:100%}.zg-team-dialog form button:last-child{background:transparent;color:#1f2937}
+ @media(max-width:480px){.zg-team-login{padding:20px;margin:16px 0}}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/dashboard/DashboardContent.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/dashboard/DashboardContent.jsx
+@@ -1,4 +1,4 @@
+-import {TeamAccess} from '../business/TeamAccess.jsx';
++import {TeamAccess,useWriteAccess} from '../business/TeamAccess.jsx';
+ import {ZuriGoLogo} from '../shared/ZuriGoLogo.jsx';
+ import React, {useEffect,useRef,useState} from 'react';
+ import {Button,Chart,DataComponent,DataTable,DateRangePicker,Dropdown,SegmentedControl,SortableItem,SortableRegion,useDataApp} from '../../data-app-public.jsx';
+@@ -10,10 +10,11 @@
+ 
+ export function DashboardContent(){return <TeamAccess>{session=><MeetingWorkspace CampaignContent={CampaignContent} cloudBusinessId={session.storage==='postgresql-cloud'?session.businessId:null}/>}</TeamAccess>;}
+ function CampaignContent({view='overview',initialWorkspace,onWorkspaceChange,onBackup,onImport,linkedTasks,serverBusinessId,onSaveWorkspace}){
+-  const shell=useDataApp();
++  const shell=useDataApp(),{canWrite,requestWrite}=useWriteAccess();
++  const setModal=value=>!value||['history','decisionDetail','reviewDetail'].includes(value.kind)?setModalState(value):requestWrite(()=>setModalState(value));
+   const storageKey=`zuri-mission-control:${shell.snapshot.id}:v1`,initial=useRef(null);
+   if(!initial.current){try{const raw=serverBusinessId?null:localStorage.getItem(storageKey);initial.current={workspace:raw?restoreWorkspace(JSON.parse(raw)):(initialWorkspace||createWorkspace()),error:''};}catch(e){initial.current={workspace:initialWorkspace||createWorkspace(),error:`อ่านข้อมูลที่บันทึกไว้ไม่ได้: ${e.message}`};}}
+-  const [ws,setWs]=useState(initial.current.workspace),[storageError,setStorageError]=useState(initial.current.error),[notice,setNotice]=useState(''),[asOf,setAsOf]=useState(today()),[modal,setModal]=useState(null),[detail,setDetail]=useState(null);
++  const [ws,setWs]=useState(initial.current.workspace),[storageError,setStorageError]=useState(initial.current.error),[notice,setNotice]=useState(''),[asOf,setAsOf]=useState(today()),[modal,setModalState]=useState(null),[detail,setDetail]=useState(null);
+   const [offer,setOffer]=useState('all'),[channel,setChannel]=useState('all'),[range,setRange]=useState(''),[ledger,setLedger]=useState('ads'),[taskStatus,setTaskStatus]=useState('all');
+   const importInput=useRef(null);
+   useEffect(()=>{if(serverBusinessId&&initialWorkspace?.serverVersion!=null)setWs(initialWorkspace);},[initialWorkspace,serverBusinessId]);
+@@ -24,7 +25,7 @@
+   const [rangeStart,rangeEnd]=range.split('..'),scope={from:rangeStart||c.start,to:rangeEnd||asOf,offer,channel},pm=measure(c,scope),alerts=alertList(c,asOf);
+   const changeCampaign=id=>{setWs(w=>({...w,selected:id}));setOffer('all');setChannel('all');setRange('');setDetail(null);};
+   async function persist(next,message){if(storageError)return;try{const saved=serverBusinessId?await onSaveWorkspace(next):next;setWs(saved);setNotice(message||(serverBusinessId?'บันทึกใน PostgreSQL แล้ว':'บันทึกใน browser นี้แล้ว'));return true;}catch(e){setStorageError(e.message);return false;}}
+-  function update(fn,message){return persist({...ws,campaigns:ws.campaigns.map(x=>x.id===c.id?fn(structuredClone(x)):x)},message);}
++  function update(fn,message){return requestWrite(()=>persist({...ws,campaigns:ws.campaigns.map(x=>x.id===c.id?fn(structuredClone(x)):x)},message));}
+   const openRecord=(type,record)=>setModal({kind:'record',type,record});
+   const openMetric=(key,metricScope={from:c.start,to:asOf})=>setDetail({key,scope:metricScope});
+   const doBackup=()=>onBackup();
+@@ -39,7 +40,7 @@
+   const offerRows=OFFERS.filter(o=>offer==='all'||o.id===offer).map(o=>{const v=measure(c,{...scope,offer:o.id});return {offer:o.name,started:o.id==='normal'?c.start||'ยังไม่กำหนด':c.releases.find(r=>r.offer===o.id)?.date||'ยังไม่เปิด',units:v.units,revenue:v.revenue,spend:v.spend,mature:v.mature,pending:v.pending,cvr:v.cvr,contribution:v.contribution};});
+   return <article className="mc-app" data-reviewed-rows>
+     <div className="mc-toolbar"><div className="mc-campaign"><ZuriGoLogo compact/><Dropdown label="Campaign" showLabel value={c.id} choices={ws.campaigns.map(c=>c.id)} choiceLabels={Object.fromEntries(ws.campaigns.map(c=>[c.id,c.name]))} onChange={changeCampaign}/><Button onClick={()=>setModal({kind:'new'})} aria-label="เพิ่มแคมเปญ">＋</Button></div><div className="mc-toolbar-actions"><Field label="Review ณ วันที่" type="date" value={asOf} max={today()} onChange={v=>{if(v){setAsOf(v);setRange('');}}}/><Button onClick={()=>setModal({kind:'settings'})}>ตั้งค่า</Button><Button className="mc-primary" onClick={()=>setModal({kind:'add'})}>＋ บันทึกข้อมูล</Button></div></div>
+-    <div className="mc-context"><span><i className="mc-dot"/> {OBJECTIVES[c.objective]} · {c.start&&c.end?`${dateLabel(c.start)} – ${dateLabel(c.end)}`:'ยังไม่กำหนดช่วงแคมเปญ'}</span><span>Manual workspace · Target v{c.version} · {serverBusinessId?'PostgreSQL ในเครื่อง':'บันทึกใน browser นี้'}</span></div>
++    <div className="mc-context"><span><i className="mc-dot"/> {OBJECTIVES[c.objective]} · {c.start&&c.end?`${dateLabel(c.start)} – ${dateLabel(c.end)}`:'ยังไม่กำหนดช่วงแคมเปญ'}</span><span>Manual workspace · Target v{c.version} · {serverBusinessId?'PostgreSQL':'บันทึกใน browser นี้'}</span></div>
+     {storageError&&<div role="alert" className="mc-errors">{storageError} <Button onClick={doBackup}>Backup ข้อมูลที่เห็น</Button><Button onClick={()=>window.location.reload()}>โหลดใหม่</Button></div>}
+     {notice&&<div className="mc-notice" role="status">{notice}<button type="button" aria-label="ปิดข้อความ" onClick={()=>setNotice('')}>×</button></div>}
+     {view==='overview'&&<>
+@@ -76,7 +77,7 @@
+         ['06','Owner decision','ต้องบันทึก','Continue / fix / release / scale / pause / close · แพ็กเกจแรก DESTINY','neutral']
+       ].map(([n,title,status,desc,tone])=><div key={n}><b>{n}</b><div><strong>{title}</strong><p>{desc}</p></div><Badge tone={tone}>{status}</Badge></div>)}</div><div className="mc-form-actions"><Button onClick={()=>setModal({kind:'decision'})}>บันทึกคำตัดสิน</Button><Button className="mc-primary" onClick={()=>setModal({kind:'release'})}>ยืนยันเปิดจริง ↗</Button></div></Panel>
+       <div className="mc-band-rules"><span><b>≤ 2%</b> FIX / NO SCALE</span><span><b>&gt; 2% – &lt; 5%</b> Learning</span><span><b>≥ 5% – &lt; 10%</b> Base review</span><span><b>≥ 10%</b> High review</span></div><p className="mc-note">กติกา package จากแผน M01 · ผล CVR ดีไม่ได้ข้าม budget, margin, stock, SLA หรือ data hold</p>
+-      <Forecast campaign={c} actual={m} onSave={forecast=>update(d=>({...d,forecast}),'บันทึก scenario reforecast แล้ว; actual ไม่เปลี่ยน')}/>
++      <fieldset className="mt-access-fields" disabled={!canWrite}><Forecast campaign={c} actual={m} onSave={forecast=>update(d=>({...d,forecast}),'บันทึก scenario reforecast แล้ว; actual ไม่เปลี่ยน')}/></fieldset>{!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไข Scenario</Button>}
+       <SortableRegion id="mc-plan-sources" variant="canvas" columns={12} spacing="standard" rows={[{id:'mc-source-offers',items:['mc-original-offers']},{id:'mc-source-scenarios',items:['mc-original-scenarios']}]}>
+         <SortableItem id="mc-original-offers" label="M01 offer assumptions" kind="table" span={12}><DataComponent id="mc-original-offers" title="M01 · ราคาและส่วนผสมจากแผนเดิม" queryId="m1_plan" kind="table" variant="card" sourceRows={shell.reviewedRows('m1_plan')} displayRows={shell.reviewedRows('m1_plan')} description="Original planning reference, not actuals. Normal-first sequence replaces the original simultaneous offer mix."><DataTable searchable={false} caption="M01 offers" rows={shell.reviewedRows('m1_plan')} columns={[{field:'name',label:'Offer'},{field:'price',label:'ราคา ฿'},{field:'unitsPerOrder',label:'Units / order'},{field:'plannedOrders',label:'Modeled orders'},{field:'cpl',label:'CPL assumption ฿'},{field:'packaging',label:'Packaging ฿'}]}/></DataComponent></SortableItem>
+         <SortableItem id="mc-original-scenarios" label="M01 scenarios" kind="table" span={12}><DataComponent id="mc-original-scenarios" title="M01 · Low / Mid / High scenarios" queryId="m1_scenarios" kind="table" variant="card" sourceRows={shell.reviewedRows('m1_scenarios')} displayRows={shell.reviewedRows('m1_scenarios')} description="43 orders / 108 units. Modeled assumptions do not authorize budget. Contribution excludes shipping, fees, commission and other operations."><DataTable searchable={false} caption="M01 scenarios" rows={shell.reviewedRows('m1_scenarios')} columns={[{field:'scenario',label:'Scenario'},{field:'conversion',label:'CVR %'},{field:'leads',label:'Leads'},{field:'revenue',label:'Revenue ฿'},{field:'media',label:'Modeled media ฿'},{field:'contribution',label:'Contribution* ฿'}]}/><p className="mc-note">*หักเฉพาะสินค้า บรรจุภัณฑ์ และสื่อ ยังไม่ใช่กำไรสุทธิ · 15,000–20,000 บาทเป็นงบทดสอบที่เสนอในเอกสาร ไม่ใช่งบที่ปล่อยแล้ว</p></DataComponent></SortableItem>
+@@ -91,11 +92,11 @@
+       <div className="mc-two-col"><Panel title="ข้อค้างและการรับทราบ"><div className="mc-alerts">{alerts.map(a=><div key={a.id}><div><strong>{a.id} · {a.title}</strong><small>พบล่าสุด {dateLabel(a.lastObserved)}{a.owner&&` · ${a.owner}`}</small></div><Badge tone={a.status==='Acknowledged'?'neutral':'warn'}>{a.status}</Badge><Button onClick={()=>setModal({kind:'ack',alert:a})}>{a.status==='Acknowledged'?'ดู / อัปเดต':'รับทราบ'}</Button></div>)}</div>{!alerts.length&&<p className="mc-note">ไม่พบเงื่อนไขค้างจากข้อมูลปัจจุบัน</p>}<p className="mc-note">หนึ่งรายการต่อ gate ต่อแคมเปญ · รับทราบไม่ได้แปลว่าแก้แล้ว รายการหายจากคิวเมื่อเงื่อนไขผ่าน และเก็บประวัติการรับทราบไว้</p></Panel><Companion view={view}/></div>
+     </>}
+     {view==='review'&&<>
+-      <div className="mc-two-col"><ReviewEditor key={c.id+asOf} campaign={c} asOf={asOf} onSave={text=>update(d=>{d.reviews.push({id:uid(),date:asOf,text,snapshot:evidenceSnapshot(d,asOf)});return d;},'เก็บ review snapshot แล้ว')} notify={setNotice}/><Companion view={view}/></div>
++      <div className="mc-two-col"><div>{!canWrite&&<Button onClick={()=>requestWrite(null)}>เขียน Review</Button>}<fieldset className="mt-access-fields" disabled={!canWrite}><ReviewEditor key={c.id+asOf} campaign={c} asOf={asOf} onSave={text=>update(d=>{d.reviews.push({id:uid(),date:asOf,text,snapshot:evidenceSnapshot(d,asOf)});return d;},'เก็บ review snapshot แล้ว')} notify={setNotice}/></fieldset></div><Companion view={view}/></div>
+       <Panel title="คำตัดสินและการเปิดขาย" action={<div className="mc-inline-actions"><Button onClick={()=>setModal({kind:'release'})}>ยืนยันเปิดจริง</Button><Button className="mc-primary" onClick={()=>setModal({kind:'decision'})}>＋ บันทึกคำตัดสิน</Button></div>}>{c.decisions.length?<div className="mc-history">{c.decisions.slice().reverse().map(d=><button key={d.id} onClick={()=>setModal({kind:'decisionDetail',entry:d})}><Badge tone={d.action==='pause'?'warn':'neutral'}>{d.action}</Badge><span><strong>{offerName(d.offer)} · {d.reason}</strong><small>{d.owner} · {dateLabel(d.date)} · ตรวจซ้ำ {dateLabel(d.nextReview)}</small></span><span>snapshot v{d.snapshot.version} ↗</span></button>)}</div>:<Empty title="ยังไม่มีคำตัดสิน">ครบหนึ่งสัปดาห์ให้บันทึก review แม้สรุปว่า “ข้อมูลยังไม่พอ”</Empty>}{c.releases.length>0&&<div className="mc-release-log">{c.releases.map(r=><p key={r.id}><b>{offerName(r.offer)}</b> เปิดจริง {dateLabel(r.date)} → Review {dateLabel(plusDays(r.date,7))} · {r.evidence}</p>)}</div>}</Panel>
+       <Panel title="Review snapshots ที่เก็บไว้">{c.reviews.length?<div className="mc-history">{c.reviews.slice().reverse().map(r=><button key={r.id} onClick={()=>setModal({kind:'reviewDetail',entry:r})}><strong>{dateLabel(r.date)}</strong><span>Target v{r.snapshot.version} · {r.snapshot.gate.status}</span><span>ดู / Export ↗</span></button>)}</div>:<p className="mc-note">บันทึก summary เพื่อเก็บตัวเลข ข้อกำหนด และหลักฐาน ณ เวลาที่ตัดสินใจ</p>}</Panel>
+     </>}
+-    <footer className="mc-footer"><span>ข้อมูลจริงกรอกเอง · Local workspace · M01 เป็นแผนอ้างอิง</span><div><Button onClick={doBackup}>{serverBusinessId?'Backup แคมเปญและงาน':'Backup JSON'}</Button><Button onClick={()=>importInput.current?.click()}>Restore backup</Button><input ref={importInput} hidden type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/></div></footer>
++    <footer className="mc-footer"><span>ข้อมูลจริงกรอกเอง · Local workspace · M01 เป็นแผนอ้างอิง</span><div><Button onClick={doBackup}>{serverBusinessId?'Backup แคมเปญและงาน':'Backup JSON'}</Button><Button onClick={()=>requestWrite(()=>importInput.current?.click())}>Restore backup</Button><input ref={importInput} hidden type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/></div></footer>
+     {modal?.kind==='settings'&&<SettingsForm campaign={c} onClose={()=>setModal(null)} onSave={(settings,meta)=>{update(d=>({...d,...settings,version:d.version+1,history:[...d.history,{id:uid(),type:'settings',version:d.version+1,...meta,previous:settingsSnapshot(d),recordedAt:new Date().toISOString()}]}),'บันทึกเป้าและเกณฑ์ version ใหม่แล้ว');setModal(null);}}/>}
+     {modal?.kind==='record'&&<RecordForm type={modal.type} campaign={c} record={modal.record} seed={modal.seed} onClose={()=>setModal(null)} onSave={r=>{update(d=>{const i=d[modal.type].findIndex(x=>x.id===r.id);if(i>=0){d.history.push({id:uid(),type:'correction',collection:modal.type,recordId:r.id,previous:d[modal.type][i],recordedAt:new Date().toISOString()});d[modal.type][i]=r;}else d[modal.type].push(r);return d;});setModal(null);}}/>}
+     {modal?.kind==='decision'&&<DecisionForm campaign={c} onClose={()=>setModal(null)} onSave={r=>{update(d=>{d.decisions.push({...r,snapshot:evidenceSnapshot(d,r.date)});return d;},'เก็บคำตัดสินและหลักฐานแล้ว');setModal(null);}}/>}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
+@@ -1,3 +1,4 @@
++import {useWriteAccess} from '../business/TeamAccess.jsx';
+ import {ZuriGoLogo} from '../shared/ZuriGoLogo.jsx';
+ import React,{useEffect,useMemo,useRef,useState} from 'react';
+ import {Button,SegmentedControl,useDataApp,useDashboardTabs} from '../../data-app-public.jsx';
+@@ -28,7 +29,9 @@
+   const inBusiness=['overview','campaigns','content','goals'].includes(activeTabId);
+   const [campaignWorkspace,setCampaignWorkspace]=useState(()=>{try{const raw=localStorage.getItem(campaignKey);return raw?restoreWorkspace(JSON.parse(raw)):createWorkspace();}catch{return createWorkspace();}});
+   const [state,setState]=useState(null),[storageError,setStorageError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[restore,setRestore]=useState(null),[restoreError,setRestoreError]=useState(''),[epoch,setEpoch]=useState(0);
+-  const [view,setView]=useState('weekly'),[week,setWeek]=useState(weekOf(today())),[layout,setLayout]=useState('kanban'),[filter,setFilter]=useState('all'),[owner,setOwner]=useState('all'),[search,setSearch]=useState(''),[sort,setSort]=useState(false),[modal,setModal]=useState(null),[selectedMeeting,setSelectedMeeting]=useState(null);
++  const [view,setView]=useState('weekly'),[week,setWeek]=useState(weekOf(today())),[layout,setLayout]=useState('kanban'),[filter,setFilter]=useState('all'),[owner,setOwner]=useState('all'),[search,setSearch]=useState(''),[sort,setSort]=useState(false),[modal,setModalState]=useState(null),[selectedMeeting,setSelectedMeeting]=useState(null);
++  const {canWrite,requestWrite}=useWriteAccess(),writeAllowed=useRef(canWrite);writeAllowed.current=canWrite;
++  const setModal=value=>!value||value.task?.id||value.member?.id?setModalState(value):requestWrite(()=>setModalState(value));
+   const input=useRef(null);
+   async function load(){try{const value=await repo.read();if(repo!==repoRef.current)return;if(repo.server){const next=repo.campaign();setCampaignWorkspace(old=>({...next,selected:pendingCampaign.current||old.selected||next.selected}));pendingCampaign.current=null;}setState(old=>!old||value.revision>=old.revision?value:old);setStorageError('');}catch(e){setStorageError(e.message);}}
+   async function boot(){try{await repo.init();if(!repo.server&&await recoverRestore(repo,campaignKey)){setCampaignWorkspace(restoreWorkspace(JSON.parse(localStorage.getItem(campaignKey))));setEpoch(v=>v+1);setNotice('กู้คืนชุดข้อมูลที่ค้างจนเสร็จแล้ว');}await load();}catch(e){setStorageError(e.message);}}
+@@ -37,7 +40,7 @@
+   async function activateServer(id){localStorage.setItem(modeKey(shell.snapshot.id),id);if(serverBusinessId===id){await load();setEpoch(v=>v+1);}else{setServerBusinessId(id);setEpoch(v=>v+1);}}
+   async function openCampaign(id,local=false,business=serverBusinessId){if(local&&cloudBusinessId)return;if(local){localStorage.removeItem(modeKey(shell.snapshot.id));setServerBusinessId(null);try{const raw=localStorage.getItem(campaignKey);setCampaignWorkspace(raw?restoreWorkspace(JSON.parse(raw)):createWorkspace());}catch{}setEpoch(v=>v+1);}else if(business){pendingCampaign.current=id;await activateServer(business);}shell.exploreDashboard('campaign-overview');if(id){const url=new URL(location.href);url.searchParams.set('campaign',id);history.replaceState(null,'',url);}}
+   async function saveCampaignWorkspace(next){const saved=await scoped(serverBusinessId,'/workspace','PUT',{version:next.serverVersion,campaignWorkspace:next});const result={...saved.campaignWorkspace,serverVersion:saved.version,selected:saved.campaignWorkspace.campaigns.some(c=>c.id===next.selected)?next.selected:saved.campaignWorkspace.selected};setCampaignWorkspace(result);setState(saved.meetingTaskManager);return result;}
+-  async function change(fn,message='บันทึกงานแล้ว'){setBusy(true);try{const result=await repo.mutate(fn);setState(result.state);setNotice(message);return result.result;}finally{setBusy(false);}}
++  async function change(fn,message='บันทึกงานแล้ว'){if(!writeAllowed.current){requestWrite(null);throw Error('กรุณาเข้าสู่ระบบก่อนแก้ไข');}setBusy(true);try{const result=await repo.mutate(fn);setState(result.state);setNotice(message);return result.result;}finally{setBusy(false);}}
+   function openTask(task){setModal({kind:'task',task});}
+   function openSource(id){setModal(null);setSelectedMeeting(id);setView('meetings');shell.exploreDashboard('meeting-task-manager');}
+   function backup(){if(!state){download(`campaign-backup-${today()}.json`,campaignWorkspace);return;}const clean=structuredClone(state);delete clean.restoreJournal;download(`mission-control-backup-${today()}.json`,{schemaVersion:2,appId:shell.snapshot.id,exportedAt:new Date().toISOString(),campaignWorkspace,meetingTaskManager:clean});}
+@@ -46,7 +49,7 @@
+   const allRows=state?weeklyRows(state,week):[],summary=weeklySummary(allRows);
+   let rows=allRows.filter(t=>(filter==='all'||(filter==='unset'?!t.priority:t.priority===filter))&&(owner==='all'||t.responsibleId===owner)&&(!search||`${t.title} ${t.description||''}`.toLowerCase().includes(search.toLowerCase())));
+   if(sort)rows=rows.slice().sort((a,b)=>(['must','should','could',null,'wont'].indexOf(a.priority))-(['must','should','could',null,'wont'].indexOf(b.priority)));
+-  function status(task,status){if(status===task.status)return;change(s=>saveTask(s,{id:task.id,version:task.version,status,statusConfirmed:true})).catch(e=>setModal({kind:'task',task,error:e.message}));}
++  function status(task,status){if(status===task.status)return;requestWrite(()=>change(s=>saveTask(s,{id:task.id,version:task.version,status,statusConfirmed:true})).catch(e=>setModal({kind:'task',task,error:e.message})));}
+   function card(task){return <div key={task.id} className="mt-task" draggable={!busy} onDragStart={e=>{e.dataTransfer.setData('application/x-zuri-task',task.id);e.dataTransfer.effectAllowed='move';}}><button className="mt-task-open" onClick={()=>openTask(task)}><div className="mt-card-top"><Priority value={task.priority}/><span>{task.seedTaskId||task.id.slice(0,6)}</span></div><h3>{task.title}</h3><p>{task.description||task.deliverable||'เพิ่มรายละเอียดภายหลังได้'}</p><div className="mt-assignee"><span className="mt-avatar">{memberName(state,task.responsibleId).slice(0,1)}</span><span>{memberName(state,task.responsibleId)}<small>A · {memberName(state,task.accountableId)}</small></span><span>{task.dueDate?dateLabel(task.dueDate):''}</span></div>{!task.statusConfirmed&&<small className="mt-warning">สถานะรอยืนยัน</small>}{task.blocker&&<p className="mt-warning">ติดขัด: {task.blocker}</p>}</button><footer><span>{task.sourceKind==='meeting'?'FUNG':task.sourceKind==='weekly-plan'?'Weekly plan':'Manual'}</span><label><span className="mc-sr-only">สถานะ {task.title}</span><select aria-label={`สถานะ ${task.title}`} disabled={busy} value={task.status} onChange={e=>status(task,e.target.value)}>{Object.entries(STATUSES).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></footer></div>;}
+   const linked=state?.tasks.filter(t=>t.campaignId===campaignWorkspace.selected)||[];
+   return <div className="mt-shell"><nav className="mt-domain" aria-label="เมนูเว็บไซต์"><ZuriGoLogo compact/><Button className={!inMeeting?'mt-domain-selected':''} aria-current={!inMeeting?'page':undefined} onClick={()=>shell.exploreDashboard('overview')}>ภาพรวมธุรกิจ</Button><Button className={inMeeting?'mt-domain-selected':''} aria-current={inMeeting?'page':undefined} onClick={()=>shell.exploreDashboard('meeting-task-manager')}>Meeting & Task Manager</Button><a href="/metrics/#overview">ความรู้ Metrics</a><a href="/metrics/#metrics-graph">Graph View</a></nav>
+@@ -66,13 +69,13 @@
+       </>}
+       {state&&view==='members'&&<><div className="mt-member-head"><div><h3>ทีมของคุณ <span>{state.members.length} Members</span></h3><p>ชื่อเดียวก็เริ่มมอบหมายได้ รายละเอียดเติมภายหลัง</p></div><Button className="mc-primary" onClick={()=>setModal({kind:'member'})}>＋ ลงทะเบียน Member</Button></div><div className="mt-member-grid">{state.members.map(m=><button className={`mt-member ${m.status}`} key={m.id} onClick={()=>setModal({kind:'member',member:m})}><span className="mt-avatar">{m.displayName.slice(0,1)}</span><h3>{m.displayName}</h3><p>{[m.position,m.team].filter(Boolean).join(' · ')||'เพิ่มทีมและตำแหน่งได้'}</p><small>{m.email||m.phone||'รายละเอียดติดต่อยังว่าง'}</small><footer><span>{m.status==='active'?'Active':'Inactive'}</span><span>{state.tasks.filter(t=>t.responsibleId===m.id).length} งาน · {m.id.slice(0,4)} ↗</span></footer></button>)}</div><aside className="mt-companion wide"><img src={pairAnalysis} alt="Zuri และ น้องวางใจ ช่วยจัดผู้รับผิดชอบ"/><p><b>R ลงมือทำ · A ตรวจรับ</b><br/>C ให้คำปรึกษา · I รับทราบ<br/>บันทึกรายชื่อในเครื่อง ยังไม่มีการส่งข้อความหาทีม</p></aside></>}
+       {state&&view==='meetings'&&<Meetings state={state} change={change} selectedId={selectedMeeting} onSelect={setSelectedMeeting} onTask={openTask} onOpenTask={id=>openTask(state.tasks.find(t=>t.id===id))} week={week} notice={setNotice}/>}
+-      <footer className="mc-footer"><span>{serverBusinessId?(cloudBusinessId?'PostgreSQL ของทีม · บันทึกบนคลาวด์':'PostgreSQL ในเครื่อง · สำรองข้อมูลก่อนย้ายเครื่อง'):'Browser workspace · สำรองข้อมูลก่อนย้าย browser/เครื่อง'}</span><div><Button onClick={backup}>{serverBusinessId?'Backup แคมเปญและงาน':'Backup JSON'}</Button><Button onClick={()=>input.current?.click()}>Restore backup</Button></div></footer>
++      <footer className="mc-footer"><span>{serverBusinessId?(cloudBusinessId?'PostgreSQL ของทีม · บันทึกบนคลาวด์':'PostgreSQL ในเครื่อง · สำรองข้อมูลก่อนย้ายเครื่อง'):'Browser workspace · สำรองข้อมูลก่อนย้าย browser/เครื่อง'}</span><div><Button onClick={backup}>{serverBusinessId?'Backup แคมเปญและงาน':'Backup JSON'}</Button><Button onClick={()=>requestWrite(()=>input.current?.click())}>Restore backup</Button></div></footer>
+     </article>}
+     <input ref={input} hidden type="file" accept=".json,application/json" onChange={e=>importBackup(e.target.files?.[0])}/>
+     {!inMeeting&&notice&&<p className="mc-notice" role="status">{notice}</p>}
+     {restore&&<Modal title="ตรวจ backup ก่อนกู้คืน" onClose={()=>setRestore(null)} wide={false}>{restoreError&&<p className="mc-errors" role="alert">{restoreError}</p>}<p>{restore.campaign.campaigns.length} แคมเปญ · {restore.domain?`${restore.domain.tasks.length} งาน / ${restore.domain.members.length} Members`:'Backup v1: เปลี่ยนเฉพาะแคมเปญ งานและ Members ในโดเมนใหม่คงเดิม'}</p><p>จะแทนที่ข้อมูลใน browser นี้ และดาวน์โหลดชุดปัจจุบันเก็บไว้ก่อน</p><div className="mc-form-actions"><Button onClick={()=>setRestore(null)}>ยกเลิก</Button><Button className="mc-primary" disabled={busy} onClick={confirmRestore}>ยืนยันกู้คืน</Button></div></Modal>}
+     {state&&modal?.kind==='member'&&<MemberForm member={modal.member} members={state.members} onSave={input=>change(s=>saveMember(s,input))} onClose={()=>setModal(null)}/>}
+-    {state&&modal?.kind==='task'&&<TaskForm initialError={modal.error} task={modal.task} week={modal.task?.id&&!membershipForDrop(state,modal.task.id,week)?'':week} entry={membershipForDrop(state,modal.task?.id,week)} state={state} campaigns={campaignWorkspace.campaigns} onSave={(input,plan)=>change(s=>saveTask(s,input,plan))} onMember={input=>change(s=>saveMember(s,input))} onClose={()=>setModal(null)} onSource={openSource}/>}
++    {state&&modal?.kind==='task'&&<TaskForm businessId={serverBusinessId} initialError={modal.error} task={modal.task} week={modal.task?.id&&!membershipForDrop(state,modal.task.id,week)?'':week} entry={membershipForDrop(state,modal.task?.id,week)} state={state} campaigns={campaignWorkspace.campaigns} onSave={(input,plan)=>change(s=>saveTask(s,input,plan))} onMember={input=>change(s=>saveMember(s,input))} onClose={()=>setModal(null)} onSource={openSource}/>}
+   </div>;
+ }
+ function membershipForDrop(s,id,week){return s.weeks.find(w=>w.weekStart===week)?.entries.find(e=>e.taskId===id);}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/meeting/Meetings.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/meeting/Meetings.jsx
+@@ -1,3 +1,4 @@
++import {useWriteAccess} from '../business/TeamAccess.jsx';
+ import React,{useEffect,useRef,useState} from 'react';
+ import {Button} from '../../data-app-public.jsx';
+ import {Field} from '../dashboard/Forms.jsx';
+@@ -7,18 +8,21 @@
+ const stamp=ms=>`${String(Math.floor(ms/60000)).padStart(2,'0')}:${String(Math.floor(ms/1000)%60).padStart(2,'0')}`;
+ 
+ export function Meetings({state,change,selectedId,onSelect,onTask,onOpenTask,week,notice}){
++  const {canWrite,requestWrite}=useWriteAccess();
+   const client=useRef(null),[url,setUrl]=useState(''),[connected,setConnected]=useState(false),[capabilities,setCapabilities]=useState(null),[recordings,setRecordings]=useState([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[job,setJob]=useState(null),[legacyConfirmed,setLegacyConfirmed]=useState(false),[connectionOpen,setConnectionOpen]=useState(false);
+   const requestId=useRef(null);
++  useEffect(()=>{if(!canWrite){disconnect();setConnectionOpen(false);}},[canWrite]);
+   useEffect(()=>()=>client.current?.disconnect(),[]);
+-  async function run(fn){setBusy(true);setError('');try{return await fn();}catch(e){setError(e.message);return null;}finally{setBusy(false);}}
++  function run(fn){return requestWrite(()=>runAction(fn));}
++  async function runAction(fn){setBusy(true);setError('');try{return await fn();}catch(e){setError(e.message);return null;}finally{setBusy(false);}}
+   async function connect(){await run(async()=>{client.current?.disconnect();setConnected(false);const legacyId=state.legacySourceInstanceId||uid();const next=createFungClient(url,{legacySourceInstanceId:legacyId});client.current=next;const result=await next.connect();if(client.current!==next)return;if(!state.legacySourceInstanceId)await change(s=>{s.legacySourceInstanceId=legacyId;});setRecordings(result.recordings);setCapabilities(result.capabilities);setConnected(true);setUrl('');setConnectionOpen(false);notice('เชื่อมต่อ FUNG สำเร็จ ตรวจสิทธิ์อ่าน recordings แล้ว');});}
+   function disconnect(){client.current?.disconnect();client.current=null;setConnected(false);setCapabilities(null);setRecordings([]);setUrl('');setLegacyConfirmed(false);}
+   async function importRecording(recording){return run(async()=>{if(!capabilities&&!legacyConfirmed)throw Error('ยืนยัน FUNG instance เดิมก่อนนำเข้า Legacy');const source=await client.current.snapshot(recording,capabilities);if(!source.segments.length)throw Error('ยังไม่มีข้อความถอดเสียง ไม่สร้างประชุม Ready จาก transcript ว่าง');const id=await change(s=>addSource(s,source,{...recording,title:recording.projectName||recording.id,originalFilename:job?.recordingId===recording.id?job.name:null}),'นำเข้าต้นฉบับแล้ว');onSelect(id);});}
+   const meeting=state.meetings.find(m=>m.id===selectedId),source=state.sources.find(s=>s.id===meeting?.sourceId),review=state.reviews.find(r=>r.id===meeting?.reviewId),batches=state.batches.filter(b=>b.meetingId===meeting?.id).slice().reverse();
+   async function extract(){await run(async()=>{if(!connected||!client.current)throw Error('เชื่อมต่อ FUNG ก่อนสร้างร่างด้วยโมเดล');if(!capabilities?.actionDraft?.available)throw Error(capabilities?.actionDraft?.reasonCode||'FUNG ยังไม่พร้อมสร้างร่างด้วยโมเดล local');if(!review||review.sourceId!==source.id)throw Error('บันทึกฉบับตรวจแล้วก่อนสร้างร่าง');const key=`${review.id}:${review.reviewHash}`;if(requestId.current?.key!==key)requestId.current={key,id:uid()};const reply=await client.current.draft({requestId:requestId.current.id,sourceInstanceId:source.sourceInstanceId,projectId:source.projectId,recordingId:source.recordingId,expectedSourceHash:source.contentHash,reviewRevisionId:review.id,reviewHash:review.reviewHash,reviewedSegments:review.segments.map(s=>({segmentId:s.segmentId,startMs:s.startMs,endMs:s.endMs,text:s.text,speakerLabel:s.speakerLabel??null})),locale:'th-TH',meetingStartedAt:meeting.meetingStartedAt,timezone:'Asia/Bangkok'});await change(s=>addBatch(s,meeting.id,reply),'ได้ร่างงานแล้ว กรุณาตรวจหลักฐานและผู้รับผิดชอบ');});}
+   async function commit(batch,choices){if(!client.current||!connected)throw Error('เชื่อมต่อ FUNG เพื่อตรวจฉบับต้นทางก่อนสร้างงาน');const latest=await client.current.snapshot({id:source.recordingId,projectId:source.projectId},capabilities);if(latest.contentHash!==source.contentHash){await change(s=>addSource(s,latest,meeting));throw Error('ต้นทางเปลี่ยนแล้ว ตรวจฉบับใหม่ก่อนสร้างงาน');}const payloadHash=await hash(choices);return change(s=>commitBatch(s,batch.id,choices,payloadHash),'สร้างและมอบหมายงานในเครื่องแล้ว');}
+-  return <section className="mt-meetings"><div className="mt-connection-summary"><div><span className={`mt-connection-dot ${connected?'on':''}`}/><strong>{connected?'FUNG connected':'ยังไม่เชื่อม FUNG'}</strong><small>{connected?(capabilities?.actionDraft?.available?'โมเดล local พร้อม':'อ่าน transcript ได้ · โมเดลยังไม่พร้อม'):'สร้างงานเองและตรวจประชุมที่นำเข้าไว้ได้'}</small></div><Button onClick={()=>setConnectionOpen(!connectionOpen)}>ตั้งค่าการเชื่อมต่อ</Button></div>
+-    {connectionOpen&&<div className="mt-connection"><h3>FUNG บนเครื่องนี้</h3><p>เปิด FUNG › Settings › Runtime แล้วคัดลอก Connect URL มาวาง เมื่อปิดหรือรีสตาร์ท FUNG ให้เชื่อมใหม่</p><div className="mt-quick"><Field label="FUNG Connect URL" type="password" autoComplete="off" value={url} onChange={setUrl} placeholder="http://127.0.0.1:PORT/#TOKEN"/><Button className="mc-primary" disabled={busy||!url} onClick={connect}>เชื่อมต่อ</Button>{connected&&<Button disabled={busy} onClick={disconnect}>ยกเลิกการเชื่อมต่อ</Button>}</div><p className="mc-note">Token ใช้เฉพาะการเปิดหน้านี้ ไม่รวมใน Backup</p></div>}
++  return <section className="mt-meetings"><div className="mt-connection-summary"><div><span className={`mt-connection-dot ${connected?'on':''}`}/><strong>{connected?'FUNG connected':'ยังไม่เชื่อม FUNG'}</strong><small>{connected?(capabilities?.actionDraft?.available?'โมเดล local พร้อม':'อ่าน transcript ได้ · โมเดลยังไม่พร้อม'):'สร้างงานเองและตรวจประชุมที่นำเข้าไว้ได้'}</small></div><Button onClick={()=>requestWrite(()=>setConnectionOpen(!connectionOpen))}>ตั้งค่าการเชื่อมต่อ</Button></div>
++    {connectionOpen&&<div className="mt-connection"><h3>FUNG บนเครื่องนี้</h3><p>เปิด FUNG › Settings › Runtime แล้วคัดลอก Connect URL มาวาง เมื่อปิดหรือรีสตาร์ท FUNG ให้เชื่อมใหม่</p><div className="mt-quick"><Field label="FUNG Connect URL" type="password" autoComplete="off" value={url} disabled={!canWrite} onChange={setUrl} placeholder="http://127.0.0.1:PORT/#TOKEN"/><Button className="mc-primary" disabled={busy||!url} onClick={connect}>เชื่อมต่อ</Button>{connected&&<Button disabled={busy} onClick={disconnect}>ยกเลิกการเชื่อมต่อ</Button>}</div><p className="mc-note">Token ใช้เฉพาะการเปิดหน้านี้ ไม่รวมใน Backup</p></div>}
+     {error&&<p role="alert" className="mc-errors">{error}</p>}
+     {connected&&<div className="mt-intake"><div className="mt-intake-title"><h3>รับเสียงและประชุมจาก FUNG</h3><Button disabled={busy} onClick={()=>run(async()=>setRecordings(await client.current.recordings()))}>อัปเดตรายการ</Button></div><label className="mt-upload">＋ อัปโหลดเสียงไป FUNG<input disabled={busy} type="file" accept="audio/*,video/mp4,video/webm,.wav,.flac,.m4a,.mov" onChange={e=>{const file=e.target.files?.[0];e.target.value='';if(file)run(async()=>{const receipt=await client.current.upload(file);setJob({...receipt,status:'accepted',name:file.name});});}}/></label>{job&&<div className="mt-job"><span>{job.name} · {job.status}{job.errorMessage&&` · ${job.errorMessage}`}</span><Button disabled={busy} onClick={()=>run(async()=>{const value=await client.current.job(job.jobId);setJob(old=>({...old,...value,jobId:old.jobId}));setRecordings(await client.current.recordings());})}>ตรวจสถานะถอดเสียง</Button></div>}
+       {!capabilities&&<label className="mt-check"><input type="checkbox" checked={legacyConfirmed} onChange={e=>setLegacyConfirmed(e.target.checked)}/> ยืนยันว่าเป็น FUNG เครื่องเดิม · Legacy transcript ไม่มี native revision และยังใช้ AI drafting ไม่ได้</label>}
+@@ -28,13 +32,14 @@
+         {meeting.latestSourceId!==meeting.sourceId&&<div className="mt-source-change"><strong>มีต้นฉบับใหม่จาก FUNG</strong><details><summary>เทียบข้อความก่อนเลือกใช้</summary><div className="mt-source-diff"><pre>{source.segments.map(s=>s.text).join('\n')}</pre><pre>{state.sources.find(s=>s.id===meeting.latestSourceId)?.segments.map(s=>s.text).join('\n')}</pre></div></details><Button onClick={()=>run(()=>change(s=>adoptSource(s,meeting.id,meeting.latestSourceId),'เปลี่ยนต้นฉบับแล้ว ฉบับตรวจเก่ายังอยู่ในประวัติ'))}>ใช้ฉบับใหม่และตรวจอีกครั้ง</Button></div>}
+         <ReviewEditor key={`${meeting.id}:${source.id}:${meeting.reviewId||''}`} meeting={meeting} source={source} review={review?.sourceId===source.id?review:null} state={state} change={change} client={connected?client.current:null} canExtract={!!capabilities?.actionDraft?.available&&meeting.latestSourceId===meeting.sourceId} busy={busy} onExtract={extract} onNewExtract={()=>{requestId.current=null;extract();}} onTask={onTask} notice={notice}/>
+         {batches.length>0&&<section className="mt-action-review"><h3>Action Review</h3>{batches.map((batch,i)=><ActionBatch key={batch.id} batch={batch} state={state} week={week} onCommit={choices=>commit(batch,choices)} onOpenTask={onOpenTask} collapsed={i>0}/>)}</section>}
+-      </>:<div className="mt-meeting-empty"><h3>จากบทสนทนา → งานที่ทำต่อได้</h3><ol><li>นำเข้าเสียงหรือเลือกประชุมจาก FUNG</li><li>ตรวจข้อความและชื่อผู้พูด</li><li>ตรวจร่างงาน เลือก R และสัปดาห์</li><li>สร้างงานแล้วติดตามใน Weekly To-do</li></ol><Button onClick={()=>setConnectionOpen(true)}>เชื่อมต่อ FUNG เพื่อเริ่ม</Button></div>}</div>
++      </>:<div className="mt-meeting-empty"><h3>จากบทสนทนา → งานที่ทำต่อได้</h3><ol><li>นำเข้าเสียงหรือเลือกประชุมจาก FUNG</li><li>ตรวจข้อความและชื่อผู้พูด</li><li>ตรวจร่างงาน เลือก R และสัปดาห์</li><li>สร้างงานแล้วติดตามใน Weekly To-do</li></ol><Button onClick={()=>requestWrite(()=>setConnectionOpen(true))}>เชื่อมต่อ FUNG เพื่อเริ่ม</Button></div>}</div>
+     </div>
+   </section>;
+ }
+-function MeetingMeta({meeting,onSave}){const [title,setTitle]=useState(meeting.title),[date,setDate]=useState(meeting.meetingStartedAt?new Date(meeting.meetingStartedAt).toLocaleString('sv-SE',{timeZone:'Asia/Bangkok'}).slice(0,16).replace(' ','T'):''),[error,setError]=useState('');return <form className="mt-meeting-meta" onSubmit={async e=>{e.preventDefault();try{await onSave({title,date});setError('');}catch(e){setError(e.message);}}}><Field label="ชื่อประชุม" value={title} required onChange={setTitle}/><Field label="วันเวลาประชุม · Bangkok" type="datetime-local" value={date} onChange={setDate}/><Button type="submit">บันทึกข้อมูลประชุม</Button>{error&&<p role="alert">{error}</p>}</form>;}
++function MeetingMeta({meeting,onSave}){const {canWrite,requestWrite}=useWriteAccess();const [title,setTitle]=useState(meeting.title),[date,setDate]=useState(meeting.meetingStartedAt?new Date(meeting.meetingStartedAt).toLocaleString('sv-SE',{timeZone:'Asia/Bangkok'}).slice(0,16).replace(' ','T'):''),[error,setError]=useState('');return <div>{!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไขข้อมูลประชุม</Button>}<fieldset className="mt-access-fields" disabled={!canWrite}><form className="mt-meeting-meta" onSubmit={async e=>{e.preventDefault();try{await onSave({title,date});setError('');}catch(e){setError(e.message);}}}><Field label="ชื่อประชุม" value={title} required onChange={setTitle}/><Field label="วันเวลาประชุม · Bangkok" type="datetime-local" value={date} onChange={setDate}/><Button type="submit">บันทึกข้อมูลประชุม</Button>{error&&<p role="alert">{error}</p>}</form></fieldset></div>;}
+ 
+ function ReviewEditor({meeting,source,review,state,change,client,canExtract,busy,onExtract,onNewExtract,onTask,notice}){
++  const {canWrite,requestWrite}=useWriteAccess();
+   const working=meeting.workingCopy?.sourceId===source.id?meeting.workingCopy.segments:null;
+   const [segments,setSegments]=useState(()=>structuredClone(working||review?.segments||source.segments)),[dirty,setDirty]=useState(false),[saving,setSaving]=useState(false),[error,setError]=useState(''),[audio,setAudio]=useState(null),[channel,setChannel]=useState(meeting.channels?.[0]||'');
+   const player=useRef(null),editSeq=useRef(0),changeRef=useRef(change);changeRef.current=change;
+@@ -45,25 +50,26 @@
+   async function save(){setSaving(true);setError('');try{const id=uid(),fingerprint=await reviewHash(id,segments);await change(s=>{const result=saveReview(s,{id,sourceId:source.id,segments,reviewHash:fingerprint});delete s.meetings.find(m=>m.id===meeting.id).workingCopy;return result;},'บันทึกฉบับตรวจแล้ว');}catch(e){setError(e.message);}finally{setSaving(false);}}
+   async function loadAudio(){setError('');try{const blob=await client.audio(source.recordingId,channel);setAudio(URL.createObjectURL(blob));}catch(e){setError(e.message);}}
+   function manual(seg){if(!review||changed)return;onTask({title:'',description:seg.text,sourceKind:'manual-from-meeting',sourceRefs:[{meetingId:meeting.id,sourceId:source.id,reviewRevisionId:review.id,evidence:[{segmentId:seg.segmentId,startMs:seg.startMs,endMs:seg.endMs,quote:seg.text,reviewRevisionId:review.id}]}],status:'planned',statusConfirmed:true,consultedIds:[],informedIds:[]});}
+-  return <section className="mt-transcript"><div className="mt-transcript-heading"><div><h3>Transcript Review</h3><small>{source.sourceMode==='native'?'Native revision':'Legacy · ไม่ยืนยัน native revisions'} · {source.segments.length} ช่วงข้อความ · coverage {source.coverage?.status||'unknown'}</small></div><Button className="mc-primary" disabled={saving||!segments.length} onClick={save}>{saving?'กำลังบันทึก…':'บันทึกฉบับตรวจแล้ว'}</Button></div>
++  return <section className="mt-transcript"><div className="mt-transcript-heading"><div><h3>Transcript Review</h3><small>{source.sourceMode==='native'?'Native revision':'Legacy · ไม่ยืนยัน native revisions'} · {source.segments.length} ช่วงข้อความ · coverage {source.coverage?.status||'unknown'}</small></div><Button className="mc-primary" disabled={saving||!segments.length} onClick={()=>requestWrite(save)}>{saving?'กำลังบันทึก…':'บันทึกฉบับตรวจแล้ว'}</Button></div>
+     {error&&<p className="mc-errors" role="alert">{error}</p>}<p className="mc-note">{dirty?'กำลังบันทึกร่าง…':changed?'ร่างข้อความยังไม่ใช่ฉบับตรวจแล้ว':'กำลังดูฉบับตรวจแล้ว'} · ชื่อผู้พูดไม่ได้แปลว่าเป็น R</p>
+     <div className="mt-audio"><Field label="ช่องเสียง" value={channel} options={[{value:'',label:'เลือกอัตโนมัติจาก FUNG'},...(meeting.channels||[]).map(value=>({value,label:value}))]} onChange={v=>{setChannel(v);setAudio(null);}}/><Button disabled={!client} onClick={loadAudio}>โหลดเสียงอ้างอิง</Button>{audio&&<audio ref={player} controls src={audio}/>}{!client&&<small>เชื่อม FUNG เพื่อเล่นเสียง</small>}</div>
+-    <div className="mt-segments">{segments.map((seg,i)=><div className="mt-segment" key={seg.segmentId}><div className="mt-segment-top"><button disabled={!audio} onClick={()=>{if(player.current){player.current.currentTime=seg.startMs/1000;player.current.play().catch(()=>{});}}}>{stamp(seg.startMs)}–{stamp(seg.endMs)}</button><Field label={`ผู้พูดช่วง ${i+1}`} value={seg.speakerLabel} onChange={v=>edit(i,'speakerLabel',v)} disabled={saving}/></div><Field label={`ข้อความช่วง ${i+1}`} type="textarea" value={seg.text} onChange={v=>edit(i,'text',v)} disabled={saving}/><details><summary>ต้นฉบับ / สิ่งที่แก้</summary><p className="mt-raw">{source.segments[i]?.text}</p>{seg.text!==source.segments[i]?.text&&<p><b>ฉบับแก้:</b> {seg.text}</p>}</details><Button disabled={!review||changed||!seg.text.trim()} onClick={()=>manual(seg)}>สร้างงานเองจากช่วงนี้</Button></div>)}</div>
++    {!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไข Transcript</Button>}<div className="mt-segments">{segments.map((seg,i)=><div className="mt-segment" key={seg.segmentId}><div className="mt-segment-top"><button disabled={!audio} onClick={()=>{if(player.current){player.current.currentTime=seg.startMs/1000;player.current.play().catch(()=>{});}}}>{stamp(seg.startMs)}–{stamp(seg.endMs)}</button><Field label={`ผู้พูดช่วง ${i+1}`} value={seg.speakerLabel} onChange={v=>edit(i,'speakerLabel',v)} disabled={saving||!canWrite}/></div><Field label={`ข้อความช่วง ${i+1}`} type="textarea" value={seg.text} onChange={v=>edit(i,'text',v)} disabled={saving||!canWrite}/><details><summary>ต้นฉบับ / สิ่งที่แก้</summary><p className="mt-raw">{source.segments[i]?.text}</p>{seg.text!==source.segments[i]?.text&&<p><b>ฉบับแก้:</b> {seg.text}</p>}</details><Button disabled={!review||changed||!seg.text.trim()} onClick={()=>manual(seg)}>สร้างงานเองจากช่วงนี้</Button></div>)}</div>
+     <div className="mt-draft-actions"><Button className="mc-primary" disabled={busy||saving||dirty||changed||!canExtract} onClick={onExtract}>สร้างร่างงานด้วย FUNG</Button><Button disabled={busy||changed||!canExtract} onClick={onNewExtract}>วิเคราะห์ใหม่</Button>{!canExtract&&<small>โมเดล local / adapter ยังไม่พร้อม หรือมีต้นฉบับใหม่ · ใช้สร้างงานเองจากข้อความที่ตรวจแล้วได้</small>}</div>
+     <details className="mt-history"><summary>ประวัติฉบับตรวจ ({state.reviews.filter(r=>r.meetingId===meeting.id).length})</summary>{state.reviews.filter(r=>r.meetingId===meeting.id).slice().reverse().map(r=><details key={r.id}><summary>{new Date(r.reviewedAt).toLocaleString('th-TH')} · {r.id.slice(0,8)}</summary><pre>{r.segments.map(s=>s.text).join('\n')}</pre></details>)}</details>
+   </section>;
+ }
+ 
+ function ActionBatch({batch,state,week,onCommit,onOpenTask,collapsed}){
++  const {requestWrite}=useWriteAccess();
+   const previous=state.tasks.filter(t=>t.sourceRefs.some(r=>r.meetingId===batch.meetingId)),receipt=state.receipts.find(r=>r.batchId===batch.id),stale=isBatchStale(state,batch);
+   const [choices,setChoices]=useState(()=>batch.items.map(item=>({proposalId:item.proposalId,mode:item.kind==='task'&&!previous.length?'create':'skip',title:item.title,description:null,responsibleId:'',accountableId:'',dueDate:item.suggestedDueDate||'',week,priority:null,taskId:'',taskVersion:null}))),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+-  const update=(i,key,value)=>setChoices(v=>v.map((c,j)=>j===i?{...c,[key]:value,...(key==='taskId'?{taskVersion:state.tasks.find(t=>t.id===value)?.version??null}:{})}:c));
++  const update=(i,key,value)=>requestWrite(()=>setChoices(v=>v.map((c,j)=>j===i?{...c,[key]:value,...(key==='taskId'?{taskVersion:state.tasks.find(t=>t.id===value)?.version??null}:{})}:c)));
+   async function submit(){setBusy(true);setError('');try{await onCommit(choices);}catch(e){setError(e.message);}finally{setBusy(false);}}
+   return <details className="mt-batch" open={!collapsed}><summary>{new Date(batch.generatedAt).toLocaleString('th-TH')} · {batch.items.length} รายการ · {receipt?'สร้างงานแล้ว':stale?'Stale · ต้องตรวจใหม่':'ร่างรอคุณตรวจ'}</summary>{receipt?<div className="mt-created">{receipt.taskIds.map(id=><Button key={id} onClick={()=>onOpenTask(id)}>{state.tasks.find(t=>t.id===id)?.title||id} ↗</Button>)}</div>:<>
+     {error&&<p role="alert" className="mc-errors">{error}</p>}{previous.length>0&&<p className="mt-warning">ประชุมนี้มี {previous.length} งานแล้ว ตรวจรายการเดิมและเลือก ผูก / อัปเดต / สร้างใหม่ ทีละรายการเพื่อกันงานซ้ำ</p>}
+     {batch.items.map((item,i)=><div key={item.proposalId} className="mt-proposal"><div className="mt-proposal-heading"><span>{item.kind==='task'?'งาน':item.kind==='decision'?'การตัดสินใจ':'คำถามค้าง'}</span><Field label={`จัดการร่าง ${i+1}`} value={choices[i].mode} disabled={stale||busy} options={[{value:'skip',label:'ไม่สร้าง'},{value:'create',label:'สร้างงานใหม่'},{value:'link',label:'ผูกกับงานเดิม'},{value:'update',label:'อัปเดตงานเดิม'}]} onChange={v=>update(i,'mode',v)}/></div><h4>{item.title}</h4>{item.evidence.map((e,j)=><blockquote key={j}>{e.quote}<small>{stamp(e.startMs)}–{stamp(e.endMs)}</small></blockquote>)}
+       <p className="mc-note">{item.suggestedResponsibleLabel?`ชื่อที่เสนอ: ${item.suggestedResponsibleLabel} · `:''}{item.suggestedDueText?`วันส่งที่กล่าวถึง: ${item.suggestedDueText} · `:''}{item.unresolvedFields?.length?`รอยืนยัน: ${item.unresolvedFields.join(', ')}`:''}</p>
+       {choices[i].mode!=='skip'&&<div className="mc-form-grid">{['link','update'].includes(choices[i].mode)&&<Field label={`งานเดิมของร่าง ${i+1}`} value={choices[i].taskId} options={[{value:'',label:'เลือกงานเดิม'},...state.tasks.map(t=>({value:t.id,label:`${t.title} · ${memberName(state,t.responsibleId)}`}))]} onChange={v=>update(i,'taskId',v)} wide/>}{choices[i].mode!=='link'&&<><Field label={`ชื่องานร่าง ${i+1}`} value={choices[i].title} onChange={v=>update(i,'title',v)} wide/><Field label={`รายละเอียดร่าง ${i+1}`} type="textarea" value={choices[i].description} onChange={v=>update(i,'description',v)} hint="กรอกภายหลังได้" wide/><Field label={`R ของร่าง ${i+1}`} value={choices[i].responsibleId} options={[{value:'',label:'เลือกผู้รับผิดชอบ'},...state.members.filter(m=>m.status==='active').map(m=>({value:m.id,label:`${m.displayName} · ${m.id.slice(0,4)}`}))]} onChange={v=>update(i,'responsibleId',v)}/><Field label={`A ของร่าง ${i+1}`} value={choices[i].accountableId} options={[{value:'',label:'รอยืนยัน'},...state.members.filter(m=>m.status==='active').map(m=>({value:m.id,label:m.displayName}))]} onChange={v=>update(i,'accountableId',v)}/><Field label={`วันส่งร่าง ${i+1}`} type="date" value={choices[i].dueDate} onChange={v=>update(i,'dueDate',v)}/></>}<Field label={`สัปดาห์ร่าง ${i+1}`} type="date" value={choices[i].week} onChange={v=>update(i,'week',weekOf(v))}/><Field label={`MoSCoW ร่าง ${i+1}`} value={choices[i].priority||''} options={[{value:'',label:'ยังไม่จัดลำดับ'},...Object.entries(MOSCOW).map(([value,label])=>({value,label}))]} onChange={v=>update(i,'priority',v||null)}/></div>}
+-    </div>)}<Button className="mc-primary" disabled={busy||stale||!choices.some(c=>c.mode!=='skip')} onClick={submit}>{busy?'กำลังตรวจและบันทึก…':`สร้างและมอบหมาย ${choices.filter(c=>c.mode!=='skip').length} งาน`}</Button><p className="mc-note">บันทึกผู้รับผิดชอบในเครื่องนี้ ไม่ส่งข้อความถึงทีม</p>
++    </div>)}<Button className="mc-primary" disabled={busy||stale||!choices.some(c=>c.mode!=='skip')} onClick={()=>requestWrite(submit)}>{busy?'กำลังตรวจและบันทึก…':`สร้างและมอบหมาย ${choices.filter(c=>c.mode!=='skip').length} งาน`}</Button><p className="mc-note">บันทึกผู้รับผิดชอบในเครื่องนี้ ไม่ส่งข้อความถึงทีม</p>
+   </>}</details>;
+ }
+--- 0.3.0/output/draft/campaign-mission-control/src/content/meeting/TaskAttachments.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/meeting/TaskAttachments.jsx
+@@ -0,0 +1,19 @@
++import React,{useEffect,useRef,useState} from 'react';
++import {Button} from '../../data-app-public.jsx';
++import {ROOT,scoped} from '../business/api.mjs';
++import {useWriteAccess} from '../business/TeamAccess.jsx';
++
++export function TaskAttachments({businessId,taskId,onEvidence}){
++ const {canWrite,requestWrite}=useWriteAccess(),input=useRef(null),[files,setFiles]=useState([]),[loading,setLoading]=useState(true),[busy,setBusy]=useState(false),[error,setError]=useState(''),[removing,setRemoving]=useState(null);
++ const path=`/tasks/${taskId}/attachments`,href=id=>`${ROOT}/businesses/${businessId}${path}/${id}`;
++ useEffect(()=>{let live=true;setLoading(true);if(!businessId||!taskId){setLoading(false);return;}scoped(businessId,path).then(value=>{if(live)setFiles(value);}).catch(e=>{if(live)setError(e.message);}).finally(()=>{if(live)setLoading(false);});return()=>{live=false;};},[businessId,taskId]);
++ async function upload(file){
++  if(!file)return;setError('');if(file.size>2*1024*1024||!file.size){setError('เลือกไฟล์ขนาด 1 byte ถึง 2 MB');return;}setBusy(true);
++  try{
++   const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(Error('อ่านไฟล์ไม่สำเร็จ'));reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(file);});
++   const row=await scoped(businessId,path,'POST',{filename:file.name,base64});setFiles(old=>[...old,row]);onEvidence?.(location.origin+href(row.id));
++  }catch(e){setError(e.message);}finally{setBusy(false);if(input.current)input.current.value='';}
++ }
++ async function remove(file){setBusy(true);setError('');try{await scoped(businessId,`${path}/${file.id}`,'PATCH',{deleted:true});setFiles(old=>old.filter(x=>x.id!==file.id));setRemoving(null);}catch(e){setError(e.message);}finally{setBusy(false);}}
++ return <section className="mt-attachments"><div className="mt-attachment-heading"><h3>ไฟล์และรูปหลักฐาน</h3><span>{files.length} / 5 ไฟล์</span></div><p className="mc-note">ไฟล์ละไม่เกิน 2 MB · ไฟล์ใหญ่ใส่ลิงก์ผลงานได้ · Guest ดูและดาวน์โหลดได้</p>{!businessId?<p>เปิด workspace PostgreSQL เพื่อแนบไฟล์</p>:!taskId?<p>บันทึกงานก่อน แล้วเปิดรายละเอียดงานเพื่อแนบไฟล์</p>:<>{loading?<p role="status">กำลังโหลดไฟล์แนบ…</p>:<div className="mt-attachment-grid">{files.map(file=><article key={file.id}>{file.media_type.startsWith('image/')&&<a href={href(file.id)} target="_blank" rel="noreferrer"><img src={href(file.id)+'?preview=1'} alt={file.filename} loading="lazy"/></a>}<a href={href(file.id)} download={file.filename}>{file.filename} ↓</a><small>{Math.ceil(file.byte_size/1024)} KB</small>{removing===file.id&&canWrite?<div><span>ลบไฟล์นี้จากงาน?</span><Button type="button" disabled={busy} onClick={()=>remove(file)}>ยืนยันลบไฟล์</Button><Button type="button" onClick={()=>setRemoving(null)}>ยกเลิก</Button></div>:<Button type="button" disabled={busy} onClick={()=>requestWrite(()=>setRemoving(file.id))}>ลบไฟล์ {file.filename}</Button>}</article>)}</div>}{!loading&&!files.length&&<p>ยังไม่มีไฟล์แนบ</p>}<Button type="button" disabled={busy||loading||files.length>=5} onClick={()=>requestWrite(()=>input.current?.click())}>{busy?'กำลังบันทึกไฟล์…':'＋ แนบไฟล์ / รูปภาพ'}</Button><input ref={input} type="file" hidden aria-label="เลือกไฟล์หลักฐาน" onChange={e=>upload(e.target.files?.[0])}/><small>อัปโหลดและลบจะบันทึกทันที แยกจากปุ่มบันทึกงาน</small></>}{error&&<p role="alert" className="mc-errors">{error}</p>}</section>;
++}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx
++++ 0.3.1/output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx
+@@ -1,28 +1,32 @@
++import {useWriteAccess} from '../business/TeamAccess.jsx';
++import {TaskAttachments} from './TaskAttachments.jsx';
+ import React,{useState} from 'react';
+ import {Button} from '../../data-app-public.jsx';
+ import {Field,Modal} from '../dashboard/Forms.jsx';
+ import {MOSCOW,STATUSES,weekOf} from './model.mjs';
+ 
+ export function MemberForm({member,onSave,onClose,members=[]}){
++  const {canWrite,requestWrite}=useWriteAccess();
+   const [draft,setDraft]=useState(member||{displayName:'',status:'active'}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+   const set=(k,v)=>setDraft(d=>({...d,[k]:v}));
+   async function submit(e){e.preventDefault();setError('');setBusy(true);try{await onSave(draft);onClose();}catch(e){setError(e.message);}finally{setBusy(false);}}
+-  return <Modal title={member?'รายละเอียด Member':'ลงทะเบียน Member'} onClose={onClose}><form onSubmit={submit} className="mt-form"><p className="mc-note">เริ่มจากชื่อที่ใช้แสดง แล้วกลับมาเติมรายละเอียดภายหลังได้</p>{error&&<p role="alert" className="mc-errors">{error}</p>}<div className="mc-form-grid">
++  return <Modal title={member?'รายละเอียด Member':'ลงทะเบียน Member'} onClose={onClose}>{!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไข Member</Button>}<fieldset className="mt-access-fields" disabled={!canWrite}><form onSubmit={submit} className="mt-form"><p className="mc-note">เริ่มจากชื่อที่ใช้แสดง แล้วกลับมาเติมรายละเอียดภายหลังได้</p>{error&&<p role="alert" className="mc-errors">{error}</p>}<div className="mc-form-grid">
+     <Field label="ชื่อที่ใช้แสดง" value={draft.displayName} onChange={v=>set('displayName',v)} required maxLength={160}/>
+     <Field label="สถานะสมาชิก" value={draft.status} options={[{value:'active',label:'Active'},{value:'inactive',label:'Inactive'}]} onChange={v=>set('status',v)}/>
+     {[['fullName','ชื่อ–นามสกุล'],['nickname','ชื่อเล่น'],['team','ทีม'],['position','ตำแหน่ง'],['email','Email'],['phone','เบอร์ติดต่อ']].map(([key,label])=><Field key={key} label={label} type={key==='email'?'email':key==='phone'?'tel':'text'} value={draft[key]} onChange={v=>set(key,v)} hint="กรอกภายหลังได้" maxLength={250}/>)}
+     <Field label="รายละเอียด Member / หมายเหตุ" type="textarea" value={draft.notes} onChange={v=>set('notes',v)} wide hint="กรอกภายหลังได้" maxLength={12000}/>
+-  </div>{members.some(m=>m.id!==draft.id&&m.displayName.trim()===draft.displayName.trim())&&<p className="mc-note">มีชื่อเหมือนกันในทะเบียน กรุณาตรวจทีม/ตำแหน่งเพื่อแยกคน ระบบจะเก็บเป็นคนละ Member</p>}<div className="mc-form-actions"><Button onClick={onClose} type="button">ยกเลิก</Button><Button className="mc-primary" type="submit" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึก Member'}</Button></div></form></Modal>;
++  </div>{members.some(m=>m.id!==draft.id&&m.displayName.trim()===draft.displayName.trim())&&<p className="mc-note">มีชื่อเหมือนกันในทะเบียน กรุณาตรวจทีม/ตำแหน่งเพื่อแยกคน ระบบจะเก็บเป็นคนละ Member</p>}<div className="mc-form-actions"><Button onClick={onClose} type="button">ยกเลิก</Button><Button className="mc-primary" type="submit" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึก Member'}</Button></div></form></fieldset></Modal>;
+ }
+ 
+-export function TaskForm({initialError,task,week,entry,state,campaigns,onSave,onMember,onClose,onSource}){
++export function TaskForm({businessId,initialError,task,week,entry,state,campaigns,onSave,onMember,onClose,onSource}){
++  const {canWrite,requestWrite}=useWriteAccess();
+   const [draft,setDraft]=useState(task||{title:'',status:'planned',statusConfirmed:true,consultedIds:[],informedIds:[],accountableConfirmed:false}),[selectedWeek,setWeek]=useState(week||''),[priority,setPriority]=useState(entry?.priority||''),[note,setNote]=useState(entry?.priorityNote||''),[error,setError]=useState(initialError||''),[busy,setBusy]=useState(false),[newName,setNewName]=useState(''),[quick,setQuick]=useState(false);
+   const set=(k,v)=>setDraft(d=>({...d,[k]:v,...(k==='accountableId'?{accountableConfirmed:false}:{}),...(k==='status'?{statusConfirmed:true}:{})}));
+   const choices=key=>[{value:'',label:'รอยืนยัน'},...state.members.filter(m=>m.status==='active'||draft[key]===m.id).map(m=>({value:m.id,label:`${m.displayName}${m.team?' · '+m.team:''}${m.status==='inactive'?' (Inactive)':''} · ${m.id.slice(0,4)}`}))];
+   async function submit(e){e.preventDefault();setError('');setBusy(true);try{await onSave(draft,{week:selectedWeek,priority:priority||null,priorityNote:note});onClose();}catch(e){setError(e.message);}finally{setBusy(false);}}
+   async function quickMember(){setBusy(true);setError('');try{const id=await onMember({displayName:newName});set('responsibleId',id);setNewName('');setQuick(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
+   function changeWeek(value){const w=value?weekOf(value):'';setWeek(w);const saved=state.weeks.find(p=>p.weekStart===w)?.entries.find(e=>e.taskId===task?.id);setPriority(saved?.priority||'');setNote(saved?.priorityNote||'');}
+-  return <Modal title={task?.id?'รายละเอียดงาน':'เพิ่มงานเอง'} onClose={onClose}><form className="mt-form" onSubmit={submit}>{error&&<p className="mc-errors" role="alert">{error}</p>}<div className="mc-form-grid">
++  return <Modal title={task?.id?'รายละเอียดงาน':'เพิ่มงานเอง'} onClose={onClose}>{!canWrite&&<div className="mt-readonly-note"><span>Guest mode · รายละเอียดงานอ่านอย่างเดียว</span><Button onClick={()=>requestWrite(null)}>แก้ไขงาน</Button></div>}<fieldset className="mt-access-fields" disabled={!canWrite}><form className="mt-form" onSubmit={submit}>{error&&<p className="mc-errors" role="alert">{error}</p>}<div className="mc-form-grid">
+     <Field label="ชื่องาน" value={draft.title} onChange={v=>set('title',v)} required wide maxLength={300}/>
+     <Field label="รายละเอียดงาน" type="textarea" value={draft.description} onChange={v=>set('description',v)} hint="กรอกภายหลังได้" wide maxLength={20000}/>
+     <Field label="R · ผู้ลงมือทำ / PIC" value={draft.responsibleId} options={choices('responsibleId')} onChange={v=>set('responsibleId',v)}/>
+@@ -47,7 +51,8 @@
+     <Field label="Dependency / งานที่ต้องรอ" value={draft.dependency} onChange={v=>set('dependency',v)}/>
+     <Field label="KPI ที่ต้องตรวจซ้ำ (ถ้ามี)" value={draft.kpi} onChange={v=>set('kpi',v)}/>
+     {draft.kpi&&<Field label="วันตรวจ KPI ซ้ำ" type="date" value={draft.recheckDate} onChange={v=>set('recheckDate',v)}/>}
+-  </div><div className="mc-form-actions"><Button type="button" onClick={onClose}>ยกเลิก</Button><Button type="submit" className="mc-primary" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึกงาน'}</Button></div></form>
++  </div><div className="mc-form-actions"><Button type="button" onClick={onClose}>ยกเลิก</Button><Button type="submit" className="mc-primary" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึกงาน'}</Button></div></form></fieldset>
++    <TaskAttachments businessId={businessId} taskId={task?.id} onEvidence={url=>{if(!draft.evidence)set('evidence',url);}}/>
+     {task?.sourceRefs?.length>0&&<section className="mt-source"><h3>ที่มาจากประชุม</h3>{task.sourceRefs.map((ref,i)=><div key={i}>{ref.evidence?.map((e,j)=><blockquote key={j}>{e.quote}<small>{Math.floor(e.startMs/1000)}s – {Math.floor(e.endMs/1000)}s</small></blockquote>)}<Button onClick={()=>onSource(ref.meetingId)}>เปิดประชุมต้นทาง</Button></div>)}</section>}
+     {task?.sourceUrl&&<p><a href={task.sourceUrl} target="_blank" rel="noreferrer">เอกสารต้นทาง ↗</a></p>}
+     {task?.id&&<details className="mt-history"><summary>ประวัติการแก้ไข · {task.id.slice(0,8)}</summary>{state.events.filter(e=>e.taskId===task.id).slice().reverse().map(e=><p key={e.id}><b>{e.type==='priority'?`MoSCoW · ${e.detail.weekStart} · ${MOSCOW[e.detail.after.priority]||'ยังไม่จัดลำดับ'}`:e.type}</b><small>{new Date(e.at).toLocaleString('th-TH')} · {e.actor}</small></p>)}</details>}
+--- 0.3.0/output/draft/campaign-mission-control/src/content/meeting/meeting.css
++++ 0.3.1/output/draft/campaign-mission-control/src/content/meeting/meeting.css
+@@ -50,3 +50,5 @@
+ @media(prefers-color-scheme:dark){.mt-companion img,.mt-meeting-mascot{mix-blend-mode:normal}}
+ @media(max-width:1100px){.mt-overview{grid-template-columns:1fr}.mt-companion{max-width:none;justify-content:center}.mt-companion img{height:90px;width:140px}.mt-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-board{grid-auto-columns:255px}}
+ @media(max-width:650px){.mt-heading h2{font-size:22px}.mt-heading-actions{width:100%}.mt-heading-actions>button{flex:1;font-size:12px}.mt-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.mt-totals>div{border-bottom:1px solid var(--border);padding:15px}.mt-totals>div>span{min-height:25px}.mt-totals strong{font-size:27px}.mt-week-bar{padding:12px}.mt-week-title{gap:7px}.mt-week-title strong{font-size:15px}.mt-filters>.mc-field{max-width:none}.mt-member-grid{gap:10px}.mt-member{padding:16px 12px}.mt-member footer{flex-wrap:wrap}.mt-meeting-layout{grid-template-columns:1fr}.mt-meeting-list{display:flex;flex-wrap:wrap;gap:8px}.mt-meeting-list h3{width:100%}.mt-meeting-list>button{width:calc(50% - 4px)}.mt-meeting-mascot{height:90px;width:150px;margin:auto}.mt-meeting-meta{padding:12px}.mt-transcript,.mt-action-review,.mt-connection,.mt-intake{padding:13px}.mt-upload{display:block;padding:12px}.mt-upload input{display:block;margin:8px 0 0;max-width:100%}.mt-connection-summary{padding:13px;flex-wrap:wrap}.mt-source-diff{grid-template-columns:1fr}.mt-all-tasks button,.mt-linked>button{display:block}.mt-all-tasks button>span,.mt-linked>button>span{display:block;margin-top:5px}.mt-domain>span{width:100%}.mt-domain button{font-size:12px}.mt-meeting-empty{padding:20px}.mt-board{grid-auto-columns:min(280px,85vw)}}
++
++.mt-access-fields{border:0;padding:0;margin:0;min-width:0}.mt-access-fields:disabled input,.mt-access-fields:disabled textarea,.mt-access-fields:disabled select{opacity:1;color:inherit;-webkit-text-fill-color:currentColor}.mt-readonly-note,.mt-attachment-heading{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.mt-readonly-note{background:#fff0dc;padding:12px;border-radius:12px;margin-bottom:16px}.mt-attachments{border-top:1px solid #e8820c40;padding-top:18px;margin-top:20px}.mt-attachments h3{margin:0}.mt-attachments>small{display:block;margin-top:8px}.mt-attachment-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:12px 0}.mt-attachment-grid article{padding:12px;border:1px solid #e8820c40;border-radius:12px;display:grid;gap:8px;min-width:0}.mt-attachment-grid img{width:100%;height:140px;object-fit:contain;background:#fff8f0;border-radius:8px}.mt-attachment-grid a{overflow-wrap:anywhere;color:#8d4a00}.mt-attachment-grid button{font-size:12px}.mt-attachment-grid small{color:#6b7280}
+--- 0.3.0/output/draft/zuri-go/cloud-deployment-spec.md
++++ 0.3.1/output/draft/zuri-go/cloud-deployment-spec.md
+@@ -42,3 +42,6 @@
+ Migration 003 adds `team_login_limits`: composite PK `(business_id, bucket)`, FK `business_id → businesses.id`, integer attempt count and `resets_at` timestamp. Business-scoped RLS is enabled and forced. A global bucket and a bounded hashed-client bucket count attempts atomically in PostgreSQL; raw IP addresses and entered passwords are not stored. There are now 26 application tables.
+ 
+ Hosted imports are trusted operator tasks using the existing import contract. Public hosted import endpoints are disabled because their local staging files are not persistent serverless storage. Shared team auth uses the existing `authenticated` audit kind with subject `shared_team`.
++
++## 0.3.1 access amendment
++The user replaced mandatory login for reading with public Guest read-only access. [Guest access and attachments](guest-access-spec.md) supersedes the read-access rule above; authenticated write, origin, session and rate-limit rules remain. Migration 004 adds task evidence bytes to PostgreSQL.
+--- 0.3.0/output/draft/zuri-go/data-model.md
++++ 0.3.1/output/draft/zuri-go/data-model.md
+@@ -308,3 +308,8 @@
+ - `campaign_states` holds the pre-existing sales/ad/order/inventory model. It does not duplicate normalized campaign headers or task rows. Those detailed ledgers have not been split into new SQL tables in this version.
+ - Local runtime role is non-owner, non-superuser, NOBYPASSRLS. UUID composite Business FKs and forced RLS are verified with real rejected writes. No browser database credentials.
+ - Local period default is Asia/Bangkok. The initial UI has no timezone switch. Actuals are entered manually; no social connector is implied.
++
++## 0.3.1 amendment: task evidence attachments
++`task_attachments`: `id UUID` PK; `business_id UUID` FK to businesses; `(business_id, task_id)` composite FK to tasks. Fields: filename, media_type, byte_size (1–2,097,152), sha256, payload bytea, created_at, deleted_at. Partial active-file index `(business_id, task_id) WHERE deleted_at IS NULL`; forced Business RLS. Five active files per task are enforced by the API in a transaction serialized through the Business revision. Compatibility task IDs are resolved to canonical FK IDs inside the same Business scope.
++
++Existing tables/PKs are unchanged. Attachment upload/removal is audited without file bytes. Public reads follow the user-approved Guest policy; mutations require a signed shared-team session. See [Guest and evidence specification](guest-access-spec.md).
+--- 0.3.0/output/draft/zuri-go/guest-access-spec.md
++++ 0.3.1/output/draft/zuri-go/guest-access-spec.md
+@@ -0,0 +1,38 @@
++# Zuri-Go 0.3.1 — Guest read-only access
++
++Date: 2026-09-30. Complexity: C-3. Risk: HIGH (production authorization boundary).
++Authority: user explicitly requested public viewing without login, Guest mode at the upper right, and shared-team login only when creating/deleting/editing; user also requested Vercel deployment.
++
++This supersedes the mandatory-login-for-reading rule in the 0.3.0 cloud spec. Parent: [Cloud architecture](cloud-deployment-spec.md). Peers: Business Overview, campaign editor, Meeting/Tasks, Metrics/Graph.
++
++## Behavior
++- An anonymous visitor opens the same live PostgreSQL workspace immediately and sees **Guest mode** in the upper-right authored toolbar, with an explicit login action.
++- Session/bootstrap and existing business read routes are public and remain restricted to the configured Business. No arbitrary tenant selection, database credentials or private server files are exposed.
++- All state-changing API methods still require a valid shared-team session and same-origin write checks. Guest mutation attempts return 401 and do not change database rows.
++- A create/edit/delete UI intent opens a login modal before the editable action starts. After successful login, continue that chosen action. Cancel leaves state unchanged. Navigation, filtering, metric details and read-only views remain available without login.
++- Expired sessions return to Guest mode and request login for a write. Logout clears the session and keeps the readable workspace visible.
++- The existing shared team password stays unchanged. Shared access still does not identify individual members.
++
++## Verification
++1. Anonymous browser renders Overview and current tasks without a login wall; badge is visible.
++2. Anonymous API reads succeed; wrong Business fails. Anonymous POST/PATCH/PUT fail with no mutation.
++3. Create/edit intents and task-status changes request login; cancelling causes no writes. Successful login resumes the chosen editor.
++4. Authenticated edits persist to PostgreSQL; logout preserves readable state and blocks later writes.
++5. Build, access regression tests and production browser checks pass; redeploy the same Vercel project and report final URL/version.
++
++## Evidence attachments (user amendment)
++- Keep existing evidence text/URLs. Add images and files to a saved Task, up to 2 MiB per file and 5 active files per task. New tasks are saved first, then accept attachments; this avoids orphan files or implicit task creation.
++- PostgreSQL `task_attachments`: UUID PK `id`, composite FK `(business_id,task_id)` to Tasks, filename, verified display MIME, byte size, SHA-256, bytea payload, timestamps and soft-delete marker. Forced Business RLS and app-scoped queries match existing ownership.
++- Guest may list/download evidence and view task details. Team login is required to upload/remove. Safe raster images (PNG/JPEG/GIF/WebP, signature checked) render previews; all other files download as octet-stream, with nosniff, attachment disposition and sandbox CSP. Do not render user HTML/SVG.
++- Upload is bounded JSON/base64 (under Vercel request limit); the server enforces size/count under task lock. Attachment changes are separate explicit saves and are audited, with no raw bytes in events. Removing a file soft-deletes it and makes its download unavailable.
++- The existing v2 JSON backup excludes file bytes; full PostgreSQL backup includes them. Local and cloud remain separate databases.
++- Verify actual image/file round trip, byte hash, unauthenticated rejection, foreign-business denial, size/count/invalid payload rules, removal and deployment persistence.
++
++```mermaid
++flowchart LR
++ Guest -->|GET| API[Vercel API]
++ Team -->|shared password session| API
++ API -->|public reads / authenticated writes| PG[(PostgreSQL)]
++ PG --- Tasks
++ Tasks -->|business_id + task_id FK| Attachments[task_attachments: metadata + bytea]
++```
+--- 0.3.0/projects/zuri-go/README.md
++++ 0.3.1/projects/zuri-go/README.md
+@@ -49,9 +49,9 @@
+ 
+ HTTP tests require the normal local server on 4319. Database tests create explicitly labeled QA Businesses, never use the configured user Business and do not delete user records. The app source is `output/draft/campaign-mission-control/src/content/`; package with the existing Data app builder and `projects/campaign-mission-control/build_unified_site.py`. Keep the protected shell and app ID unchanged.
+ 
+-## Production — version 0.3.0
++## Production — version 0.3.1
+ 
+-The PostgreSQL version is live at **https://zuri-metrics-map.vercel.app/** with the shared team password requested by the user. Retrieve it from the private `.local/team-access.txt` file; do not publish that file. Hosted state is stored in Neon PostgreSQL, Singapore. Member profiles remain task-assignment names, not separate authenticated accounts.
++The PostgreSQL version is live at **https://zuri-metrics-map.vercel.app/** with public Guest read-only access. A shared-team password is required only for create/edit/delete/upload actions; login opens as a modal and logout returns to Guest mode. Retrieve it from the private `.local/team-access.txt` file; do not publish that file. Hosted state is stored in Neon PostgreSQL, Singapore. Member profiles remain task-assignment names, not separate authenticated accounts.
+ 
+ The latest supplied backup was imported into local and cloud PostgreSQL: 1 campaign, 11 tasks, 4 members, 1 weekly plan and 45 events. Use production for shared work; local and hosted databases do not synchronize later edits. Imported campaign status needs explicit confirmation before it is counted as active or queued.
+ 
+@@ -60,3 +60,10 @@
+ Migration 003 adds persistent team-login rate limits. Existing local startup and API boundaries remain in place. Hosted import is an operator task, and hosted API import staging is intentionally disabled. Password rotation must replace both the password hash and session signing secret, then redeploy; this invalidates old sessions. No individual member identity is inferred from a shared session.
+ 
+ See `output/draft/zuri-go-cloud-review/verification.md` for deployment identity, tests, import reconciliation, actual persistence evidence and remaining AI/FUNG/backup limitations.
++
++## Task evidence files — 0.3.1
++Open a saved task in Meeting & Task Manager, then use **แนบไฟล์ / รูปภาพ**. Up to 5 active files per task, at most 2 MiB each. The existing evidence text/link field remains available. Upload and removal save immediately, independently of saving task details. Guest can view task details, image previews and download files; upload/removal requires team login. For a new task, save it first and reopen its details to add files.
++
++Migration 004 stores file metadata and bytea in `task_attachments`, with a composite Business/Task FK and forced Business RLS. Safe raster formats have signature-based preview MIME; other files download as octet-stream under sandbox CSP and nosniff. Deleted files are soft-deleted and no longer downloadable. Full database backups include bytes; **v2 JSON Backup does not include attachments**. Local and hosted files do not synchronize.
++
++Specification: `output/draft/zuri-go/guest-access-spec.md`. Verification and version diff: `output/draft/zuri-go-guest-review/`.
+--- 0.3.0/projects/zuri-go/api.mjs
++++ 0.3.1/projects/zuri-go/api.mjs
+@@ -1,3 +1,4 @@
++import {attachmentAction,sendAttachment} from './attachments.mjs';
+ import {body} from './http.mjs';
+ import {transaction} from './db.mjs';
+ import {snapshot,save,observe,brief,fail,audit} from './service.mjs';
+@@ -11,6 +12,14 @@
+    if(method!=='GET'&&(req.headers['x-zuri-go']!=='1'||!req.headers['content-type']?.startsWith('application/json')))fail('Use the same-origin application',403);
+    if(route==='/session'&&method==='GET'){send(res,200,{authenticated:true,storage,businessId});return;}
+    if(route==='/bootstrap'&&method==='GET'){const data=await transaction(businessId,c=>snapshot(c,businessId));send(res,200,{business:data.business,storage,apiVersion:1});return;}
++   const fileRoute=route.match(/^\/businesses\/([a-f0-9-]{36})\/tasks\/([A-Za-z0-9_-]{1,160})\/attachments(?:\/([a-f0-9-]{36}))?$/);
++   if(fileRoute){
++    const [,b,task,id]=fileRoute;if(b!==businessId)fail('Business access denied',403);
++    const input=method==='GET'?null:await body(req);
++    const result=await transaction(b,c=>attachmentAction(c,b,task,id,method,input));
++    if(method==='GET'&&id)sendAttachment(res,result,url.searchParams.get('preview')==='1');else send(res,200,result);
++    return;
++   }
+    const match=route.match(/^\/businesses\/([a-f0-9-]{36})(?:\/([a-z-]+))?(?:\/([a-f0-9-]{36}))?(?:\/(commit))?$/);
+    if(!match||match[1]!==businessId)fail('Business access denied',403);
+    const [,b,resource,id,action]=match,input=method==='GET'?null:await body(req);
+--- 0.3.0/projects/zuri-go/attachments.mjs
++++ 0.3.1/projects/zuri-go/attachments.mjs
+@@ -0,0 +1,49 @@
++import {createHash} from 'node:crypto';
++import {fail,audit} from './service.mjs';
++export const MAX_ATTACHMENT_BYTES=2*1024*1024;
++const columns='id,task_id,filename,media_type,byte_size,sha256,created_at';
++export function decodeAttachment(input){
++ const filename=typeof input?.filename==='string'?input.filename.trim():'';
++ if(!filename||filename.length>180||/[\x00-\x1f\x7f\\/]/.test(filename))fail('ชื่อไฟล์ไม่ถูกต้อง');
++ const encoded=input.base64;
++ if(typeof encoded!=='string'||encoded.length>Math.ceil(MAX_ATTACHMENT_BYTES/3)*4)fail('ไฟล์ต้องไม่เกิน 2 MB',413);
++ if(!encoded||encoded.length%4!==0||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))fail('ข้อมูลไฟล์ไม่ถูกต้อง');
++ const payload=Buffer.from(encoded,'base64');
++ if(!payload.length||payload.toString('base64')!==encoded)fail('ข้อมูลไฟล์ไม่ถูกต้อง');
++ if(payload.length>MAX_ATTACHMENT_BYTES)fail('ไฟล์ต้องไม่เกิน 2 MB',413);
++ const hex=payload.subarray(0,12).toString('hex');let media_type='application/octet-stream';
++ if(hex.startsWith('89504e470d0a1a0a'))media_type='image/png';
++ else if(hex.startsWith('ffd8ff'))media_type='image/jpeg';
++ else if(['GIF87a','GIF89a'].includes(payload.subarray(0,6).toString()))media_type='image/gif';
++ else if(payload.subarray(0,4).toString()==='RIFF'&&payload.subarray(8,12).toString()==='WEBP')media_type='image/webp';
++ return {filename,payload,media_type,byte_size:payload.length,sha256:createHash('sha256').update(payload).digest('hex')};
++}
++export async function attachmentAction(c,b,task,id,method,input){
++ const owner=(await c.query("SELECT id FROM tasks WHERE business_id=$1 AND (id::text=$2 OR legacy_metadata->>'id'=$2) AND archived_at IS NULL ORDER BY (id::text=$2) DESC LIMIT 1",[b,task])).rows[0];
++ if(!owner)fail('ไม่พบงาน',404);task=owner.id;
++ if(method==='GET'){
++  if(!id)return (await c.query(`SELECT ${columns} FROM task_attachments WHERE business_id=$1 AND task_id=$2 AND deleted_at IS NULL ORDER BY created_at,id`,[b,task])).rows;
++  const file=(await c.query('SELECT * FROM task_attachments WHERE business_id=$1 AND task_id=$2 AND id=$3 AND deleted_at IS NULL',[b,task,id])).rows[0];
++  if(!file)fail('ไม่พบไฟล์',404);return file;
++ }
++ // Updating the Business serializes concurrent uploads under repeatable-read;
++ // a stale transaction receives 409 before it can exceed the per-task limit.
++ await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
++ if(method==='POST'&&!id){
++  const file=decodeAttachment(input);
++  const count=(await c.query('SELECT count(*)::int AS n FROM task_attachments WHERE business_id=$1 AND task_id=$2 AND deleted_at IS NULL',[b,task])).rows[0].n;
++  if(count>=5)fail('แนบได้สูงสุด 5 ไฟล์ต่องาน');
++  const row=(await c.query(`INSERT INTO task_attachments(business_id,task_id,filename,media_type,byte_size,sha256,payload) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING ${columns}`,[b,task,file.filename,file.media_type,file.byte_size,file.sha256,file.payload])).rows[0];
++  await audit(c,b,'task_attachments',row.id,null,row);return row;
++ }
++ if(method==='PATCH'&&id&&input?.deleted===true){
++  const row=(await c.query(`UPDATE task_attachments SET deleted_at=now() WHERE business_id=$1 AND task_id=$2 AND id=$3 AND deleted_at IS NULL RETURNING ${columns},deleted_at`,[b,task,id])).rows[0];
++  if(!row)fail('ไม่พบไฟล์',404);await audit(c,b,'task_attachments',row.id,null,row);return {id:row.id,deleted:true};
++ }
++ fail('Not found',404);
++}
++export function sendAttachment(res,file,preview){
++ const inline=preview&&file.media_type.startsWith('image/');
++ res.writeHead(200,{'Content-Type':inline?file.media_type:'application/octet-stream','Content-Length':file.byte_size,'Content-Disposition':`${inline?'inline':'attachment'}; filename="download"; filename*=UTF-8''${encodeURIComponent(file.filename).replace(/['()]/g,c=>'%'+c.charCodeAt(0).toString(16))}`,'X-Content-Type-Options':'nosniff','Content-Security-Policy':"sandbox; default-src 'none'",'Cache-Control':'no-store'});
++ res.end(file.payload);
++}
+--- 0.3.0/projects/zuri-go/build-cloud.py
++++ 0.3.1/projects/zuri-go/build-cloud.py
+@@ -16,7 +16,7 @@
+ site = ROOT / 'output/draft/unified-site'
+ for path in json.loads((site / 'site-build.json').read_text())['files']:
+     copy('output/draft/unified-site/' + path, 'public/' + path)
+-for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs']:
++for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs']:
+     copy('projects/zuri-go/' + path, 'projects/zuri-go/' + path)
+ for path in ['shared/model.mjs','meeting/model.mjs','business/model.mjs']:
+     relative = 'output/draft/campaign-mission-control/src/content/' + path
+@@ -24,7 +24,7 @@
+ (OUT / 'api').mkdir(exist_ok=True)
+ (OUT / 'api/index.mjs').write_text("export {default} from '../projects/zuri-go/cloud.mjs';\n")
+ package = json.loads((ROOT / 'projects/zuri-go/package.json').read_text())
+-package.update(name='zuri-go-cloud', scripts={}, version='0.3.0', engines={'node':'24.x'})
++package.update(name='zuri-go-cloud', scripts={}, version='0.3.1', engines={'node':'24.x'})
+ (OUT / 'package.json').write_text(json.dumps(package, indent=2)+'\n')
+ copy('projects/zuri-go/package-lock.json', 'package-lock.json')
+ configuration = {'version':2,'outputDirectory':'public','buildCommand':'','regions':['sin1'],
+--- 0.3.0/projects/zuri-go/cloud.mjs
++++ 0.3.1/projects/zuri-go/cloud.mjs
+@@ -21,8 +21,9 @@
+    res.setHeader('Set-Cookie',sessionCookie(sessionToken(cfg.businessId,secret)));send(res,200,{authenticated:true,businessId:cfg.businessId,storage:'postgresql-cloud'});return;
+   }
+   if(route==='/logout'&&req.method==='POST'){res.setHeader('Set-Cookie',sessionCookie(''));send(res,200,{authenticated:false});return;}
+-  if(!validSession(req.headers.cookie,cfg.businessId,secret)){send(res,401,{error:'เข้าสู่ระบบด้วยรหัสทีมก่อนใช้งาน',code:'AUTH_REQUIRED'});return;}
+-  if(route==='/session'&&req.method==='GET'){send(res,200,{authenticated:true,businessId:cfg.businessId,storage:'postgresql-cloud'});return;}
++  const authenticated=validSession(req.headers.cookie,cfg.businessId,secret);
++  if(req.method!=='GET'&&!authenticated){send(res,401,{error:'เข้าสู่ระบบด้วยรหัสทีมก่อนแก้ไข',code:'AUTH_REQUIRED'});return;}
++  if(route==='/session'&&req.method==='GET'){send(res,200,{authenticated,businessId:cfg.businessId,storage:'postgresql-cloud'});return;}
+   // Import staging is an operator-only local task, never serverless filesystem state.
+   if(/^\/businesses\/[^/]+\/imports(?:\/|$)/.test(route)){send(res,403,{error:'นำเข้า backup ผ่านผู้ดูแลระบบ'});return;}
+   url.pathname='/api/zuri-go/v1'+route;
+--- 0.3.0/projects/zuri-go/migrate.mjs
++++ 0.3.1/projects/zuri-go/migrate.mjs
+@@ -6,7 +6,7 @@
+ try{
+  await client.query('SELECT pg_advisory_lock(973091)');
+  await client.query('CREATE TABLE IF NOT EXISTS public.zuri_go_migrations(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+- for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql']]){
++ for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql'],[4,'004_task_attachments.sql']]){
+    if((await client.query('SELECT 1 FROM public.zuri_go_migrations WHERE version=$1',[version])).rowCount)continue;
+    await client.query('BEGIN');try{const sql=(await readFile(new URL('migrations/'+file,import.meta.url),'utf8')).replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,'');await client.query(sql);await client.query('INSERT INTO public.zuri_go_migrations(version) VALUES($1)',[version]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
+  }
+@@ -15,5 +15,5 @@
+  await client.query('GRANT DELETE ON zuri_go.campaign_channels,zuri_go.goal_series,zuri_go.task_roles,zuri_go.weekly_plan_tasks TO zuri_go_app');
+  await client.query('REVOKE INSERT,UPDATE ON zuri_go.metric_definitions FROM zuri_go_app');
+  await client.query('REVOKE UPDATE ON zuri_go.change_events,zuri_go.ai_briefs,zuri_go.meeting_task_links FROM zuri_go_app');
+- console.log('Zuri-Go schema 3 applied; runtime role grants configured.');
++ console.log('Zuri-Go schema 4 applied; runtime role grants configured.');
+ }finally{await client.end();}
+--- 0.3.0/projects/zuri-go/migrations/004_task_attachments.sql
++++ 0.3.1/projects/zuri-go/migrations/004_task_attachments.sql
+@@ -0,0 +1,14 @@
++BEGIN;
++SET search_path TO zuri_go, public;
++CREATE TABLE task_attachments (
++ id uuid PRIMARY KEY DEFAULT gen_random_uuid(), business_id uuid NOT NULL REFERENCES businesses(id), task_id uuid NOT NULL,
++ filename text NOT NULL CHECK(length(filename) BETWEEN 1 AND 180), media_type text NOT NULL,
++ byte_size integer NOT NULL CHECK(byte_size BETWEEN 1 AND 2097152), sha256 text NOT NULL CHECK(length(sha256)=64),
++ payload bytea NOT NULL, created_at timestamptz NOT NULL DEFAULT now(), deleted_at timestamptz,
++ CHECK(octet_length(payload)=byte_size), FOREIGN KEY(business_id,task_id) REFERENCES tasks(business_id,id)
++);
++CREATE INDEX task_attachments_active ON task_attachments(business_id,task_id) WHERE deleted_at IS NULL;
++ALTER TABLE task_attachments ENABLE ROW LEVEL SECURITY;
++ALTER TABLE task_attachments FORCE ROW LEVEL SECURITY;
++CREATE POLICY business_scope ON task_attachments USING (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid) WITH CHECK (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid);
++COMMIT;
+--- 0.3.0/projects/zuri-go/test/cloud-handler.test.mjs
++++ 0.3.1/projects/zuri-go/test/cloud-handler.test.mjs
+@@ -10,15 +10,15 @@
+ await transaction(business,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[business,'QA ONLY · cloud access verification',business]));
+ after(()=>pool.end());
+ async function call(route,{method='GET',body,cookie,headers={}}={}){
+- const result={headers:{}};const res={setHeader:(k,v)=>result.headers[k]=v,writeHead:(status,h)=>{result.status=status;Object.assign(result.headers,h);},end:value=>{result.body=JSON.parse(value);}};
++ const result={headers:{}};const res={setHeader:(k,v)=>result.headers[k]=v,writeHead:(status,h)=>{result.status=status;Object.assign(result.headers,h);},end:value=>{result.body=Buffer.isBuffer(value)?value:JSON.parse(value);}};
+  await handler({url:'/api/index?route='+route,method,body,headers:{host:'zuri-qa.test',origin,'content-type':'application/json','x-zuri-go':'1',cookie,...headers}},res);return result;
+ }
+-test('hosted API denies anonymous reads/writes, supports shared login, and rejects forged sessions',async()=>{
+- assert.equal((await call('bootstrap')).status,401);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',body:{}})).status,401);
++test('hosted API allows guest reads, denies writes, and supports shared login',async()=>{
++ assert.equal((await call('bootstrap')).status,200);assert.equal((await call('session')).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',body:{}})).status,401);
+  assert.equal((await call('login',{method:'POST',body:{password:'wrong'}})).status,401);
+  const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});assert.equal(login.status,200);const cookie=login.headers['Set-Cookie'];assert.match(cookie,/Secure; SameSite=Strict/);
+  assert.equal((await call('session',{cookie})).body.businessId,business);assert.equal((await call('bootstrap',{cookie})).body.storage,'postgresql-cloud');
+- assert.equal((await call('bootstrap',{cookie:cookie.replace(/team=./,'team=x')})).status,401);
++ assert.equal((await call('bootstrap',{cookie:cookie.replace(/team=./,'team=x')})).status,200);assert.equal((await call('businesses/'+business+'/workspace',{method:'PUT',body:{},cookie:cookie.replace(/team=./,'team=x')})).status,401);
+  assert.equal((await call('businesses/'+randomUUID()+'/state',{cookie})).status,403);
+  assert.equal((await call('businesses/'+business+'/imports',{method:'POST',cookie,body:{}})).status,403);
+  assert.equal((await call('logout',{method:'POST',cookie,body:{},headers:{origin:'https://evil.test'}})).status,403);
+@@ -30,6 +30,42 @@
+  const another=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});
+  const state=await call('businesses/'+business+'/state',{cookie:another.headers['Set-Cookie']});assert.equal(state.status,200);assert.ok(state.body.channel_accounts.some(x=>x.id===created.body.id));
+ });
++test('guest write attempts cannot alter state, including attachments and wrong businesses',async()=>{
++ const before=await call('businesses/'+business+'/state');
++ for(const [method,path] of [['POST','channels'],['PATCH',randomUUID()],['PUT','workspace'],['POST','tasks/'+randomUUID()+'/attachments'],['PATCH','tasks/'+randomUUID()+'/attachments/'+randomUUID()]]){
++  assert.equal((await call('businesses/'+business+'/'+path,{method,body:{name:'unauthorized'}})).status,401);
++ }
++ assert.equal((await call('businesses/'+randomUUID()+'/state')).status,403);
++ assert.deepEqual((await call('businesses/'+business+'/state')).body,before.body);
++});
++test('attachments persist bytes, remain publicly readable, enforce bounds and become unavailable after removal',async()=>{
++ const task=randomUUID();await transaction(business,c=>c.query('INSERT INTO tasks(id,business_id,code,title) VALUES($1,$2,$3,$4)',[task,business,task,'QA ONLY attachment test']));
++ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}}),cookie=login.headers['Set-Cookie'];
++ await transaction(business,c=>c.query("UPDATE tasks SET legacy_metadata=$2 WHERE id=$1",[task,{id:'legacy-task-reference'}]));
++ const path='businesses/'+business+'/tasks/legacy-task-reference/attachments';
++ const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5s8AAAAASUVORK5CYII=';
++ const created=await call(path,{method:'POST',cookie,body:{filename:'หลักฐาน.png',base64:png}});assert.equal(created.status,200);assert.equal(created.body.media_type,'image/png');assert.ok(!('payload' in created.body));
++ const downloaded=await call(path+'/'+created.body.id);assert.equal(downloaded.status,200);assert.equal(downloaded.body.toString('base64'),png);assert.match(downloaded.headers['Content-Disposition'],/^attachment/);
++ const preview=await call(path+'/'+created.body.id+'&preview=1');assert.equal(preview.headers['Content-Type'],'image/png');assert.match(preview.headers['Content-Security-Policy'],/sandbox/);
++ const svg=await call(path,{method:'POST',cookie,body:{filename:'unsafe.svg',base64:Buffer.from('<svg onload="alert(1)"></svg>').toString('base64')}});
++ assert.equal((await call(path+'/'+svg.body.id+'&preview=1')).headers['Content-Type'],'application/octet-stream');
++ for(const body of [{filename:'../bad.txt',base64:'YQ=='},{filename:'x',base64:'???='},{filename:'x',base64:''}])assert.equal((await call(path,{method:'POST',cookie,body})).status,422);
++ assert.equal((await call(path,{method:'POST',cookie,body:{filename:'big.bin',base64:Buffer.alloc(2097153).toString('base64')}})).status,413);
++ for(let i=0;i<2;i++)assert.equal((await call(path,{method:'POST',cookie,body:{filename:'small'+i+'.txt',base64:'YQ=='}})).status,200);
++ const parallel=await Promise.all([0,1].map(i=>call(path,{method:'POST',cookie,body:{filename:'concurrent'+i+'.txt',base64:'YQ=='}})));
++ assert.equal(parallel.filter(r=>r.status===200).length,1);assert.ok(parallel.every(r=>[200,409,422].includes(r.status)));
++ assert.equal((await call(path)).body.length,5);
++ assert.equal((await transaction(randomUUID(),c=>c.query('SELECT id FROM task_attachments WHERE task_id=$1',[task]))).rowCount,0);
++ assert.equal((await call(path,{method:'POST',cookie,body:{filename:'sixth',base64:'YQ=='}})).status,422);
++ assert.equal((await call(path+'/'+created.body.id,{method:'PATCH',body:{deleted:true}})).status,401);
++ assert.equal((await call(path+'/'+created.body.id,{method:'PATCH',cookie,body:{deleted:true}})).status,200);
++ assert.equal((await call(path+'/'+created.body.id)).status,404);
++ assert.equal((await call(path)).body.length,4);
++ const logout=await call('logout',{method:'POST',cookie,body:{}});
++ assert.equal((await call('session',{cookie:logout.headers['Set-Cookie']})).body.authenticated,false);
++ assert.equal((await call(path,{cookie:logout.headers['Set-Cookie']})).status,200);
++ assert.equal((await call(path,{method:'POST',cookie:logout.headers['Set-Cookie'],body:{}})).status,401);
++});
+ test('rate limiting is persisted in PostgreSQL and denies after the per-bucket threshold',async()=>{
+  await transaction(business,c=>c.query("INSERT INTO team_login_limits(business_id,bucket,attempts,resets_at) VALUES($1,'global',400,now()+interval '15 minutes') ON CONFLICT(business_id,bucket) DO UPDATE SET attempts=400",[business]));
+  const response=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');

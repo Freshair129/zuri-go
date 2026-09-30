@@ -1,0 +1,169 @@
+{
+  "baseUrl": "https://zuri-metrics-map.vercel.app/",
+  "checkedFiles": 27,
+  "allHashesMatch": true,
+  "checks": [
+    {
+      "path": "data-app-build.json",
+      "status": 200,
+      "bytes": 591,
+      "hashMatch": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "bytes": 5051855,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibm-plex-mono-400.ttf",
+      "status": 200,
+      "bytes": 128812,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibm-plex-mono-500.ttf",
+      "status": 200,
+      "bytes": 129916,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibm-plex-sans-thai-400.ttf",
+      "status": 200,
+      "bytes": 105108,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibm-plex-sans-thai-500.ttf",
+      "status": 200,
+      "bytes": 105280,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibm-plex-sans-thai-600.ttf",
+      "status": 200,
+      "bytes": 105468,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibmplexmono-OFL.txt",
+      "status": 200,
+      "bytes": 4456,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/ibmplexsansthai-OFL.txt",
+      "status": 200,
+      "bytes": 4456,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/manrope-700.ttf",
+      "status": 200,
+      "bytes": 94928,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/manrope-800.ttf",
+      "status": 200,
+      "bytes": 95688,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/manrope-OFL.txt",
+      "status": 200,
+      "bytes": 4387,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/fonts/metrics-map.css",
+      "status": 200,
+      "bytes": 1176,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/logos/zuri-wordmark.svg",
+      "status": 200,
+      "bytes": 1398,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/mascot/metrics-pair-analysis_gen-d190a201.png",
+      "status": 200,
+      "bytes": 1192287,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/mascot/metrics-pair-chart_gen-04ac9b83.png",
+      "status": 200,
+      "bytes": 1087419,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/assets/mascot/metrics-pair-clipboard_gen-80d72fb8.png",
+      "status": 200,
+      "bytes": 931598,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/615885615_122133354686992725_8991070302867251796_n.jpg",
+      "status": 200,
+      "bytes": 72146,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/617563287_122133354782992725_7931094083234134915_n.jpg",
+      "status": 200,
+      "bytes": 124414,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/617606245_122133354794992725_4887824788410035437_n.jpg",
+      "status": 200,
+      "bytes": 121120,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/617912566_122133354776992725_2860196314728364820_n.jpg",
+      "status": 200,
+      "bytes": 153053,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/619250988_122133354710992725_6766144328900826988_n.jpg",
+      "status": 200,
+      "bytes": 129326,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/620112234_122133354788992725_3797505832379488852_n.jpg",
+      "status": 200,
+      "bytes": 137581,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/IMG_4136.jpeg",
+      "status": 200,
+      "bytes": 187195,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/gvm/Screenshot 2026-09-02 113422.png",
+      "status": 200,
+      "bytes": 684226,
+      "hashMatch": true
+    },
+    {
+      "path": "metrics/index.html",
+      "status": 200,
+      "bytes": 183281,
+      "hashMatch": true
+    },
+    {
+      "path": "snapshot.547f3c07ea7f61f878053a0d0060c0ae7c1646d45825f1fae68be88a9f917ae1.json",
+      "status": 200,
+      "bytes": 3985,
+      "hashMatch": true
+    }
+  ]
+}

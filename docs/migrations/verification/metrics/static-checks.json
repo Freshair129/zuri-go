@@ -1,0 +1,45 @@
+{
+  "artifact": "D:\\workspace\\zuri-go\\apps\\metrics\\index.html",
+  "guidePages": 18,
+  "metricCards": 38,
+  "graphTerms": 40,
+  "graphCategories": {
+    "acquisition": 10,
+    "lead": 10,
+    "revenue": 20
+  },
+  "graphAppearance": {
+    "sphericalNodes": true,
+    "texturedContrastStage": true,
+    "graphModes": [
+      "2d",
+      "3d"
+    ],
+    "backgroundPresets": [
+      "dark",
+      "canvas",
+      "warm"
+    ],
+    "full360Rotation": "VERIFIED_STATIC — yaw normalized modulo 2π",
+    "hoverAndFocusNames": true
+  },
+  "pageViewer": {
+    "previousNextControls": true,
+    "hashNavigation": true,
+    "allPagesAvailableForPrint": true
+  },
+  "mascotPages": 18,
+  "graphMascotNames": [
+    "zuri · อธิบาย",
+    "น้องวางใจ · ชี้สัญญาณ"
+  ],
+  "localReferencesChecked": 16,
+  "missingFiles": [],
+  "missingAnchors": [],
+  "errors": [],
+  "browserAndPrintRendering": {
+    "playwright": "STALE_OR_NOT_RUN",
+    "pdfPageCount": null,
+    "pdfMascotAndFolioChecks": "STALE_OR_NOT_RUN"
+  }
+}

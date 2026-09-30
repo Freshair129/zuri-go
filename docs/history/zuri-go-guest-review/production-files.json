@@ -1,0 +1,26 @@
+{
+  "version": "0.3.1",
+  "origin": "https://zuri-metrics-map.vercel.app",
+  "guestSession": true,
+  "files": [
+    {
+      "filename": "metrics-pair-clipboard_gen-80d72fb8.webp",
+      "sha256": "490e41902481f7268c3550ac9f4f5ebd4b4d0c5d868c3e331013d38f89266fc6",
+      "publicDownload": 200
+    },
+    {
+      "filename": "qa-evidence.txt",
+      "sha256": "146af1cdafb0966c8e2aefc188c5a1ae57c761bdc63ff1454d7bbf1f77518fdd",
+      "publicDownload": 200
+    }
+  ],
+  "downloadedFileMatches": true,
+  "softDelete": 200,
+  "removedDownload": 404,
+  "qaTaskArchived": "aebb53e1-7ad8-4487-a5d4-7a90c5022831",
+  "remainingUserTasks": 11,
+  "members": 4,
+  "weeklyEntries": [
+    11
+  ]
+}

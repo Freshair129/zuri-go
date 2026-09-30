@@ -1,0 +1,714 @@
+--- a/output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx
++++ b/output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx
+@@ -11,16 +11,16 @@
+ export function TeamAccess({children}){
+  const shell=useDataApp();
+  useEffect(()=>{if(shell.appTitle==='Campaign Mission Control')shell.setAppTitle('Zuri-Go');},[shell.appTitle,shell.setAppTitle]);
+- const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
++ const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[pid,setPid]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  const canWrite=local||!!session?.authenticated;
+  async function check(){setLoading(true);try{setSession(await request('/session'));setError('');}catch(e){setError(e.message);}finally{setLoading(false);}}
+- useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false}:old);setError('กรุณาใส่รหัสทีมเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
++ useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false}:old);setError('กรุณาใส่ PID และรหัสผ่านส่วนตัวเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
+  useEffect(()=>{if(canWrite&&pending.current){const action=pending.current;pending.current=null;action();}},[canWrite]);
+  function requestWrite(action){if(canWrite)return action?.();pending.current=action;setError('');setLoginOpen(true);}
+  function close(){if(busy)return;pending.current=null;setLoginOpen(false);setPassword('');setError('');}
+- async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{password}));setPassword('');setLoginOpen(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
++ async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{pid,password}));setPassword('');setLoginOpen(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
+  async function logout(){setBusy(true);try{await request('/logout','POST',{});pending.current=null;setSession(old=>({...old,authenticated:false}));setError('');}catch(e){setError(e.message);}finally{setBusy(false);}}
+  if(loading)return <section className="zg-team-login" aria-busy="true"><ZuriGoLogo/><p>กำลังเปิด workspace ของทีม…</p></section>;
+  if(!session)return <section className="zg-team-login"><ZuriGoLogo/><p role="alert">{error||'เชื่อมต่อ workspace ไม่สำเร็จ'}</p><Button onClick={check}>ลองโหลดอีกครั้ง</Button></section>;
+- return <Access.Provider value={{canWrite,requestWrite}}>{!local&&<div className="zg-team-bar"><span className={`zg-access-badge ${canWrite?'team':'guest'}`}>{canWrite?'Team mode':'Guest mode'}</span><span>{canWrite?'แก้ไขและบันทึกได้':'ดูได้อย่างเดียว'}</span><Button onClick={canWrite?logout:()=>requestWrite(null)} disabled={busy}>{canWrite?'ออกจากระบบ':'เข้าสู่ระบบเพื่อแก้ไข'}</Button>{error&&!loginOpen&&<span role="alert">{error}</span>}</div>}{children(session)}{loginOpen&&<Modal title="เข้าสู่ระบบเพื่อแก้ไข" onClose={close} wide={false}><section className="zg-team-login zg-team-dialog"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><p>Guest ดูข้อมูลได้ทันที<br/>ใส่รหัสทีมเพื่อสร้าง แก้ไข ลบ หรือแนบไฟล์</p><form onSubmit={login}><label htmlFor="team-password">รหัสเข้าทีม</label><input id="team-password" type="password" autoComplete="current-password" autoFocus required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button><Button type="button" onClick={close} disabled={busy}>ดูต่อใน Guest mode</Button></form></section></Modal>}</Access.Provider>;
++ return <Access.Provider value={{canWrite,requestWrite}}>{!local&&<div className="zg-team-bar"><span className={`zg-access-badge ${canWrite?'team':'guest'}`}>{canWrite?(session.member?.displayName+' · '+session.member?.pid):'Guest mode'}</span><span>{canWrite?'แก้ไขและบันทึกได้':'ดูได้อย่างเดียว'}</span><Button onClick={canWrite?logout:()=>requestWrite(null)} disabled={busy}>{canWrite?'ออกจากระบบ':'เข้าสู่ระบบเพื่อแก้ไข'}</Button>{error&&!loginOpen&&<span role="alert">{error}</span>}</div>}{children(session)}{loginOpen&&<Modal title="เข้าสู่ระบบเพื่อแก้ไข" onClose={close} wide={false}><section className="zg-team-login zg-team-dialog"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><p>Guest ดูข้อมูลได้ทันที<br/>ใช้ PID และรหัสผ่านส่วนตัวเพื่อสร้าง แก้ไข ลบ หรือแนบไฟล์</p><form onSubmit={login}><label htmlFor="member-pid">PID สมาชิก</label><input id="member-pid" autoComplete="username" autoCapitalize="characters" required autoFocus maxLength={40} placeholder="ZGO-P0001" value={pid} onChange={e=>setPid(e.target.value.toUpperCase())}/><label htmlFor="team-password">รหัสผ่านส่วนตัว</label><input id="team-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button><Button type="button" onClick={close} disabled={busy}>ดูต่อใน Guest mode</Button></form></section></Modal>}</Access.Provider>;
+ }
+--- a/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
++++ b/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
+@@ -67,7 +67,7 @@
+         {layout==='kanban'&&rows.some(t=>t.priority==='wont')&&<section className="mt-deferred"><h3>ไม่ทำในรอบนี้ · {rows.filter(t=>t.priority==='wont').length}</h3><div className="mt-card-grid">{rows.filter(t=>t.priority==='wont').map(card)}</div></section>}
+         {view==='tasks'&&<section className="mt-backlog"><h3>งานทั้งหมด / Backlog · {state.tasks.length}</h3><p className="mc-note">เปิดงานเพื่อเพิ่มเข้าสัปดาห์ที่เลือก โดยเก็บประวัติรอบก่อน</p><div className="mt-all-tasks">{state.tasks.filter(t=>!search||t.title.toLowerCase().includes(search.toLowerCase())).map(t=><button key={t.id} onClick={()=>openTask(t)}><strong>{t.title}</strong><span>{memberName(state,t.responsibleId)} · {state.weeks.some(w=>w.entries.some(e=>e.taskId===t.id))?'อยู่ในแผนแล้ว':'ยังไม่กำหนดรอบ'}</span></button>)}</div></section>}
+       </>}
+-      {state&&view==='members'&&<><div className="mt-member-head"><div><h3>ทีมของคุณ <span>{state.members.length} Members</span></h3><p>ชื่อเดียวก็เริ่มมอบหมายได้ รายละเอียดเติมภายหลัง</p></div><Button className="mc-primary" onClick={()=>setModal({kind:'member'})}>＋ ลงทะเบียน Member</Button></div><div className="mt-member-grid">{state.members.map(m=><button className={`mt-member ${m.status}`} key={m.id} onClick={()=>setModal({kind:'member',member:m})}><span className="mt-avatar">{m.displayName.slice(0,1)}</span><h3>{m.displayName}</h3><p>{[m.position,m.team].filter(Boolean).join(' · ')||'เพิ่มทีมและตำแหน่งได้'}</p><small>{m.email||m.phone||'รายละเอียดติดต่อยังว่าง'}</small><footer><span>{m.status==='active'?'Active':'Inactive'}</span><span>{state.tasks.filter(t=>t.responsibleId===m.id).length} งาน · {m.id.slice(0,4)} ↗</span></footer></button>)}</div><aside className="mt-companion wide"><img src={pairAnalysis} alt="Zuri และ น้องวางใจ ช่วยจัดผู้รับผิดชอบ"/><p><b>R ลงมือทำ · A ตรวจรับ</b><br/>C ให้คำปรึกษา · I รับทราบ<br/>บันทึกรายชื่อในเครื่อง ยังไม่มีการส่งข้อความหาทีม</p></aside></>}
++      {state&&view==='members'&&<><div className="mt-member-head"><div><h3>ทีมของคุณ <span>{state.members.length} Members</span></h3><p>ชื่อเดียวก็เริ่มมอบหมายได้ รายละเอียดเติมภายหลัง</p></div><Button className="mc-primary" onClick={()=>setModal({kind:'member'})}>＋ ลงทะเบียน Member</Button></div><div className="mt-member-grid">{state.members.map(m=><button className={`mt-member ${m.status}`} key={m.id} onClick={()=>setModal({kind:'member',member:m})}><span className="mt-avatar">{m.displayName.slice(0,1)}</span><h3>{m.displayName}</h3><small>{m.pid||'PID จะกำหนดเมื่อบันทึกใน PostgreSQL'}</small><p>{[m.position,m.team].filter(Boolean).join(' · ')||'เพิ่มทีมและตำแหน่งได้'}</p><small>{m.email||m.phone||'รายละเอียดติดต่อยังว่าง'}</small><footer><span>{m.status==='active'?'Active':'Inactive'}</span><span>{state.tasks.filter(t=>t.responsibleId===m.id).length} งาน · {m.id.slice(0,4)} ↗</span></footer></button>)}</div><aside className="mt-companion wide"><img src={pairAnalysis} alt="Zuri และ น้องวางใจ ช่วยจัดผู้รับผิดชอบ"/><p><b>R ลงมือทำ · A ตรวจรับ</b><br/>C ให้คำปรึกษา · I รับทราบ<br/>บันทึกรายชื่อในเครื่อง ยังไม่มีการส่งข้อความหาทีม</p></aside></>}
+       {state&&view==='meetings'&&<Meetings state={state} change={change} selectedId={selectedMeeting} onSelect={setSelectedMeeting} onTask={openTask} onOpenTask={id=>openTask(state.tasks.find(t=>t.id===id))} week={week} notice={setNotice}/>}
+       <footer className="mc-footer"><span>{serverBusinessId?(cloudBusinessId?'PostgreSQL ของทีม · บันทึกบนคลาวด์':'PostgreSQL ในเครื่อง · สำรองข้อมูลก่อนย้ายเครื่อง'):'Browser workspace · สำรองข้อมูลก่อนย้าย browser/เครื่อง'}</span><div><Button onClick={backup}>{serverBusinessId?'Backup แคมเปญและงาน':'Backup JSON'}</Button><Button onClick={()=>requestWrite(()=>input.current?.click())}>Restore backup</Button></div></footer>
+     </article>}
+--- a/output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx
++++ b/output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx
+@@ -10,7 +10,7 @@
+   const [draft,setDraft]=useState(member||{displayName:'',status:'active'}),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+   const set=(k,v)=>setDraft(d=>({...d,[k]:v}));
+   async function submit(e){e.preventDefault();setError('');setBusy(true);try{await onSave(draft);onClose();}catch(e){setError(e.message);}finally{setBusy(false);}}
+-  return <Modal title={member?'รายละเอียด Member':'ลงทะเบียน Member'} onClose={onClose}>{!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไข Member</Button>}<fieldset className="mt-access-fields" disabled={!canWrite}><form onSubmit={submit} className="mt-form"><p className="mc-note">เริ่มจากชื่อที่ใช้แสดง แล้วกลับมาเติมรายละเอียดภายหลังได้</p>{error&&<p role="alert" className="mc-errors">{error}</p>}<div className="mc-form-grid">
++  return <Modal title={member?'รายละเอียด Member':'ลงทะเบียน Member'} onClose={onClose}>{member?.pid&&<p>PID: <strong>{member.pid}</strong> <Button onClick={()=>navigator.clipboard.writeText(member.pid)}>คัดลอก PID</Button></p>}{!canWrite&&<Button onClick={()=>requestWrite(null)}>แก้ไข Member</Button>}<fieldset className="mt-access-fields" disabled={!canWrite}><form onSubmit={submit} className="mt-form"><p className="mc-note">เริ่มจากชื่อที่ใช้แสดง แล้วกลับมาเติมรายละเอียดภายหลังได้</p>{error&&<p role="alert" className="mc-errors">{error}</p>}<div className="mc-form-grid">
+     <Field label="ชื่อที่ใช้แสดง" value={draft.displayName} onChange={v=>set('displayName',v)} required maxLength={160}/>
+     <Field label="สถานะสมาชิก" value={draft.status} options={[{value:'active',label:'Active'},{value:'inactive',label:'Inactive'}]} onChange={v=>set('status',v)}/>
+     {[['fullName','ชื่อ–นามสกุล'],['nickname','ชื่อเล่น'],['team','ทีม'],['position','ตำแหน่ง'],['email','Email'],['phone','เบอร์ติดต่อ']].map(([key,label])=><Field key={key} label={label} type={key==='email'?'email':key==='phone'?'tel':'text'} value={draft[key]} onChange={v=>set(key,v)} hint="กรอกภายหลังได้" maxLength={250}/>)}
+--- a/output/draft/zuri-go/cloud-deployment-spec.md
++++ b/output/draft/zuri-go/cloud-deployment-spec.md
+@@ -45,3 +45,6 @@
+ 
+ ## 0.3.1 access amendment
+ The user replaced mandatory login for reading with public Guest read-only access. [Guest access and attachments](guest-access-spec.md) supersedes the read-access rule above; authenticated write, origin, session and rate-limit rules remain. Migration 004 adds task evidence bytes to PostgreSQL.
++
++## 0.4.0 approved identity amendment
++The approved [Member identity contract](member-identity-spec.md) supersedes all shared-password/session assumptions above. Guest reads remain public. Writes require PID + individual password, a versioned Member cookie, and a current active/enabled credential checked in the same PostgreSQL transaction as the write. The API derives the audit actor from that session. Migration 005 preserves Member UUIDs, adds immutable Business-scoped PIDs, credentials and actor references. Provisioning/reset is a trusted local operator action; no credentials ship to the browser or static package. The obsolete shared-password environment variable is removed at rollout after verifying individual access. The local loopback workspace remains explicitly local-operator access. [Release verification](../zuri-go-member-review/verification.md) records the exact rollout status.
+--- a/output/draft/zuri-go/data-model.md
++++ b/output/draft/zuri-go/data-model.md
+@@ -313,3 +313,11 @@
+ `task_attachments`: `id UUID` PK; `business_id UUID` FK to businesses; `(business_id, task_id)` composite FK to tasks. Fields: filename, media_type, byte_size (1–2,097,152), sha256, payload bytea, created_at, deleted_at. Partial active-file index `(business_id, task_id) WHERE deleted_at IS NULL`; forced Business RLS. Five active files per task are enforced by the API in a transaction serialized through the Business revision. Compatibility task IDs are resolved to canonical FK IDs inside the same Business scope.
+ 
+ Existing tables/PKs are unchanged. Attachment upload/removal is audited without file bytes. Public reads follow the user-approved Guest policy; mutations require a signed shared-team session. See [Guest and evidence specification](guest-access-spec.md).
++
++## 0.4.0 amendment: Member identity / schema 5
++
++Migration `005_member_identity.sql` preserves all existing UUID PKs and relationship FKs. `businesses.next_member_no` allocates immutable `members.pid` values using an atomic Business-row increment; UNIQUE `(business_id,pid)` and a trigger prohibit client allocation or reassignment. PID is a display/login identifier, never a replacement FK. Legacy import IDs preserve the four existing identities through backfill.
++
++`member_credentials` has composite PK and Member FK `(business_id,member_id)`, salted `password_hash`, positive `credential_version`, `enabled` and timestamps. Forced Business RLS applies; the runtime role has SELECT only on this table. No public endpoint, Member metadata, or v2 export includes credential records. Only the trusted operator provisions/resets/enables/disables credentials. These operations increment the version, invalidating prior sessions, and serialize with API writes on the Business row.
++
++`change_events.actor_member_id` already existed with its composite Member FK; reuse it and add nullable `actor_pid`. `task_attachments.uploaded_by_member_id` and `deleted_by_member_id` are nullable composite Member FKs. New authenticated mutations obtain these values from validated server session context; pre-existing unknown/shared actors remain unchanged. Local trusted operator writes remain explicitly distinct. See [approved contract](member-identity-spec.md) and [verification](../zuri-go-member-review/verification.md).
+--- a/output/draft/zuri-go/guest-access-spec.md
++++ b/output/draft/zuri-go/guest-access-spec.md
+@@ -4,6 +4,8 @@
+ Authority: user explicitly requested public viewing without login, Guest mode at the upper right, and shared-team login only when creating/deleting/editing; user also requested Vercel deployment.
+ 
+ This supersedes the mandatory-login-for-reading rule in the 0.3.0 cloud spec. Parent: [Cloud architecture](cloud-deployment-spec.md). Peers: Business Overview, campaign editor, Meeting/Tasks, Metrics/Graph.
++
++**0.4.0 amendment:** [Member identity](member-identity-spec.md) replaces the shared-team password/session references below with individual PID/password sign-in and authenticated Member attribution. Public Guest reads, write-intent modal, action resume, file limits and downloads are unchanged. The old team password/cookie is no longer accepted by 0.4.0.
+ 
+ ## Behavior
+ - An anonymous visitor opens the same live PostgreSQL workspace immediately and sees **Guest mode** in the upper-right authored toolbar, with an explicit login action.
+--- a/output/draft/zuri-go/member-identity-spec.md
++++ b/output/draft/zuri-go/member-identity-spec.md
+@@ -1,15 +1,15 @@
+ ---
+ document_id: ZGO-AUTH-002
+-version: 0.4.0-draft.1
++version: 0.4.0
+ date: 2026-09-30
+-status: approved-implementation-in-progress
++status: implemented-production-verified
+ complexity: C-3
+ risk: HIGH
+ ---
+ 
+ # Zuri-Go — Member PID and individual sign-in
+ 
+-User request: create a different sign-in password for each Member and a PID identifying that Member. This document is the reviewable proposal required by the user-provided R5/SOP. No passwords, production rows, runtime code or authentication settings are changed by this document.
++User request: create a different sign-in password for each Member and a PID identifying that Member. The user approved this contract under R5/SOP on 2026-09-30. Implementation and verification are tracked in the [release evidence](../zuri-go-member-review/verification.md).
+ 
+ Parent: [Cloud architecture](cloud-deployment-spec.md). Peers: [Guest access and files](guest-access-spec.md), [PostgreSQL data model](data-model.md), [Architecture](architecture.md). It supersedes only the shared-team identity/authentication parts after approval; Guest visibility, task assignments, file limits, logos and metrics remain as previously approved.
+ 
+@@ -17,9 +17,9 @@
+ 
+ Current source: `projects/zuri-go/team-auth.mjs` signs a Business-only team session; `cloud.mjs` checks one shared password hash. `service.mjs:audit` records authenticated subject `shared_team`. `workspace.mjs:writeDomain` imports/persists legacy task events with local actor labels. These cannot identify an individual authenticated member.
+ 
+-Live production read on 2026-09-30 confirms exactly these four Active members. The PID assignments below are PROPOSED, not issued:
++Live production read on 2026-09-30 confirmed exactly these four Active members. The approved PID assignments below have been issued by migration 005 with independent credentials and private handovers:
+ 
+-| Member | Existing PostgreSQL member UUID (retained) | Proposed PID |
++| Member | Existing PostgreSQL member UUID (retained) | PID |
+ |---|---|---|
+ | Chef | c0a536e6-b701-4868-a2dd-b2fe0517ea47 | ZGO-P0001 |
+ | Boss | c058670c-8808-4a8a-af5b-26fc92462156 | ZGO-P0002 |
+@@ -43,7 +43,7 @@
+ - Provisioning is idempotent: rerunning does not silently rotate an existing password or reassign a PID. Reset must explicitly name the target PID and increases its credential version to invalidate prior sessions.
+ - Inactive or disabled sign-in accounts cannot log in or write. Re-enabling/resetting identity is performed by the trusted operator; other users cannot select an actor ID in a request to impersonate that member.
+ 
+-## 3. PostgreSQL amendment (proposed migration 005)
++## 3. PostgreSQL amendment (migration 005)
+ 
+ | Table | Added fields / relationships | Rules |
+ |---|---|---|
+@@ -106,7 +106,7 @@
+ 
+ ## Documentation version diff
+ 
+-| 0.3.1 approved behavior | 0.4.0 proposed behavior |
++| 0.3.1 behavior | 0.4.0 behavior |
+ |---|---|
+ | One shared team password | Independent Member password + PID |
+ | Business-only team session | Member UUID + credential-version session |
+@@ -115,6 +115,6 @@
+ | Member profile without login identity | Stable PID + separately protected credential record |
+ | Public Guest reads | Preserved |
+ 
+-Approval of this document is the implementation gate requested by R5/SOP. It is not evidence that credentials have already been created or deployed.
++The user approval satisfied the R5/SOP implementation gate. Completed production rollout and credential handover are evidenced in the [release verification](../zuri-go-member-review/verification.md); secrets are absent from this document.
+ 
+ Approval: user explicitly approved this specification on 2026-09-30.
+--- a/projects/zuri-go/api.mjs
++++ b/projects/zuri-go/api.mjs
+@@ -1,3 +1,4 @@
++import {authorizeWrite} from './member-auth.mjs';
+ import {attachmentAction,sendAttachment} from './attachments.mjs';
+ import {body} from './http.mjs';
+ import {transaction} from './db.mjs';
+@@ -6,8 +7,9 @@
+ import {importPreview,importCommit,readLegacy,saveLegacy} from './workspace.mjs';
+ export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
+ export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
+-export async function handleApi(req,res,url,{businessId,storage}){
++export async function handleApi(req,res,url,{businessId,storage,memberSession=null,requireMember=false}){
+    const route=url.pathname.slice('/api/zuri-go/v1'.length),method=req.method;
++   const scopedTransaction=(b,fn)=>transaction(b,async c=>{if(requireMember&&method!=='GET')await authorizeWrite(c,b,memberSession);return fn(c);});
+    if(!['GET','POST','PATCH','PUT'].includes(method))fail('Method not allowed',405);
+    if(method!=='GET'&&(req.headers['x-zuri-go']!=='1'||!req.headers['content-type']?.startsWith('application/json')))fail('Use the same-origin application',403);
+    if(route==='/session'&&method==='GET'){send(res,200,{authenticated:true,storage,businessId});return;}
+@@ -16,14 +18,14 @@
+    if(fileRoute){
+     const [,b,task,id]=fileRoute;if(b!==businessId)fail('Business access denied',403);
+     const input=method==='GET'?null:await body(req);
+-    const result=await transaction(b,c=>attachmentAction(c,b,task,id,method,input));
++    const result=await scopedTransaction(b,c=>attachmentAction(c,b,task,id,method,input));
+     if(method==='GET'&&id)sendAttachment(res,result,url.searchParams.get('preview')==='1');else send(res,200,result);
+     return;
+    }
+    const match=route.match(/^\/businesses\/([a-f0-9-]{36})(?:\/([a-z-]+))?(?:\/([a-f0-9-]{36}))?(?:\/(commit))?$/);
+    if(!match||match[1]!==businessId)fail('Business access denied',403);
+    const [,b,resource,id,action]=match,input=method==='GET'?null:await body(req);
+-   const result=await transaction(b,async c=>{
++   const result=await scopedTransaction(b,async c=>{
+     if(!resource&&method==='PATCH'){if(!input.name?.trim())fail('ระบุชื่อธุรกิจ');const old=(await c.query('SELECT * FROM businesses WHERE id=$1 FOR UPDATE',[b])).rows[0];if(Number(input.row_version)!==Number(old.row_version))fail('ข้อมูลเปลี่ยนแล้ว โหลดใหม่',409);const row=(await c.query('UPDATE businesses SET name=$2 WHERE id=$1 RETURNING *',[b,input.name.trim()])).rows[0];await audit(c,b,'businesses',b,old,row);return row;}
+     if(resource==='state'&&method==='GET'){const data=await snapshot(c,b);data.campaign_channels=(await c.query('SELECT * FROM campaign_channels WHERE business_id=$1',[b])).rows;return data;}
+     if(resource==='overview'&&method==='GET')return overview(await snapshot(c,b),{date:url.searchParams.get('date')||undefined,kind:url.searchParams.get('period')==='month'?'monthly':'weekly'});
+--- a/projects/zuri-go/attachments.mjs
++++ b/projects/zuri-go/attachments.mjs
+@@ -1,7 +1,7 @@
+ import {createHash} from 'node:crypto';
+ import {fail,audit} from './service.mjs';
+ export const MAX_ATTACHMENT_BYTES=2*1024*1024;
+-const columns='id,task_id,filename,media_type,byte_size,sha256,created_at';
++const columns='id,task_id,filename,media_type,byte_size,sha256,created_at,uploaded_by_member_id,deleted_by_member_id';
+ export function decodeAttachment(input){
+  const filename=typeof input?.filename==='string'?input.filename.trim():'';
+  if(!filename||filename.length>180||/[\x00-\x1f\x7f\\/]/.test(filename))fail('ชื่อไฟล์ไม่ถูกต้อง');
+@@ -33,11 +33,11 @@
+   const file=decodeAttachment(input);
+   const count=(await c.query('SELECT count(*)::int AS n FROM task_attachments WHERE business_id=$1 AND task_id=$2 AND deleted_at IS NULL',[b,task])).rows[0].n;
+   if(count>=5)fail('แนบได้สูงสุด 5 ไฟล์ต่องาน');
+-  const row=(await c.query(`INSERT INTO task_attachments(business_id,task_id,filename,media_type,byte_size,sha256,payload) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING ${columns}`,[b,task,file.filename,file.media_type,file.byte_size,file.sha256,file.payload])).rows[0];
++  const row=(await c.query(`INSERT INTO task_attachments(business_id,task_id,filename,media_type,byte_size,sha256,payload,uploaded_by_member_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING ${columns}`,[b,task,file.filename,file.media_type,file.byte_size,file.sha256,file.payload,c.zuriActor?.memberId||null])).rows[0];
+   await audit(c,b,'task_attachments',row.id,null,row);return row;
+  }
+  if(method==='PATCH'&&id&&input?.deleted===true){
+-  const row=(await c.query(`UPDATE task_attachments SET deleted_at=now() WHERE business_id=$1 AND task_id=$2 AND id=$3 AND deleted_at IS NULL RETURNING ${columns},deleted_at`,[b,task,id])).rows[0];
++  const row=(await c.query(`UPDATE task_attachments SET deleted_at=now(),deleted_by_member_id=$4 WHERE business_id=$1 AND task_id=$2 AND id=$3 AND deleted_at IS NULL RETURNING ${columns},deleted_at`,[b,task,id,c.zuriActor?.memberId||null])).rows[0];
+   if(!row)fail('ไม่พบไฟล์',404);await audit(c,b,'task_attachments',row.id,null,row);return {id:row.id,deleted:true};
+  }
+  fail('Not found',404);
+--- a/projects/zuri-go/build-cloud.py
++++ b/projects/zuri-go/build-cloud.py
+@@ -16,7 +16,7 @@
+ site = ROOT / 'output/draft/unified-site'
+ for path in json.loads((site / 'site-build.json').read_text())['files']:
+     copy('output/draft/unified-site/' + path, 'public/' + path)
+-for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs']:
++for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs']:
+     copy('projects/zuri-go/' + path, 'projects/zuri-go/' + path)
+ for path in ['shared/model.mjs','meeting/model.mjs','business/model.mjs']:
+     relative = 'output/draft/campaign-mission-control/src/content/' + path
+@@ -24,7 +24,7 @@
+ (OUT / 'api').mkdir(exist_ok=True)
+ (OUT / 'api/index.mjs').write_text("export {default} from '../projects/zuri-go/cloud.mjs';\n")
+ package = json.loads((ROOT / 'projects/zuri-go/package.json').read_text())
+-package.update(name='zuri-go-cloud', scripts={}, version='0.3.1', engines={'node':'24.x'})
++package.update(name='zuri-go-cloud', scripts={}, version='0.4.0', engines={'node':'24.x'})
+ (OUT / 'package.json').write_text(json.dumps(package, indent=2)+'\n')
+ copy('projects/zuri-go/package-lock.json', 'package-lock.json')
+ configuration = {'version':2,'outputDirectory':'public','buildCommand':'','regions':['sin1'],
+--- a/projects/zuri-go/cloud.mjs
++++ b/projects/zuri-go/cloud.mjs
+@@ -1,14 +1,15 @@
++import {memberToken,readMemberSession,memberCookie,loginMember,resolveMember,publicIdentity} from './member-auth.mjs';
+ import {config} from './config.mjs';
+ import {transaction} from './db.mjs';
+ import {body} from './http.mjs';
+ import {handleApi,send,sendError} from './api.mjs';
+-import {cloudOriginAllowed,consumeLoginAttempt,verifyPassword,validSession,sessionToken,sessionCookie} from './team-auth.mjs';
++import {cloudOriginAllowed,consumeLoginAttempt,sessionCookie} from './team-auth.mjs';
+ 
+ export default async function handler(req,res){
+  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');res.setHeader('Cache-Control','no-store');
+  try{
+-  const cfg=config(),secret=process.env.ZURI_GO_SESSION_SECRET,password=process.env.ZURI_GO_TEAM_PASSWORD_HASH,base=process.env.ZURI_GO_PUBLIC_ORIGIN;
+-  if(!cfg.businessId||!cfg.databaseUrl||!secret||secret.length<32||!password||!base?.startsWith('https://')){send(res,503,{error:'Workspace ยังตั้งค่าไม่ครบ'});return;}
++  const cfg=config(),secret=process.env.ZURI_GO_SESSION_SECRET,base=process.env.ZURI_GO_PUBLIC_ORIGIN;
++  if(!cfg.businessId||!cfg.databaseUrl||!secret||secret.length<32||!base?.startsWith('https://')){send(res,503,{error:'Workspace ยังตั้งค่าไม่ครบ'});return;}
+   const origins=[base,...(process.env.VERCEL_URL?['https://'+process.env.VERCEL_URL]:[])];
+   if(!cloudOriginAllowed(req,origins)){send(res,403,{error:'เปิดผ่านเว็บไซต์ Zuri-Go เท่านั้น'});return;}
+   const url=new URL(req.url,base),route=url.searchParams.has('route')?'/'+url.searchParams.get('route'):url.pathname.replace(/^\/api\/zuri-go\/v1/,'');
+@@ -17,16 +18,17 @@
+   if(route==='/login'&&req.method==='POST'){
+    const input=await body(req);const allowed=await transaction(cfg.businessId,c=>consumeLoginAttempt(c,cfg.businessId,req.headers['x-vercel-forwarded-for']||req.headers['x-real-ip'],secret));
+    if(!allowed){res.setHeader('Retry-After','900');send(res,429,{error:'ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 15 นาที'});return;}
+-   if(!await verifyPassword(input?.password,password)){send(res,401,{error:'รหัสเข้าทีมไม่ถูกต้อง'});return;}
+-   res.setHeader('Set-Cookie',sessionCookie(sessionToken(cfg.businessId,secret)));send(res,200,{authenticated:true,businessId:cfg.businessId,storage:'postgresql-cloud'});return;
++   const member=await transaction(cfg.businessId,c=>loginMember(c,cfg.businessId,input?.pid,input?.password));
++   if(!member){send(res,401,{error:'PID หรือรหัสผ่านไม่ถูกต้อง'});return;}
++   res.setHeader('Set-Cookie',[memberCookie(memberToken(cfg.businessId,member,secret)),sessionCookie('')]);send(res,200,{authenticated:true,member:publicIdentity(member),businessId:cfg.businessId,storage:'postgresql-cloud'});return;
+   }
+-  if(route==='/logout'&&req.method==='POST'){res.setHeader('Set-Cookie',sessionCookie(''));send(res,200,{authenticated:false});return;}
+-  const authenticated=validSession(req.headers.cookie,cfg.businessId,secret);
+-  if(req.method!=='GET'&&!authenticated){send(res,401,{error:'เข้าสู่ระบบด้วยรหัสทีมก่อนแก้ไข',code:'AUTH_REQUIRED'});return;}
+-  if(route==='/session'&&req.method==='GET'){send(res,200,{authenticated,businessId:cfg.businessId,storage:'postgresql-cloud'});return;}
++  if(route==='/logout'&&req.method==='POST'){res.setHeader('Set-Cookie',[memberCookie(''),sessionCookie('')]);send(res,200,{authenticated:false});return;}
++  const claims=readMemberSession(req.headers.cookie,cfg.businessId,secret);
++  if(req.method!=='GET'&&!claims){send(res,401,{error:'เข้าสู่ระบบด้วย PID และรหัสผ่านส่วนตัวก่อนแก้ไข',code:'AUTH_REQUIRED'});return;}
++  if(route==='/session'&&req.method==='GET'){const member=await transaction(cfg.businessId,c=>resolveMember(c,cfg.businessId,claims));send(res,200,{authenticated:!!member,member:publicIdentity(member),businessId:cfg.businessId,storage:'postgresql-cloud'});return;}
+   // Import staging is an operator-only local task, never serverless filesystem state.
+   if(/^\/businesses\/[^/]+\/imports(?:\/|$)/.test(route)){send(res,403,{error:'นำเข้า backup ผ่านผู้ดูแลระบบ'});return;}
+   url.pathname='/api/zuri-go/v1'+route;
+-  await handleApi(req,res,url,{businessId:cfg.businessId,storage:'postgresql-cloud'});
++  await handleApi(req,res,url,{businessId:cfg.businessId,storage:'postgresql-cloud',memberSession:claims,requireMember:true});
+  }catch(e){sendError(res,e);}
+ }
+--- a/projects/zuri-go/db.mjs
++++ b/projects/zuri-go/db.mjs
+@@ -3,7 +3,7 @@
+ pg.types.setTypeParser(1082,value=>value);
+ export const pool=new pg.Pool({connectionString:config().databaseUrl,max:5,options:process.env.VERCEL==='1'?undefined:'-c search_path=zuri_go,public',connectionTimeoutMillis:4000});
+ export async function transaction(businessId,fn){
+- const client=await pool.connect();try{await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');await client.query('SET LOCAL search_path TO zuri_go,public');await client.query("SELECT set_config('zuri_go.business_id',$1,true)",[businessId]);const result=await fn(client);await client.query('COMMIT');return result;}catch(e){await client.query('ROLLBACK');throw e;}finally{client.release();}
++ const client=await pool.connect();client.zuriActor=null;try{await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');await client.query('SET LOCAL search_path TO zuri_go,public');await client.query("SELECT set_config('zuri_go.business_id',$1,true)",[businessId]);const result=await fn(client);await client.query('COMMIT');return result;}catch(e){await client.query('ROLLBACK');throw e;}finally{client.zuriActor=null;client.release();}
+ }
+ export const hashable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
+ export async function rows(client,table,businessId){return (await client.query(`SELECT * FROM zuri_go.${table} WHERE business_id=$1`,[businessId])).rows;}
+--- a/projects/zuri-go/migrate.mjs
++++ b/projects/zuri-go/migrate.mjs
+@@ -6,7 +6,7 @@
+ try{
+  await client.query('SELECT pg_advisory_lock(973091)');
+  await client.query('CREATE TABLE IF NOT EXISTS public.zuri_go_migrations(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
+- for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql'],[4,'004_task_attachments.sql']]){
++ for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql'],[4,'004_task_attachments.sql'],[5,'005_member_identity.sql']]){
+    if((await client.query('SELECT 1 FROM public.zuri_go_migrations WHERE version=$1',[version])).rowCount)continue;
+    await client.query('BEGIN');try{const sql=(await readFile(new URL('migrations/'+file,import.meta.url),'utf8')).replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,'');await client.query(sql);await client.query('INSERT INTO public.zuri_go_migrations(version) VALUES($1)',[version]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
+  }
+@@ -15,5 +15,6 @@
+  await client.query('GRANT DELETE ON zuri_go.campaign_channels,zuri_go.goal_series,zuri_go.task_roles,zuri_go.weekly_plan_tasks TO zuri_go_app');
+  await client.query('REVOKE INSERT,UPDATE ON zuri_go.metric_definitions FROM zuri_go_app');
+  await client.query('REVOKE UPDATE ON zuri_go.change_events,zuri_go.ai_briefs,zuri_go.meeting_task_links FROM zuri_go_app');
+- console.log('Zuri-Go schema 4 applied; runtime role grants configured.');
++ await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.member_credentials FROM zuri_go_app');
++ console.log('Zuri-Go schema 5 applied; runtime role grants configured.');
+ }finally{await client.end();}
+--- a/projects/zuri-go/README.md
++++ b/projects/zuri-go/README.md
+@@ -49,20 +49,35 @@
+ 
+ HTTP tests require the normal local server on 4319. Database tests create explicitly labeled QA Businesses, never use the configured user Business and do not delete user records. The app source is `output/draft/campaign-mission-control/src/content/`; package with the existing Data app builder and `projects/campaign-mission-control/build_unified_site.py`. Keep the protected shell and app ID unchanged.
+ 
+-## Production — version 0.3.1
++## Production — version 0.4.0
+ 
+-The PostgreSQL version is live at **https://zuri-metrics-map.vercel.app/** with public Guest read-only access. A shared-team password is required only for create/edit/delete/upload actions; login opens as a modal and logout returns to Guest mode. Retrieve it from the private `.local/team-access.txt` file; do not publish that file. Hosted state is stored in Neon PostgreSQL, Singapore. Member profiles remain task-assignment names, not separate authenticated accounts.
++The PostgreSQL site is **https://zuri-metrics-map.vercel.app/** with public Guest read-only access. Version 0.4.0 uses each Member's PID and personal password for create/edit/delete/upload actions; login opens as a modal and logout returns to Guest mode. The toolbar shows the signed-in Member name and PID. Hosted state is stored in Neon PostgreSQL, Singapore. See the release verification below for the exact promoted deployment.
++
++Chef: `ZGO-P0001`; Boss: `ZGO-P0002`; Tong: `ZGO-P0003`; K’jeab: `ZGO-P0004`. Private individual handovers are `.local/member-access/production/<PID>.json`. Share only the intended member's file; never deploy these files. PID is public and immutable, scoped to this Business; the UUID remains the PK. Historical shared/local events are not reassigned to a Member.
+ 
+ The latest supplied backup was imported into local and cloud PostgreSQL: 1 campaign, 11 tasks, 4 members, 1 weekly plan and 45 events. Use production for shared work; local and hosted databases do not synchronize later edits. Imported campaign status needs explicit confirmation before it is counted as active or queued.
+ 
+-Build the verified UI and unified site first, then run `python projects/zuri-go/build-cloud.py` from the workspace root. The generated `output/draft/zuri-go-cloud/` contains an allowlisted static UI and Vercel API, with private files excluded. Deploy that directory to the existing `zuri-metrics-map` project. Migration/admin credentials stay local; Vercel receives only the restricted runtime connection, Business ID, password hash, session signing secret and allowed production origin.
++Build the verified UI and unified site first, then run `python projects/zuri-go/build-cloud.py` from the workspace root. The generated `output/draft/zuri-go-cloud/` contains an allowlisted static UI and Vercel API, with private files excluded. Deploy that directory to the existing `zuri-metrics-map` project. Migration/admin credentials stay local; Vercel receives only the restricted runtime connection, Business ID, session signing secret and allowed production origin. Salted personal password hashes are stored only in the separate PostgreSQL credential table; the runtime role cannot modify that table.
+ 
+-Migration 003 adds persistent team-login rate limits. Existing local startup and API boundaries remain in place. Hosted import is an operator task, and hosted API import staging is intentionally disabled. Password rotation must replace both the password hash and session signing secret, then redeploy; this invalidates old sessions. No individual member identity is inferred from a shared session.
++Migration 003 supplies persistent login rate limits. Migration 005 adds immutable PIDs, separate credentials and authenticated actor references. Member sessions validate active status, enabled credential and credential version inside the write transaction. Reset/disable and ordinary writes share Business locking; a stale concurrent transaction is rejected. Version 0.4.0 rejects the old shared password and team cookie. Existing local startup stays a trusted loopback operator workspace, without cloud synchronization or Member impersonation. Hosted import remains an operator task.
++
++Trusted operator commands from the workspace root:
++
++```powershell
++node projects/zuri-go/provision-members.mjs --cloud
++node projects/zuri-go/provision-members.mjs --cloud --reset ZGO-P0001
++node projects/zuri-go/provision-members.mjs --cloud --disable ZGO-P0001
++node projects/zuri-go/provision-members.mjs --cloud --enable ZGO-P0001
++```
++
++The first command provisions only missing credentials and verifies existing private handovers; it never silently rotates passwords. Reset generates a new private handover and invalidates previous sessions. Disable/enable also increments the credential version. A newly registered profile receives a PID automatically; only an operator enables its login. No self-service password recovery or email delivery is included. Disabling a profile blocks its sessions while inactive; use credential disable/reset to permanently revoke its existing sessions before reactivating it.
+ 
+ See `output/draft/zuri-go-cloud-review/verification.md` for deployment identity, tests, import reconciliation, actual persistence evidence and remaining AI/FUNG/backup limitations.
+ 
++For version 0.4.0, see `output/draft/zuri-go/member-identity-spec.md` and `output/draft/zuri-go-member-review/verification.md` for identity architecture, migration, live checks and version diff.
++
+ ## Task evidence files — 0.3.1
+-Open a saved task in Meeting & Task Manager, then use **แนบไฟล์ / รูปภาพ**. Up to 5 active files per task, at most 2 MiB each. The existing evidence text/link field remains available. Upload and removal save immediately, independently of saving task details. Guest can view task details, image previews and download files; upload/removal requires team login. For a new task, save it first and reopen its details to add files.
++Open a saved task in Meeting & Task Manager, then use **แนบไฟล์ / รูปภาพ**. Up to 5 active files per task, at most 2 MiB each. The existing evidence text/link field remains available. Upload and removal save immediately, independently of saving task details. Guest can view task details, image previews and download files; upload/removal requires Member login in 0.4.0. For a new task, save it first and reopen its details to add files.
+ 
+ Migration 004 stores file metadata and bytea in `task_attachments`, with a composite Business/Task FK and forced Business RLS. Safe raster formats have signature-based preview MIME; other files download as octet-stream under sandbox CSP and nosniff. Deleted files are soft-deleted and no longer downloadable. Full database backups include bytes; **v2 JSON Backup does not include attachments**. Local and hosted files do not synchronize.
+ 
+--- a/projects/zuri-go/service.mjs
++++ b/projects/zuri-go/service.mjs
+@@ -18,7 +18,7 @@
+  goals:['goals','name metric_code campaign_id owner_member_id period_kind period_start period_end_exclusive timezone target_value status change_reason'],
+ };
+ export async function audit(c,b,type,id,before,after,event='update'){
+- await c.query('INSERT INTO change_events(business_id,entity_type,entity_id,event_type,before_data,after_data,actor_kind,actor_subject,request_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)',[b,type,id,event,before,after,process.env.VERCEL==='1'?'authenticated':'local_operator',process.env.VERCEL==='1'?'shared_team':null,randomUUID()]);
++ await c.query('INSERT INTO change_events(business_id,entity_type,entity_id,event_type,before_data,after_data,actor_kind,actor_subject,request_id,actor_member_id,actor_pid) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[b,type,id,event,before,after,c.zuriActor?'authenticated':'local_operator',c.zuriActor?.pid||null,randomUUID(),c.zuriActor?.memberId||null,c.zuriActor?.pid||null]);
+ }
+ export async function allocate(c,b,kind){const field={campaigns:'next_campaign_no',content_items:'next_content_no',tasks:'next_task_no'}[kind];const row=(await c.query(`UPDATE businesses SET ${field}=${field}+1 WHERE id=$1 RETURNING ${field}-1 AS n`,[b])).rows[0];return ({campaigns:'CAM',content_items:'CNT',tasks:'TSK'}[kind])+'-'+String(row.n).padStart(4,'0');}
+ const clean=v=>typeof v==='string'&&v.trim()===''?null:v;
+@@ -99,5 +99,6 @@
+  }catch{error='AI_UNAVAILABLE_OR_UNSUPPORTED_OUTPUT';}}
+  const evidence={facts,view,sourceVersions:{business:data.business.row_version,goals:data.goals.map(g=>({id:g.id,version:g.row_version})),observations:data.metric_observations.filter(o=>o.is_current).map(o=>({id:o.id,revision:o.revision}))}};
+  const inserted=(await c.query("INSERT INTO ai_briefs(business_id,period_start,period_end_exclusive,as_of,input_hash,prompt_version,mode,provider,model,status,summary,evidence_snapshot,error_code) VALUES($1,$2,$3,$4,$5,'1',$6,$7,$8,'ready',$9,$10,$11) ON CONFLICT(business_id,input_hash,prompt_version,mode) WHERE status='ready' DO NOTHING RETURNING *",[b,view.period.start,view.period.end,view.asOf,inputHash,mode,mode==='ai'?'local_ollama':null,model,JSON.stringify(summary),JSON.stringify(evidence),error])).rows[0];
++ if(inserted)await audit(c,b,'ai_briefs',inserted.id,null,{id:inserted.id,mode},'create');
+  return inserted||(await c.query("SELECT * FROM ai_briefs WHERE business_id=$1 AND input_hash=$2 AND prompt_version='1' AND mode=$3 AND status='ready'",[b,inputHash,mode])).rows[0];
+ }
+--- a/projects/zuri-go/test/cloud-handler.test.mjs
++++ b/projects/zuri-go/test/cloud-handler.test.mjs
+@@ -1,3 +1,6 @@
++import pg from 'pg';
++import {sessionToken,sessionCookie} from '../team-auth.mjs';
++import {saveTask} from '../../../output/draft/campaign-mission-control/src/content/meeting/model.mjs';
+ import test,{after} from 'node:test';
+ import assert from 'node:assert/strict';
+ import {randomUUID} from 'node:crypto';
+@@ -8,26 +11,33 @@
+ Object.assign(process.env,{VERCEL:'1',ZURI_GO_DATABASE_URL:local.databaseUrl,ZURI_GO_BUSINESS_ID:business,ZURI_GO_PUBLIC_ORIGIN:origin,ZURI_GO_SESSION_SECRET:'isolated-test-session-secret-at-least-32-bytes',ZURI_GO_TEAM_PASSWORD_HASH:await passwordHash('isolated-qa-team-password')});
+ const {default:handler}=await import('../cloud.mjs');
+ await transaction(business,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[business,'QA ONLY · cloud access verification',business]));
+-after(()=>pool.end());
++const members=[];const admin=new pg.Client({connectionString:local.adminUrl});await admin.connect();
++for(let i=0;i<4;i++){
++ const m=await transaction(business,async c=>(await c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2) RETURNING *',[business,'QA Member '+i])).rows[0]);members.push(m);
++ await admin.query('BEGIN');await admin.query("SELECT set_config('zuri_go.business_id',$1,true)",[business]);await admin.query('INSERT INTO zuri_go.member_credentials(business_id,member_id,password_hash) VALUES($1,$2,$3)',[business,m.id,await passwordHash('isolated-qa-team-password'+i)]);await admin.query('COMMIT');
++}
++async function credentialUpdate(id,sql){await admin.query('BEGIN');try{await admin.query("SELECT set_config('zuri_go.business_id',$1,true)",[business]);await admin.query('UPDATE zuri_go.businesses SET domain_revision=domain_revision+1 WHERE id=$1',[business]);await admin.query('UPDATE zuri_go.member_credentials SET '+sql+' WHERE business_id=$1 AND member_id=$2',[business,id]);await admin.query('COMMIT');}catch(e){await admin.query('ROLLBACK');throw e;}}
++after(async()=>{await admin.end();await pool.end();});
++let requestNumber=0;
+ async function call(route,{method='GET',body,cookie,headers={}}={}){
+  const result={headers:{}};const res={setHeader:(k,v)=>result.headers[k]=v,writeHead:(status,h)=>{result.status=status;Object.assign(result.headers,h);},end:value=>{result.body=Buffer.isBuffer(value)?value:JSON.parse(value);}};
+- await handler({url:'/api/index?route='+route,method,body,headers:{host:'zuri-qa.test',origin,'content-type':'application/json','x-zuri-go':'1',cookie,...headers}},res);return result;
++ await handler({url:'/api/index?route='+route,method,body,headers:{host:'zuri-qa.test',origin,'content-type':'application/json','x-zuri-go':'1',cookie:Array.isArray(cookie)?cookie.join('; '):cookie,'x-real-ip':'198.51.100.'+(++requestNumber),...headers}},res);return result;
+ }
+-test('hosted API allows guest reads, denies writes, and supports shared login',async()=>{
++test('hosted API allows guest reads, denies writes, and supports individual member login',async()=>{
+  assert.equal((await call('bootstrap')).status,200);assert.equal((await call('session')).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',body:{}})).status,401);
+  assert.equal((await call('login',{method:'POST',body:{password:'wrong'}})).status,401);
+- const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});assert.equal(login.status,200);const cookie=login.headers['Set-Cookie'];assert.match(cookie,/Secure; SameSite=Strict/);
++ const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});assert.equal(login.status,200);const cookie=login.headers['Set-Cookie'][0];assert.match(cookie,/Secure; SameSite=Strict/);
+  assert.equal((await call('session',{cookie})).body.businessId,business);assert.equal((await call('bootstrap',{cookie})).body.storage,'postgresql-cloud');
+- assert.equal((await call('bootstrap',{cookie:cookie.replace(/team=./,'team=x')})).status,200);assert.equal((await call('businesses/'+business+'/workspace',{method:'PUT',body:{},cookie:cookie.replace(/team=./,'team=x')})).status,401);
++ assert.equal((await call('bootstrap',{cookie:cookie.replace(/member=./,'member=x')})).status,200);assert.equal((await call('businesses/'+business+'/workspace',{method:'PUT',body:{},cookie:cookie.replace(/member=./,'member=x')})).status,401);
+  assert.equal((await call('businesses/'+randomUUID()+'/state',{cookie})).status,403);
+  assert.equal((await call('businesses/'+business+'/imports',{method:'POST',cookie,body:{}})).status,403);
+  assert.equal((await call('logout',{method:'POST',cookie,body:{},headers:{origin:'https://evil.test'}})).status,403);
+- assert.match((await call('logout',{method:'POST',cookie,body:{}})).headers['Set-Cookie'],/Max-Age=0/);
++ assert.match((await call('logout',{method:'POST',cookie,body:{}})).headers['Set-Cookie'][0],/Max-Age=0/);
+ });
+ test('Vercel parsed JSON writes persist across independently authenticated sessions',async()=>{
+- const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}}),cookie=login.headers['Set-Cookie'];
++ const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+  const created=await call('businesses/'+business+'/channels',{method:'POST',cookie,body:{display_name:'QA ONLY · persistence',platform:'other'}});assert.equal(created.status,200);
+- const another=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});
++ const another=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});
+  const state=await call('businesses/'+business+'/state',{cookie:another.headers['Set-Cookie']});assert.equal(state.status,200);assert.ok(state.body.channel_accounts.some(x=>x.id===created.body.id));
+ });
+ test('guest write attempts cannot alter state, including attachments and wrong businesses',async()=>{
+@@ -40,11 +50,11 @@
+ });
+ test('attachments persist bytes, remain publicly readable, enforce bounds and become unavailable after removal',async()=>{
+  const task=randomUUID();await transaction(business,c=>c.query('INSERT INTO tasks(id,business_id,code,title) VALUES($1,$2,$3,$4)',[task,business,task,'QA ONLY attachment test']));
+- const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}}),cookie=login.headers['Set-Cookie'];
++ const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+  await transaction(business,c=>c.query("UPDATE tasks SET legacy_metadata=$2 WHERE id=$1",[task,{id:'legacy-task-reference'}]));
+  const path='businesses/'+business+'/tasks/legacy-task-reference/attachments';
+  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5s8AAAAASUVORK5CYII=';
+- const created=await call(path,{method:'POST',cookie,body:{filename:'หลักฐาน.png',base64:png}});assert.equal(created.status,200);assert.equal(created.body.media_type,'image/png');assert.ok(!('payload' in created.body));
++ const created=await call(path,{method:'POST',cookie,body:{filename:'หลักฐาน.png',base64:png}});assert.equal(created.status,200);assert.equal(created.body.media_type,'image/png');assert.equal(created.body.uploaded_by_member_id,members[0].id);assert.ok(!('payload' in created.body));
+  const downloaded=await call(path+'/'+created.body.id);assert.equal(downloaded.status,200);assert.equal(downloaded.body.toString('base64'),png);assert.match(downloaded.headers['Content-Disposition'],/^attachment/);
+  const preview=await call(path+'/'+created.body.id+'&preview=1');assert.equal(preview.headers['Content-Type'],'image/png');assert.match(preview.headers['Content-Security-Policy'],/sandbox/);
+  const svg=await call(path,{method:'POST',cookie,body:{filename:'unsafe.svg',base64:Buffer.from('<svg onload="alert(1)"></svg>').toString('base64')}});
+@@ -66,8 +76,35 @@
+  assert.equal((await call(path,{cookie:logout.headers['Set-Cookie']})).status,200);
+  assert.equal((await call(path,{method:'POST',cookie:logout.headers['Set-Cookie'],body:{}})).status,401);
+ });
++test('four individual identities, PID binding, audit actors, disabled/reset sessions and legacy rejection',async()=>{
++ const old=sessionCookie(sessionToken(business,process.env.ZURI_GO_SESSION_SECRET));
++ assert.equal((await call('businesses/'+business+'/channels',{method:'POST',cookie:old,body:{}})).status,401);
++ assert.equal((await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}})).status,401);
++ for(let i=0;i<4;i++){
++  const login=await call('login',{method:'POST',body:{pid:members[i].pid,password:'isolated-qa-team-password'+i}});assert.equal(login.status,200);assert.equal(login.body.member.memberId,members[i].id);assert.equal(login.body.member.pid,members[i].pid);
++  assert.equal((await call('login',{method:'POST',body:{pid:members[(i+1)%4].pid,password:'isolated-qa-team-password'+i}})).status,401);
++  const saved=await call('businesses/'+business+'/channels',{method:'POST',cookie:login.headers['Set-Cookie'],body:{display_name:'QA actor '+i,platform:'other'}});assert.equal(saved.status,200);
++  const audit=await transaction(business,async c=>(await c.query('SELECT actor_member_id,actor_pid FROM change_events WHERE business_id=$1 AND entity_id=$2',[business,saved.body.id])).rows[0]);assert.equal(audit.actor_member_id,members[i].id);assert.equal(audit.actor_pid,members[i].pid);
++ }
++ const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
++ await credentialUpdate(members[0].id,'credential_version=credential_version+1');
++ assert.equal((await call('session',{cookie})).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',cookie,body:{}})).status,401);
++ await credentialUpdate(members[0].id,'enabled=false');assert.equal((await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}})).status,401);
++ await credentialUpdate(members[0].id,'enabled=true');
++ const logged=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});
++ const workspace=(await call('businesses/'+business+'/workspace')).body;
++ const tid=saveTask(workspace.meetingTaskManager,{title:'QA claimed actor',responsibleId:members[0].id});
++ workspace.meetingTaskManager.events.forEach(e=>{e.actor='spoofed other member';e.actorMemberId=members[1].id;e.actorPid=members[1].pid;});
++ const written=await call('businesses/'+business+'/workspace',{method:'PUT',cookie:logged.headers['Set-Cookie'],body:{version:workspace.version,meetingTaskManager:workspace.meetingTaskManager}});assert.equal(written.status,200,JSON.stringify(written.body));
++ const event=written.body.meetingTaskManager.events.find(e=>e.taskId===tid);assert.equal(event.actorPid,members[0].pid);assert.equal(event.actorMemberId,members[0].id);
++ const publicState=JSON.stringify((await call('businesses/'+business+'/state')).body);assert.ok(!/password_hash|credential_version|isolated-qa-team-password/.test(publicState));
++ assert.equal((await call('businesses/'+business+'/members/'+members[0].id,{method:'PATCH',cookie:logged.headers['Set-Cookie'],body:{pid:'ZGO-P9999'}})).status,422);
++ await assert.rejects(()=>transaction(business,c=>c.query("UPDATE members SET pid='ZGO-P9999' WHERE id=$1",[members[0].id])),/PID is immutable/);
++ assert.equal((await transaction(business,c=>c.query('SELECT pid FROM members WHERE id=$1',[members[0].id]))).rows[0].pid,members[0].pid);
++ await assert.rejects(()=>transaction(business,c=>c.query('UPDATE member_credentials SET enabled=false WHERE member_id=$1',[members[1].id])),/permission denied/);
++});
+ test('rate limiting is persisted in PostgreSQL and denies after the per-bucket threshold',async()=>{
+  await transaction(business,c=>c.query("INSERT INTO team_login_limits(business_id,bucket,attempts,resets_at) VALUES($1,'global',400,now()+interval '15 minutes') ON CONFLICT(business_id,bucket) DO UPDATE SET attempts=400",[business]));
+- const response=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');
++ const response=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');
+  assert.equal((await transaction(business,c=>c.query("SELECT attempts FROM team_login_limits WHERE business_id=$1 AND bucket='global'",[business]))).rows[0].attempts,401);
+ });
+--- a/projects/zuri-go/test/database.test.mjs
++++ b/projects/zuri-go/test/database.test.mjs
+@@ -16,7 +16,8 @@
+  const a=await business(),b=await business();
+  const m=await run(a,c=>save(c,a,'members',{display_name:'QA A'})),n=await run(b,c=>save(c,b,'members',{display_name:'QA B'}));
+  assert.equal((await run(a,c=>c.query('SELECT * FROM members WHERE id=$1',[n.id]))).rowCount,0);
+- await assert.rejects(run(a,c=>c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2)',[b,'Blocked'])),e=>e.code==='42501');
++ await assert.rejects(run(a,c=>c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2)',[b,'Blocked'])),e=>e.code==='42501'||(e.code==='23514'&&e.message==='Business scope required'));
++ assert.equal((await run(b,c=>c.query("SELECT id FROM members WHERE display_name='Blocked'"))).rowCount,0);
+  await assert.rejects(run(a,c=>save(c,a,'campaigns',{name:'Cross business',owner_member_id:n.id})),e=>e.code==='23503');
+  const role=(await run(a,c=>c.query('SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user'))).rows[0];assert.deepEqual(role,{rolsuper:false,rolbypassrls:false});
+  const other=await run(a,c=>save(c,a,'members',{display_name:'QA second'}));
+--- a/projects/zuri-go/workspace.mjs
++++ b/projects/zuri-go/workspace.mjs
+@@ -19,7 +19,7 @@
+  const memberMap=new Map(members.map(m=>[m.id,legacyId(m)])),campaignMap=new Map(campaignRows.map(r=>[r.id,r.id]));
+  const campaigns=campaignRows.filter(x=>!x.archived_at).map(r=>{const payload=states.find(s=>s.campaign_id===r.id)?.state_json||createCampaign(r.name,r.objective,false);return {...payload,id:r.id,name:r.name,objective:r.objective,owner:members.find(m=>m.id===r.owner_member_id)?.display_name||payload.legacyOwnerLabel||'',start:r.planned_start||'',end:r.planned_end||'',createdAt:iso(r.created_at),tasks:tasks.filter(t=>t.campaign_id===r.id&&t.source_kind==='campaign-legacy').map(t=>t.legacy_metadata)};});
+  const domain=empty();domain.revision=Number(business.domain_revision);domain.seedKeys=business.legacy_metadata.seedKeys||[];
+- domain.members=members.map(r=>{const m={...r.legacy_metadata,id:legacyId(r),version:Number(r.row_version),createdAt:iso(r.created_at),updatedAt:iso(r.updated_at)};for(const [k,v] of Object.entries(M_FIELDS))m[k]=r[v];return m;});
++ domain.members=members.map(r=>{const m={...r.legacy_metadata,id:legacyId(r),pid:r.pid,version:Number(r.row_version),createdAt:iso(r.created_at),updatedAt:iso(r.updated_at)};for(const [k,v] of Object.entries(M_FIELDS))m[k]=r[v];return m;});
+  domain.tasks=tasks.filter(t=>t.source_kind!=='campaign-legacy'&&!t.archived_at).map(r=>{const result={...r.legacy_metadata,id:legacyId(r),version:Number(r.row_version),campaignId:r.campaign_id||null,createdAt:iso(r.created_at),updatedAt:iso(r.updated_at),sourceKind:r.source_kind,sourceRefs:r.legacy_metadata.sourceRefs||[],consultedIds:[],informedIds:[]};for(const [k,v] of Object.entries(T_FIELDS))result[k]=r[v];for(const role of ['R','A','C','I']){const matches=roles.filter(x=>x.task_id===r.id&&x.role===role);if(role==='R'||role==='A')result[role==='R'?'responsibleId':'accountableId']=matches[0]?memberMap.get(matches[0].member_id):null;else result[role==='C'?'consultedIds':'informedIds']=matches.map(x=>memberMap.get(x.member_id));if(role==='A')result.accountableConfirmed=matches[0]?.confirmation==='confirmed';}return result;});
+  const taskMap=new Map(tasks.map(t=>[t.id,legacyId(t)]));domain.weeks=weeks.map(w=>({weekStart:w.week_start,timezone:w.timezone,entries:entries.filter(e=>e.weekly_plan_id===w.id).map(e=>({taskId:taskMap.get(e.task_id),priority:e.priority,priorityNote:e.priority_note}))}));
+  domain.meetings=(await all(c,b,'meetings')).map(r=>({...r.legacy_metadata,campaignId:r.campaign_id||null}));
+@@ -61,7 +61,7 @@
+  // Never silently drop records omitted by an old or partial client.
+  for(const old of existingMembers)if(!state.members.some(m=>m.id===(old.legacy_metadata.id||old.id)))fail('Workspace ขาดสมาชิกเดิม กรุณาโหลดข้อมูลล่าสุด',409);
+  for(const old of existingTasks.filter(t=>t.source_kind!=='campaign-legacy'&&!t.archived_at))if(!state.tasks.some(t=>t.id===(old.legacy_metadata.id||old.id)))fail('Workspace ขาดงานเดิม กรุณาโหลดข้อมูลล่าสุด',409);
+- for(const m of state.members)await upsert(c,b,'members',memberId(m.id),{...translated(m,M_FIELDS),legacy_metadata:m});
++ for(const m of state.members){const metadata={...m};for(const key of ['pid','password','password_hash','passwordHash','credentials','credential_version'])delete metadata[key];await upsert(c,b,'members',memberId(m.id),{...translated(m,M_FIELDS),legacy_metadata:metadata});}
+  const campaignId=value=>campaignMap.get(value)||value||null;
+  for(const t of state.tasks){const old=existingTasks.find(row=>row.id===taskId(t.id));await upsert(c,b,'tasks',taskId(t.id),{...translated(t,T_FIELDS),code:old?.code||await allocate(c,b,'tasks'),source_kind:t.sourceKind||'manual',campaign_id:campaignId(t.campaignId),legacy_metadata:t});
+    await c.query('DELETE FROM task_roles WHERE business_id=$1 AND task_id=$2',[b,taskId(t.id)]);
+@@ -76,13 +76,14 @@
+  for(const batch of state.batches){const receipt=state.receipts.find(r=>r.batchId===batch.id);await upsert(c,b,'meeting_draft_batches',id('batch',batch.id),{meeting_id:id('meeting',batch.meetingId),review_revision_id:id('review',batch.reviewRevisionId),request_id:batch.requestId||batch.id,source_hash:batch.sourceHash,review_hash:batch.reviewHash,mode:batch.modelName?'local_ai':'manual',model_ref:batch.modelName||null,items:JSON.stringify(batch.items),generated_at:batch.generatedAt||new Date().toISOString(),committed_at:receipt?.committedAt||null,commit_key:receipt?.idempotencyKey||null,commit_payload_hash:receipt?receipt.payloadHash||hash(receipt.payload):null,legacy_metadata:{batch,receipt}});
+    for(const mapping of receipt?.mappings||[]){const evidence=batch.items.find(i=>i.proposalId===mapping.proposalId)?.evidence;if(!evidence)fail('Receipt ขาด proposal evidence');await c.query('INSERT INTO meeting_task_links(business_id,batch_id,proposal_id,task_id,review_revision_id,evidence,committed_at) VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(business_id,batch_id,proposal_id) DO NOTHING',[b,id('batch',batch.id),mapping.proposalId,taskId(mapping.taskId),id('review',batch.reviewRevisionId),JSON.stringify(evidence),receipt.committedAt]);}
+  }
+- for(const event of state.events)await c.query("INSERT INTO change_events(id,business_id,entity_type,entity_id,event_type,after_data,actor_kind,request_id,occurred_at) VALUES($1,$2,'legacy_task_event',$3,$4,$5,'local_operator',$6,$7) ON CONFLICT(id) DO NOTHING",[id('event',event.id),b,event.taskId?taskId(event.taskId):b,event.type||'legacy',event,event.id,event.at||new Date().toISOString()]);
++ for(const event of state.events){const stamped=c.zuriActor?{...event,actor:c.zuriActor.displayName+' · '+c.zuriActor.pid,actorMemberId:c.zuriActor.memberId,actorPid:c.zuriActor.pid,at:new Date().toISOString()}:event;await c.query("INSERT INTO change_events(id,business_id,entity_type,entity_id,event_type,after_data,actor_kind,request_id,occurred_at,actor_member_id,actor_pid,actor_subject) VALUES($1,$2,'legacy_task_event',$3,$4,$5,$6,$7,$8,$9,$10,$11) ON CONFLICT(id) DO NOTHING",[id('event',event.id),b,event.taskId?taskId(event.taskId):b,event.type||'legacy',stamped,c.zuriActor?'authenticated':'local_operator',event.id,stamped.at||new Date().toISOString(),c.zuriActor?.memberId||null,c.zuriActor?.pid||null,c.zuriActor?.pid||null]);}
+  await c.query('UPDATE businesses SET legacy_metadata=jsonb_set(legacy_metadata,\'{seedKeys}\',$2::jsonb) WHERE id=$1',[b,JSON.stringify(state.seedKeys)]);
+ }
+ export async function saveLegacy(c,b,input){
+  const current=(await c.query('SELECT * FROM businesses WHERE id=$1 FOR UPDATE',[b])).rows[0];if(Number(input.version)!==Number(current.domain_revision))fail('ข้อมูลถูกแก้แล้ว กรุณาโหลด workspace ใหม่',409);
+  let map=new Map();if(input.campaignWorkspace)map=await writeCampaigns(c,b,input.campaignWorkspace);
+  if(input.meetingTaskManager)await writeDomain(c,b,input.meetingTaskManager,map);
++ await audit(c,b,'workspace',b,null,{domains:[...(input.campaignWorkspace?['campaigns']:[]),...(input.meetingTaskManager?['meetings_tasks_members']:[])]},'save');
+  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);const result=await readLegacy(c,b);if(input.campaignWorkspace?.selected)result.campaignWorkspace.selected=map.get(input.campaignWorkspace.selected)||result.campaignWorkspace.selected;return result;
+ }
+ function decodeBackup(value){if(value.schemaVersion===2){if(value.appId!==APP_ID)fail('Backup เป็นของแอปอื่น');validateCampaignWorkspace(value.campaignWorkspace);if(value.meetingTaskManager?.restoreJournal)fail('Backup มี restore ที่ยังไม่เสร็จ');validateState(value.meetingTaskManager);return value;}return {schemaVersion:2,appId:APP_ID,campaignWorkspace:restoreWorkspace(value),meetingTaskManager:empty()};}
+--- /dev/null
++++ b/projects/zuri-go/member-auth.mjs
+@@ -0,0 +1,29 @@
++import {createHmac,randomBytes,timingSafeEqual} from 'node:crypto';
++import {verifyPassword} from './team-auth.mjs';
++const COOKIE='__Host-zuri-go-member',LIFETIME=43200,DUMMY='0'.repeat(32)+':'+'0'.repeat(128);
++const sign=(p,s)=>createHmac('sha256',s).update(p).digest('base64url');
++export function memberToken(b,member,secret,now=Date.now()){
++ const p=Buffer.from(JSON.stringify({v:2,b,m:member.memberId,cv:member.credentialVersion,exp:Math.floor(now/1000)+LIFETIME,n:randomBytes(16).toString('hex')})).toString('base64url');return p+'.'+sign(p,secret);
++}
++export function readMemberSession(cookie,business,secret,now=Date.now()){
++ try{const token=(cookie||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(COOKIE+'='))?.slice(COOKIE.length+1);if(!token||token.length>768)return null;const [p,s,...rest]=token.split('.'),expected=sign(p,secret);if(rest.length||!s||s.length!==expected.length||!timingSafeEqual(Buffer.from(s),Buffer.from(expected)))return null;const v=JSON.parse(Buffer.from(p,'base64url'));return v.v===2&&v.b===business&&/^[a-f0-9-]{36}$/.test(v.m)&&Number.isSafeInteger(v.cv)&&v.cv>0&&Number.isInteger(v.exp)&&v.exp>Math.floor(now/1000)&&v.exp<=Math.floor(now/1000)+LIFETIME?v:null;}catch{return null;}
++}
++export const memberCookie=t=>`${COOKIE}=${t}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${t?LIFETIME:0}`;
++const identity=r=>({memberId:r.id,pid:r.pid,displayName:r.display_name,credentialVersion:Number(r.credential_version)});
++export const publicIdentity=m=>m?{memberId:m.memberId,pid:m.pid,displayName:m.displayName}:null;
++export async function loginMember(c,b,pid,password){
++ const normalized=typeof pid==='string'&&pid.length<40?pid.trim().toUpperCase():'';
++ const r=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.password_hash,a.credential_version,a.enabled FROM members m JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1 AND m.pid=$2',[b,normalized])).rows[0];
++ const valid=await verifyPassword(password,r?.password_hash||DUMMY);return valid&&r?.enabled&&r.status==='active'?identity(r):null;
++}
++export async function resolveMember(c,b,claims){
++ if(!claims)return null;
++ const r=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.credential_version,a.enabled FROM members m JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1 AND m.id=$2',[b,claims.m])).rows[0];
++ return r?.enabled&&r.status==='active'&&Number(r.credential_version)===claims.cv?identity(r):null;
++}
++export async function authorizeWrite(c,b,claims){
++ await c.query('SELECT id FROM businesses WHERE id=$1 FOR UPDATE',[b]);
++ const member=await resolveMember(c,b,claims);
++ if(!member)throw Object.assign(Error('กรุณาเข้าสู่ระบบด้วย PID และรหัสผ่านส่วนตัว'),{status:401,code:'AUTH_REQUIRED'});
++ c.zuriActor=member;return member;
++}
+--- /dev/null
++++ b/projects/zuri-go/provision-members.mjs
+@@ -0,0 +1,52 @@
++// Trusted operator CLI. Never included in the Vercel package.
++import {readFile,writeFile,mkdir,rename,readdir} from 'node:fs/promises';
++import {randomBytes} from 'node:crypto';
++import {fileURLToPath} from 'node:url';
++import {resolve} from 'node:path';
++import pg from 'pg';
++import {config} from './config.mjs';
++import {passwordHash,verifyPassword} from './team-auth.mjs';
++
++export async function provisionMembers(cfg,folder,{resetPid,disablePid,enablePid}={}){
++ const c=new pg.Client({connectionString:cfg.adminUrl});await c.connect();await mkdir(folder,{recursive:true});
++ const issued=[];
++ try{
++  const target=resetPid||disablePid||enablePid;
++  await c.query('BEGIN');await c.query('SET LOCAL search_path TO zuri_go,public');await c.query("SELECT set_config('zuri_go.business_id',$1,true)",[cfg.businessId]);
++  // Shared lock order with authenticated writes also invalidates stale snapshots.
++  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[cfg.businessId]);
++  const members=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.password_hash,a.credential_version,a.enabled FROM members m LEFT JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1 AND ($2::text IS NULL OR m.pid=$2) ORDER BY m.pid',[cfg.businessId,target||null])).rows;
++  if(target&&!members.length)throw Error('PID not found');
++  for(const m of members){
++   if(disablePid||enablePid){if(!m.password_hash)throw Error('No credential to enable/disable');await c.query('UPDATE member_credentials SET enabled=$3,credential_version=credential_version+1,updated_at=now() WHERE business_id=$1 AND member_id=$2',[cfg.businessId,m.id,!!enablePid]);continue;}
++   if(m.status!=='active')continue;
++   const path=resolve(folder,m.pid+'.json');let saved;
++   try{saved=JSON.parse(await readFile(path,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
++   if(m.password_hash&&!resetPid){
++    if(!saved||saved.memberId!==m.id||saved.businessId!==cfg.businessId||!await verifyPassword(saved.password,m.password_hash))throw Error('Existing credential handover unavailable for '+m.pid+'; explicit --reset required.');
++    issued.push({pid:m.pid,name:m.display_name,path,created:false});continue;
++   }
++   const password=randomBytes(18).toString('base64url'),version=Number(m.credential_version||0)+1;
++   const handover={businessId:cfg.businessId,memberId:m.id,pid:m.pid,name:m.display_name,url:cfg.origin||'https://zuri-metrics-map.vercel.app/',password,credentialVersion:version,issuedAt:new Date().toISOString()};
++   // A private pending handover survives an uncertain commit without logging secrets.
++   await writeFile(path+'.pending',JSON.stringify(handover,null,2),{mode:0o600});
++   await c.query('INSERT INTO member_credentials(business_id,member_id,password_hash,credential_version,enabled) VALUES($1,$2,$3,$4,true) ON CONFLICT(business_id,member_id) DO UPDATE SET password_hash=EXCLUDED.password_hash,credential_version=EXCLUDED.credential_version,enabled=true,updated_at=now()',[cfg.businessId,m.id,await passwordHash(password),version]);
++   issued.push({pid:m.pid,name:m.display_name,path,created:true});
++  }
++  await c.query('COMMIT');
++  for(const item of issued)if(item.created)await rename(item.path+'.pending',item.path);
++  const handovers=await Promise.all((await readdir(folder)).filter(x=>/^ZGO-P\d+\.json$/.test(x)).map(async name=>JSON.parse(await readFile(resolve(folder,name),'utf8'))));
++  if(issued.length)await writeFile(resolve(folder,'index.md'),'# Private member access\n\nEach JSON file contains one member password. Do not deploy or share this index publicly.\n\n'+handovers.map(x=>`- ${x.name} · ${x.pid}: ${x.pid}.json`).join('\n')+'\n',{mode:0o600});
++  return issued;
++ }catch(e){await c.query('ROLLBACK').catch(()=>{});throw e;}finally{await c.end();}
++}
++if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
++ const args=process.argv.slice(2),cloud=args.includes('--cloud');
++ const cfg=cloud?JSON.parse(await readFile(new URL('.local/cloud-config.json',import.meta.url),'utf8')):config();
++ const value=k=>args.includes(k)?args[args.indexOf(k)+1]:undefined;
++ for(const key of ['--reset','--disable','--enable'])if(args.includes(key)&&!/^ZGO-P\d{4,}$/.test(value(key)||''))throw Error('Specify a PID after '+key);
++ if(['--reset','--disable','--enable'].filter(x=>args.includes(x)).length>1)throw Error('Choose one credential operation');
++ const folder=fileURLToPath(new URL('.local/member-access/'+(cloud?'production/':'local/'),import.meta.url));
++ const result=await provisionMembers(cfg,folder,{resetPid:value('--reset'),disablePid:value('--disable'),enablePid:value('--enable')});
++ console.log(JSON.stringify({members:result.map(x=>({pid:x.pid,name:x.name,created:x.created})),privateHandover:folder}));
++}
+--- /dev/null
++++ b/projects/zuri-go/migrations/005_member_identity.sql
+@@ -0,0 +1,51 @@
++BEGIN;
++SET search_path TO zuri_go,public;
++ALTER TABLE businesses ADD COLUMN next_member_no bigint NOT NULL DEFAULT 1;
++ALTER TABLE members ADD COLUMN pid text;
++CREATE FUNCTION member_pid() RETURNS trigger LANGUAGE plpgsql AS $$
++DECLARE n bigint; existing_pid text;
++BEGIN
++ IF TG_OP='INSERT' AND NEW.pid IS NOT NULL THEN RAISE EXCEPTION 'PID is server assigned' USING ERRCODE='23514'; END IF;
++ IF TG_OP='UPDATE' AND OLD.pid IS NOT NULL AND NEW.pid IS DISTINCT FROM OLD.pid THEN RAISE EXCEPTION 'PID is immutable' USING ERRCODE='23514'; END IF;
++ IF TG_OP='INSERT' THEN
++  SELECT pid INTO existing_pid FROM zuri_go.members WHERE business_id=NEW.business_id AND id=NEW.id;
++  IF existing_pid IS NOT NULL THEN NEW.pid=existing_pid; RETURN NEW; END IF;
++ END IF;
++ IF NEW.pid IS NULL THEN
++  UPDATE zuri_go.businesses SET next_member_no=next_member_no+1 WHERE id=NEW.business_id RETURNING next_member_no-1 INTO n;
++  IF n IS NULL THEN RAISE EXCEPTION 'Business scope required' USING ERRCODE='23514'; END IF;
++  NEW.pid='ZGO-P'||lpad(n::text,greatest(4,length(n::text)),'0');
++ END IF;
++ RETURN NEW;
++END $$;
++CREATE TRIGGER members_pid BEFORE INSERT OR UPDATE ON members FOR EACH ROW EXECUTE FUNCTION member_pid();
++-- Backfill by the preserved import IDs; no display-name matching or PK changes.
++ALTER TABLE members DISABLE ROW LEVEL SECURITY;
++DO $$ DECLARE m record; BEGIN
++ FOR m IN SELECT id,business_id FROM members ORDER BY business_id,CASE legacy_metadata->>'id'
++  WHEN 'c746fb0a-f974-4bc8-9e08-610bfd596f75' THEN 1
++  WHEN '1d97715d-6ae8-46e4-87ba-5ce4c534da1c' THEN 2
++  WHEN '3163eeb1-3f4d-4340-88e7-f07dd188ab34' THEN 3
++  WHEN '72ba0a5a-4e04-4d42-b0e2-ca3a802ffe49' THEN 4 ELSE 5 END,created_at,id LOOP
++  PERFORM set_config('zuri_go.business_id',m.business_id::text,true);
++  UPDATE members SET pid=NULL WHERE id=m.id;
++ END LOOP;
++END $$;
++ALTER TABLE members ENABLE ROW LEVEL SECURITY;
++ALTER TABLE members FORCE ROW LEVEL SECURITY;
++ALTER TABLE members ALTER COLUMN pid SET NOT NULL;
++ALTER TABLE members ADD UNIQUE(business_id,pid);
++CREATE TABLE member_credentials (
++ business_id uuid NOT NULL,member_id uuid NOT NULL,password_hash text NOT NULL,
++ credential_version bigint NOT NULL DEFAULT 1 CHECK(credential_version>0),enabled boolean NOT NULL DEFAULT true,
++ created_at timestamptz NOT NULL DEFAULT now(),updated_at timestamptz NOT NULL DEFAULT now(),
++ PRIMARY KEY(business_id,member_id),FOREIGN KEY(business_id,member_id) REFERENCES members(business_id,id)
++);
++ALTER TABLE member_credentials ENABLE ROW LEVEL SECURITY;
++ALTER TABLE member_credentials FORCE ROW LEVEL SECURITY;
++CREATE POLICY business_scope ON member_credentials USING (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid) WITH CHECK (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid);
++ALTER TABLE change_events ADD COLUMN actor_pid text;
++ALTER TABLE task_attachments ADD COLUMN uploaded_by_member_id uuid,ADD COLUMN deleted_by_member_id uuid,
++ ADD FOREIGN KEY(business_id,uploaded_by_member_id) REFERENCES members(business_id,id),
++ ADD FOREIGN KEY(business_id,deleted_by_member_id) REFERENCES members(business_id,id);
++COMMIT;
+--- /dev/null
++++ b/projects/zuri-go/test/member-auth.test.mjs
+@@ -0,0 +1,36 @@
++import test,{after} from 'node:test';
++import assert from 'node:assert/strict';
++import {randomUUID} from 'node:crypto';
++import {mkdtemp,readFile} from 'node:fs/promises';
++import {resolve} from 'node:path';
++import {memberToken,memberCookie,readMemberSession,loginMember,resolveMember} from '../member-auth.mjs';
++import {provisionMembers} from '../provision-members.mjs';
++import {pool,transaction} from '../db.mjs';
++import {config} from '../config.mjs';
++const secret='isolated-member-test-key-at-least-32-bytes',b=randomUUID(),m={memberId:randomUUID(),credentialVersion:1};
++after(()=>pool.end());
++test('member session is versioned, signed, bounded and distinct from team cookie',()=>{
++ const now=1700000000000,t=memberToken(b,m,secret,now),cookie=memberCookie(t),claims=readMemberSession(cookie,b,secret,now);
++ assert.equal(claims.m,m.memberId);assert.equal(claims.cv,1);assert.equal(claims.v,2);assert.match(cookie,/HttpOnly; Secure; SameSite=Strict/);
++ for(const [c,business,key,time] of [[memberCookie(t+'x'),b,secret,now],[cookie,randomUUID(),secret,now],[cookie,b,'wrong',now],[cookie,b,secret,now+43200000],[cookie,b,secret,now-1000],['__Host-zuri-go-team='+t,b,secret,now]])assert.equal(readMemberSession(c,business,key,time),null);
++ assert.equal(readMemberSession(memberCookie(''),b,secret,now),null);
++});
++test('PID creation is unique and immutable; operator provisioning is idempotent and reset revokes sessions',async()=>{
++ await transaction(b,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'QA ONLY member provisioning',b]));
++ const make=async name=>transaction(b,async c=>(await c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2) RETURNING *',[b,name])).rows[0]);
++ const a=await make('QA A'),d=await make('QA B');assert.notEqual(a.pid,d.pid);
++ const contenders=await Promise.allSettled([make('QA concurrent 1'),make('QA concurrent 2')]);
++ for(const r of contenders)if(r.status==='rejected')assert.equal(r.reason.code,'40001');
++ const rows=(await transaction(b,c=>c.query('SELECT id,pid FROM members WHERE business_id=$1',[b]))).rows;assert.equal(new Set(rows.map(x=>x.pid)).size,rows.length);
++ await transaction(b,c=>c.query("UPDATE members SET display_name='QA renamed' WHERE id=$1",[a.id]));assert.equal((await transaction(b,c=>c.query('SELECT pid FROM members WHERE id=$1',[a.id]))).rows[0].pid,a.pid);
++ const cfg={...config(),businessId:b},folder=await mkdtemp(resolve('projects/zuri-go/.local','qa-members-'));
++ const first=await provisionMembers(cfg,folder),again=await provisionMembers(cfg,folder);assert.equal(first.length,rows.length);assert.ok(again.every(x=>!x.created));
++ const files=await Promise.all(first.map(x=>readFile(x.path,'utf8').then(JSON.parse)));assert.equal(new Set(files.map(x=>x.password)).size,files.length);assert.ok(files.every(x=>x.password.length===24));
++ const initial=files.find(x=>x.memberId===a.id),login=await transaction(b,c=>loginMember(c,b,a.pid,initial.password));assert.equal(login.memberId,a.id);
++ const claims=readMemberSession(memberCookie(memberToken(b,login,secret)),b,secret);
++ await provisionMembers(cfg,folder,{resetPid:a.pid});const updated=JSON.parse(await readFile(initial.pid?resolve(folder,initial.pid+'.json'):'','utf8'));assert.notEqual(updated.password,initial.password);
++ assert.equal(await transaction(b,c=>resolveMember(c,b,claims)),null);assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,initial.password)),null);
++ await provisionMembers(cfg,folder,{disablePid:a.pid});assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)),null);
++ await provisionMembers(cfg,folder,{enablePid:a.pid});assert.ok(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)));
++ await transaction(b,c=>c.query("UPDATE members SET status='inactive' WHERE id=$1",[a.id]));assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)),null);
++});
+--- /dev/null
++++ b/.brain/rca/zuri-go-member-migration-existing-actor.md
+@@ -0,0 +1,6 @@
++# Member migration: existing actor FK
++Symptom: local migration 005 failed with duplicate actor_member_id.
++Evidence: 001_core.sql already defines change_events.actor_member_id and its composite Member FK; migration 005 attempted to add it again. Transaction rolled back, including PID backfill.
++Root cause: the new identity design treated a dormant existing column as a new column.
++Why escaped: initial source review focused on audit call sites that left that column null.
++Prevention: reuse the existing actor_member_id FK, add only actor_pid, and run migration plus schema tests before cloud deployment. This narrows the approved schema amendment without changing behavior.
+--- /dev/null
++++ b/.brain/rca/zuri-go-member-verification-expectations.md
+@@ -0,0 +1,17 @@
++# Member identity verification expectations — 2026-09-30
++
++## Symptom
++The full database suite initially rejected the expected cross-Business write failure code. The first staged identity check passed four real logins, actor writes, archives and negative login checks, then failed the final workspace equality check.
++
++## Evidence
++- The new PID trigger performs a Business-scoped counter UPDATE before INSERT RLS. Foreign Business rows are hidden, producing SQLSTATE 23514 with exact message `Business scope required`, rather than the prior 42501 from table RLS. The insert still fails.
++- The staged diff contained only Meeting Task Manager `revision: 12 -> 20`. Each of four isolated content creates and archives correctly increments the shared Business domain revision. Task/member/assignment/history data was unchanged.
++
++## Root cause
++Verification assumptions did not account for the earlier PID scope guard or the existing cross-domain concurrency counter. Neither result demonstrates an authorization bypass or a data change to user tasks.
++
++## Why it escaped detection
++The original checks were written for the pre-PID trigger and assumed isolated content writes could not affect the workspace revision projection.
++
++## Prevention / correction
++Accept 42501 or only the exact new scope-guard 23514/message pair and additionally query the target Business to prove no blocked row exists. Compare user domain data excluding the expected aggregate revision, using a digest to avoid dumping full user state on assertion failure. Preserve identity/actor/negative-auth assertions. Rerun both checks before rollout.

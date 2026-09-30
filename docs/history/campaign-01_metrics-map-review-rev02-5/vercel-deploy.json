@@ -1,0 +1,15 @@
+{
+  "revision": "REV 02.5",
+  "target": "production",
+  "status": "BLOCKED",
+  "attempted": true,
+  "httpStatus": 403,
+  "error": "You don't have permission to create a Production Deployment for this project.",
+  "deploymentCreated": false,
+  "previousDeploymentStatus": "UNVERIFIED",
+  "stagedFiles": 26,
+  "stagedLocalReferencesMissing": 0,
+  "sourceSHA256": "5121CC1517A6AE7B534813D922EB925FBDD854366DF8F1A2A737A6F9E94E317F",
+  "stagedBytes": 2600928,
+  "stagedLocalReferencesChecked": 63
+}

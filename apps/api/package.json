@@ -1,0 +1,8 @@
+{
+  "name": "zuri-go-local-service",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {"start": "node server.mjs", "migrate": "node migrate.mjs", "test": "node --test test/*.test.mjs"},
+  "dependencies": {"pg": "8.23.0"}
+}

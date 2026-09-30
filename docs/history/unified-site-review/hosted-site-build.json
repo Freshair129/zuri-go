@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "appId": "dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1",
+  "files": {
+    "data-app-build.json": "8784b26349b9dc0aa2ca37aaba880e2bbca1d67efcafe69211981b03855545e1",
+    "index.html": "80419d584df4f0ba99aa78ff3b458454dc22ebfe0cf04c80e80398f2b2dbc04d",
+    "metrics/assets/fonts/ibm-plex-mono-400.ttf": "a7fdc993f9f0387caedba4e42521136fa97e4c0837ae6239bf0413ccf8af00c2",
+    "metrics/assets/fonts/ibm-plex-mono-500.ttf": "4fc14a73ca53ba9d32fd759ae1ca1a3133326035d0dd337862b3ee1633cc156e",
+    "metrics/assets/fonts/ibm-plex-sans-thai-400.ttf": "b4b746c92c0fe46a392e6f68b6d1fc98ec124bdd44bfcfb78f4b82d9825a8a08",
+    "metrics/assets/fonts/ibm-plex-sans-thai-500.ttf": "ec8d798ca235fecac2833f5ab6ba871fde47dafd576e705fe1b3e84de066cf30",
+    "metrics/assets/fonts/ibm-plex-sans-thai-600.ttf": "2553bc047128487a725a663f60ce446fa95214ca02a6433dc849cc619d83d551",
+    "metrics/assets/fonts/ibmplexmono-OFL.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+    "metrics/assets/fonts/ibmplexsansthai-OFL.txt": "7e6b2818edbd8f6a01ae80641cc8f16a51080d08fb4e532be3a0b6f74adb07da",
+    "metrics/assets/fonts/manrope-700.ttf": "b9584e099e0e7f1e1e914c3037aabb9010c50346a3ce8df5eeeeecc0563044d8",
+    "metrics/assets/fonts/manrope-800.ttf": "b8f802f05b322a7345805f5b89f8bb976604cc719a91530918d5ce3c47160950",
+    "metrics/assets/fonts/manrope-OFL.txt": "58172e0c0fac2cda8a37b348164bb55e44b0e69051e557e92b1d3f6910141f7b",
+    "metrics/assets/fonts/metrics-map.css": "3e8dcb5fa5f8db5f53ff0a7df8c387721b3bf6107eb06393452598a319603d94",
+    "metrics/assets/logos/zuri-wordmark.svg": "9d7fe0ca58bc41b02e9073904f96999ca896f77e94f08b694926299c484c52ad",
+    "metrics/assets/mascot/metrics-pair-analysis_gen-d190a201.png": "044c748aabde9734b624d6b67230ad60a1aff5bc2136a4eec059a75396973407",
+    "metrics/assets/mascot/metrics-pair-chart_gen-04ac9b83.png": "a46f2c710360f27c36878b78be8732cf1bb6bf192001ad424a19287796339780",
+    "metrics/assets/mascot/metrics-pair-clipboard_gen-80d72fb8.png": "59732dcad846d41f89007fd1e1b3fbb1997ea36230c8a8481536ee991510c7f1",
+    "metrics/gvm/615885615_122133354686992725_8991070302867251796_n.jpg": "3c1656f38e26674e43e63141f92cbc44acd1830bb845e72f3d7f1bff9383a255",
+    "metrics/gvm/617563287_122133354782992725_7931094083234134915_n.jpg": "a44da95bf64eed3606fb36cd907f1d8505a40da65f34f27a35c04a662bb23612",
+    "metrics/gvm/617606245_122133354794992725_4887824788410035437_n.jpg": "e0b19d492c30136680c839ee2884cbb292f602fdf9f4d5bf3ab5e9c5a72e530e",
+    "metrics/gvm/617912566_122133354776992725_2860196314728364820_n.jpg": "ae6feec3e0d47ab21b03b924c87b129cf30fc615d6ca95b5ebe09999caf24d53",
+    "metrics/gvm/619250988_122133354710992725_6766144328900826988_n.jpg": "ac4e9d73fe1e023f1706a8d00f2c4e22686ad2cc4b6b76486787cc647bce7af3",
+    "metrics/gvm/620112234_122133354788992725_3797505832379488852_n.jpg": "1040d128e1ace1085ef635d0c43ab49a1eed4c91fa37477e63b26b369fa3c130",
+    "metrics/gvm/IMG_4136.jpeg": "11a9405279e7be18a0c0dbcf29788f6b79ba2e005f03910ee60e711918375173",
+    "metrics/gvm/Screenshot 2026-09-02 113422.png": "80dbd98983b9cc7abf0e7946bbe8ad4a1a2269379b8143fa85497808bd08780d",
+    "metrics/index.html": "9cc2ec9b0c7640f5581eef9fa4361d882b52b21a1e6fce9d2846a31279c5f428",
+    "snapshot.547f3c07ea7f61f878053a0d0060c0ae7c1646d45825f1fae68be88a9f917ae1.json": "547f3c07ea7f61f878053a0d0060c0ae7c1646d45825f1fae68be88a9f917ae1"
+  }
+}

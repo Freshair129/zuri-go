@@ -1,0 +1,1175 @@
+{
+  "checkedAt": "2026-09-28T21:31:23.698Z",
+  "artifact": "D:\\zuri-brand-kit\\output\\draft\\metrics-map-vercel\\index.html",
+  "checks": [
+    {
+      "width": 1440,
+      "scheme": "light",
+      "documentOverflow": false,
+      "visiblePageCount": 1,
+      "viewerMode": "guide",
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 118,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 1588
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "15",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "16",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "17",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "18",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        }
+      ],
+      "graphNodeCount": 37,
+      "graphIdsUnique": true,
+      "graphCounts": [
+        [
+          "acquisition",
+          9
+        ],
+        [
+          "lead",
+          10
+        ],
+        [
+          "revenue",
+          18
+        ]
+      ],
+      "graphMascotLoaded": true,
+      "graphDots": true,
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 10,
+      "sourceLinks": 8,
+      "externalLinks": 12,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C",
+      "graphOverflow": false
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "documentOverflow": false,
+      "visiblePageCount": 1,
+      "viewerMode": "guide",
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 118,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 1588
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "15",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "16",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "17",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "18",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        }
+      ],
+      "graphNodeCount": 37,
+      "graphIdsUnique": true,
+      "graphCounts": [
+        [
+          "acquisition",
+          9
+        ],
+        [
+          "lead",
+          10
+        ],
+        [
+          "revenue",
+          18
+        ]
+      ],
+      "graphMascotLoaded": true,
+      "graphDots": true,
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 10,
+      "sourceLinks": 8,
+      "externalLinks": 12,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C",
+      "graphOverflow": false
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "documentOverflow": false,
+      "visiblePageCount": 1,
+      "viewerMode": "guide",
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 110,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 2315
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "15",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "16",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "17",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "18",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        }
+      ],
+      "graphNodeCount": 37,
+      "graphIdsUnique": true,
+      "graphCounts": [
+        [
+          "acquisition",
+          9
+        ],
+        [
+          "lead",
+          10
+        ],
+        [
+          "revenue",
+          18
+        ]
+      ],
+      "graphMascotLoaded": true,
+      "graphDots": true,
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 10,
+      "sourceLinks": 8,
+      "externalLinks": 12,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C",
+      "graphOverflow": false
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "documentOverflow": false,
+      "visiblePageCount": 1,
+      "viewerMode": "guide",
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 110,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 2315
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "15",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "16",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "17",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        },
+        {
+          "number": "18",
+          "imagesLoaded": true,
+          "hasMascotPair": true,
+          "hasBothRoles": true,
+          "logoWidth": 0,
+          "hasDots": true,
+          "hasCta": true,
+          "height": 0
+        }
+      ],
+      "graphNodeCount": 37,
+      "graphIdsUnique": true,
+      "graphCounts": [
+        [
+          "acquisition",
+          9
+        ],
+        [
+          "lead",
+          10
+        ],
+        [
+          "revenue",
+          18
+        ]
+      ],
+      "graphMascotLoaded": true,
+      "graphDots": true,
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 10,
+      "sourceLinks": 8,
+      "externalLinks": 12,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C",
+      "graphOverflow": false
+    }
+  ],
+  "interactions": {
+    "ctrDetail": "ACQUISITION · METRIC DETAIL\nCTR\nClick-through rate\n\nสัดส่วนการคลิกต่อจำนวนครั้งที่โฆษณาแสดงผล\n\nFORMULA\n(Clicks ÷ Impressions) × 100\nUNIT\n\n%\n\nEXAMPLE · HYPOTHETICAL\n\n(2,000 ÷ 100,000) × 100 = 2%\n\nHOW TO READ\n\nเทียบวัตถุประสงค์ รูปแบบ ตำแหน่ง และชนิดคลิกที่ใกล้เคียงกัน\n\nเปิดคำอธิบายในคู่มือ ↗",
+    "hoverName": "CTR",
+    "hoverVisible": true,
+    "categoryFilter": {
+      "pressed": "true",
+      "dimmed": 27
+    },
+    "mqlDetail": "LEAD & CONVERSION · METRIC DETAIL\nMQL\nMarketing-qualified lead\n\nLead ไม่ซ้ำที่ marketing ประเมินว่าเข้าเกณฑ์ fit และมี engagement ตามเกณฑ์ที่ตกลงกัน; อาจต้อง nurture ต่อก่อนส่งให้ sales.\n\nFORMULA\nCOUNT DISTINCT lead_id ที่เข้า stage MQL ใน cohort\nUNIT\n\nlead_id\n\nEXAMPLE · HYPOTHETICAL\n\nใน cohort ตัวอย่าง มี 60 MQL และ 24 รายได้รับการยอมรับเป็น SQL\n\nHOW TO READ\n\nตกลง fit, engagement, stage-entry event และกติกา re-entry ร่วมกัน; เทียบ cohort ที่มีช่วงติดตามเดียวกัน\n\nเปิดคำอธิบายในคู่มือ ↗",
+    "mqlLink": "#metric-mql",
+    "sqlDetail": "LEAD & CONVERSION · METRIC DETAIL\nSQL\nSales-qualified lead\n\nLead ที่ sales ตรวจแล้วว่าเข้าเกณฑ์ธุรกิจ มี need หรือ intent ตามที่ทีมตกลง และรับเข้าสู่ direct sales follow-up.\n\nFORMULA\nCOUNT DISTINCT lead_id ที่ sales accept เป็น SQL\nUNIT\n\nlead_id\n\nEXAMPLE · HYPOTHETICAL\n\nจาก 60 MQL ใน cohort เดียวกัน sales รับ 24 รายเป็น SQL\n\nHOW TO READ\n\nการส่ง lead ต่ออย่างเดียวไม่นับเป็น SQL; บันทึกการ accept และเกณฑ์รับช่วงให้ตรวจสอบได้\n\nเปิดคำอธิบายในคู่มือ ↗",
+    "orbitEnabled": "true",
+    "positionBeforeDrag": "675.092px,270.735px",
+    "positionAfterDrag": "623.451px,275.757px",
+    "yawBefore3d": 0.2836,
+    "yawAfter3d": 0.8436,
+    "zoomed": "109%",
+    "fitted": "100%",
+    "mode2d": {
+      "mode": "2d",
+      "pressed": "true"
+    },
+    "mode3d": {
+      "mode": "3d",
+      "pressed": "true"
+    },
+    "yawBefore360": 16,
+    "yawAfter360": 16,
+    "rotationDifference": 0,
+    "yawBefore3603d": 16,
+    "yawAfter3603d": 16,
+    "rotationDifference3d": 0,
+    "fullTurn": 785.3981633974482,
+    "backgroundResults": [
+      {
+        "preset": "dark",
+        "color": "rgb(18, 22, 28)",
+        "dots": true
+      },
+      {
+        "preset": "canvas",
+        "color": "rgb(247, 248, 250)",
+        "dots": true
+      },
+      {
+        "preset": "warm",
+        "color": "rgb(255, 248, 240)",
+        "dots": true
+      }
+    ],
+    "exportFilename": "zuri-marketing-metrics.json",
+    "refreshNodeCount": 37
+  },
+  "nextPage": {
+    "hash": "#awareness",
+    "current": "02 / 18",
+    "visiblePages": 1
+  },
+  "navigation": {
+    "hash": "#raci",
+    "heading": 0
+  },
+  "graphPrintDisplay": "none",
+  "printVisiblePages": 18,
+  "missingFiles": [],
+  "printHeights": [
+    {
+      "number": "01",
+      "height": 934.703125
+    },
+    {
+      "number": "02",
+      "height": 854.171875
+    },
+    {
+      "number": "03",
+      "height": 828.84375
+    },
+    {
+      "number": "04",
+      "height": 862.828125
+    },
+    {
+      "number": "05",
+      "height": 864.6875
+    },
+    {
+      "number": "06",
+      "height": 808.234375
+    },
+    {
+      "number": "07",
+      "height": 933.859375
+    },
+    {
+      "number": "08",
+      "height": 935.6875
+    },
+    {
+      "number": "09",
+      "height": 908.609375
+    },
+    {
+      "number": "10",
+      "height": 844.703125
+    },
+    {
+      "number": "11",
+      "height": 929.9375
+    },
+    {
+      "number": "12",
+      "height": 905.453125
+    },
+    {
+      "number": "13",
+      "height": 807.0625
+    },
+    {
+      "number": "14",
+      "height": 936.40625
+    },
+    {
+      "number": "15",
+      "height": 745.078125
+    },
+    {
+      "number": "16",
+      "height": 752.609375
+    },
+    {
+      "number": "17",
+      "height": 963.984375
+    },
+    {
+      "number": "18",
+      "height": 820.703125
+    }
+  ],
+  "networkFailures": [],
+  "errors": []
+}

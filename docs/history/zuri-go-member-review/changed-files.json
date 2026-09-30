@@ -1,0 +1,126 @@
+{
+  "from": "0.3.1",
+  "to": "0.4.0",
+  "files": [
+    {
+      "path": "output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx",
+      "added": 4,
+      "removed": 4
+    },
+    {
+      "path": "output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx",
+      "added": 1,
+      "removed": 1
+    },
+    {
+      "path": "output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx",
+      "added": 1,
+      "removed": 1
+    },
+    {
+      "path": "output/draft/zuri-go/cloud-deployment-spec.md",
+      "added": 3,
+      "removed": 0
+    },
+    {
+      "path": "output/draft/zuri-go/data-model.md",
+      "added": 8,
+      "removed": 0
+    },
+    {
+      "path": "output/draft/zuri-go/guest-access-spec.md",
+      "added": 2,
+      "removed": 0
+    },
+    {
+      "path": "output/draft/zuri-go/member-identity-spec.md",
+      "added": 8,
+      "removed": 8
+    },
+    {
+      "path": "projects/zuri-go/api.mjs",
+      "added": 5,
+      "removed": 3
+    },
+    {
+      "path": "projects/zuri-go/attachments.mjs",
+      "added": 3,
+      "removed": 3
+    },
+    {
+      "path": "projects/zuri-go/build-cloud.py",
+      "added": 2,
+      "removed": 2
+    },
+    {
+      "path": "projects/zuri-go/cloud.mjs",
+      "added": 12,
+      "removed": 10
+    },
+    {
+      "path": "projects/zuri-go/db.mjs",
+      "added": 1,
+      "removed": 1
+    },
+    {
+      "path": "projects/zuri-go/migrate.mjs",
+      "added": 3,
+      "removed": 2
+    },
+    {
+      "path": "projects/zuri-go/README.md",
+      "added": 20,
+      "removed": 5
+    },
+    {
+      "path": "projects/zuri-go/service.mjs",
+      "added": 2,
+      "removed": 1
+    },
+    {
+      "path": "projects/zuri-go/test/cloud-handler.test.mjs",
+      "added": 48,
+      "removed": 11
+    },
+    {
+      "path": "projects/zuri-go/test/database.test.mjs",
+      "added": 2,
+      "removed": 1
+    },
+    {
+      "path": "projects/zuri-go/workspace.mjs",
+      "added": 4,
+      "removed": 3
+    },
+    {
+      "path": "projects/zuri-go/member-auth.mjs",
+      "added": 29,
+      "removed": 0
+    },
+    {
+      "path": "projects/zuri-go/provision-members.mjs",
+      "added": 52,
+      "removed": 0
+    },
+    {
+      "path": "projects/zuri-go/migrations/005_member_identity.sql",
+      "added": 51,
+      "removed": 0
+    },
+    {
+      "path": "projects/zuri-go/test/member-auth.test.mjs",
+      "added": 36,
+      "removed": 0
+    },
+    {
+      "path": ".brain/rca/zuri-go-member-migration-existing-actor.md",
+      "added": 6,
+      "removed": 0
+    },
+    {
+      "path": ".brain/rca/zuri-go-member-verification-expectations.md",
+      "added": 17,
+      "removed": 0
+    }
+  ]
+}

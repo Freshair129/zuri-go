@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "selected": "3e26cfd3-704a-448a-8e71-d0cfda1f6895",
+  "campaigns": [
+    {
+      "id": "3e26cfd3-704a-448a-8e71-d0cfda1f6895",
+      "name": "MUJEEN M1",
+      "objective": "inventory",
+      "currency": "THB",
+      "start": "",
+      "end": "",
+      "owner": "",
+      "targets": {
+        "low": null,
+        "mid": 108,
+        "high": null
+      },
+      "cap": null,
+      "committed": null,
+      "marginFloor": null,
+      "minSample": null,
+      "windowDays": null,
+      "maxDataAgeDays": null,
+      "responseSLA": null,
+      "normalLow": null,
+      "normalMid": null,
+      "normalHigh": null,
+      "definition": "",
+      "accounting": "",
+      "sources": {
+        "ads": "",
+        "leads": "",
+        "orders": "",
+        "inventory": ""
+      },
+      "boms": {
+        "pair": "",
+        "complete": ""
+      },
+      "forecast": {
+        "normal": null,
+        "destiny": null,
+        "pair": null,
+        "complete": null
+      },
+      "version": 1,
+      "createdAt": "2026-09-30T01:45:27.968Z",
+      "ads": [],
+      "leads": [],
+      "orders": [],
+      "inventory": [],
+      "tasks": [],
+      "decisions": [],
+      "releases": [],
+      "history": [],
+      "reviews": [],
+      "alertActions": []
+    }
+  ]
+}

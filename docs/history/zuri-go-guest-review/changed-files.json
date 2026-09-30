@@ -1,0 +1,86 @@
+[
+  {
+    "file": ".brain/rca/zuri-go-attachment-task-ids.md",
+    "change": "added"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/business/BusinessWorkspace.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/business/TeamAccess.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/business/team-access.css",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/dashboard/DashboardContent.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/meeting/Meetings.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/meeting/TaskAttachments.jsx",
+    "change": "added"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/meeting/TaskForms.jsx",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/campaign-mission-control/src/content/meeting/meeting.css",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/zuri-go/cloud-deployment-spec.md",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/zuri-go/data-model.md",
+    "change": "modified"
+  },
+  {
+    "file": "output/draft/zuri-go/guest-access-spec.md",
+    "change": "added"
+  },
+  {
+    "file": "projects/zuri-go/README.md",
+    "change": "modified"
+  },
+  {
+    "file": "projects/zuri-go/api.mjs",
+    "change": "modified"
+  },
+  {
+    "file": "projects/zuri-go/attachments.mjs",
+    "change": "added"
+  },
+  {
+    "file": "projects/zuri-go/build-cloud.py",
+    "change": "modified"
+  },
+  {
+    "file": "projects/zuri-go/cloud.mjs",
+    "change": "modified"
+  },
+  {
+    "file": "projects/zuri-go/migrate.mjs",
+    "change": "modified"
+  },
+  {
+    "file": "projects/zuri-go/migrations/004_task_attachments.sql",
+    "change": "added"
+  },
+  {
+    "file": "projects/zuri-go/test/cloud-handler.test.mjs",
+    "change": "modified"
+  }
+]

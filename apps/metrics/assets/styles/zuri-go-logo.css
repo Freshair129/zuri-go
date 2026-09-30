@@ -1,0 +1,9 @@
+/* Display the Main Logo region of the unchanged user-supplied identity sheet. */
+.zgo-logo{display:inline-block;position:relative;overflow:hidden;isolation:isolate;width:270px;max-width:100%;aspect-ratio:334/120;flex-shrink:0;border-radius:6px;vertical-align:middle;background:#fff}
+span.zgo-logo>img{display:block;position:absolute;width:433.532934%;max-width:none;height:auto;left:-13.473054%;top:-365%;margin:0;padding:0;border:0;object-fit:fill;filter:none}
+.zgo-logo--compact{width:128px;aspect-ratio:326/80}
+span.zgo-logo--compact>img{width:444.171779%;left:-14.723926%;top:-558.75%}
+.mt-domain>.zgo-logo,.site-nav>.zgo-logo{width:128px;margin-right:12px}
+.mc-campaign>.zgo-logo{width:140px}
+.logo-pad>.zgo-logo{width:220px}
+.mg-brandlock>.zgo-logo{width:112px}

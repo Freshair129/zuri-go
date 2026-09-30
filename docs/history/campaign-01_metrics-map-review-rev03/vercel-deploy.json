@@ -1,0 +1,23 @@
+{
+  "attemptedAt": "2026-09-28T21:39:44Z",
+  "revision": "REV 03",
+  "project": "zuri-metrics-map",
+  "target": "production",
+  "attemptedThrough": "connected Vercel deploy connector",
+  "result": "BLOCKED",
+  "deploymentCreated": false,
+  "deploymentUrl": null,
+  "error": "McpServerError: Tool deploy_to_vercel not found",
+  "preflight": {
+    "vercelCliAvailable": false,
+    "linkedProjectConfigPresent": false,
+    "connectedTeams": []
+  },
+  "previousAttempt": {
+    "revision": "REV 02.5",
+    "httpStatus": 403,
+    "error": "You don't have permission to create a Production Deployment for this project.",
+    "deploymentCreated": false
+  },
+  "notes": "The REV 03 staging package passed browser and print checks but was not uploaded. No deployment URL or production state is verified. No alternate Vercel project/account was selected."
+}

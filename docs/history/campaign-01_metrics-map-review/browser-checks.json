@@ -1,0 +1,747 @@
+{
+  "checkedAt": "2026-09-25T03:34:03.118Z",
+  "checks": [
+    {
+      "width": 1440,
+      "scheme": "light",
+      "documentOverflow": false,
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1313
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1290
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1290
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1233
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1297
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1229
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1333
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1255
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1279
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1183
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1265
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1303
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1183
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1178
+        }
+      ],
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 11,
+      "sourceLinks": 8,
+      "externalLinks": 10,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C"
+    },
+    {
+      "width": 1440,
+      "scheme": "dark",
+      "documentOverflow": false,
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1313
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1290
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1290
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1233
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1297
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1229
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1333
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1255
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1279
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1183
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1265
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1303
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1183
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 118,
+          "height": 1178
+        }
+      ],
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 11,
+      "sourceLinks": 8,
+      "externalLinks": 10,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C"
+    },
+    {
+      "width": 390,
+      "scheme": "light",
+      "documentOverflow": false,
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1759
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2089
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2032
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2117
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2061
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1875
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1781
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1833
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1815
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1616
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1863
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1822
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1818
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1845
+        }
+      ],
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 11,
+      "sourceLinks": 8,
+      "externalLinks": 10,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C"
+    },
+    {
+      "width": 390,
+      "scheme": "dark",
+      "documentOverflow": false,
+      "pages": [
+        {
+          "number": "01",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1759
+        },
+        {
+          "number": "02",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2089
+        },
+        {
+          "number": "03",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2032
+        },
+        {
+          "number": "04",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2117
+        },
+        {
+          "number": "05",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 2061
+        },
+        {
+          "number": "06",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1875
+        },
+        {
+          "number": "07",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1781
+        },
+        {
+          "number": "08",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1833
+        },
+        {
+          "number": "09",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1815
+        },
+        {
+          "number": "10",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1616
+        },
+        {
+          "number": "11",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1863
+        },
+        {
+          "number": "12",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1822
+        },
+        {
+          "number": "13",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1818
+        },
+        {
+          "number": "14",
+          "imagesLoaded": true,
+          "zuri": true,
+          "wangjai": true,
+          "logoWidth": 110,
+          "height": 1845
+        }
+      ],
+      "missingAnchors": [],
+      "fonts": [
+        {
+          "family": "Manrope",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Sans Thai",
+          "loaded": true
+        },
+        {
+          "family": "IBM Plex Mono",
+          "loaded": true
+        }
+      ],
+      "smallestFont": 11,
+      "sourceLinks": 8,
+      "externalLinks": 10,
+      "raci": [
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        },
+        {
+          "accountable": 1,
+          "responsible": 1
+        }
+      ],
+      "amber": "#E8820C"
+    }
+  ],
+  "navigation": {
+    "hash": "#raci",
+    "heading": 192.453125
+  },
+  "tableScroll": {
+    "scrollLeft": 290,
+    "max": 290,
+    "focusable": true
+  },
+  "missingFiles": [],
+  "printHeights": [
+    {
+      "number": "01",
+      "height": 975.625
+    },
+    {
+      "number": "02",
+      "height": 980.109375
+    },
+    {
+      "number": "03",
+      "height": 980.109375
+    },
+    {
+      "number": "04",
+      "height": 933.171875
+    },
+    {
+      "number": "05",
+      "height": 990.453125
+    },
+    {
+      "number": "06",
+      "height": 940.953125
+    },
+    {
+      "number": "07",
+      "height": 1011.703125
+    },
+    {
+      "number": "08",
+      "height": 979.578125
+    },
+    {
+      "number": "09",
+      "height": 986.640625
+    },
+    {
+      "number": "10",
+      "height": 909.28125
+    },
+    {
+      "number": "11",
+      "height": 975.1875
+    },
+    {
+      "number": "12",
+      "height": 987.8125
+    },
+    {
+      "number": "13",
+      "height": 920.140625
+    },
+    {
+      "number": "14",
+      "height": 860.46875
+    }
+  ],
+  "networkFailures": [],
+  "errors": []
+}

@@ -1,0 +1,26 @@
+{
+  "artifact": "D:\\zuri-brand-kit\\output\\draft\\campaign-01_metrics-map.html",
+  "guidePages": 18,
+  "metricCards": 35,
+  "graphTerms": 37,
+  "graphCategories": {
+    "acquisition": 9,
+    "lead": 10,
+    "revenue": 18
+  },
+  "graphAppearance": {
+    "sphericalNodes": true,
+    "texturedContrastStage": true,
+    "hoverAndFocusNames": true
+  },
+  "mascotPages": 18,
+  "graphMascotNames": [
+    "zuri · อธิบาย",
+    "น้องวางใจ · ชี้สัญญาณ"
+  ],
+  "localReferencesChecked": 13,
+  "missingFiles": [],
+  "missingAnchors": [],
+  "errors": [],
+  "browserAndPrintRendering": "NOT_RUN — local file URL was blocked by browser security policy"
+}

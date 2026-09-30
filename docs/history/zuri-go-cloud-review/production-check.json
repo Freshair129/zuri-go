@@ -1,0 +1,9 @@
+{
+  "url": "https://zuri-metrics-map.vercel.app",
+  "htmlHashMatches": true,
+  "anonymousStatus": 401,
+  "authenticatedStatus": 200,
+  "campaigns": 1,
+  "tasks": 11,
+  "members": 4
+}

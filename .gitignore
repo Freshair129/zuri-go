@@ -1,0 +1,7 @@
+.local/
+build/
+**/node_modules/
+**/__pycache__/
+apps/web/dist/
+.env*
+*.log

@@ -1,0 +1,50 @@
+{
+  "version": "0.4.0",
+  "allowlistedFiles": 46,
+  "privateSecretsExcluded": true,
+  "htmlSha256": "afe09e664a0b039665ae83d28ed8803d7eaafa063ea585b5842bdd71d7fce777",
+  "role": {
+    "rolsuper": false,
+    "rolbypassrls": false
+  },
+  "credentialPrivileges": {
+    "read": true,
+    "update": false,
+    "insert": false,
+    "delete": false
+  },
+  "credentialRLS": {
+    "relrowsecurity": true,
+    "relforcerowsecurity": true
+  },
+  "members": [
+    {
+      "id": "c0a536e6-b701-4868-a2dd-b2fe0517ea47",
+      "pid": "ZGO-P0001",
+      "display_name": "Chef",
+      "enabled": true,
+      "credential_version": "1"
+    },
+    {
+      "id": "c058670c-8808-4a8a-af5b-26fc92462156",
+      "pid": "ZGO-P0002",
+      "display_name": "Boss",
+      "enabled": true,
+      "credential_version": "1"
+    },
+    {
+      "id": "d94913fc-0c84-46ff-ac0a-b7a69e2bbdd0",
+      "pid": "ZGO-P0003",
+      "display_name": "Tong",
+      "enabled": true,
+      "credential_version": "1"
+    },
+    {
+      "id": "9cff23e9-3992-4819-a3f8-9746fb4b5f75",
+      "pid": "ZGO-P0004",
+      "display_name": "K’jeab",
+      "enabled": true,
+      "credential_version": "1"
+    }
+  ]
+}

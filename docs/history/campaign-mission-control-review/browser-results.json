@@ -1,0 +1,110 @@
+{
+  "checkedAt": "2026-09-29T04:57:16.899Z",
+  "results": [
+    {
+      "name": "Untouched workspace is empty and data-held",
+      "status": "PASS"
+    },
+    {
+      "name": "Overview renders at 1440px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Performance renders at 1440px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Plan & Gates renders at 1440px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Workboard renders at 1440px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Review & Decisions renders at 1440px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Overview renders at 390px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Performance renders at 390px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Plan & Gates renders at 390px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Workboard renders at 390px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Review & Decisions renders at 390px with mascots and no page overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "Settings save, local reload and planned chart render",
+      "status": "PASS"
+    },
+    {
+      "name": "Metric panel adapts to mobile and creates a linked task",
+      "status": "PASS"
+    },
+    {
+      "name": "Task Done validation and saved follow-up",
+      "status": "PASS"
+    },
+    {
+      "name": "Acknowledgement keeps the unresolved gate visible",
+      "status": "PASS"
+    },
+    {
+      "name": "Inconclusive review can be saved without releasing an offer",
+      "status": "PASS"
+    },
+    {
+      "name": "Restore preview and synthetic actual/plan comparison",
+      "status": "PASS"
+    },
+    {
+      "name": "All-scope cards and export reconcile",
+      "status": "PASS"
+    },
+    {
+      "name": "Channel filter changes denominator and exported facts",
+      "status": "PASS"
+    },
+    {
+      "name": "Decision and actual DESTINY release are separate; launch starts learning clock",
+      "status": "PASS"
+    },
+    {
+      "name": "Original source inspector remains available",
+      "status": "PASS"
+    },
+    {
+      "name": "New objective has its own empty targets and metric roles",
+      "status": "PASS"
+    },
+    {
+      "name": "Campaign selection and records survive reload",
+      "status": "PASS"
+    },
+    {
+      "name": "Full backup retains campaigns, decision and launch evidence",
+      "status": "PASS"
+    },
+    {
+      "name": "Dark surface keeps the outlined wordmark legible",
+      "status": "PASS"
+    },
+    {
+      "name": "No uncaught browser runtime errors",
+      "status": "PASS"
+    }
+  ],
+  "errors": []
+}

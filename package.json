@@ -1,0 +1,16 @@
+{
+  "name": "zuri-go",
+  "version": "0.4.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "npm ci --prefix apps/api --ignore-scripts",
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/start.ps1",
+    "build": "node scripts/run.mjs build",
+    "test": "node scripts/run.mjs test",
+    "backup": "node apps/api/backup-local.mjs",
+    "db:migrate": "node apps/api/migrate.mjs",
+    "members": "node apps/api/provision-members.mjs",
+    "deploy": "node scripts/run.mjs deploy"
+  }
+}

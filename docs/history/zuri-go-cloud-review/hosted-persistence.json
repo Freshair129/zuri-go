@@ -1,0 +1,14 @@
+{
+  "deployment": "https://zuri-metrics-4esmxwwyw-pornpons-projects.vercel.app",
+  "anonymous": 401,
+  "login": 200,
+  "imported": {
+    "campaigns": 1,
+    "tasks": 11,
+    "members": 4,
+    "events": 45
+  },
+  "crossSessionWriteRead": "PASS",
+  "crossOriginWrite": 403,
+  "qaContentArchived": "933c7fdd-80a1-4c5c-ba45-7d9f96276f52"
+}

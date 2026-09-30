@@ -1,0 +1,68 @@
+{
+  "local": "all Business rows unchanged",
+  "cloud": "all Business rows unchanged",
+  "businesses": {
+    "local": {
+      "businessId": "ac1d1e49-4abc-4863-9f14-7275b3cc25e5",
+      "tableCounts": {
+        "businesses": 1,
+        "ai_briefs": 0,
+        "campaign_channels": 0,
+        "campaign_states": 1,
+        "campaigns": 1,
+        "change_events": 45,
+        "channel_accounts": 0,
+        "content_items": 0,
+        "goal_series": 0,
+        "goals": 0,
+        "meeting_draft_batches": 0,
+        "meeting_revisions": 0,
+        "meeting_task_links": 0,
+        "meetings": 0,
+        "member_credentials": 0,
+        "members": 4,
+        "metric_observations": 0,
+        "metric_series": 0,
+        "migration_batches": 1,
+        "migration_keys": 16,
+        "publications": 0,
+        "task_attachments": 0,
+        "task_roles": 65,
+        "tasks": 11,
+        "weekly_plan_tasks": 11,
+        "weekly_plans": 1
+      }
+    },
+    "cloud": {
+      "businessId": "ac1d1e49-4abc-4863-9f14-7275b3cc25e5",
+      "tableCounts": {
+        "businesses": 1,
+        "ai_briefs": 0,
+        "campaign_channels": 0,
+        "campaign_states": 1,
+        "campaigns": 1,
+        "change_events": 78,
+        "channel_accounts": 0,
+        "content_items": 13,
+        "goal_series": 0,
+        "goals": 0,
+        "meeting_draft_batches": 0,
+        "meeting_revisions": 0,
+        "meeting_task_links": 0,
+        "meetings": 0,
+        "member_credentials": 4,
+        "members": 4,
+        "metric_observations": 0,
+        "metric_series": 0,
+        "migration_batches": 1,
+        "migration_keys": 16,
+        "publications": 0,
+        "task_attachments": 2,
+        "task_roles": 65,
+        "tasks": 12,
+        "weekly_plan_tasks": 11,
+        "weekly_plans": 1
+      }
+    }
+  }
+}

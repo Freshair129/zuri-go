@@ -1,0 +1,220 @@
+--- 0.4.1/apps/api/cloud.mjs
++++ 0.4.2/apps/api/cloud.mjs
+@@ -18,13 +18,13 @@
+   if(route==='/login'&&req.method==='POST'){
+    const input=await body(req);const allowed=await transaction(cfg.businessId,c=>consumeLoginAttempt(c,cfg.businessId,req.headers['x-vercel-forwarded-for']||req.headers['x-real-ip'],secret));
+    if(!allowed){res.setHeader('Retry-After','900');send(res,429,{error:'ลองเข้าสู่ระบบหลายครั้งเกินไป กรุณารอ 15 นาที'});return;}
+-   const member=await transaction(cfg.businessId,c=>loginMember(c,cfg.businessId,input?.pid,input?.password));
+-   if(!member){send(res,401,{error:'PID หรือรหัสผ่านไม่ถูกต้อง'});return;}
++   const member=await transaction(cfg.businessId,c=>loginMember(c,cfg.businessId,input?.password));
++   if(!member){send(res,401,{error:'รหัสระบุตัวตนไม่ถูกต้อง'});return;}
+    res.setHeader('Set-Cookie',[memberCookie(memberToken(cfg.businessId,member,secret)),sessionCookie('')]);send(res,200,{authenticated:true,member:publicIdentity(member),businessId:cfg.businessId,storage:'postgresql-cloud'});return;
+   }
+   if(route==='/logout'&&req.method==='POST'){res.setHeader('Set-Cookie',[memberCookie(''),sessionCookie('')]);send(res,200,{authenticated:false});return;}
+   const claims=readMemberSession(req.headers.cookie,cfg.businessId,secret);
+-  if(req.method!=='GET'&&!claims){send(res,401,{error:'เข้าสู่ระบบด้วย PID และรหัสผ่านส่วนตัวก่อนแก้ไข',code:'AUTH_REQUIRED'});return;}
++  if(req.method!=='GET'&&!claims){send(res,401,{error:'เข้าสู่ระบบด้วย รหัสระบุตัวตนก่อนแก้ไข',code:'AUTH_REQUIRED'});return;}
+   if(route==='/session'&&req.method==='GET'){const member=await transaction(cfg.businessId,c=>resolveMember(c,cfg.businessId,claims));send(res,200,{authenticated:!!member,member:publicIdentity(member),businessId:cfg.businessId,storage:'postgresql-cloud'});return;}
+   // Import staging is an operator-only local task, never serverless filesystem state.
+   if(/^\/businesses\/[^/]+\/imports(?:\/|$)/.test(route)){send(res,403,{error:'นำเข้า backup ผ่านผู้ดูแลระบบ'});return;}
+--- 0.4.1/apps/api/member-auth.mjs
++++ 0.4.2/apps/api/member-auth.mjs
+@@ -11,10 +11,12 @@
+ export const memberCookie=t=>`${COOKIE}=${t}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${t?LIFETIME:0}`;
+ const identity=r=>({memberId:r.id,pid:r.pid,displayName:r.display_name,credentialVersion:Number(r.credential_version)});
+ export const publicIdentity=m=>m?{memberId:m.memberId,pid:m.pid,displayName:m.displayName}:null;
+-export async function loginMember(c,b,pid,password){
+- const normalized=typeof pid==='string'&&pid.length<40?pid.trim().toUpperCase():'';
+- const r=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.password_hash,a.credential_version,a.enabled FROM members m JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1 AND m.pid=$2',[b,normalized])).rows[0];
+- const valid=await verifyPassword(password,r?.password_hash||DUMMY);return valid&&r?.enabled&&r.status==='active'?identity(r):null;
++export async function loginMember(c,b,password){
++ if(typeof password!=='string'||!password.length||password.length>256)return null;
++ const candidates=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.password_hash,a.credential_version,a.enabled FROM members m JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1',[b])).rows;
++ const matched=[];for(const r of candidates)if(await verifyPassword(password,r.password_hash))matched.push(r);
++ if(!candidates.length)await verifyPassword(password,DUMMY);
++ const r=matched.length===1?matched[0]:null;return r?.enabled&&r.status==='active'?identity(r):null;
+ }
+ export async function resolveMember(c,b,claims){
+  if(!claims)return null;
+@@ -24,6 +26,6 @@
+ export async function authorizeWrite(c,b,claims){
+  await c.query('SELECT id FROM businesses WHERE id=$1 FOR UPDATE',[b]);
+  const member=await resolveMember(c,b,claims);
+- if(!member)throw Object.assign(Error('กรุณาเข้าสู่ระบบด้วย PID และรหัสผ่านส่วนตัว'),{status:401,code:'AUTH_REQUIRED'});
++ if(!member)throw Object.assign(Error('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน'),{status:401,code:'AUTH_REQUIRED'});
+  c.zuriActor=member;return member;
+ }
+--- 0.4.1/apps/api/provision-members.mjs
++++ 0.4.2/apps/api/provision-members.mjs
+@@ -27,6 +27,8 @@
+     issued.push({pid:m.pid,name:m.display_name,path,created:false});continue;
+    }
+    const password=randomBytes(18).toString('base64url'),version=Number(m.credential_version||0)+1;
++   const hashes=(await c.query('SELECT password_hash FROM member_credentials WHERE business_id=$1',[cfg.businessId])).rows;
++   for(const other of hashes)if(await verifyPassword(password,other.password_hash))throw Error('Generated identity code collision; retry provisioning.');
+    const handover={businessId:cfg.businessId,memberId:m.id,pid:m.pid,name:m.display_name,url:cfg.origin||'https://zuri-metrics-map.vercel.app/',password,credentialVersion:version,issuedAt:new Date().toISOString()};
+    // A private pending handover survives an uncertain commit without logging secrets.
+    await writeFile(path+'.pending',JSON.stringify(handover,null,2),{mode:0o600});
+--- 0.4.1/apps/api/test/cloud-handler.test.mjs
++++ 0.4.2/apps/api/test/cloud-handler.test.mjs
+@@ -26,7 +26,7 @@
+ test('hosted API allows guest reads, denies writes, and supports individual member login',async()=>{
+  assert.equal((await call('bootstrap')).status,200);assert.equal((await call('session')).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',body:{}})).status,401);
+  assert.equal((await call('login',{method:'POST',body:{password:'wrong'}})).status,401);
+- const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});assert.equal(login.status,200);const cookie=login.headers['Set-Cookie'][0];assert.match(cookie,/Secure; SameSite=Strict/);
++ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}});assert.equal(login.status,200);const cookie=login.headers['Set-Cookie'][0];assert.match(cookie,/Secure; SameSite=Strict/);
+  assert.equal((await call('session',{cookie})).body.businessId,business);assert.equal((await call('bootstrap',{cookie})).body.storage,'postgresql-cloud');
+  assert.equal((await call('bootstrap',{cookie:cookie.replace(/member=./,'member=x')})).status,200);assert.equal((await call('businesses/'+business+'/workspace',{method:'PUT',body:{},cookie:cookie.replace(/member=./,'member=x')})).status,401);
+  assert.equal((await call('businesses/'+randomUUID()+'/state',{cookie})).status,403);
+@@ -35,9 +35,9 @@
+  assert.match((await call('logout',{method:'POST',cookie,body:{}})).headers['Set-Cookie'][0],/Max-Age=0/);
+ });
+ test('Vercel parsed JSON writes persist across independently authenticated sessions',async()=>{
+- const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
++ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+  const created=await call('businesses/'+business+'/channels',{method:'POST',cookie,body:{display_name:'QA ONLY · persistence',platform:'other'}});assert.equal(created.status,200);
+- const another=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});
++ const another=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}});
+  const state=await call('businesses/'+business+'/state',{cookie:another.headers['Set-Cookie']});assert.equal(state.status,200);assert.ok(state.body.channel_accounts.some(x=>x.id===created.body.id));
+ });
+ test('guest write attempts cannot alter state, including attachments and wrong businesses',async()=>{
+@@ -50,7 +50,7 @@
+ });
+ test('attachments persist bytes, remain publicly readable, enforce bounds and become unavailable after removal',async()=>{
+  const task=randomUUID();await transaction(business,c=>c.query('INSERT INTO tasks(id,business_id,code,title) VALUES($1,$2,$3,$4)',[task,business,task,'QA ONLY attachment test']));
+- const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
++ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+  await transaction(business,c=>c.query("UPDATE tasks SET legacy_metadata=$2 WHERE id=$1",[task,{id:'legacy-task-reference'}]));
+  const path='businesses/'+business+'/tasks/legacy-task-reference/attachments';
+  const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5s8AAAAASUVORK5CYII=';
+@@ -76,22 +76,22 @@
+  assert.equal((await call(path,{cookie:logout.headers['Set-Cookie']})).status,200);
+  assert.equal((await call(path,{method:'POST',cookie:logout.headers['Set-Cookie'],body:{}})).status,401);
+ });
+-test('four individual identities, PID binding, audit actors, disabled/reset sessions and legacy rejection',async()=>{
++test('four individual identities, single-code binding, audit actors, disabled/reset sessions and legacy rejection',async()=>{
+  const old=sessionCookie(sessionToken(business,process.env.ZURI_GO_SESSION_SECRET));
+  assert.equal((await call('businesses/'+business+'/channels',{method:'POST',cookie:old,body:{}})).status,401);
+- assert.equal((await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}})).status,401);
++ assert.equal((await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}})).status,200);
+  for(let i=0;i<4;i++){
+-  const login=await call('login',{method:'POST',body:{pid:members[i].pid,password:'isolated-qa-team-password'+i}});assert.equal(login.status,200);assert.equal(login.body.member.memberId,members[i].id);assert.equal(login.body.member.pid,members[i].pid);
+-  assert.equal((await call('login',{method:'POST',body:{pid:members[(i+1)%4].pid,password:'isolated-qa-team-password'+i}})).status,401);
++  const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password'+i}});assert.equal(login.status,200);assert.equal(login.body.member.memberId,members[i].id);assert.equal(login.body.member.pid,members[i].pid);
++  const spoof=await call('login',{method:'POST',body:{pid:members[(i+1)%4].pid,memberId:members[(i+1)%4].id,password:'isolated-qa-team-password'+i}});assert.equal(spoof.status,200);assert.equal(spoof.body.member.memberId,members[i].id);
+   const saved=await call('businesses/'+business+'/channels',{method:'POST',cookie:login.headers['Set-Cookie'],body:{display_name:'QA actor '+i,platform:'other'}});assert.equal(saved.status,200);
+   const audit=await transaction(business,async c=>(await c.query('SELECT actor_member_id,actor_pid FROM change_events WHERE business_id=$1 AND entity_id=$2',[business,saved.body.id])).rows[0]);assert.equal(audit.actor_member_id,members[i].id);assert.equal(audit.actor_pid,members[i].pid);
+  }
+- const login=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
++ const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}}),cookie=login.headers['Set-Cookie'];
+  await credentialUpdate(members[0].id,'credential_version=credential_version+1');
+  assert.equal((await call('session',{cookie})).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',cookie,body:{}})).status,401);
+- await credentialUpdate(members[0].id,'enabled=false');assert.equal((await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}})).status,401);
++ await credentialUpdate(members[0].id,'enabled=false');assert.equal((await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}})).status,401);
+  await credentialUpdate(members[0].id,'enabled=true');
+- const logged=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});
++ const logged=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}});
+  const workspace=(await call('businesses/'+business+'/workspace')).body;
+  const tid=saveTask(workspace.meetingTaskManager,{title:'QA claimed actor',responsibleId:members[0].id});
+  workspace.meetingTaskManager.events.forEach(e=>{e.actor='spoofed other member';e.actorMemberId=members[1].id;e.actorPid=members[1].pid;});
+@@ -105,6 +105,6 @@
+ });
+ test('rate limiting is persisted in PostgreSQL and denies after the per-bucket threshold',async()=>{
+  await transaction(business,c=>c.query("INSERT INTO team_login_limits(business_id,bucket,attempts,resets_at) VALUES($1,'global',400,now()+interval '15 minutes') ON CONFLICT(business_id,bucket) DO UPDATE SET attempts=400",[business]));
+- const response=await call('login',{method:'POST',body:{pid:members[0].pid,password:'isolated-qa-team-password0'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');
++ const response=await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}});assert.equal(response.status,429);assert.equal(response.headers['Retry-After'],'900');
+  assert.equal((await transaction(business,c=>c.query("SELECT attempts FROM team_login_limits WHERE business_id=$1 AND bucket='global'",[business]))).rows[0].attempts,401);
+ });
+--- 0.4.1/apps/api/test/member-auth.test.mjs
++++ 0.4.2/apps/api/test/member-auth.test.mjs
+@@ -26,11 +26,25 @@
+  const cfg={...config(),businessId:b},folder=await mkdtemp(new URL('../../../.local/qa-members-',import.meta.url));
+  const first=await provisionMembers(cfg,folder),again=await provisionMembers(cfg,folder);assert.equal(first.length,rows.length);assert.ok(again.every(x=>!x.created));
+  const files=await Promise.all(first.map(x=>readFile(x.path,'utf8').then(JSON.parse)));assert.equal(new Set(files.map(x=>x.password)).size,files.length);assert.ok(files.every(x=>x.password.length===24));
+- const initial=files.find(x=>x.memberId===a.id),login=await transaction(b,c=>loginMember(c,b,a.pid,initial.password));assert.equal(login.memberId,a.id);
++ const initial=files.find(x=>x.memberId===a.id),login=await transaction(b,c=>loginMember(c,b,initial.password));assert.equal(login.memberId,a.id);
+  const claims=readMemberSession(memberCookie(memberToken(b,login,secret)),b,secret);
+  await provisionMembers(cfg,folder,{resetPid:a.pid});const updated=JSON.parse(await readFile(initial.pid?resolve(folder,initial.pid+'.json'):'','utf8'));assert.notEqual(updated.password,initial.password);
+- assert.equal(await transaction(b,c=>resolveMember(c,b,claims)),null);assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,initial.password)),null);
+- await provisionMembers(cfg,folder,{disablePid:a.pid});assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)),null);
+- await provisionMembers(cfg,folder,{enablePid:a.pid});assert.ok(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)));
+- await transaction(b,c=>c.query("UPDATE members SET status='inactive' WHERE id=$1",[a.id]));assert.equal(await transaction(b,c=>loginMember(c,b,a.pid,updated.password)),null);
++ assert.equal(await transaction(b,c=>resolveMember(c,b,claims)),null);assert.equal(await transaction(b,c=>loginMember(c,b,initial.password)),null);
++ await provisionMembers(cfg,folder,{disablePid:a.pid});assert.equal(await transaction(b,c=>loginMember(c,b,updated.password)),null);
++ await provisionMembers(cfg,folder,{enablePid:a.pid});assert.ok(await transaction(b,c=>loginMember(c,b,updated.password)));
++ await transaction(b,c=>c.query("UPDATE members SET status='inactive' WHERE id=$1",[a.id]));assert.equal(await transaction(b,c=>loginMember(c,b,updated.password)),null);
+ });
++
++test('single code rejects ambiguity even with a disabled duplicate and validates input',async()=>{
++ const {passwordHash}=await import('../team-auth.mjs'),code='isolated-identity-code';
++ const a={id:randomUUID(),pid:'QA-1',display_name:'QA A',status:'active',enabled:true,credential_version:1,password_hash:await passwordHash(code)};
++ const d={...a,id:randomUUID(),pid:'QA-2',password_hash:await passwordHash(code)};
++ let rows=[a];const c={query:async(sql,args)=>{assert.deepEqual(args,[b]);return {rows};}};
++ assert.equal((await loginMember(c,b,code)).memberId,a.id);
++ for(const disabled of [false,true]){rows=[a,{...d,enabled:!disabled}];assert.equal(await loginMember(c,b,code),null);rows.reverse();assert.equal(await loginMember(c,b,code),null);}
++ rows=[{...a,status:'inactive'}];assert.equal(await loginMember(c,b,code),null);
++ rows=[a];assert.equal(await loginMember(c,b,'wrong-code'),null);
++ const neverQuery={query:()=>assert.fail('invalid inputs must not query credentials')};
++ for(const value of [undefined,null,42,{},[], '', 'x'.repeat(257)])assert.equal(await loginMember(neverQuery,b,value),null);
++ rows=[];assert.equal(await loginMember(c,b,code),null);
++});
+--- 0.4.1/apps/web/src/content/business/TeamAccess.jsx
++++ 0.4.2/apps/web/src/content/business/TeamAccess.jsx
+@@ -11,16 +11,16 @@
+ export function TeamAccess({children}){
+  const shell=useDataApp();
+  useEffect(()=>{if(shell.appTitle==='Campaign Mission Control')shell.setAppTitle('Zuri-Go');},[shell.appTitle,shell.setAppTitle]);
+- const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[pid,setPid]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
++ const local=location.hostname==='127.0.0.1',pending=useRef(null),[session,setSession]=useState(local?{storage:'postgresql-local',authenticated:true}:null),[loading,setLoading]=useState(!local),[loginOpen,setLoginOpen]=useState(false),[password,setPassword]=useState(''),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  const canWrite=local||!!session?.authenticated;
+  async function check(){setLoading(true);try{setSession(await request('/session'));setError('');}catch(e){setError(e.message);}finally{setLoading(false);}}
+- useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false}:old);setError('กรุณาใส่ PID และรหัสผ่านส่วนตัวเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
++ useEffect(()=>{if(local)return;check();const expired=()=>{pending.current=null;setSession(old=>old?{...old,authenticated:false}:old);setError('กรุณาใส่ รหัสระบุตัวตนเพื่อบันทึกการเปลี่ยนแปลง');setLoginOpen(true);};window.addEventListener('zuri-go-auth-required',expired);return()=>window.removeEventListener('zuri-go-auth-required',expired);},[]);
+  useEffect(()=>{if(canWrite&&pending.current){const action=pending.current;pending.current=null;action();}},[canWrite]);
+  function requestWrite(action){if(canWrite)return action?.();pending.current=action;setError('');setLoginOpen(true);}
+  function close(){if(busy)return;pending.current=null;setLoginOpen(false);setPassword('');setError('');}
+- async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{pid,password}));setPassword('');setLoginOpen(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
++ async function login(e){e.preventDefault();setBusy(true);setError('');try{setSession(await request('/login','POST',{password}));setPassword('');setLoginOpen(false);}catch(e){setError(e.message);}finally{setBusy(false);}}
+  async function logout(){setBusy(true);try{await request('/logout','POST',{});pending.current=null;setSession(old=>({...old,authenticated:false}));setError('');}catch(e){setError(e.message);}finally{setBusy(false);}}
+  if(loading)return <section className="zg-team-login" aria-busy="true"><ZuriGoLogo/><p>กำลังเปิด workspace ของทีม…</p></section>;
+  if(!session)return <section className="zg-team-login"><ZuriGoLogo/><p role="alert">{error||'เชื่อมต่อ workspace ไม่สำเร็จ'}</p><Button onClick={check}>ลองโหลดอีกครั้ง</Button></section>;
+- return <Access.Provider value={{canWrite,requestWrite}}>{!local&&<div className="zg-team-bar"><span className={`zg-access-badge ${canWrite?'team':'guest'}`}>{canWrite?(session.member?.displayName+' · '+session.member?.pid):'Guest mode'}</span><span>{canWrite?'แก้ไขและบันทึกได้':'ดูได้อย่างเดียว'}</span><Button onClick={canWrite?logout:()=>requestWrite(null)} disabled={busy}>{canWrite?'ออกจากระบบ':'เข้าสู่ระบบเพื่อแก้ไข'}</Button>{error&&!loginOpen&&<span role="alert">{error}</span>}</div>}{children(session)}{loginOpen&&<Modal title="เข้าสู่ระบบเพื่อแก้ไข" onClose={close} wide={false}><section className="zg-team-login zg-team-dialog"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><p>Guest ดูข้อมูลได้ทันที<br/>ใช้ PID และรหัสผ่านส่วนตัวเพื่อสร้าง แก้ไข ลบ หรือแนบไฟล์</p><form onSubmit={login}><label htmlFor="member-pid">PID สมาชิก</label><input id="member-pid" autoComplete="username" autoCapitalize="characters" required autoFocus maxLength={40} placeholder="ZGO-P0001" value={pid} onChange={e=>setPid(e.target.value.toUpperCase())}/><label htmlFor="team-password">รหัสผ่านส่วนตัว</label><input id="team-password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button><Button type="button" onClick={close} disabled={busy}>ดูต่อใน Guest mode</Button></form></section></Modal>}</Access.Provider>;
++ return <Access.Provider value={{canWrite,requestWrite}}>{!local&&<div className="zg-team-bar"><span className={`zg-access-badge ${canWrite?'team':'guest'}`}>{canWrite?(session.member?.displayName+' · '+session.member?.pid):'Guest mode'}</span><span>{canWrite?'แก้ไขและบันทึกได้':'ดูได้อย่างเดียว'}</span><Button onClick={canWrite?logout:()=>requestWrite(null)} disabled={busy}>{canWrite?'ออกจากระบบ':'เข้าสู่ระบบเพื่อแก้ไข'}</Button>{error&&!loginOpen&&<span role="alert">{error}</span>}</div>}{children(session)}{loginOpen&&<Modal title="เข้าสู่ระบบเพื่อแก้ไข" onClose={close} wide={false}><section className="zg-team-login zg-team-dialog"><ZuriGoLogo/><img className="zg-team-pair" src={pair} alt="Zuri และน้องวางใจต้อนรับทีม"/><p>Guest ดูข้อมูลได้ทันที<br/>ใช้ รหัสระบุตัวตนเพื่อสร้าง แก้ไข ลบ หรือแนบไฟล์</p><form onSubmit={login}><label htmlFor="team-password">รหัสระบุตัวตน</label><input id="team-password" type="password" autoComplete="current-password" autoFocus required maxLength={256} value={password} onChange={e=>setPassword(e.target.value)}/>{error&&<p role="alert">{error}</p>}<Button type="submit" disabled={busy}>{busy?'กำลังเข้าสู่ระบบ…':'เข้า Zuri-Go →'}</Button><Button type="button" onClick={close} disabled={busy}>ดูต่อใน Guest mode</Button></form></section></Modal>}</Access.Provider>;
+ }
+--- 0.4.1/package.json
++++ 0.4.2/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "zuri-go",
+-  "version": "0.4.1",
++  "version": "0.4.2",
+   "private": true,
+   "type": "module",
+   "scripts": {
+--- 0.4.1/scripts/deploy/build_cloud.py
++++ 0.4.2/scripts/deploy/build_cloud.py
+@@ -30,7 +30,7 @@
+ (OUT / 'api').mkdir(exist_ok=True)
+ (OUT / 'api/index.mjs').write_text("export {default} from '../apps/api/cloud.mjs';\n")
+ package = json.loads((ROOT / 'apps/api/package.json').read_text())
+-package.update(name='zuri-go-cloud', scripts={}, version='0.4.1', engines={'node':'24.x'})
++package.update(name='zuri-go-cloud', scripts={}, version='0.4.2', engines={'node':'24.x'})
+ (OUT / 'package.json').write_text(json.dumps(package, indent=2)+'\n')
+ copy('apps/api/package-lock.json', 'package-lock.json')
+ configuration = {'version':2,'outputDirectory':'public','buildCommand':'','regions':['sin1'],
+--- 0.4.1/scripts/site/verify_extraction.py
++++ 0.4.2/scripts/site/verify_extraction.py
+@@ -6,10 +6,12 @@
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+ manifest = json.loads((ROOT / 'docs/migrations/source-manifest.json').read_text(encoding='utf-8'))
++editable = json.loads((ROOT / 'apps/web/protected-runtime.json').read_text(encoding='utf-8'))['editablePaths']
+ checked = 0
+ for entry in manifest['files']:
+     target = entry['target'].replace('\\', '/')
+-    if target.startswith(('apps/web/', 'assets/', '.local/member-access/')):
++    authored = target.startswith('apps/web/') and any(target[9:].startswith(p) if p.endswith('/') else target[9:] == p for p in editable)
++    if not authored and target.startswith(('apps/web/', 'assets/', '.local/member-access/')):
+         data = (ROOT / target).read_bytes()
+         assert hashlib.sha256(data).hexdigest() == entry['sha256'], target
+         checked += 1

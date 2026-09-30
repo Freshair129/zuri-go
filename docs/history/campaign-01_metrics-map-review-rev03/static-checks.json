@@ -1,0 +1,45 @@
+{
+  "artifact": "D:\\zuri-brand-kit\\output\\draft\\campaign-01_metrics-map.html",
+  "guidePages": 18,
+  "metricCards": 35,
+  "graphTerms": 37,
+  "graphCategories": {
+    "acquisition": 9,
+    "lead": 10,
+    "revenue": 18
+  },
+  "graphAppearance": {
+    "sphericalNodes": true,
+    "texturedContrastStage": true,
+    "graphModes": [
+      "2d",
+      "3d"
+    ],
+    "backgroundPresets": [
+      "dark",
+      "canvas",
+      "warm"
+    ],
+    "full360Rotation": "VERIFIED_STATIC — yaw normalized modulo 2π",
+    "hoverAndFocusNames": true
+  },
+  "pageViewer": {
+    "previousNextControls": true,
+    "hashNavigation": true,
+    "allPagesAvailableForPrint": true
+  },
+  "mascotPages": 18,
+  "graphMascotNames": [
+    "zuri · อธิบาย",
+    "น้องวางใจ · ชี้สัญญาณ"
+  ],
+  "localReferencesChecked": 13,
+  "missingFiles": [],
+  "missingAnchors": [],
+  "errors": [],
+  "browserAndPrintRendering": {
+    "playwright": "PASS",
+    "pdfPageCount": 18,
+    "pdfMascotAndFolioChecks": "PASS"
+  }
+}

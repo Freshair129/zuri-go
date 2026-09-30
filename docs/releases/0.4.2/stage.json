@@ -1,0 +1,18 @@
+{
+  "mode": "stage",
+  "url": "https://zuri-metrics-h2lz95q39-pornpons-projects.vercel.app",
+  "guestRead": true,
+  "guestWriteDenied": true,
+  "invalidCodeDenied": true,
+  "codeOnlyLogin": [
+    "ZGO-P0001",
+    "ZGO-P0002",
+    "ZGO-P0003",
+    "ZGO-P0004"
+  ],
+  "sessionIdentityVerified": true,
+  "htmlMatchesBuild": true,
+  "htmlSha256": "8fd179c7019e8a2b517079ad5676415c5ed6662354d274d02f452da79fd824b8",
+  "browserVisual": "NOT_RUN - prior local browser policy block; HTTP/API and compiled artifact verification only",
+  "at": "2026-09-30T16:12:19.798Z"
+}

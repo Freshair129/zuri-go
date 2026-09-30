@@ -1,0 +1,7 @@
+{
+  "production": "https://zuri-metrics-map.vercel.app",
+  "deploymentId": "dpl_C1VEVMPK1NrQwBKTDcnn18FF6YdT",
+  "version": "0.3.1",
+  "htmlMatchesBuild": true,
+  "htmlSha256": "78ede59109560d27e9370de120ad2ec20a696e7d1fd4170ecc67a0b1edc9600a"
+}

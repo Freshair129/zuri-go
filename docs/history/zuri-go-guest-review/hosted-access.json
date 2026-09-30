@@ -1,0 +1,9 @@
+{
+  "deployment": "https://zuri-metrics-r5hpfpfks-pornpons-projects.vercel.app",
+  "guestSession": 200,
+  "guestWorkspace": 200,
+  "guestWrite": 401,
+  "login": 200,
+  "tasks": 11,
+  "importedTaskAttachmentLists": "11/11 PASS"
+}

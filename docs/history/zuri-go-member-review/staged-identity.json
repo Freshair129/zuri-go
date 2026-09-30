@@ -1,0 +1,75 @@
+{
+  "version": "0.4.0",
+  "deployment": "https://zuri-metrics-6fs100q7q-pornpons-projects.vercel.app",
+  "members": [
+    {
+      "pid": "ZGO-P0001",
+      "name": "Chef",
+      "memberId": "c0a536e6-b701-4868-a2dd-b2fe0517ea47",
+      "login": 200,
+      "create": 200,
+      "actorVerified": true,
+      "qaArchived": true
+    },
+    {
+      "pid": "ZGO-P0002",
+      "name": "Boss",
+      "memberId": "c058670c-8808-4a8a-af5b-26fc92462156",
+      "login": 200,
+      "create": 200,
+      "actorVerified": true,
+      "qaArchived": true
+    },
+    {
+      "pid": "ZGO-P0003",
+      "name": "Tong",
+      "memberId": "d94913fc-0c84-46ff-ac0a-b7a69e2bbdd0",
+      "login": 200,
+      "create": 200,
+      "actorVerified": true,
+      "qaArchived": true
+    },
+    {
+      "pid": "ZGO-P0004",
+      "name": "K’jeab",
+      "memberId": "9cff23e9-3992-4819-a3f8-9746fb4b5f75",
+      "login": 200,
+      "create": 200,
+      "actorVerified": true,
+      "qaArchived": true
+    }
+  ],
+  "guestRead": 200,
+  "guestWrites": [
+    {
+      "method": "POST",
+      "path": "content",
+      "status": 401
+    },
+    {
+      "method": "PUT",
+      "path": "workspace",
+      "status": 401
+    },
+    {
+      "method": "PATCH",
+      "path": "",
+      "status": 401
+    },
+    {
+      "method": "POST",
+      "path": "tasks/254e5c4f-643a-460c-9706-b490f3ef838a/attachments",
+      "status": 401
+    }
+  ],
+  "oldSharedPasswordRejected": true,
+  "preserved": {
+    "tasks": 11,
+    "members": 4,
+    "campaigns": 1,
+    "weeklyEntries": [
+      11
+    ],
+    "workspaceDataUnchanged": true
+  }
+}

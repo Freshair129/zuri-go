@@ -1,0 +1,45 @@
+:root {
+  color-scheme: light dark;
+  --adaptive-theme: 1;
+  --font-sans-default: 'IBM Plex Sans Thai', Manrope, sans-serif;
+  --font-sans: var(--font-sans-default);
+  --background: light-dark(#FFFFFF, #1F2937);
+  --surface: light-dark(#F7F8FA, #1F2937);
+  --surface-raised: light-dark(#FFFFFF, #1F2937);
+  --muted: light-dark(#F7F8FA, color-mix(in srgb, #FFFFFF 8%, #1F2937));
+  --control: light-dark(#FFFFFF, #1F2937);
+  --control-hover: light-dark(#FFF8F0, color-mix(in srgb, #FFFFFF 12%, #1F2937));
+  --interaction-hover: var(--muted);
+  --interaction-active: var(--control-hover);
+  --text: light-dark(#1F2937, #F7F8FA);
+  --secondary: light-dark(#6B7280, color-mix(in srgb, #F7F8FA 70%, #1F2937));
+  --border: light-dark(color-mix(in srgb, #6B7280 18%, #FFFFFF), color-mix(in srgb, #FFFFFF 18%, #1F2937));
+  --border-strong: light-dark(color-mix(in srgb, #6B7280 28%, #FFFFFF), color-mix(in srgb, #FFFFFF 28%, #1F2937));
+  --accent: #E8820C;
+  --positive: #238553;
+  --negative: #C84B4B;
+  --chart-1: #E8820C;
+  --chart-2: #3D7A9E;
+  --chart-3: #238553;
+  --chart-4: #B7791F;
+  --chart-5: #3D7A9E;
+  --chart-6: #F09420;
+  --chart-7: #C84B4B;
+  --chart-8: #6B7280;
+  --chart-neutral-fill: color-mix(in srgb, var(--text) 3%, var(--surface));
+  --ranked-list-fill: color-mix(in srgb, var(--chart-1) 16%, var(--surface));
+  --ranked-list-fill-hover: color-mix(in srgb, var(--chart-1) 24%, var(--surface));
+  --movement-positive: var(--positive);
+  --movement-negative: var(--negative);
+  --movement-total: var(--secondary);
+  --card-radius: 14px;
+  --data-card-radius: 14px;
+  --data-card-background: var(--background);
+  --control-radius: 8px;
+  --mark-radius: 4;
+  --card-shadow: none;
+  --shadow: none;
+  --data-app-chrome-background: var(--background);
+  --data-app-chrome-text: var(--text);
+}
+:root:not([data-app-theme]), :root:is([data-app-theme="original"],[data-app-theme="codex-classic"]){--dashboard-background:light-dark(#F7F8FA,#1F2937)}

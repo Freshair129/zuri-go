@@ -1,0 +1,11 @@
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {mkdir,writeFile,rename} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+const run=promisify(execFile),folder=new URL('../../.local/backups/',import.meta.url);
+await mkdir(folder,{recursive:true});
+const name='zuri-go-'+new Date().toISOString().replace(/[:.]/g,'-')+'.sql',target=new URL(name,folder),temporary=new URL(name+'.partial',folder);
+const {stdout}=await run('docker',['exec','zuri-go-postgres','pg_dump','-U','postgres','-d','zuri_go','--no-owner','--no-privileges'],{windowsHide:true,maxBuffer:256*1024*1024});
+if(!stdout.includes('PostgreSQL database dump'))throw Error('Backup output was not a PostgreSQL dump');
+await writeFile(temporary,stdout,{mode:0o600});await rename(temporary,target);
+console.log('Private full database backup saved:',fileURLToPath(target));

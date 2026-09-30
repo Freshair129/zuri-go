@@ -1,0 +1,132 @@
+{
+  "surface": "dashboard",
+  "title": "Campaign Mission Control",
+  "id": "dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1",
+  "generatedAt": "2026-09-29T00:00:00Z",
+  "status": "planning-reference",
+  "buildStatus": "complete",
+  "filters": [],
+  "queries": {
+    "m1_plan": {
+      "rows": [
+        {
+          "offer": "normal",
+          "name": "Normal",
+          "price": 5900,
+          "unitsPerOrder": 1,
+          "plannedOrders": null,
+          "cpl": null,
+          "packaging": null
+        },
+        {
+          "offer": "destiny",
+          "name": "DESTINY",
+          "price": 5555,
+          "unitsPerOrder": 1,
+          "plannedOrders": 8,
+          "cpl": 90,
+          "packaging": 277.75
+        },
+        {
+          "offer": "pair",
+          "name": "LUCKY PAIR",
+          "price": 8888,
+          "unitsPerOrder": 2,
+          "plannedOrders": 20,
+          "cpl": 120,
+          "packaging": 444.4
+        },
+        {
+          "offer": "complete",
+          "name": "COMPLETE 4",
+          "price": 15900,
+          "unitsPerOrder": 4,
+          "plannedOrders": 15,
+          "cpl": 180,
+          "packaging": 1590
+        }
+      ],
+      "source": {
+        "label": "MUJEEN M1 plan — 25 Sep 2026",
+        "files": [
+          {
+            "label": "MUJEEN_GTM_M1_Offer_AOV_Lead_Budget_Revision_2026-09-25(1).md"
+          }
+        ],
+        "metricDefinitions": [
+          {
+            "label": "Original offer mix",
+            "definition": "8 DESTINY + 20 LUCKY PAIR + 15 COMPLETE 4 = 43 orders and 108 units."
+          }
+        ],
+        "caveats": [
+          "Planning assumptions, not actual observations or approved spending caps.",
+          "Normal-first weekly rollout requires an updated offer-mix forecast; actuals are entered separately."
+        ]
+      }
+    },
+    "m1_scenarios": {
+      "rows": [
+        {
+          "scenario": "Low / Stress",
+          "conversion": 2,
+          "leads": 2150,
+          "orders": 43,
+          "units": 108,
+          "revenue": 460700,
+          "media": 291000,
+          "contribution": 26740
+        },
+        {
+          "scenario": "Mid / Base",
+          "conversion": 5,
+          "leads": 860,
+          "orders": 43,
+          "units": 108,
+          "revenue": 460700,
+          "media": 116400,
+          "contribution": 201340
+        },
+        {
+          "scenario": "High / Optimized",
+          "conversion": 10,
+          "leads": 430,
+          "orders": 43,
+          "units": 108,
+          "revenue": 460700,
+          "media": 58200,
+          "contribution": 259540
+        }
+      ],
+      "source": {
+        "label": "MUJEEN M1 — scenarios §§8–12",
+        "files": [
+          {
+            "label": "MUJEEN_GTM_M1_Offer_AOV_Lead_Budget_Revision_2026-09-25(1).md"
+          }
+        ],
+        "caveats": [
+          "Contribution excludes shipping, payment fees, commissions and operations.",
+          "Low is a stress case; modeled media is not a released budget."
+        ]
+      }
+    },
+    "manual_workspace": {
+      "rows": [],
+      "source": {
+        "label": "Manual campaign workspace — provisional user-entered records",
+        "metricDefinitions": [
+          {
+            "label": "Live component rows",
+            "definition": "Component source rows are the current records entered in this browser. No actual campaign dataset is embedded in the reviewed planning snapshot."
+          }
+        ],
+        "caveats": [
+          "Unverified manual input. Completeness depends on the campaign source watermarks and owner definitions.",
+          "Saved locally per browser origin; JSON backup restores this workspace. No provider connection or cloud sync.",
+          "The original M01 planning reference is a separate source and does not supply actuals."
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,975 @@
+--- old/projects/zuri-go/api.mjs
++++ new/apps/api/api.mjs
+@@ -3,7 +3,7 @@
+ import {body} from './http.mjs';
+ import {transaction} from './db.mjs';
+ import {snapshot,save,observe,brief,fail,audit} from './service.mjs';
+-import {overview} from '../../output/draft/campaign-mission-control/src/content/business/model.mjs';
++import {overview} from '../web/src/content/business/model.mjs';
+ import {importPreview,importCommit,readLegacy,saveLegacy} from './workspace.mjs';
+ export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
+ export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
+--- old/projects/zuri-go/backup-local.mjs
++++ new/apps/api/backup-local.mjs
+@@ -2,7 +2,7 @@
+ import {promisify} from 'node:util';
+ import {mkdir,writeFile,rename} from 'node:fs/promises';
+ import {fileURLToPath} from 'node:url';
+-const run=promisify(execFile),folder=new URL('.local/backups/',import.meta.url);
++const run=promisify(execFile),folder=new URL('../../.local/backups/',import.meta.url);
+ await mkdir(folder,{recursive:true});
+ const name='zuri-go-'+new Date().toISOString().replace(/[:.]/g,'-')+'.sql',target=new URL(name,folder),temporary=new URL(name+'.partial',folder);
+ const {stdout}=await run('docker',['exec','zuri-go-postgres','pg_dump','-U','postgres','-d','zuri_go','--no-owner','--no-privileges'],{windowsHide:true,maxBuffer:256*1024*1024});
+--- old/projects/zuri-go/config.mjs
++++ new/apps/api/config.mjs
+@@ -2,6 +2,6 @@
+ import {fileURLToPath} from 'node:url';
+ export const directory=fileURLToPath(new URL('.',import.meta.url));
+ export function config(){
+- let local={};if(process.env.VERCEL!=='1')try{local=JSON.parse(readFileSync(new URL('.local/config.json',import.meta.url),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
++ let local={};if(process.env.VERCEL!=='1')try{local=JSON.parse(readFileSync(new URL('../../.local/config.json',import.meta.url),'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;}
+  return {...local,businessId:process.env.ZURI_GO_BUSINESS_ID||local.businessId,port:Number(process.env.ZURI_GO_PORT||local.port||4319),databaseUrl:process.env.ZURI_GO_DATABASE_URL||local.databaseUrl,adminUrl:process.env.ZURI_GO_ADMIN_URL||local.adminUrl};
+ }
+--- old/projects/zuri-go/provision-members.mjs
++++ new/apps/api/provision-members.mjs
+@@ -42,11 +42,11 @@
+ }
+ if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
+  const args=process.argv.slice(2),cloud=args.includes('--cloud');
+- const cfg=cloud?JSON.parse(await readFile(new URL('.local/cloud-config.json',import.meta.url),'utf8')):config();
++ const cfg=cloud?JSON.parse(await readFile(new URL('../../.local/cloud-config.json',import.meta.url),'utf8')):config();
+  const value=k=>args.includes(k)?args[args.indexOf(k)+1]:undefined;
+  for(const key of ['--reset','--disable','--enable'])if(args.includes(key)&&!/^ZGO-P\d{4,}$/.test(value(key)||''))throw Error('Specify a PID after '+key);
+  if(['--reset','--disable','--enable'].filter(x=>args.includes(x)).length>1)throw Error('Choose one credential operation');
+- const folder=fileURLToPath(new URL('.local/member-access/'+(cloud?'production/':'local/'),import.meta.url));
++ const folder=fileURLToPath(new URL('../../.local/member-access/'+(cloud?'production/':'local/'),import.meta.url));
+  const result=await provisionMembers(cfg,folder,{resetPid:value('--reset'),disablePid:value('--disable'),enablePid:value('--enable')});
+  console.log(JSON.stringify({members:result.map(x=>({pid:x.pid,name:x.name,created:x.created})),privateHandover:folder}));
+ }
+--- old/projects/zuri-go/README.md
++++ new/apps/api/README.md
+@@ -1,84 +1,3 @@
+-# Zuri-Go — local workspace
++# Zuri-Go API
+ 
+-Let’s Go to Market. Together
+-
+-## Open / restart
+-
+-Open **http://127.0.0.1:4319/?view=1&tab=overview**. Use `127.0.0.1`, because the local server checks the exact Host and Origin.
+-
+-If the machine has restarted, start Docker Desktop, then run:
+-
+-```powershell
+-& D:\zuri-brand-kit\projects\zuri-go\start-local.ps1
+-```
+-
+-PostgreSQL runs in `zuri-go-postgres` on `127.0.0.1:54329`; database `zuri_go`, persistent volume `zuri-go-postgres-data`. Node serves the app and private API on port 4319. Credentials are only in `.local/config.json` / `.local/postgres.env`, outside the published site. Do not copy these files to Vercel or the static output.
+-
+-## First use
+-
+-1. Open Overview and select **ตรวจข้อมูลเดิม**. Review campaign, task, member and meeting counts; select transcript inclusion if needed. **ยืนยันนำเข้าชุดนี้** performs one atomic import into the empty local Business. Existing browser records remain untouched. Imported lifecycle is **รอยืนยัน** until set by the user. Imports into an occupied Business are refused rather than merged automatically.
+-2. Alternatively select **เริ่ม workspace ว่าง**. Meeting/Tasks/Members and campaign details then use PostgreSQL. This does not erase browser data.
+-3. Register members in Meeting & Task Manager. Members are local names/profiles, not login accounts; assigning a task sends no messages.
+-4. Add channel accounts from Content or Goals. Create campaigns, select channels, and confirm whether each is draft/queued/active.
+-5. Plan content by month, approve it, then add one publication per channel/time. The calendar is a plan; it does not publish to social media. Mark a post published with its actual time and URL or evidence note.
+-6. Set a weekly/monthly goal and select its exact accounts. For net followers, enter the cumulative baseline at Monday 00:00 / month-start 00:00 and the latest cumulative observation. Example: 1,320 minus 1,000 = **320 / 500**. Missing baseline is unknown; zero is only shown when supported by observations.
+-
+-All dates in the initial forms are Bangkok time. Goals may retain negative actual progress. A correction records a new observation revision with its reason; it does not erase history. Editing an approved content item invalidates its approval and scheduled publications until reviewed again.
+-
+-## Summary and AI
+-
+-The default summary is clearly marked **สรุปจากกติกา** and uses current recorded facts. An optional local Ollama adapter exists; it was not enabled or exercised against an actual model in this delivery. Set `ZURI_GO_AI_URL` to a loopback Ollama origin and `ZURI_GO_AI_MODEL` explicitly before starting the server to opt in. No cloud provider fallback, redirects or AI tools are enabled. A model may prioritize known fact IDs only; unsupported output falls back to the rule summary. Evidence snapshots are stored with each brief.
+-
+-## Backup
+-
+-The UI **Backup แคมเปญและงาน** is the compatible v2 export of those domains only. It excludes the new Business content/goals/observations. Full PostgreSQL backup:
+-
+-```powershell
+-cd D:\zuri-brand-kit\projects\zuri-go
+-node backup-local.mjs
+-```
+-
+-This saves a private timestamped SQL dump under `.local/backups/`, including every table and isolated QA Businesses. Treat backups as private. Copy a chosen backup to your own secure backup location. Restore must target a reviewed empty database; the UI does not overwrite an existing PostgreSQL workspace. Automated scheduled backup and a full database recovery drill are outside this delivery.
+-
+-## Develop / verify
+-
+-```powershell
+-node migrate.mjs
+-node --test test/*.test.mjs
+-```
+-
+-HTTP tests require the normal local server on 4319. Database tests create explicitly labeled QA Businesses, never use the configured user Business and do not delete user records. The app source is `output/draft/campaign-mission-control/src/content/`; package with the existing Data app builder and `projects/campaign-mission-control/build_unified_site.py`. Keep the protected shell and app ID unchanged.
+-
+-## Production — version 0.4.0
+-
+-The PostgreSQL site is **https://zuri-metrics-map.vercel.app/** with public Guest read-only access. Version 0.4.0 uses each Member's PID and personal password for create/edit/delete/upload actions; login opens as a modal and logout returns to Guest mode. The toolbar shows the signed-in Member name and PID. Hosted state is stored in Neon PostgreSQL, Singapore. See the release verification below for the exact promoted deployment.
+-
+-Chef: `ZGO-P0001`; Boss: `ZGO-P0002`; Tong: `ZGO-P0003`; K’jeab: `ZGO-P0004`. Private individual handovers are `.local/member-access/production/<PID>.json`. Share only the intended member's file; never deploy these files. PID is public and immutable, scoped to this Business; the UUID remains the PK. Historical shared/local events are not reassigned to a Member.
+-
+-The latest supplied backup was imported into local and cloud PostgreSQL: 1 campaign, 11 tasks, 4 members, 1 weekly plan and 45 events. Use production for shared work; local and hosted databases do not synchronize later edits. Imported campaign status needs explicit confirmation before it is counted as active or queued.
+-
+-Build the verified UI and unified site first, then run `python projects/zuri-go/build-cloud.py` from the workspace root. The generated `output/draft/zuri-go-cloud/` contains an allowlisted static UI and Vercel API, with private files excluded. Deploy that directory to the existing `zuri-metrics-map` project. Migration/admin credentials stay local; Vercel receives only the restricted runtime connection, Business ID, session signing secret and allowed production origin. Salted personal password hashes are stored only in the separate PostgreSQL credential table; the runtime role cannot modify that table.
+-
+-Migration 003 supplies persistent login rate limits. Migration 005 adds immutable PIDs, separate credentials and authenticated actor references. Member sessions validate active status, enabled credential and credential version inside the write transaction. Reset/disable and ordinary writes share Business locking; a stale concurrent transaction is rejected. Version 0.4.0 rejects the old shared password and team cookie. Existing local startup stays a trusted loopback operator workspace, without cloud synchronization or Member impersonation. Hosted import remains an operator task.
+-
+-Trusted operator commands from the workspace root:
+-
+-```powershell
+-node projects/zuri-go/provision-members.mjs --cloud
+-node projects/zuri-go/provision-members.mjs --cloud --reset ZGO-P0001
+-node projects/zuri-go/provision-members.mjs --cloud --disable ZGO-P0001
+-node projects/zuri-go/provision-members.mjs --cloud --enable ZGO-P0001
+-```
+-
+-The first command provisions only missing credentials and verifies existing private handovers; it never silently rotates passwords. Reset generates a new private handover and invalidates previous sessions. Disable/enable also increments the credential version. A newly registered profile receives a PID automatically; only an operator enables its login. No self-service password recovery or email delivery is included. Disabling a profile blocks its sessions while inactive; use credential disable/reset to permanently revoke its existing sessions before reactivating it.
+-
+-See `output/draft/zuri-go-cloud-review/verification.md` for deployment identity, tests, import reconciliation, actual persistence evidence and remaining AI/FUNG/backup limitations.
+-
+-For version 0.4.0, see `output/draft/zuri-go/member-identity-spec.md` and `output/draft/zuri-go-member-review/verification.md` for identity architecture, migration, live checks and version diff.
+-
+-## Task evidence files — 0.3.1
+-Open a saved task in Meeting & Task Manager, then use **แนบไฟล์ / รูปภาพ**. Up to 5 active files per task, at most 2 MiB each. The existing evidence text/link field remains available. Upload and removal save immediately, independently of saving task details. Guest can view task details, image previews and download files; upload/removal requires Member login in 0.4.0. For a new task, save it first and reopen its details to add files.
+-
+-Migration 004 stores file metadata and bytea in `task_attachments`, with a composite Business/Task FK and forced Business RLS. Safe raster formats have signature-based preview MIME; other files download as octet-stream under sandbox CSP and nosniff. Deleted files are soft-deleted and no longer downloadable. Full database backups include bytes; **v2 JSON Backup does not include attachments**. Local and hosted files do not synchronize.
+-
+-Specification: `output/draft/zuri-go/guest-access-spec.md`. Verification and version diff: `output/draft/zuri-go-guest-review/`.
++Active service source, migrations and backend tests. See [project README](../../README.md) and [operations runbook](../../docs/operations/runbook.md) for current commands. Local private configuration is ../../.local, resolved relative to modules rather than shell cwd.
+--- old/projects/zuri-go/server.mjs
++++ new/apps/api/server.mjs
+@@ -7,7 +7,7 @@
+ import {config} from './config.mjs';
+ import {pool,transaction} from './db.mjs';
+ import {fail} from './service.mjs';
+-const cfg=config(),publicRoot=resolve(fileURLToPath(new URL('../../output/draft/unified-site/',import.meta.url))),businessId=cfg.businessId;
++const cfg=config(),publicRoot=resolve(fileURLToPath(new URL('../../build/site/',import.meta.url))),businessId=cfg.businessId;
+ if(!businessId||!cfg.databaseUrl)throw Error('Configure a local Business and PostgreSQL before starting.');
+ await transaction(businessId,async c=>{await c.query("INSERT INTO businesses(id,name,slug) VALUES($1,'ธุรกิจของฉัน',$2) ON CONFLICT(id) DO NOTHING",[businessId,'local-'+businessId]);});
+ const media={'.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg','.ttf':'font/ttf','.txt':'text/plain; charset=utf-8'};
+--- old/projects/zuri-go/service.mjs
++++ new/apps/api/service.mjs
+@@ -1,7 +1,7 @@
+ import {randomUUID,createHash} from 'node:crypto';
+ import {rows,hashable} from './db.mjs';
+-import {overview,summaryFacts,validateSummarySelection,periodFor,midnight} from '../../output/draft/campaign-mission-control/src/content/business/model.mjs';
+-import {createCampaign,restoreWorkspace} from '../../output/draft/campaign-mission-control/src/content/shared/model.mjs';
++import {overview,summaryFacts,validateSummarySelection,periodFor,midnight} from '../web/src/content/business/model.mjs';
++import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.mjs';
+ export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
+ export function fail(message,status=422){throw Object.assign(Error(message),{status});}
+ export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks'];
+--- old/projects/zuri-go/workspace.mjs
++++ new/apps/api/workspace.mjs
+@@ -1,8 +1,8 @@
+ import {createHash,randomUUID} from 'node:crypto';
+ import {writeFile,readFile,mkdir} from 'node:fs/promises';
+ import {hash,fail,audit,allocate} from './service.mjs';
+-import {createCampaign,restoreWorkspace,measure,evaluate} from '../../output/draft/campaign-mission-control/src/content/shared/model.mjs';
+-import {empty,validateState,validateEvidence,isBatchStale} from '../../output/draft/campaign-mission-control/src/content/meeting/model.mjs';
++import {createCampaign,restoreWorkspace,measure,evaluate} from '../web/src/content/shared/model.mjs';
++import {empty,validateState,validateEvidence,isBatchStale} from '../web/src/content/meeting/model.mjs';
+ const APP_ID='dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1';
+ const safeId=(b,kind,id)=>{const s=createHash('sha256').update([b,kind,id].join(':')).digest('hex');return s.slice(0,8)+'-'+s.slice(8,12)+'-4'+s.slice(13,16)+'-a'+s.slice(17,20)+'-'+s.slice(20,32);};
+ const iso=v=>v?new Date(v).toISOString():null;
+@@ -93,11 +93,11 @@
+  const id=randomUUID(),namespace=input.source_namespace||randomUUID(),sha=hash(backup),prior=(await c.query('SELECT * FROM migration_batches WHERE business_id=$1 AND source_namespace=$2 AND backup_sha256=$3',[b,namespace,sha])).rows[0];if(prior?.status==='committed')return {...prior.report,id:prior.id,alreadyCommitted:true};
+  const existing=(await c.query('SELECT count(*)::integer AS n FROM campaigns WHERE business_id=$1',[b])).rows[0].n;
+  const report={id,source_namespace:namespace,backup_sha256:sha,campaigns:backup.campaignWorkspace.campaigns.length,members:backup.meetingTaskManager.members.length,tasks:backup.meetingTaskManager.tasks.length+backup.campaignWorkspace.campaigns.reduce((n,x)=>n+x.tasks.length,0),meetings:backup.meetingTaskManager.meetings.length,containsTranscript,canCommit:existing===0,warnings:['แคมเปญเดิมจะเป็นสถานะรอยืนยัน','ไม่เดา lifecycle หรือเป้าผู้ติดตามจากวันที่',...(existing?['ธุรกิจมีแคมเปญแล้ว ยังไม่ merge อัตโนมัติ ให้ตรวจและเลือกปลายทางว่าง']:[])]};
+- await mkdir(new URL('.local/imports/',import.meta.url),{recursive:true});await writeFile(new URL(`.local/imports/${id}.json`,import.meta.url),JSON.stringify({businessId:b,backup,report}));
++ await mkdir(new URL('../../.local/imports/',import.meta.url),{recursive:true});await writeFile(new URL(`../../.local/imports/${id}.json`,import.meta.url),JSON.stringify({businessId:b,backup,report}));
+  return report;
+ }
+ export async function importCommit(c,b,id,input){
+- const stage=JSON.parse(await readFile(new URL(`.local/imports/${id}.json`,import.meta.url),'utf8'));if(stage.businessId!==b||input.backup_sha256!==stage.report.backup_sha256)fail('Import preview ไม่ตรงกับคำยืนยัน',409);
++ const stage=JSON.parse(await readFile(new URL(`../../.local/imports/${id}.json`,import.meta.url),'utf8'));if(stage.businessId!==b||input.backup_sha256!==stage.report.backup_sha256)fail('Import preview ไม่ตรงกับคำยืนยัน',409);
+  const {backup,report}=stage;await c.query('SELECT id FROM businesses WHERE id=$1 FOR UPDATE',[b]);
+  const prior=(await c.query("SELECT * FROM migration_batches WHERE business_id=$1 AND source_namespace=$2 AND backup_sha256=$3 AND status='committed'",[b,report.source_namespace,report.backup_sha256])).rows[0];if(prior)return {id:prior.id,alreadyCommitted:true,workspace:await readLegacy(c,b)};
+  if((await c.query('SELECT 1 FROM campaigns WHERE business_id=$1 LIMIT 1',[b])).rowCount)fail('ธุรกิจไม่ว่าง ไม่แทนที่ข้อมูลที่มีอยู่',409);
+--- old/projects/zuri-go/test/cloud-handler.test.mjs
++++ new/apps/api/test/cloud-handler.test.mjs
+@@ -1,6 +1,6 @@
+ import pg from 'pg';
+ import {sessionToken,sessionCookie} from '../team-auth.mjs';
+-import {saveTask} from '../../../output/draft/campaign-mission-control/src/content/meeting/model.mjs';
++import {saveTask} from '../../web/src/content/meeting/model.mjs';
+ import test,{after} from 'node:test';
+ import assert from 'node:assert/strict';
+ import {randomUUID} from 'node:crypto';
+--- old/projects/zuri-go/test/database.test.mjs
++++ new/apps/api/test/database.test.mjs
+@@ -5,10 +5,10 @@
+ import {pool,transaction} from '../db.mjs';
+ import {save,observe,snapshot,brief,hash} from '../service.mjs';
+ import {readLegacy,saveLegacy,importPreview,importCommit} from '../workspace.mjs';
+-import {empty,seedWorkspace,addSource,saveReview,addBatch,commitBatch,saveTask,validateState} from '../../../output/draft/campaign-mission-control/src/content/meeting/model.mjs';
+-import {createWorkspace,measure} from '../../../output/draft/campaign-mission-control/src/content/shared/model.mjs';
+-import {goalProgress,midnight} from '../../../output/draft/campaign-mission-control/src/content/business/model.mjs';
+-const seed=JSON.parse(await readFile(new URL('../../../output/draft/campaign-mission-control/src/content/meeting/seed.json',import.meta.url),'utf8'));
++import {empty,seedWorkspace,addSource,saveReview,addBatch,commitBatch,saveTask,validateState} from '../../web/src/content/meeting/model.mjs';
++import {createWorkspace,measure} from '../../web/src/content/shared/model.mjs';
++import {goalProgress,midnight} from '../../web/src/content/business/model.mjs';
++const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
+ async function business(){const id=randomUUID();await transaction(id,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · isolated verification',id]));return id;}
+ const run=(b,fn)=>transaction(b,fn);
+ after(()=>pool.end());
+--- old/projects/zuri-go/test/member-auth.test.mjs
++++ new/apps/api/test/member-auth.test.mjs
+@@ -23,7 +23,7 @@
+  for(const r of contenders)if(r.status==='rejected')assert.equal(r.reason.code,'40001');
+  const rows=(await transaction(b,c=>c.query('SELECT id,pid FROM members WHERE business_id=$1',[b]))).rows;assert.equal(new Set(rows.map(x=>x.pid)).size,rows.length);
+  await transaction(b,c=>c.query("UPDATE members SET display_name='QA renamed' WHERE id=$1",[a.id]));assert.equal((await transaction(b,c=>c.query('SELECT pid FROM members WHERE id=$1',[a.id]))).rows[0].pid,a.pid);
+- const cfg={...config(),businessId:b},folder=await mkdtemp(resolve('projects/zuri-go/.local','qa-members-'));
++ const cfg={...config(),businessId:b},folder=await mkdtemp(new URL('../../../.local/qa-members-',import.meta.url));
+  const first=await provisionMembers(cfg,folder),again=await provisionMembers(cfg,folder);assert.equal(first.length,rows.length);assert.ok(again.every(x=>!x.created));
+  const files=await Promise.all(first.map(x=>readFile(x.path,'utf8').then(JSON.parse)));assert.equal(new Set(files.map(x=>x.password)).size,files.length);assert.ok(files.every(x=>x.password.length===24));
+  const initial=files.find(x=>x.memberId===a.id),login=await transaction(b,c=>loginMember(c,b,a.pid,initial.password));assert.equal(login.memberId,a.id);
+--- old/projects/zuri-go/test/model.test.mjs
++++ new/apps/api/test/model.test.mjs
+@@ -1,6 +1,6 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+-import {periodFor,midnight,goalProgress,overview,validateSummarySelection} from '../../../output/draft/campaign-mission-control/src/content/business/model.mjs';
++import {periodFor,midnight,goalProgress,overview,validateSummarySelection} from '../../web/src/content/business/model.mjs';
+ const asOf='2026-09-30T05:00:00.000Z';
+ function fixture(){return {business:{timezone:'Asia/Bangkok'},campaigns:[],content_items:[],publications:[],goals:[],tasks:[],channel_accounts:[{id:'a',display_name:'QA'}],metric_series:[{id:'s',channel_account_id:'a',metric_code:'followers_total',freshness_hours:48}],goal_series:[{goal_id:'g',series_id:'s'}],metric_observations:[{id:'b',series_id:'s',is_current:true,effective_at:midnight('2026-09-28'),value:1000,coverage:'complete'},{id:'l',series_id:'s',is_current:true,effective_at:asOf,value:1320,coverage:'complete'}]};}
+ const goal={id:'g',name:'ผู้ติดตามใหม่',metric_code:'followers_net',period_start:'2026-09-28',period_end_exclusive:'2026-10-05',period_kind:'weekly',target_value:500};
+--- old/projects/zuri-go/test/seed-ui.mjs
++++ new/apps/api/test/seed-ui.mjs
+@@ -4,12 +4,12 @@
+ import {transaction,pool} from '../db.mjs';
+ import {save,snapshot,observe} from '../service.mjs';
+ import {saveLegacy} from '../workspace.mjs';
+-import {empty,seedWorkspace} from '../../../output/draft/campaign-mission-control/src/content/meeting/model.mjs';
+-import {localDate,periodFor,midnight} from '../../../output/draft/campaign-mission-control/src/content/business/model.mjs';
++import {empty,seedWorkspace} from '../../web/src/content/meeting/model.mjs';
++import {localDate,periodFor,midnight} from '../../web/src/content/business/model.mjs';
+ const b=randomUUID(),date=localDate(),week=periodFor(date),month=periodFor(date,'monthly');
+ try{await transaction(b,async c=>{
+  await c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'ข้อมูลตัวอย่าง · Zuri-Go QA',b]);
+- const domain=empty();seedWorkspace(domain,JSON.parse(await readFile(new URL('../../../output/draft/campaign-mission-control/src/content/meeting/seed.json',import.meta.url),'utf8')));await saveLegacy(c,b,{version:0,meetingTaskManager:domain});
++ const domain=empty();seedWorkspace(domain,JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8')));await saveLegacy(c,b,{version:0,meetingTaskManager:domain});
+  const a=await save(c,b,'channels',{platform:'facebook',display_name:'QA · Facebook'}),t=await save(c,b,'channels',{platform:'tiktok',display_name:'QA · TikTok'});
+  const owner=(await snapshot(c,b)).members[0].id;
+  const campaign=await save(c,b,'campaigns',{name:'เปิดตัวคอลเลกชัน · ข้อมูลตัวอย่าง',objective:'commerce',lifecycle:'active',planned_start:month.start,planned_end:date,owner_member_id:owner,channel_ids:[a.id,t.id]});
+@@ -23,5 +23,5 @@
+  await observe(c,b,{series_id:series.id,effective_at:midnight(month.start),value:700,source_ref:'QA synthetic month baseline'});
+  if(week.start!==month.start)await observe(c,b,{series_id:series.id,effective_at:midnight(week.start),value:1000,source_ref:'QA synthetic week baseline'});
+  await observe(c,b,{series_id:series.id,effective_at:new Date().toISOString(),value:1320,source_ref:'QA synthetic latest snapshot'});
+- });await writeFile(new URL('../.local/ui-business.json',import.meta.url),JSON.stringify({businessId:b}));console.log('Created separate synthetic QA Business:',b);
++ });await writeFile(new URL('../../../.local/ui-business.json',import.meta.url),JSON.stringify({businessId:b}));console.log('Created separate synthetic QA Business:',b);
+ }finally{await pool.end();}
+--- old/projects/zuri-go/start-local.ps1
++++ new/scripts/local/start.ps1
+@@ -1,6 +1,9 @@
+ $ErrorActionPreference = 'Stop'
+-$zgDirectory = $PSScriptRoot
+-$zgConfig = Get-Content -LiteralPath (Join-Path $zgDirectory '.local/config.json') -Raw | ConvertFrom-Json
++$zgRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
++$zgDirectory = Join-Path $zgRoot 'apps/api'
++$zgPrivate = Join-Path $zgRoot '.local'
++New-Item -ItemType Directory -Path (Join-Path $zgPrivate 'logs') -Force | Out-Null
++$zgConfig = Get-Content -LiteralPath (Join-Path $zgPrivate 'config.json') -Raw | ConvertFrom-Json
+ $zgPort = $zgConfig.port
+ docker start zuri-go-postgres | Out-Null
+ if ($LASTEXITCODE -ne 0) { throw 'Start Docker Desktop, then run this script again.' }
+@@ -23,5 +26,5 @@
+     throw "Port $zgPort is in use by another application. It was not stopped."
+ }
+ $zgNode = (Get-Command node -ErrorAction Stop).Source
+-Start-Process -FilePath $zgNode -ArgumentList 'server.mjs' -WorkingDirectory $zgDirectory -WindowStyle Hidden -RedirectStandardOutput (Join-Path $zgDirectory '.local/server.log') -RedirectStandardError (Join-Path $zgDirectory '.local/server-error.log') | Out-Null
++Start-Process -FilePath $zgNode -ArgumentList ('"' + (Join-Path $zgDirectory 'server.mjs') + '"') -WorkingDirectory $zgDirectory -WindowStyle Hidden -RedirectStandardOutput (Join-Path $zgPrivate 'logs/server.log') -RedirectStandardError (Join-Path $zgPrivate 'logs/server-error.log') | Out-Null
+ Write-Output "Zuri-Go started: http://127.0.0.1:$zgPort/?view=1&tab=overview"
+--- old/projects/zuri-go/build-cloud.py
++++ new/scripts/deploy/build_cloud.py
+@@ -4,8 +4,14 @@
+ from shutil import copy2
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+-OUT = ROOT / 'output/draft/zuri-go-cloud'
++OUT = ROOT / 'build/vercel'
+ OUT.mkdir(parents=True, exist_ok=True)
++link = json.loads((ROOT / 'scripts/deploy/project.json').read_text())
++binding = OUT / '.vercel/project.json'
++if binding.exists() and json.loads(binding.read_text()) != link:
++    raise ValueError('Refusing to replace a different Vercel project binding')
++binding.parent.mkdir(parents=True, exist_ok=True)
++binding.write_text(json.dumps(link, indent=2) + '\n')
+ files = []
+ def copy(source, relative):
+     target = OUT / relative
+@@ -13,20 +19,20 @@
+     copy2(ROOT / source, target)
+     files.append(relative)
+ 
+-site = ROOT / 'output/draft/unified-site'
++site = ROOT / 'build/site'
+ for path in json.loads((site / 'site-build.json').read_text())['files']:
+-    copy('output/draft/unified-site/' + path, 'public/' + path)
++    copy('build/site/' + path, 'public/' + path)
+ for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs']:
+-    copy('projects/zuri-go/' + path, 'projects/zuri-go/' + path)
++    copy('apps/api/' + path, 'apps/api/' + path)
+ for path in ['shared/model.mjs','meeting/model.mjs','business/model.mjs']:
+-    relative = 'output/draft/campaign-mission-control/src/content/' + path
++    relative = 'apps/web/src/content/' + path
+     copy(relative, relative)
+ (OUT / 'api').mkdir(exist_ok=True)
+-(OUT / 'api/index.mjs').write_text("export {default} from '../projects/zuri-go/cloud.mjs';\n")
+-package = json.loads((ROOT / 'projects/zuri-go/package.json').read_text())
+-package.update(name='zuri-go-cloud', scripts={}, version='0.4.0', engines={'node':'24.x'})
++(OUT / 'api/index.mjs').write_text("export {default} from '../apps/api/cloud.mjs';\n")
++package = json.loads((ROOT / 'apps/api/package.json').read_text())
++package.update(name='zuri-go-cloud', scripts={}, version='0.4.1', engines={'node':'24.x'})
+ (OUT / 'package.json').write_text(json.dumps(package, indent=2)+'\n')
+-copy('projects/zuri-go/package-lock.json', 'package-lock.json')
++copy('apps/api/package-lock.json', 'package-lock.json')
+ configuration = {'version':2,'outputDirectory':'public','buildCommand':'','regions':['sin1'],
+  'functions':{'api/index.mjs':{'maxDuration':30}},
+  'rewrites':[{'source':'/api/zuri-go/v1/:path*','destination':'/api/index?route=:path*'}],
+--- old/projects/campaign-mission-control/build_unified_site.py
++++ new/scripts/site/build_unified_site.py
+@@ -7,7 +7,7 @@
+ import re
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+-DRAFT = ROOT / 'output/draft'
++APPS = ROOT / 'apps'
+ APP_ID = 'dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1'
+ 
+ 
+@@ -109,9 +109,9 @@
+ 
+ 
+ def main():
+-    files = app_files(DRAFT / 'campaign-mission-control/dist')
+-    files.update(metrics_files(DRAFT / 'campaign-01_metrics-map.html'))
+-    manifest = write_package(DRAFT / 'unified-site', files)
++    files = app_files(APPS / 'web/dist')
++    files.update(metrics_files(APPS / 'metrics/index.html'))
++    manifest = write_package(ROOT / 'build/site', files)
+     print(json.dumps({'files': len(files), 'bytes': sum(map(len, files.values())), 'appId': manifest['appId']}))
+ 
+ 
+--- old/projects/campaign-mission-control/model.test.mjs
++++ new/tests/campaign/model.test.mjs
+@@ -1,7 +1,7 @@
+ import test from 'node:test';
+ import assert from 'node:assert/strict';
+ import {readFileSync} from 'node:fs';
+-import {createCampaign,createWorkspace,measure,evaluate,capacity,alertList,validateRecord,validateSettings,validateRelease,restoreWorkspace,evidenceSnapshot,trend,plusDays,parseBom,targetBand} from '../../output/draft/campaign-mission-control/src/content/shared/model.mjs';
++import {createCampaign,createWorkspace,measure,evaluate,capacity,alertList,validateRecord,validateSettings,validateRelease,restoreWorkspace,evidenceSnapshot,trend,plusDays,parseBom,targetBand} from '../../apps/web/src/content/shared/model.mjs';
+ 
+ const ASOF='2026-09-15';
+ export function fixture(converted=5,offer='destiny'){
+--- old/projects/campaign-01/build_metrics_map.py
++++ new/scripts/metrics/build_metrics_map.py
+@@ -5,12 +5,12 @@
+ from shutil import copyfile
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+-OUT = ROOT / 'output/draft/campaign-01_metrics-map.html'
++OUT = ROOT / 'apps/metrics/index.html'
+ PAGES = []
+ PAGE_TOTAL = 18
+ 
+ # Keep the user-selected brand sheet byte-identical; CSS displays its Main Logo panel.
+-LOGO_CONTENT = ROOT / 'output/draft/campaign-mission-control/src/content'
++LOGO_CONTENT = ROOT / 'apps/web/src/content'
+ for target, source in (
+     ('assets/logos/zuri-go-brand-sheet.png', ROOT / 'assets/logos/zuri-go/download.png'),
+     ('assets/styles/zuri-go-logo.css', LOGO_CONTENT / 'shared/zuri-go-logo.css'),
+@@ -24,7 +24,7 @@
+     label = 'Zuri-Go' if compact else 'Zuri-Go — Let’s Go to Market. Together.'
+     return f'<span class="zgo-logo{modifier}" role="img" aria-label="{label}"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span>'
+ 
+-SITE_NAV = '''<nav class="site-nav" aria-label="เมนูเว็บไซต์">'''+logo(True)+'''<a href="campaign-mission-control/dist/index.html?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="campaign-mission-control/dist/index.html?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav>'''
++SITE_NAV = '''<nav class="site-nav" aria-label="เมนูเว็บไซต์">'''+logo(True)+'''<a href="/?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="/?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav>'''
+ SITE_CSS = '''
+ .site-nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:14px max(18px,calc((100% - 1390px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
+ .nav{position:static}html{scroll-padding-top:calc(var(--site-nav-height,64px) + 16px)}
+--- old/projects/campaign-01/verify_metrics_map_static.py
++++ new/scripts/metrics/verify_metrics_map_static.py
+@@ -9,8 +9,8 @@
+ import sys
+ 
+ ROOT = Path(__file__).resolve().parents[2]
+-HTML_PATH = ROOT / 'output/draft/campaign-01_metrics-map.html'
+-REPORT_DIR = ROOT / 'output/draft/campaign-01_metrics-map-review-rev04'
++HTML_PATH = ROOT / 'apps/metrics/index.html'
++REPORT_DIR = ROOT / 'docs/migrations/verification/metrics'
+ 
+ 
+ class Audit(HTMLParser):
+@@ -165,7 +165,7 @@
+     missing_files = []
+     for ref in sorted(set(audit.local_refs)):
+         parsed = urlparse(ref)
+-        if parsed.scheme or ref.startswith('#'):
++        if parsed.scheme or ref.startswith('#') or ref in ('/?view=1&tab=overview', '/?view=1&tab=meeting-task-manager'):
+             continue
+         target = (HTML_PATH.parent / unquote(parsed.path)).resolve()
+         if not target.is_file():
+--- old/output/draft/campaign-01_metrics-map.html
++++ new/apps/metrics/index.html
+@@ -121,7 +121,7 @@
+ .site-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+ @media(max-width:650px){.site-nav>span{width:100%}}
+ @media print{.site-nav{display:none!important}}
+-</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="site-nav" aria-label="เมนูเว็บไซต์"><span class="zgo-logo zgo-logo--compact" role="img" aria-label="Zuri-Go"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span><a href="campaign-mission-control/dist/index.html?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="campaign-mission-control/dist/index.html?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>
++</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="site-nav" aria-label="เมนูเว็บไซต์"><span class="zgo-logo zgo-logo--compact" role="img" aria-label="Zuri-Go"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span><a href="/?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="/?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>
+ <section class="metrics-graph" id="metrics-graph" aria-labelledby="mg-title">
+   <div class="mg-intro">
+     <div><p class="eyebrow caps">Interactive / Marketing Measurement</p><h2 id="mg-title">Marketing <span class="accent">Metrics</span></h2><p class="mg-intro-copy">เลือก node เพื่ออ่านความหมาย สูตร หน่วย ตัวอย่างสมมติ และข้อควรระวัง ลากเพื่อหมุน ใช้ล้อเมาส์เพื่อซูม หรือค้นหาคำศัพท์โดยตรง</p></div>
+--- old/output/draft/zuri-go-cloud/.vercel/project.json
++++ new/build/vercel/.vercel/project.json
+@@ -1 +1,5 @@
+-{"projectId":"prj_8f3zf1qaZnRcAvWabOv1PWAPIABG","orgId":"team_ffvAb1lASX07dwqLeKwEAhlz","projectName":"zuri-metrics-map"}+{
++  "projectId": "prj_8f3zf1qaZnRcAvWabOv1PWAPIABG",
++  "orgId": "team_ffvAb1lASX07dwqLeKwEAhlz",
++  "projectName": "zuri-metrics-map"
++}
+--- old/output/draft/zuri-go/cloud-deployment-spec.md
++++ new/docs/architecture/cloud-deployment-spec.md
+@@ -1,10 +1,10 @@
+ # Zuri-Go PostgreSQL on Vercel — 0.3.0
+ 
+-Status: implemented and deployed; [verification and limits](../zuri-go-cloud-review/verification.md).
++Status: implemented and deployed; [verification and limits](../history/zuri-go-cloud-review/verification.md).
+ 
+ Date: 2026-09-30. Complexity: C-3. Risk: HIGH.
+ Authority: user requested importing the attached latest state and deploying the PostgreSQL version to Vercel; user selected one shared team password. This amends the approved local-only deployment boundary; member profiles remain separate from authentication.
+-Parent: [Architecture](architecture.md). Peers: [Overview](overview-spec.md), [Data model](data-model.md), [Unified site](../unified-site-spec.md), [Logo correction](logo-correction-spec.md).
++Parent: [Architecture](architecture.md). Peers: [Overview](overview-spec.md), [Data model](data-model.md), [Unified site](../product/unified-site-spec.md), [Logo correction](logo-correction-spec.md).
+ 
+ ## Source and import
+ - Explicit source: `C:/Users/pc/Downloads/mission-control-backup-2026-09-30 (3).json`.
+@@ -47,4 +47,4 @@
+ The user replaced mandatory login for reading with public Guest read-only access. [Guest access and attachments](guest-access-spec.md) supersedes the read-access rule above; authenticated write, origin, session and rate-limit rules remain. Migration 004 adds task evidence bytes to PostgreSQL.
+ 
+ ## 0.4.0 approved identity amendment
+-The approved [Member identity contract](member-identity-spec.md) supersedes all shared-password/session assumptions above. Guest reads remain public. Writes require PID + individual password, a versioned Member cookie, and a current active/enabled credential checked in the same PostgreSQL transaction as the write. The API derives the audit actor from that session. Migration 005 preserves Member UUIDs, adds immutable Business-scoped PIDs, credentials and actor references. Provisioning/reset is a trusted local operator action; no credentials ship to the browser or static package. The obsolete shared-password environment variable is removed at rollout after verifying individual access. The local loopback workspace remains explicitly local-operator access. [Release verification](../zuri-go-member-review/verification.md) records the exact rollout status.
++The approved [Member identity contract](member-identity-spec.md) supersedes all shared-password/session assumptions above. Guest reads remain public. Writes require PID + individual password, a versioned Member cookie, and a current active/enabled credential checked in the same PostgreSQL transaction as the write. The API derives the audit actor from that session. Migration 005 preserves Member UUIDs, adds immutable Business-scoped PIDs, credentials and actor references. Provisioning/reset is a trusted local operator action; no credentials ship to the browser or static package. The obsolete shared-password environment variable is removed at rollout after verifying individual access. The local loopback workspace remains explicitly local-operator access. [Release verification](../history/zuri-go-member-review/verification.md) records the exact rollout status.
+--- old/output/draft/zuri-go/data-model.md
++++ new/docs/architecture/data-model.md
+@@ -301,7 +301,7 @@
+ 
+ ## Implementation 0.2.0 / schema 2
+ 
+-- Executable DDL: `projects/zuri-go/migrations/001_core.sql` and `002_compatibility.sql`. Both applied to local PostgreSQL 17.
++- Executable DDL: `apps/api/migrations/001_core.sql` and `002_compatibility.sql`. Both applied to local PostgreSQL 17.
+ - `businesses.domain_revision` provides optimistic concurrency for the existing campaign/meeting aggregate. Every new resource write invalidates that version.
+ - `legacy_metadata jsonb` on businesses, members, tasks, weekly_plans, meetings, revisions and draft batches preserves original IDs, field provenance, seed keys and FUNG evidence/receipts during the compatibility transition. Typed relational columns remain authoritative for current fields.
+ - `publications.confirmation_note` permits manual publication proof where a public URL is unavailable. Scheduling never posts automatically.
+@@ -320,4 +320,4 @@
+ 
+ `member_credentials` has composite PK and Member FK `(business_id,member_id)`, salted `password_hash`, positive `credential_version`, `enabled` and timestamps. Forced Business RLS applies; the runtime role has SELECT only on this table. No public endpoint, Member metadata, or v2 export includes credential records. Only the trusted operator provisions/resets/enables/disables credentials. These operations increment the version, invalidating prior sessions, and serialize with API writes on the Business row.
+ 
+-`change_events.actor_member_id` already existed with its composite Member FK; reuse it and add nullable `actor_pid`. `task_attachments.uploaded_by_member_id` and `deleted_by_member_id` are nullable composite Member FKs. New authenticated mutations obtain these values from validated server session context; pre-existing unknown/shared actors remain unchanged. Local trusted operator writes remain explicitly distinct. See [approved contract](member-identity-spec.md) and [verification](../zuri-go-member-review/verification.md).
++`change_events.actor_member_id` already existed with its composite Member FK; reuse it and add nullable `actor_pid`. `task_attachments.uploaded_by_member_id` and `deleted_by_member_id` are nullable composite Member FKs. New authenticated mutations obtain these values from validated server session context; pre-existing unknown/shared actors remain unchanged. Local trusted operator writes remain explicitly distinct. See [approved contract](member-identity-spec.md) and [verification](../history/zuri-go-member-review/verification.md).
+--- old/output/draft/zuri-go/logo-correction-spec.md
++++ new/docs/architecture/logo-correction-spec.md
+@@ -1,6 +1,6 @@
+ # Zuri-Go logo correction — 0.2.1
+ 
+-Status: implemented and verified locally and in production as part of 0.3.0. See [verification](../zuri-go-cloud-review/verification.md).
++Status: implemented and verified locally and in production as part of 0.3.0. See [verification](../history/zuri-go-cloud-review/verification.md).
+ Complexity: C-2. Risk: LOW.
+ Parent: [Business Overview](overview-spec.md). Peers: existing campaign, meeting and Metrics Map views.
+ 
+--- old/output/draft/zuri-go/member-identity-spec.md
++++ new/docs/architecture/member-identity-spec.md
+@@ -9,13 +9,13 @@
+ 
+ # Zuri-Go — Member PID and individual sign-in
+ 
+-User request: create a different sign-in password for each Member and a PID identifying that Member. The user approved this contract under R5/SOP on 2026-09-30. Implementation and verification are tracked in the [release evidence](../zuri-go-member-review/verification.md).
++User request: create a different sign-in password for each Member and a PID identifying that Member. The user approved this contract under R5/SOP on 2026-09-30. Implementation and verification are tracked in the [release evidence](../history/zuri-go-member-review/verification.md).
+ 
+ Parent: [Cloud architecture](cloud-deployment-spec.md). Peers: [Guest access and files](guest-access-spec.md), [PostgreSQL data model](data-model.md), [Architecture](architecture.md). It supersedes only the shared-team identity/authentication parts after approval; Guest visibility, task assignments, file limits, logos and metrics remain as previously approved.
+ 
+ ## 1. Current evidence and intended change
+ 
+-Current source: `projects/zuri-go/team-auth.mjs` signs a Business-only team session; `cloud.mjs` checks one shared password hash. `service.mjs:audit` records authenticated subject `shared_team`. `workspace.mjs:writeDomain` imports/persists legacy task events with local actor labels. These cannot identify an individual authenticated member.
++Current source: `apps/api/team-auth.mjs` signs a Business-only team session; `cloud.mjs` checks one shared password hash. `service.mjs:audit` records authenticated subject `shared_team`. `workspace.mjs:writeDomain` imports/persists legacy task events with local actor labels. These cannot identify an individual authenticated member.
+ 
+ Live production read on 2026-09-30 confirmed exactly these four Active members. The approved PID assignments below have been issued by migration 005 with independent credentials and private handovers:
+ 
+@@ -39,7 +39,7 @@
+ - A write action opens a modal with **PID** (or a member picker displaying name + PID) and **รหัสผ่านส่วนตัว**. The submitted identity is the PID, never the editable display name.
+ - Successful login resumes the chosen action and displays **Chef · ZGO-P0001** (corresponding member) in the upper-right toolbar. Logout returns to Guest mode.
+ - Members page and member details display PID with a copy action. Name/RACI/task references continue using the existing identity mapping.
+-- Generate an independent cryptographically random password (24 URL-safe characters) for each provisioned member. Only salted password hashes are stored in PostgreSQL. Provisioning writes a one-time private handover file per member under `projects/zuri-go/.local/member-access/` and a private index for the operator, excluded from deployment and ordinary JSON backups. Do not show all passwords inside the app, a public Member card, logs or a spec.
++- Generate an independent cryptographically random password (24 URL-safe characters) for each provisioned member. Only salted password hashes are stored in PostgreSQL. Provisioning writes a one-time private handover file per member under `.local/member-access/` and a private index for the operator, excluded from deployment and ordinary JSON backups. Do not show all passwords inside the app, a public Member card, logs or a spec.
+ - Provisioning is idempotent: rerunning does not silently rotate an existing password or reassign a PID. Reset must explicitly name the target PID and increases its credential version to invalidate prior sessions.
+ - Inactive or disabled sign-in accounts cannot log in or write. Re-enabling/resetting identity is performed by the trusted operator; other users cannot select an actor ID in a request to impersonate that member.
+ 
+@@ -115,6 +115,6 @@
+ | Member profile without login identity | Stable PID + separately protected credential record |
+ | Public Guest reads | Preserved |
+ 
+-The user approval satisfied the R5/SOP implementation gate. Completed production rollout and credential handover are evidenced in the [release verification](../zuri-go-member-review/verification.md); secrets are absent from this document.
++The user approval satisfied the R5/SOP implementation gate. Completed production rollout and credential handover are evidenced in the [release verification](../history/zuri-go-member-review/verification.md); secrets are absent from this document.
+ 
+ Approval: user explicitly approved this specification on 2026-09-30.
+--- old/output/draft/zuri-go/overview-spec.md
++++ new/docs/architecture/overview-spec.md
+@@ -33,13 +33,13 @@
+ |---|---|---|
+ | Human | คำสั่งวันที่ 30 กันยายน 2026 และคำยืนยัน net followers | ใช้ชื่อใหม่และ Business Overview; 500 เป็นตัวอย่าง target ที่ผู้ใช้กำหนด ไม่ใช่ benchmark |
+ | Visual reference | [ภาพ Zuri-Go ที่ผู้ใช้แนบ](C:/Users/pc/Downloads/ChatGPT%20Image%20Sep%2030,%202026,%2011_03_22%20AM-4.png) | อบอุ่น มีพลัง ink/amber, mascot pair, ใช้ง่าย; เป็น brand direction ไม่ใช่ dashboard screenshot |
+-| Parent | [Brand profile](../../../brand/brand-profile.md), [Do / don't](../../../brand/do-dont.md), [Text rules](../../../brand/text-rules.md) | ใช้สีจาก token ไม่ดูดสีจากภาพ; Thai UI; ชื่อ Zuri-Go เป็นข้อยกเว้นตามคำสั่งผู้ใช้สำหรับผลิตภัณฑ์นี้ |
+-| Parent | [Campaign brief](../../../projects/campaign-mission-control/brief.md) | คง objective ต่อแคมเปญ, Low/Mid/High, D7/DESTINY gates และข้อมูล MUJEEN เดิม |
+-| Peer | [Meeting spec](../meeting-task-manager-spec.md), [Meeting architecture](../meeting-task-manager-architecture.md) | สมาชิกไม่ใช่ login; งาน manual/FUNG ยังอยู่ในระบบนี้; priority อยู่ที่ task ในรอบสัปดาห์ |
+-| Peer | [Unified site](../unified-site-spec.md) | ใช้ site/project/app ID เดิม ไม่แยก Graph ออกเป็นอีก deployment |
+-| Runtime | [Authoring guide](../campaign-mission-control/AGENTS.md) | ปรับ authored content และ metadata ตาม public API; รักษา protected shell |
+-| Source | [DashboardContent](../campaign-mission-control/src/content/dashboard/DashboardContent.jsx), [model](../campaign-mission-control/src/content/shared/model.mjs) | `CampaignContent` เลือก `ws.selected` แล้วคำนวณ Overview ต่อแคมเปญ; ไม่มี lifecycle status หรือ content calendar ใน campaign model |
+-| Source | [Meeting repository](../campaign-mission-control/src/content/meeting/repository.mjs), [meeting model](../campaign-mission-control/src/content/meeting/model.mjs) | Campaign อยู่ localStorage, Meeting อยู่ IndexedDB; ยังไม่มี PostgreSQL source of truth |
++| Parent | [Brand profile](../../brand/brand-profile.md), [Do / don't](../../brand/do-dont.md), [Text rules](../../brand/text-rules.md) | ใช้สีจาก token ไม่ดูดสีจากภาพ; Thai UI; ชื่อ Zuri-Go เป็นข้อยกเว้นตามคำสั่งผู้ใช้สำหรับผลิตภัณฑ์นี้ |
++| Parent | [Campaign brief](../product/campaign-mission-control-brief.md) | คง objective ต่อแคมเปญ, Low/Mid/High, D7/DESTINY gates และข้อมูล MUJEEN เดิม |
++| Peer | [Meeting spec](../product/meeting-task-manager-spec.md), [Meeting architecture](../product/meeting-task-manager-architecture.md) | สมาชิกไม่ใช่ login; งาน manual/FUNG ยังอยู่ในระบบนี้; priority อยู่ที่ task ในรอบสัปดาห์ |
++| Peer | [Unified site](../product/unified-site-spec.md) | ใช้ site/project/app ID เดิม ไม่แยก Graph ออกเป็นอีก deployment |
++| Runtime | [Authoring guide](../../apps/web/AGENTS.md) | ปรับ authored content และ metadata ตาม public API; รักษา protected shell |
++| Source | [DashboardContent](../../apps/web/src/content/dashboard/DashboardContent.jsx), [model](../../apps/web/src/content/shared/model.mjs) | `CampaignContent` เลือก `ws.selected` แล้วคำนวณ Overview ต่อแคมเปญ; ไม่มี lifecycle status หรือ content calendar ใน campaign model |
++| Source | [Meeting repository](../../apps/web/src/content/meeting/repository.mjs), [meeting model](../../apps/web/src/content/meeting/model.mjs) | Campaign อยู่ localStorage, Meeting อยู่ IndexedDB; ยังไม่มี PostgreSQL source of truth |
+ 
+ นี่เป็นการเพิ่มความสามารถ ไม่ใช่ข้อสรุปว่าของเดิมทำงานผิดตามสเปกเดิม
+ 
+--- old/output/draft/zuri-go/verification.md
++++ new/docs/architecture/verification.md
+@@ -13,7 +13,7 @@
+ | Separate browser persistence assumptions | Campaign/meeting compatibility adapter with optimistic revisions, stable imported identities and atomic import |
+ | Campaign Mission Control product title | Zuri-Go — Let’s Go to Market. Together |
+ 
+-Existing source modifications are captured in [version-diff.patch](../zuri-go-review/version-diff.patch). New authored components live in `campaign-mission-control/src/content/business/`; new backend, DDL, tests, startup and backup utilities live in `projects/zuri-go/`. This workspace is not a Git repository, so the patch compares saved before-files rather than Git commits.
++Existing source modifications are captured in [version-diff.patch](../history/zuri-go-review/version-diff.patch). New authored components live in `campaign-mission-control/src/content/business/`; new backend, DDL, tests, startup and backup utilities live in `apps/api/`. This workspace is not a Git repository, so the patch compares saved before-files rather than Git commits.
+ 
+ ## Verified
+ 
+@@ -33,10 +33,10 @@
+ 
+ Reused the existing named mascot pair assets and corporate SVG. The user-approved Zuri-Go name/tagline is rendered as a product UI title, not supplied as a new final logo master. Exact brand ink/amber tokens, textured canvas, contrasting CTAs, readable Thai and responsive layouts are retained. No new raster/logo generation or promotion to `output/approved/` occurred.
+ 
+-- [Desktop fixture screenshot](../zuri-go-review/overview-qa-desktop.png)
+-- [Mobile fixture screenshot](../zuri-go-review/overview-qa-mobile.png)
+-- [Mobile content calendar](../zuri-go-review/content-qa-mobile.png)
+-- [User import preview](../zuri-go-review/import-preview.png)
++- [Desktop fixture screenshot](../history/zuri-go-review/overview-qa-desktop.png)
++- [Mobile fixture screenshot](../history/zuri-go-review/overview-qa-mobile.png)
++- [Mobile content calendar](../history/zuri-go-review/content-qa-mobile.png)
++- [User import preview](../history/zuri-go-review/import-preview.png)
+ 
+ All marketing figures in QA screenshots are **synthetic test data in a separate Business**, not user actuals.
+ 
+@@ -46,4 +46,4 @@
+ 
+ Summary fallback is **rule-based**, explicitly labeled in the UI. The optional loopback Ollama fact-selection adapter is implemented but no model is configured or verified here. FUNG compatibility was tested with fixtures; live FUNG transcription/AI generation was not exercised in this turn.
+ 
+-The first import remains an explicit user action in the reviewed UI. Existing SQL data cannot be overwritten through the old browser Restore action. Full DB backup instructions and local startup are in [README](../../../projects/zuri-go/README.md).
++The first import remains an explicit user action in the reviewed UI. Existing SQL data cannot be overwritten through the old browser Restore action. Full DB backup instructions and local startup are in [README](../../apps/api/README.md).
+--- old/output/draft/campaign-mission-control-spec.md
++++ new/docs/product/campaign-mission-control-spec.md
+@@ -15,7 +15,7 @@
+ 
+ **Purpose:** รู้ว่าแคมเปญถึงเป้าหรือไม่ ระบุจุดติดขัด ตัดสินใจเปิด offer/เพิ่มงบอย่างมีเงื่อนไข และติดตามงานจนวัดผลซ้ำได้
+ 
+-[Screen wireframes](campaign-mission-control-wireframes.md) · [Metric reference REV 04](campaign-01_metrics-map.html) · [Parent brief](../../projects/campaign-mission-control/brief.md)
++[Screen wireframes](campaign-mission-control-wireframes.md) · [Metric reference REV 04](../../apps/metrics/index.html) · [Parent brief](campaign-mission-control-brief.md)
+ 
+ ## 1. Confirmed scope and evidence
+ 
+--- old/output/draft/campaign-mission-control-verification.md
++++ new/docs/product/campaign-mission-control-verification.md
+@@ -14,7 +14,7 @@
+ 
+ Preview: http://127.0.0.1:4319
+ 
+-[User guide](../../projects/campaign-mission-control/user-guide.md) · [Approved specification](campaign-mission-control-spec.md)
++[User guide](campaign-mission-control-user-guide.md) · [Approved specification](campaign-mission-control-spec.md)
+ 
+ ## Evidence
+ 
+--- old/output/draft/campaign-mission-control-wireframes.md
++++ new/docs/product/campaign-mission-control-wireframes.md
+@@ -10,7 +10,7 @@
+ 
+ แบบสำหรับ review โครงหน้าและลำดับการใช้งาน ไม่ใช่หน้าจอ live ตัวเลขแผนจาก MUJEEN แสดงเป็น Plan/Scenario; Actual ทุกช่องยังไม่มีข้อมูล
+ 
+-[Requirements and metric contracts](campaign-mission-control-spec.md) · [Existing Metrics Map](campaign-01_metrics-map.html)
++[Requirements and metric contracts](campaign-mission-control-spec.md) · [Existing Metrics Map](../../apps/metrics/index.html)
+ 
+ ## Screen 1 — Overview / สิ่งที่ต้องตัดสินใจวันนี้
+ 
+--- old/output/draft/campaign-01_metrics-map-qc.md
++++ new/docs/product/campaign-01_metrics-map-qc.md
+@@ -19,15 +19,15 @@
+ ## REV 02.5 implementation and validation
+ 
+ - The graph builder now draws category-colored spheres with radial highlights and inset shading, uses a dark dotted/grid stage for contrast, and creates a tooltip for pointer hover and keyboard focus. The right-side detail panel remains the full explanation view.
+-- Static audit: [verify_metrics_map_static.py](../../projects/campaign-01/verify_metrics_map_static.py); [static-checks.json](campaign-01_metrics-map-review-rev02-5/static-checks.json).
++- Static audit: [verify_metrics_map_static.py](../../scripts/metrics/verify_metrics_map_static.py); [static-checks.json](../history/campaign-01_metrics-map-review-rev02-5/static-checks.json).
+ - Static checks verify all 37 terms and categories, shaded sphere CSS, dark textured stage, tooltip event hooks, the 18-page guide, mascot pairs, local assets and anchors. JavaScript syntax is checked separately.
+ - Browser interaction, responsive visual layout, hover placement and print pagination remain `NOT_RUN` because direct local file access was blocked by browser security policy. No alternate browser/page-fetch path was used.
+-- The fresh REV 02.5 production request returned HTTP 403 with the message that the connected account lacks permission to create a Production Deployment for this project. No new deployment was created; the earlier URL remains unverified. Evidence: [vercel-deploy.json](campaign-01_metrics-map-review-rev02-5/vercel-deploy.json).
++- The fresh REV 02.5 production request returned HTTP 403 with the message that the connected account lacks permission to create a Production Deployment for this project. No new deployment was created; the earlier URL remains unverified. Evidence: [vercel-deploy.json](../history/campaign-01_metrics-map-review-rev02-5/vercel-deploy.json).
+ 
+ ## REV 02.4 implementation and validation
+ 
+-- Builder: [build_metrics_map.py](../../projects/campaign-01/build_metrics_map.py); output: [campaign-01_metrics-map.html](campaign-01_metrics-map.html).
+-- Static audit: [verify_metrics_map_static.py](../../projects/campaign-01/verify_metrics_map_static.py); [static-checks.json](campaign-01_metrics-map-review-rev02-4/static-checks.json).
++- Builder: [build_metrics_map.py](../../scripts/metrics/build_metrics_map.py); output: [campaign-01_metrics-map.html](../../apps/metrics/index.html).
++- Static audit: [verify_metrics_map_static.py](../../scripts/metrics/verify_metrics_map_static.py); [static-checks.json](../history/campaign-01_metrics-map-review-rev02-4/static-checks.json).
+ - JavaScript syntax validation passed for the embedded graph script; the static audit found 18 ordered guide pages, 35 unique metric cards plus MQL and SQL (37 terms), category counts 9/10/18, 18 mascot-role pairs, 13 local file references present, and no missing anchors.
+ - The browser refused the direct local HTML URL under its security policy. No alternate browser, DevTools, or page-fetch path was used. Browser interactions, responsive visual layout, image appearance in context, and PDF pagination remain `NOT_RUN`.
+ - The saved REV 02 PDF and screenshots below are historical evidence only. They do not support a REV 02.4 print pass.
+@@ -36,10 +36,10 @@
+ 
+ ## Evidence
+ 
+-- [HTML](campaign-01_metrics-map.html)
++- [HTML](../../apps/metrics/index.html)
+ - [PDF print output](campaign-01_metrics-map-review/metrics-map-rev02-print.pdf)
+-- [Browser checks](campaign-01_metrics-map-review/browser-checks.json)
+-- [Print checks](campaign-01_metrics-map-review/print-checks.json)
++- [Browser checks](../history/campaign-01_metrics-map-review/browser-checks.json)
++- [Print checks](../history/campaign-01_metrics-map-review/print-checks.json)
+ - Review directory: desktop/mobile screenshots 01–14, dark-theme samples and print renders 01–14.
+ - Browser verification at `2026-09-25T03:34:03.118Z` (10:34 ICT).
+ - Original preserved as `campaign-01_metrics-map-review/rev01.html`.
+--- old/output/draft/unified-site-spec.md
++++ new/docs/product/unified-site-spec.md
+@@ -26,10 +26,10 @@
+ | ระดับ | เอกสาร/แหล่งปัจจุบัน | สิ่งที่ต้องรักษา |
+ |---|---|---|
+ | Parent | [Brand profile](../../brand/brand-profile.md) | สี amber/ink, wordmark และตัวละคร Zuri กับน้องวางใจ |
+-| Parent | [Mission Control brief](../../projects/campaign-mission-control/brief.md) | แคมเปญหลายรูปแบบ, Overview ต่อแคมเปญ, Performance, Plan & Gates, Workboard และ Review |
+-| Peer | [Metrics Map brief REV 04](../../projects/campaign-01/brief.md) และ [Graph spec](campaign-01_metrics-graph-spec.md) | คู่มือ 18 หน้า, 40 terms, 2D/3D, การหมุน/ซูม, พื้นหลัง, hover labels และแผงคำอธิบาย |
++| Parent | [Mission Control brief](campaign-mission-control-brief.md) | แคมเปญหลายรูปแบบ, Overview ต่อแคมเปญ, Performance, Plan & Gates, Workboard และ Review |
++| Peer | [Metrics Map brief REV 04](campaign-01-brief.md) และ [Graph spec](campaign-01_metrics-graph-spec.md) | คู่มือ 18 หน้า, 40 terms, 2D/3D, การหมุน/ซูม, พื้นหลัง, hover labels และแผงคำอธิบาย |
+ | Peer | [Meeting & Task Manager spec](meeting-task-manager-spec.md) และ [architecture](meeting-task-manager-architecture.md) | งาน manual, Members, รายละเอียด, RACI, MoSCoW, local storage และ FUNG connector |
+-| Runtime | [Data App Authoring Guide](campaign-mission-control/AGENTS.md) | app ID เดิม, public API, protected shell, theme, source inspection และ build integrity |
++| Runtime | [Data App Authoring Guide](../../apps/web/AGENTS.md) | app ID เดิม, public API, protected shell, theme, source inspection และ build integrity |
+ 
+ การรวมนี้เปลี่ยน navigation และขอบเขตของ deployment; ไม่เปลี่ยนนิยาม KPI, metric formulas หรือเจ้าของข้อมูลงาน
+ 
+--- old/output/draft/unified-site-verification.md
++++ new/docs/product/unified-site-verification.md
+@@ -14,9 +14,9 @@
+ | Menu อาจหลุดจากจอเมื่อเปลี่ยน hash | เมนูคู่มือ sticky และวัดความสูงตามการขึ้นบรรทัดบนมือถือ |
+ | ต้องประกอบไฟล์เผยแพร่เอง | Packager ตรวจ manifest/hash และปฏิเสธไฟล์ที่ไม่อยู่ในรายการ |
+ 
+-ดู [source diff](unified-site-review/version-diff.patch); ไฟล์ใหม่คือ `projects/campaign-mission-control/build_unified_site.py`, `test_unified_site.py`, spec/verification นี้ และ [RCA ของ navigation](../../.brain/rca/unified-site-navigation.md)
++ดู [source diff](../history/unified-site-review/version-diff.patch); ไฟล์ใหม่คือ `projects/campaign-mission-control/build_unified_site.py`, `test_unified_site.py`, spec/verification นี้ และ [RCA ของ navigation](../../.brain/rca/unified-site-navigation.md)
+ 
+-Graph JavaScript, Graph CSS, Graph HTML และ CSS ของคู่มือเดิมตรงกับสำเนาก่อนแก้ทุก byte ใน string constant ตาม [ผลเปรียบเทียบ](unified-site-review/preserved-graph.json) ไม่มีการเปลี่ยน KPI หรือ formulas
++Graph JavaScript, Graph CSS, Graph HTML และ CSS ของคู่มือเดิมตรงกับสำเนาก่อนแก้ทุก byte ใน string constant ตาม [ผลเปรียบเทียบ](../history/unified-site-review/preserved-graph.json) ไม่มีการเปลี่ยน KPI หรือ formulas
+ 
+ ## ผลตรวจ
+ 
+@@ -28,8 +28,8 @@
+ | Metrics static check หลังแก้ navigation | PASS: 18 หน้า, 40 graph terms, mascot pair ทุก 18 หน้า, ไม่มีไฟล์/anchor ขาด |
+ | Local browser navigation | Marketing ทั้งห้าแท็บ, Meeting, guide, graph เปิดได้; ไปคู่มือแล้วกลับมายังเห็น 5 งานและ 4 Members เดิม |
+ | Local graph/guide interaction | 2D/3D, Warm background, ค้นหา CTR, เปิด node detail, ลิงก์กลับ guide, Previous page ผ่าน |
+-| Mobile 390 × 844 | เมนูขึ้นบรรทัด ไม่หลุดจอหลัง hash navigation; แตะลิงก์กลับ Meeting ได้ ดู [ภาพ](unified-site-review/mobile-guide.png) |
+-| Hosted package | 27/27 payload files ตอบ HTTP 200 และ SHA256 ตรงทุกไฟล์ รวม path ที่มีช่องว่าง ดู [หลักฐาน](unified-site-review/production-http-checks.json) |
++| Mobile 390 × 844 | เมนูขึ้นบรรทัด ไม่หลุดจอหลัง hash navigation; แตะลิงก์กลับ Meeting ได้ ดู [ภาพ](../history/unified-site-review/mobile-guide.png) |
++| Hosted package | 27/27 payload files ตอบ HTTP 200 และ SHA256 ตรงทุกไฟล์ รวม path ที่มีช่องว่าง ดู [หลักฐาน](../history/unified-site-review/production-http-checks.json) |
+ | Production browser | Dashboard → ความรู้ → Graph → Meeting อยู่ origin เดียว; 2D/3D และ CTR detail ผ่าน; Meeting reload พร้อม Kanban 5 งาน; ไม่พบ console errors ที่ตรวจ |
+ | Print | ตรวจ print CSS ว่าซ่อนเมนูใหม่ และยังมีทุก guide page; ไม่ได้ render PDF ใหม่ในรอบนี้ |
+ 
+--- old/projects/meeting-task-manager/brief.md
++++ new/docs/product/meeting-task-manager-brief.md
+@@ -27,10 +27,10 @@
+ 
+ ## เอกสารที่ให้ตรวจ
+ 
+-- [สเปกโดเมน](../../output/draft/meeting-task-manager-spec.md) — ขอบเขต หน้าจอ RACI งานรายสัปดาห์ เกณฑ์ยอมรับ และแผนลงมือ
+-- [สถาปัตยกรรมและ FUNG contract](../../output/draft/meeting-task-manager-architecture.md) — การแบ่งเจ้าของข้อมูล การเชื่อมต่อ revision และการกันงานซ้ำ
++- [สเปกโดเมน](meeting-task-manager-spec.md) — ขอบเขต หน้าจอ RACI งานรายสัปดาห์ เกณฑ์ยอมรับ และแผนลงมือ
++- [สถาปัตยกรรมและ FUNG contract](meeting-task-manager-architecture.md) — การแบ่งเจ้าของข้อมูล การเชื่อมต่อ revision และการกันงานซ้ำ
+ - [Weekly seed](../../output/draft/meeting-task-manager-weekly-seed.json) — รายการ 5 งานสำหรับนำเข้าหลังอนุมัติ
+-- [Weekly Kanban เดิม](../../output/draft/weekly-kanban-2026-09-28.md) — ต้นทางของชื่องาน PIC และเกณฑ์ปิดงาน
++- [Weekly Kanban เดิม](weekly-kanban-2026-09-28.md) — ต้นทางของชื่องาน PIC และเกณฑ์ปิดงาน
+ 
+ ## ความเสี่ยงและขอบเขต
+ 
+@@ -67,4 +67,4 @@
+ 
+ เพิ่มโดเมนใน Mission Control เดิมแล้ว: Weekly To-do/Kanban/List/RACI, Members, manual task, nullable details, MoSCoW รายสัปดาห์, IndexedDB และ Backup v2 พร้อมรับ v1 ตัวเชื่อม FUNG อยู่ใน isolated worktree และผ่าน source/fixture/browser tests; installed desktop, เสียงจริง/Whisper และโมเดลจริงยัง NOT_RUN
+ 
+-ผลตรวจและ version diff: [implementation report](../../output/draft/meeting-task-manager-verification.md) · [คู่มือใช้งาน](../../output/draft/meeting-task-manager-guide.md)
++ผลตรวจและ version diff: [implementation report](meeting-task-manager-verification.md) · [คู่มือใช้งาน](meeting-task-manager-guide.md)
+--- /dev/null
++++ new/README.md
+@@ -0,0 +1,60 @@
++# Zuri-Go · 0.4.1
++
++Let’s Go to Market. Together.
++
++โปรเจกต์หลักอยู่ที่ **D:/workspace/zuri-go** ตั้งแต่การแยก source รุ่น 0.4.1 ใช้ PostgreSQL และบัญชีสมาชิกเดิม ผลลัพธ์ Dashboard และ Metrics build ตรงกับรุ่น 0.4.0 ทุก byte การจัดโฟลเดอร์รอบนี้ไม่ได้เผยแพร่ production รุ่นใหม่
++
++## เริ่มใช้งาน
++
++ต้องมี Node 24, Python 3, Docker Desktop และ installed Codex Data plugin สำหรับ build Dashboard เครื่องนี้ติดตั้งไว้แล้ว
++
++```powershell
++cd D:\workspace\zuri-go
++npm run setup
++npm run build
++npm start
++```
++
++เปิด http://127.0.0.1:4319/?view=1&tab=overview ใช้ 127.0.0.1 เพราะ local API ตรวจ Host/Origin คู่มืออยู่ที่ http://127.0.0.1:4319/metrics/#overview และ Graph View อยู่ที่ /metrics/#metrics-graph
++
++`npm start` เปิด Docker container เดิมและ local server แบบซ่อนหน้าต่าง ถ้าพอร์ตมีโปรแกรมอื่นใช้จะไม่หยุดให้อัตโนมัติ Log อยู่ที่ `.local/logs/` Local เป็น trusted operator; production ยังคง Guest อ่านอย่างเดียวและใช้ PID + รหัสส่วนตัวเพื่อแก้ไข
++
++## คำสั่ง
++
++| คำสั่งจาก root | ผลลัพธ์ |
++|---|---|
++| `npm run setup` | ติดตั้ง API dependencies ตาม lockfile |
++| `npm run build` | ตรวจและสร้าง Metrics, Dashboard, build/site และ build/vercel |
++| `npm start` | เปิด local PostgreSQL/server เดิมที่พอร์ต 4319 |
++| `npm test` | backend, campaign, meeting, packaging, metrics และ extraction checks; ต้องเปิด local server ก่อน |
++| `npm run backup` | full local PostgreSQL dump ลง .local/backups |
++| `npm run db:migrate` | operator ใช้เมื่ออนุมัติ migration; ไม่ต้องรันซ้ำเพื่อย้าย source |
++| `npm run members -- --cloud` | provision สมาชิกที่ยังไม่มี credential; ไม่หมุนรหัสเดิม |
++| `npm run members -- --cloud --reset ZGO-P0001` | operator เปลี่ยนรหัสของ PID ที่ระบุและ revoke sessions เดิม |
++| `npm run deploy` | เผยแพร่ build/vercel ไป production ของ project เดิม; build/test ให้ผ่านก่อน |
++
++คำสั่ง build ใช้ Data plugin 1.0.11 และ Codex Node ใน user profile ปัจจุบัน ถ้าย้ายเครื่องให้กำหนด `ZURI_GO_DATA_PLUGIN`, `ZURI_GO_BUILD_NODE` และหากจำเป็น `ZURI_GO_PYTHON` เป็นตำแหน่งติดตั้งของเครื่องนั้น ไม่ต้องคัดลอก plugin runtime เข้า source หรือปรับ protected integrity manifests
++
++## โครงสร้าง
++
++- `apps/web/`: Data App ทั้งหน่วย; UI ที่แก้ได้อยู่ใน src/content และต้องทำตาม nested AGENTS.md
++- `apps/api/`: API, auth, services, local server, PostgreSQL migrations 001–005 และ backend tests
++- `apps/metrics/`: คู่มือ/Graph ที่สร้างจาก scripts/metrics พร้อม assets/fonts/licenses และ gvm
++- `assets/`, `brand/`: source logo และกติกาแบรนด์; assets ใน UI/guide เป็นสำเนาที่ใช้งานจริง
++- `scripts/`: local startup, metrics generator, site/deploy packagers และ root command runner
++- `tests/campaign/`: campaign model regression suite; meeting suite อยู่กับ authored model
++- `docs/`: current architecture, product contracts, operations, migration evidence และประวัติรุ่นก่อน
++- `build/site/`: static files สำหรับ local; `build/vercel/`: deploy package ที่สร้างจาก allowlist
++- `.local/`: config, private member handovers, backups, import staging และ logs — ไม่เข้า Git หรือ deploy
++
++## ฐานข้อมูลและรหัสสมาชิก
++
++Local ใช้ Docker container `zuri-go-postgres`, volume `zuri-go-postgres-data`, PostgreSQL ที่ 127.0.0.1:54329 และฐาน `zuri_go` เหมือนเดิม Production ใช้ Neon และเว็บไซต์ https://zuri-metrics-map.vercel.app/ เหมือนเดิม Local/cloud ไม่ sync กันอัตโนมัติ
++
++Connection ของเครื่องนี้อยู่ `.local/config.json`; cloud operator config อยู่ `.local/cloud-config.json` ส่วน Vercel runtime ใช้ encrypted environment variables เดิม ไม่มี connection string ใน frontend
++
++ไฟล์รหัสรายคนอยู่ `.local/member-access/production/`: Chef `ZGO-P0001`, Boss `ZGO-P0002`, Tong `ZGO-P0003`, K’jeab `ZGO-P0004` ส่งเฉพาะไฟล์ของเจ้าของรหัส สมาชิกใหม่ได้ PID เมื่อบันทึก profile แต่ operator ต้อง provision credential เพื่อให้ login ได้
++
++UI JSON backup ยังเป็น export แคมเปญ/งาน ไม่รวม attachment bytes และ business-domain ทุกตาราง ใช้ full SQL backup สำหรับสำรองครบ ห้าม reset/reimport ฐานเพื่อแก้ปัญหา path
++
++ดู [สถาปัตยกรรมปัจจุบัน](docs/architecture/README.md), [การดูแลระบบ](docs/operations/runbook.md), [ผลตรวจการย้ายและ version diff](docs/migrations/verification.md)
+--- /dev/null
++++ new/AGENTS.md
+@@ -0,0 +1,14 @@
++# Zuri-Go working source
++
++This is the active standalone project. Read README.md and docs/architecture/README.md first. Approved extraction: docs/migrations/001-project-extraction.md.
++
++- Follow documentation-driven development: inspect parent and peer contracts; approve documentation before non-trivial code changes. State assumptions, complexity (C-1/C-2/C-3), risk and acceptance checks. Ask about material uncertainty.
++- Keep changes surgical. No unrelated refactors, speculative features or destructive cleanup. For bugs, confirm evidence-supported root cause and write RCA under .brain/rca before fixing.
++- Verify acceptance, relevant tests, documentation and version diff before declaring completion.
++- apps/web/AGENTS.md controls the copied Data App. Preserve its protected runtime, app ID, build integrity and UI behavior. Never bypass integrity checks.
++- Read brand/brand-profile.md for visual work. User-approved Zuri-Go logo/tagline exceptions are documented in docs/architecture/logo-correction-spec.md. Use existing approved assets; do not redraw logos or rename mascots. Brand promotion remains human-only.
++- .local contains secrets, database config, private handovers and backups. Never publish it or log credentials. Public assets and deploy files are explicitly allowlisted.
++- PostgreSQL databases and Docker volume are persistent state, not generated files. No reset, reimport, credential rotation or destructive migration without specific authorization.
++- Local is trusted operator access; production is public Guest read-only with per-Member PID/password writes. Current identity contract is docs/architecture/member-identity-spec.md.
++- Build/test/start must use this project root, without reading the previous brand-kit checkout. Historical source paths in docs/history and migration provenance are not active dependencies.
++- Do not run legacy browser automation scripts: use the current session's approved browser tools. Keep production deployment separate from local verification.
+--- /dev/null
++++ new/package.json
+@@ -0,0 +1,16 @@
++{
++  "name": "zuri-go",
++  "version": "0.4.1",
++  "private": true,
++  "type": "module",
++  "scripts": {
++    "setup": "npm ci --prefix apps/api --ignore-scripts",
++    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/local/start.ps1",
++    "build": "node scripts/run.mjs build",
++    "test": "node scripts/run.mjs test",
++    "backup": "node apps/api/backup-local.mjs",
++    "db:migrate": "node apps/api/migrate.mjs",
++    "members": "node apps/api/provision-members.mjs",
++    "deploy": "node scripts/run.mjs deploy"
++  }
++}
+--- /dev/null
++++ new/.gitignore
+@@ -0,0 +1,7 @@
++.local/
++build/
++**/node_modules/
++**/__pycache__/
++apps/web/dist/
++.env*
++*.log
+--- /dev/null
++++ new/scripts/run.mjs
+@@ -0,0 +1,25 @@
++import {execFileSync} from 'node:child_process';
++import {existsSync} from 'node:fs';
++import {fileURLToPath} from 'node:url';
++import {resolve,join} from 'node:path';
++const root=fileURLToPath(new URL('../',import.meta.url)),command=process.argv[2];
++const run=(program,args)=>execFileSync(program,args,{cwd:root,stdio:'inherit',windowsHide:true,env:{...process.env,PYTHONIOENCODING:'utf-8'}});
++const python=process.env.ZURI_GO_PYTHON||'python';
++if(command==='build'){
++ const home=process.env.USERPROFILE,plugin=process.env.ZURI_GO_DATA_PLUGIN||join(home,'.codex/plugins/cache/openai-curated-remote/data-analytics/1.0.11');
++ const node=process.env.ZURI_GO_BUILD_NODE||join(home,'.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe');
++ if(!existsSync(node)||!existsSync(join(plugin,'scripts/data-app.mjs')))throw Error('Set ZURI_GO_BUILD_NODE and ZURI_GO_DATA_PLUGIN to the installed Codex Node and Data plugin paths.');
++ run(python,['scripts/metrics/build_metrics_map.py']);
++ run(python,['scripts/metrics/verify_metrics_map_static.py']);
++ run(node,[join(plugin,'scripts/data-app.mjs'),'build','--project-dir',resolve(root,'apps/web'),'--separate-data']);
++ run(python,['scripts/site/build_unified_site.py']);
++ run(python,['scripts/deploy/build_cloud.py']);
++}else if(command==='test'){
++ run(process.execPath,['--test','apps/api/test/*.test.mjs','tests/campaign/*.test.mjs','apps/web/src/content/meeting/model.test.mjs']);
++ run(python,['-m','unittest','discover','-s','scripts/site','-p','test_unified_site.py']);
++ run(python,['scripts/metrics/verify_metrics_map_static.py']);
++ run(python,['scripts/site/verify_extraction.py']);
++}else if(command==='deploy'){
++ // An explicit npm run deploy uses the existing project link in the verified package.
++ run('powershell',['-NoProfile','-Command',"npx --yes vercel@61.1.0 deploy --prod --yes --scope pornpons-projects --cwd ./build/vercel; exit $LASTEXITCODE"]);
++}else throw Error('Expected build, test or deploy');
+--- /dev/null
++++ new/scripts/site/verify_extraction.py
+@@ -0,0 +1,54 @@
++"""Verify standalone ownership, relocation paths and the public/private package boundary."""
++from pathlib import Path
++import hashlib
++import json
++import re
++
++ROOT = Path(__file__).resolve().parents[2]
++manifest = json.loads((ROOT / 'docs/migrations/source-manifest.json').read_text(encoding='utf-8'))
++checked = 0
++for entry in manifest['files']:
++    target = entry['target'].replace('\\', '/')
++    if target.startswith(('apps/web/', 'assets/', '.local/member-access/')):
++        data = (ROOT / target).read_bytes()
++        assert hashlib.sha256(data).hexdigest() == entry['sha256'], target
++        checked += 1
++for folder in ['apps/api', 'scripts', 'tests']:
++    for path in (ROOT / folder).rglob('*'):
++        if not path.is_file() or any(p in path.parts for p in ['node_modules', '__pycache__']):
++            continue
++        if path.suffix not in ['.mjs', '.py', '.ps1']:
++            continue
++        text = path.read_text(encoding='utf-8')
++        if path != Path(__file__).resolve():
++            assert not re.search(r'D:[/\\]zuri-brand-kit|output/draft/', text, re.I), str(path)
++
++secrets = []
++for name in ['config.json', 'cloud-config.json']:
++    path = ROOT / '.local' / name
++    if path.exists():
++        config = json.loads(path.read_text(encoding='utf-8-sig'))
++        secrets.extend(config[k] for k in ['adminUrl', 'databaseUrl', 'sessionSecret', 'passwordHash'] if config.get(k))
++for path in (ROOT / '.local/member-access/production').glob('*.json'):
++    secrets.append(json.loads(path.read_text(encoding='utf-8'))['password'])
++count = 0
++for path in (ROOT / 'build/vercel').rglob('*'):
++    if not path.is_file() or any(p in path.parts for p in ['node_modules', '.vercel']):
++        continue
++    relative = path.relative_to(ROOT / 'build/vercel')
++    assert '.local' not in relative.parts and not path.name.startswith('.env'), str(relative)
++    assert path.name not in ['provision-members.mjs', 'setup-local.mjs', 'migrate.mjs'], str(relative)
++    data = path.read_bytes()
++    assert all(secret.encode() not in data for secret in secrets), 'Private value in package'
++    count += 1
++assert count == 46, count
++build = json.loads((ROOT / 'apps/web/dist/data-app-build.json').read_text())
++snapshot = json.loads((ROOT / 'apps/web/dist' / build['snapshot']['path']).read_text(encoding='utf-8'))
++assert snapshot['id'] == 'dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1'
++project = json.loads((ROOT / 'build/vercel/.vercel/project.json').read_text())
++assert project['projectId'] == 'prj_8f3zf1qaZnRcAvWabOv1PWAPIABG'
++report = {'unchangedSourceFilesChecked': checked, 'deployFiles': count, 'secretsExcluded': True, 'standalonePaths': True, 'appId': snapshot['id'], 'projectId': project['projectId'], 'htmlSha256': build['html']['sha256'], 'runtimeSha256': build['runtimeSha256']}
++out = ROOT / 'docs/migrations/verification'
++out.mkdir(parents=True, exist_ok=True)
++(out / 'extraction.json').write_text(json.dumps(report, indent=2) + '\n')
++print(json.dumps(report))
+--- /dev/null
++++ new/scripts/deploy/project.json
+@@ -0,0 +1 @@
++{"projectId":"prj_8f3zf1qaZnRcAvWabOv1PWAPIABG","orgId":"team_ffvAb1lASX07dwqLeKwEAhlz","projectName":"zuri-metrics-map"}--- /dev/null
++++ new/docs/architecture/README.md
+@@ -0,0 +1,17 @@
++# Current architecture index
++
++Current source layout: 0.4.1. Current production behavior: 0.4.0. Working source: D:/workspace/zuri-go.
++
++อ่านตามลำดับ authority: user approval → [Member identity](member-identity-spec.md) → [Guest access](guest-access-spec.md) → amendments ใน [Cloud deployment](cloud-deployment-spec.md) / [data model](data-model.md) → [architecture baseline](architecture.md)
++
++เอกสาร baseline เก็บประวัติการออกแบบตั้งแต่ local-only และ shared password ข้อกำหนดเหล่านั้นถูกแทนด้วย approved Guest/Member amendments แล้ว ห้ามใช้ baseline เก่าปิด Guest หรือเปิด shared password กลับมา
++
++- UI และ API ใช้ origin เดียว; local serve build/site, production deploy build/vercel
++- Database: PostgreSQL schema 5; local Docker กับ production Neon เป็นคนละ state ไม่ sync อัตโนมัติ
++- Hosted reads: public Guest ตาม Business เดิม; writes: same-origin + signed Member session + active/version checks ใน transaction
++- Local: trusted operator ผูก loopback; ไม่อ้างว่าผู้ทำรายการเป็น Member โดยไม่มี session
++- PID เป็น public stable identifier; UUID เป็น PK/FK; credentials และ handovers แยกจาก profiles และ static package
++- Data App shell อยู่ apps/web ทั้งหน่วย มี stable app ID เดิม; API import domain models จาก authored content ใน apps/web ไม่มี shared package เพิ่ม
++- Metrics อยู่ apps/metrics และใช้ generator ใน scripts/metrics; /metrics/ เป็นส่วนของ site เดียว
++
++[แผนจัดโครงสร้างที่อนุมัติ](../migrations/001-project-extraction.md) · [ผลตรวจจริง](../migrations/verification.md) · [root README](../../README.md)
+--- /dev/null
++++ new/docs/product/README.md
+@@ -0,0 +1,13 @@
++# Product documentation
++
++This folder retains the approved design history of campaigns, Metrics/Graph, weekly Kanban and Meeting & Task Manager. File paths and baseline infrastructure statements inside older documents describe their original version; current build/start/deploy commands are in the [project README](../../README.md).
++
++- [Campaign Mission Control](campaign-mission-control-spec.md)
++- [Meeting & Task Manager](meeting-task-manager-spec.md)
++- [Meeting architecture](meeting-task-manager-architecture.md)
++- [Metrics graph](campaign-01_metrics-graph-spec.md)
++- [Unified site](unified-site-spec.md)
++- [Business Overview](../architecture/overview-spec.md)
++- [Current architecture and identity authority](../architecture/README.md)
++
++The 0.4.1 extraction changes source layout and operational paths only; it does not reinterpret KPI formulas, targets, RACI, MoSCoW, Guest policy or Member identity.
+--- /dev/null
++++ new/docs/operations/runbook.md
+@@ -0,0 +1,25 @@
++# Zuri-Go operations after extraction
++
++Run all commands from the project root described in [README](../../README.md).
++
++## Database custody
++Existing local Docker container and volume are retained. `.local/config.json` selects the existing local Business; `.local/cloud-config.json` is for trusted operator cloud access. These files and `.local/postgres.env` are private. Never put them in apps/metrics, apps/web/src/data.json, build/site or build/vercel.
++
++Migration source is `apps/api/migrations/`; five historical SQL migrations were copied without modification. `npm run db:migrate` is an explicit schema operation, not a startup or extraction prerequisite. Do not use setup/import to initialize over an occupied Business. App runtime uses a restricted PostgreSQL role; admin credentials stay outside deployment.
++
++`npm run backup` creates a full local SQL dump under `.local/backups`. Cloud requires a matching-major pg_dump and the private admin connection. Extraction reused existing cloud checkpoints; it did not claim a new cloud backup or restore drill. Member private handovers are retained byte-identical. Operator reset/enable/disable commands stay documented in the identity contract; do not infer authority to rotate credentials from a file move.
++
++## Build and deploy
++`npm run build` verifies the copied Data App with the installed Data plugin, builds the guide, assembles static content and creates the allowlisted Vercel package. Do not hand-edit generated files. `npm test` includes PostgreSQL tests that create isolated QA Businesses and requires the local server on 4319 for HTTP checks.
++
++Durable project binding is `scripts/deploy/project.json`, copied by the packager into `build/vercel/.vercel/project.json`: project `zuri-metrics-map`, scope `pornpons-projects`, project ID `prj_8f3zf1qaZnRcAvWabOv1PWAPIABG`. It was copied from the verified existing binding. `npm run deploy` invokes Vercel CLI 61.1.0 for production only when the operator requests deployment. No new Vercel project or provider is needed. The packager restores this binding when regenerating build output and refuses to overwrite a conflicting binding; never silently create a new project.
++
++Production environment: ZURI_GO_DATABASE_URL, ZURI_GO_BUSINESS_ID, ZURI_GO_SESSION_SECRET, ZURI_GO_PUBLIC_ORIGIN. Individual credential hashes live in PostgreSQL; there is no shared-password fallback.
++
++## Local service and rollback
++`npm start` opens Docker and starts `apps/api/server.mjs` on 127.0.0.1:4319. Logs: `.local/logs/server.log` and server-error.log. An existing listener is accepted only after API Business identity matches; unrelated processes are not stopped automatically.
++
++For rollback, stop only the identified new Zuri-Go listener and run the previous checkpoint's startup command. The persistent database has not moved, so no restore/reimport is needed for a source-path rollback. Rollback is a deliberate operator action; the old brand-kit source is frozen and its README points here.
++
++## Documentation history
++`docs/history/` retains release evidence, screenshots and diffs from prior versions. Paths inside preserved evidence describe where files were when verified; before-snapshots and temporary test data remain in the original checkpoint. Current commands are in the root README and this runbook. Existing external FUNG/AI limitations remain; extraction did not exercise external providers or publish social content.
+--- /dev/null
++++ new/.brain/rca/project-extraction-metrics-route-check.md
+@@ -0,0 +1,11 @@
++# Metrics route checker after extraction
++
++Symptom: static verification reports missing files at D:/ for /?view=1&tab=overview and meeting-task-manager.
++
++Evidence: the relocated guide has same-origin site navigation; verify_metrics_map_static.py resolves each non-external link against the filesystem. The guide's 18 pages, 40 terms, assets and anchors pass.
++
++Root cause: a filesystem-only assumption in the original checker treats a site-root navigation route as an asset path. Extraction replaces the old authoring-dist link with the approved root route.
++
++Escaped detection: earlier source layout used a relative dist/index.html path and the site packager rewrote it later.
++
++Prevention: recognize only the two approved root navigation routes in the structural checker; retain filesystem validation for asset references. Verify these routes over HTTP after building the complete site. No browser behavior change is needed.

@@ -1,0 +1,73 @@
+--- before/projects/campaign-01/build_metrics_map.py
++++ after/projects/campaign-01/build_metrics_map.py
+@@ -7,6 +7,18 @@
+ OUT = ROOT / 'output/draft/campaign-01_metrics-map.html'
+ PAGES = []
+ PAGE_TOTAL = 18
++
++SITE_NAV = '''<nav class="site-nav" aria-label="เมนูเว็บไซต์"><span>WORKSPACE</span><a href="campaign-mission-control/dist/index.html?view=1&amp;tab=overview">Marketing</a><a href="campaign-mission-control/dist/index.html?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav>'''
++SITE_CSS = '''
++.site-nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:14px max(18px,calc((100% - 1390px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
++.nav{position:static}html{scroll-padding-top:calc(var(--site-nav-height,64px) + 16px)}
++.site-nav>span{font:600 11px Manrope,sans-serif;letter-spacing:.16em;color:var(--muted);margin-right:12px}
++.site-nav>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
++.site-nav>a:hover,.site-nav>a[aria-current="page"]{border-color:var(--amber);background:var(--tint)}
++.site-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
++@media(max-width:650px){.site-nav>span{width:100%}}
++@media print{.site-nav{display:none!important}}
++'''
+ 
+ CSS = r'''
+ :root{color-scheme:light;--paper:#FFFFFF;--canvas:#F7F8FA;--ink:#1F2937;--muted:#6B7280;--line:#D6ECFA;--amber:#E8820C;--tint:#FFF8F0;--tint-ink:#B86A08;--dot:rgba(31,41,55,.13)}
+@@ -486,9 +498,20 @@
+   if (!pages.length || !previous || !next) return;
+   let activeIndex = 0;
+   body.classList.add('viewer-ready');
++  const siteNav = document.querySelector('.site-nav');
++  if (siteNav) {
++    const syncNavHeight = () => document.documentElement.style.setProperty('--site-nav-height', `${siteNav.offsetHeight}px`);
++    syncNavHeight();
++    new ResizeObserver(syncNavHeight).observe(siteNav);
++  }
+ 
+   function showHash(scrollToTarget = false) {
+     const id = decodeURIComponent(location.hash.slice(1));
++    document.querySelectorAll('.site-nav [data-site-section]').forEach(link => {
++      const active = link.dataset.siteSection === (id === 'metrics-graph' ? 'graph' : 'guide');
++      if (active) link.setAttribute('aria-current', 'page');
++      else link.removeAttribute('aria-current');
++    });
+     if (id === 'metrics-graph') {
+       body.dataset.view = 'graph';
+       if (scrollToTarget) requestAnimationFrame(() => document.getElementById('metrics-graph').scrollIntoView({block:'start'}));
+@@ -720,6 +743,7 @@
+ <html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="คู่มือ metrics การตลาด 18 หน้า พร้อมมุมมองกราฟ 2D และ 3D, MQL, SQL, AARRR, KPI และ Budget โดย zuri"><title>zuri — Marketing Metrics Map · REV 04</title>
+ <link rel="stylesheet" href="assets/fonts/metrics-map.css">
+ <style>'''+CSS+GRAPH_CSS+VIEWER_CSS+'''</style></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>'''+GRAPH_HTML+'''<div id="guideViewer"><div class="page-controls" id="guideControls" aria-label="การนำทางหน้าคู่มือ"><button class="page-control-button" id="previousPage" type="button" aria-label="ไปหน้าก่อนหน้า">← หน้าก่อน</button><div class="page-control-current"><span class="caps">Guide page</span><strong id="pageCurrent" aria-live="polite">01 / 18</strong><span id="pageTitle">Marketing metrics, mapped.</span></div><button class="page-control-button" id="nextPage" type="button" aria-label="ไปหน้าถัดไป">หน้าถัดไป →</button></div>'''+''.join(PAGES)+'''</div></main><script>'''+GRAPH_SCRIPT+VIEWER_SCRIPT+'''</script></body></html>'''
++HTML = HTML.replace('</style>', SITE_CSS + '</style>', 1).replace('<nav class="nav"', SITE_NAV + '<nav class="nav"', 1)
+ assert len(PAGES)==PAGE_TOTAL
+ OUT.write_text(HTML,encoding='utf-8')
+ print(f'Built {OUT} ({len(PAGES)} pages, {OUT.stat().st_size:,} bytes)')
+--- before/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
++++ after/output/draft/campaign-mission-control/src/content/meeting/MeetingWorkspace.jsx
+@@ -39,7 +39,7 @@
+   function status(task,status){if(status===task.status)return;change(s=>saveTask(s,{id:task.id,version:task.version,status,statusConfirmed:true})).catch(e=>setModal({kind:'task',task,error:e.message}));}
+   function card(task){return <div key={task.id} className="mt-task" draggable={!busy} onDragStart={e=>{e.dataTransfer.setData('application/x-zuri-task',task.id);e.dataTransfer.effectAllowed='move';}}><button className="mt-task-open" onClick={()=>openTask(task)}><div className="mt-card-top"><Priority value={task.priority}/><span>{task.seedTaskId||task.id.slice(0,6)}</span></div><h3>{task.title}</h3><p>{task.description||task.deliverable||'เพิ่มรายละเอียดภายหลังได้'}</p><div className="mt-assignee"><span className="mt-avatar">{memberName(state,task.responsibleId).slice(0,1)}</span><span>{memberName(state,task.responsibleId)}<small>A · {memberName(state,task.accountableId)}</small></span><span>{task.dueDate?dateLabel(task.dueDate):''}</span></div>{!task.statusConfirmed&&<small className="mt-warning">สถานะรอยืนยัน</small>}{task.blocker&&<p className="mt-warning">ติดขัด: {task.blocker}</p>}</button><footer><span>{task.sourceKind==='meeting'?'FUNG':task.sourceKind==='weekly-plan'?'Weekly plan':'Manual'}</span><label><span className="mc-sr-only">สถานะ {task.title}</span><select aria-label={`สถานะ ${task.title}`} disabled={busy} value={task.status} onChange={e=>status(task,e.target.value)}>{Object.entries(STATUSES).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label></footer></div>;}
+   const linked=state?.tasks.filter(t=>t.campaignId===campaignWorkspace.selected)||[];
+-  return <div className="mt-shell"><nav className="mt-domain" aria-label="เลือกโดเมน"><span>WORKSPACE</span><Button className={!inMeeting?'mt-domain-selected':''} onClick={()=>shell.exploreDashboard('overview')}>Marketing</Button><Button className={inMeeting?'mt-domain-selected':''} onClick={()=>shell.exploreDashboard('meeting-task-manager')}>Meeting & Task Manager</Button></nav>
++  return <div className="mt-shell"><nav className="mt-domain" aria-label="เมนูเว็บไซต์"><span>WORKSPACE</span><Button className={!inMeeting?'mt-domain-selected':''} aria-current={!inMeeting?'page':undefined} onClick={()=>shell.exploreDashboard('overview')}>Marketing</Button><Button className={inMeeting?'mt-domain-selected':''} aria-current={inMeeting?'page':undefined} onClick={()=>shell.exploreDashboard('meeting-task-manager')}>Meeting & Task Manager</Button><a href="/metrics/#overview">ความรู้ Metrics</a><a href="/metrics/#metrics-graph">Graph View</a></nav>
+     {!inMeeting?<CampaignContent key={epoch} view={activeTabId} initialWorkspace={campaignWorkspace} onWorkspaceChange={setCampaignWorkspace} onBackup={backup} onImport={importBackup} linkedTasks={linked.length?<section className="mt-linked"><h3>งานที่เชื่อมจาก Meeting & Task Manager</h3>{linked.map(t=><button key={t.id} onClick={()=>{shell.exploreDashboard('meeting-task-manager');setView('tasks');openTask(t);}}>{t.title}<span>{memberName(state,t.responsibleId)} · {STATUSES[t.status]} ↗</span></button>)}</section>:null}/>:<article className="mc-app mt-app" data-reviewed-rows>
+       <div className="mt-heading"><div><span className="mc-kicker">MEETING & TASK MANAGER</span><h2>คุยให้ชัด แล้วไปต่อให้เป็นงาน</h2><p>งานของทีม · บันทึกในเครื่องนี้</p></div><div className="mt-heading-actions"><Button onClick={()=>{setView('meetings');setSelectedMeeting(null);}}>นำเข้างานจากประชุม</Button><Button className="mc-primary" onClick={()=>openTask(null)} disabled={!state||!!storageError}>＋ เพิ่มงาน</Button></div></div>
+       <SegmentedControl value={view} options={VIEWS} onChange={setView}/>
+--- before/output/draft/campaign-mission-control/src/content/meeting/meeting.css
++++ after/output/draft/campaign-mission-control/src/content/meeting/meeting.css
+@@ -2,6 +2,9 @@
+ .mt-domain{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:12px 0 20px;border-bottom:1px solid var(--border);margin-bottom:18px}
+ .mt-domain>span{font:11px Manrope,sans-serif;letter-spacing:.16em;color:var(--secondary);margin-right:12px}
+ .mt-domain .mt-domain-selected{border-color:#E8820C;background:color-mix(in srgb,#E8820C 10%,var(--background));color:var(--text)}
++.mt-domain>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-weight:600;color:var(--text);text-decoration:none;background:var(--background)}
++.mt-domain>a:hover{border-color:#E8820C}.mt-domain>a:focus-visible{outline:2px solid #E8820C;outline-offset:3px}
++@media print{.mt-domain{display:none!important}}
+ .mt-app h2{font-size:26px;line-height:1.5}.mt-app h3{font-size:16px}.mt-app h4{margin:12px 0 6px}
+ .mt-heading,.mt-heading-actions,.mt-week-bar,.mt-week-title,.mt-filters,.mt-member-head,.mt-intake-title,.mt-transcript-heading,.mt-proposal-heading,.mt-audio,.mt-draft-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+ .mt-heading,.mt-week-bar,.mt-member-head,.mt-intake-title,.mt-transcript-heading,.mt-proposal-heading{justify-content:space-between}
