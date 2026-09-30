@@ -250,3 +250,42 @@ test('a receipt made by the old client replays through the endpoint by the old p
  // Tasks written by the old flow keep their references; the quote is in the link, and the old receipt replays after a re-save too.
  const after=await run(c=>readLegacy(c,lb));assert.equal(after.meetingTaskManager.tasks.find(t=>t.id===ids[0]).sourceRefs[0].evidence[0].quote,'ตรวจหน้าเว็บ');
 });
+test('a restricted meeting with an Inactive participant commits and keeps them in the audience; an Inactive R is refused (WI-12 D2)',async()=>{
+ const setStatus=(m,status)=>owner('UPDATE zuri_go.members SET status=$3 WHERE business_id=$1 AND id=$2',[b,m.id,status]);
+ await setStatus(m2,'inactive');
+ try{
+  const made=await prepare('INACTIVE-P',restricted(m0,m1,m2)),done=await commit(m0,made,[create('INACTIVE-P')]);
+  assert.equal(done.replayed,false);assert.equal(done.receipt.taskIds.length,1);
+  const row=await taskRow('งาน INACTIVE-P');assert.equal(row.visibility,'restricted');assert.deepEqual(await viewersOf(row.id),[m0.id,m1.id,m2.id].sort(),'the Inactive participant is a viewer');
+  const other=await prepare('INACTIVE-R',restricted(m0,m1)),before=await counts();
+  await assert.rejects(commit(m0,other,[create('INACTIVE-R',{responsibleId:m2.legacy})]),e=>e.status===422&&/Active/.test(e.message),'an Inactive R is work, not access');
+  await assert.rejects(commit(m0,other,[create('INACTIVE-R',{accountableId:m2.legacy})]),e=>e.status===422&&/Active/.test(e.message));
+  assert.deepEqual(await counts(),before);assert.equal(await tasksTitled('งาน INACTIVE-R'),0);
+ }finally{await setStatus(m2,'active');}
+});
+test('history events keep no quote text, after a commit or a later edit; no priority event when the priority does not change (WI-12 D14, D12)',async()=>{
+ // A business task for p2 to link to, then a meeting whose p1 creates a task (no priority) and whose p2 links with a priority.
+ const read=await as('operator',c=>readLegacy(c,b)),d=read.meetingTaskManager,target=saveTask(d,{title:'งานผูก HISTORY',responsibleId:m2.legacy});
+ await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
+ const made=await prepare('HISTORY',restricted(m0,m1)),second='ประโยคที่สอง HISTORY',linkTarget=(await as('operator',c=>readLegacy(c,b))).meetingTaskManager.tasks.find(t=>t.title==='งานผูก HISTORY');
+ await commit(m1,made,[create('HISTORY',{priority:null}),{proposalId:'p2',mode:'link',taskId:linkTarget.id,taskVersion:linkTarget.version,week:seed.weekStart,priority:'should'}]);
+ const events=()=>owner("SELECT entity_id,event_type,after_data FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='legacy_task_event'").then(r=>r.rows);
+ const row=await taskRow('งาน HISTORY'),linked=await taskRow('งานผูก HISTORY');
+ let rows=await events();
+ for(const text of [made.quote,second])assert.equal(everywhere(rows,text),false,'no quote in any history event: '+text);
+ const created=rows.find(r=>r.entity_id===row.id&&r.after_data.type==='task-created'),link=rows.find(r=>r.entity_id===linked.id&&r.after_data.type==='source-linked');
+ assert.ok(created&&link,'both events are still recorded');
+ assert.equal(created.after_data.detail.after.sourceRefs[0].proposalId,'p1');assert.equal(created.after_data.detail.after.sourceRefs[0].evidence,undefined);
+ assert.equal(link.after_data.detail.proposalId,'p2');assert.equal(link.after_data.detail.evidence,undefined);assert.equal(link.after_data.detail.meetingId,made.mid);
+ // D12: the new task joined the week without a priority, so it has no priority event; the link set 'should', so it has one.
+ assert.equal(rows.filter(r=>r.entity_id===row.id&&r.after_data.type==='priority').length,0);assert.equal(rows.filter(r=>r.entity_id===linked.id&&r.after_data.type==='priority').length,1);
+ assert.equal((await owner('SELECT priority FROM zuri_go.weekly_plan_tasks WHERE business_id=$1 AND task_id=$2',[b,row.id])).rows[0].priority,null,'the week entry itself is kept');
+ // A later edit by a participant: the client holds the quote (re-attached from the link), its event snapshots must not store it.
+ const view=await as(m1,c=>readLegacy(c,b)),mine=view.meetingTaskManager.tasks.find(t=>t.title==='งาน HISTORY');
+ assert.equal(everywhere(mine.sourceRefs,made.quote),true,'the participant still reads the evidence');
+ saveTask(view.meetingTaskManager,{id:mine.id,version:mine.version,description:'แก้หลังประชุม'});
+ await write(m1,c=>saveLegacy(c,b,{version:view.version,meetingTaskManager:view.meetingTaskManager}));
+ rows=await events();assert.ok(rows.some(r=>r.entity_id===row.id&&r.after_data.type==='task-updated'),'the edit is recorded');
+ for(const text of [made.quote,second])assert.equal(everywhere(rows,text),false,'no quote after the edit: '+text);
+ assert.equal(everywhere(await as(m1,c=>readLegacy(c,b)),made.quote),true,'and the participant reads it on the task');
+});

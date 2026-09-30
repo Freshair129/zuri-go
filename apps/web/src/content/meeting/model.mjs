@@ -14,6 +14,8 @@ export const membership=(s,id,week)=>s.weeks.find(w=>w.weekStart===week)?.entrie
 const event=(s,type,taskId,detail)=>s.events.push({id:uid(),type,taskId,detail:structuredClone(detail),at:now(),actor:'ผู้ใช้ในเครื่อง'});
 function checkVersion(old,expected){if(old&&expected!=null&&old.version!==expected)fail('ข้อมูลถูกแก้แล้ว กรุณาปิดแล้วเปิดรายการใหม่ก่อนบันทึก');}
 function person(s,id,old){if(!id)return null;const member=s.members.find(m=>m.id===id);if(!member)fail('ไม่พบ Member ที่อ้างอิง');if(member.status==='inactive'&&id!==old)fail('สมาชิกนี้ปิดใช้งานอยู่ กรุณาเลือกคนที่ Active');return id;}
+// A named viewer or meeting participant is access, not work: it must exist but may be Inactive (WI-12 D2).
+const known=(s,id)=>{if(!id)return null;if(!s.members.some(m=>m.id===id))fail('ไม่พบ Member ที่อ้างอิง');return id;};
 export function saveMember(s,input){
   const old=s.members.find(m=>m.id===input.id);checkVersion(old,input.version);
   const m={...(old||{id:input.id||uid(),createdAt:now(),version:0}),displayName:required(input.displayName??old?.displayName,'ชื่อที่ใช้แสดง'),status:input.status??old?.status??'active',updatedAt:now()};
@@ -30,7 +32,10 @@ export function setPriority(s,taskId,week,priority=null,priorityNote=null){
   let plan=s.weeks.find(w=>w.weekStart===week);if(!plan){plan={weekStart:week,timezone:'Asia/Bangkok',entries:[]};s.weeks.push(plan);}
   let item=plan.entries.find(e=>e.taskId===taskId);const before=item?{...item}:null;
   if(!item){item={taskId,priority:null,priorityNote:null};plan.entries.push(item);}
-  item.priority=priority;item.priorityNote=text(priorityNote);event(s,'priority',taskId,{weekStart:week,before,after:{...item}});
+  const note=text(priorityNote),changed=(before?.priority??null)!==priority||(before?.priorityNote??null)!==note;
+  item.priority=priority;item.priorityNote=note;
+  // No history event when neither the priority nor the note changes, e.g. null to null on a seed or a week chosen without a priority (WI-12 D12).
+  if(changed)event(s,'priority',taskId,{weekStart:week,before,after:{...item}});
 }
 export function saveTask(s,input,{week,priority=null,priorityNote=null}={}){
   const old=s.tasks.find(t=>t.id===input.id);checkVersion(old,input.version);
@@ -41,7 +46,7 @@ export function saveTask(s,input,{week,priority=null,priorityNote=null}={}){
   t.accountableConfirmed=input.accountableConfirmed??old?.accountableConfirmed??false;
   // Visibility (FR-011-004, -005, -011) is enforced by the server; a widening reason is sent once and never kept.
   if(Object.hasOwn(input,'visibility'))t.visibility=input.visibility||null;if(Object.hasOwn(input,'teamId'))t.teamId=input.teamId||null;
-  if(Object.hasOwn(input,'viewerIds'))t.viewerIds=[...new Set((input.viewerIds||[]).map(id=>person(s,id,old?.viewerIds?.includes(id)?id:null)).filter(Boolean))];
+  if(Object.hasOwn(input,'viewerIds'))t.viewerIds=[...new Set((input.viewerIds||[]).map(id=>known(s,id)).filter(Boolean))];
   if(text(input.visibilityReason))t.visibilityReason=text(input.visibilityReason);else delete t.visibilityReason;
   t.acceptanceProposed=input.acceptanceProposed??old?.acceptanceProposed??false;t.raciProposed=input.raciProposed??old?.raciProposed??false;
   if(old&&t.accountableId!==old.accountableId&&!Object.hasOwn(input,'accountableConfirmed'))t.accountableConfirmed=false;

@@ -88,6 +88,12 @@ async function checkPeople(c,b,ids){
   const found=(await c.query('SELECT id FROM members WHERE business_id=$1 AND id=ANY($2::uuid[])',[b,wanted])).rows.length;
   if(found!==wanted.length)ruleFail('MEMBER_NOT_FOUND',422,'ไม่พบสมาชิกที่อ้างอิงในธุรกิจนี้');
 }
+// A new R, A, C or I must be Active; a role the task already had with that Member is kept (WI-12 D2). Viewers are access, not work.
+async function checkActive(c,b,before,after){
+  const roleIds=t=>[['R',[t?.roles.R]],['A',[t?.roles.A]],['C',t?.roles.C||[]],['I',t?.roles.I||[]]].flatMap(([role,ids])=>ids.filter(Boolean).map(id=>role+':'+id));
+  const had=new Set(roleIds(before)),added=[...new Set(roleIds(after).filter(x=>!had.has(x)).map(x=>x.slice(2)))];
+  if(added.length&&(await c.query("SELECT 1 FROM members WHERE business_id=$1 AND id=ANY($2::uuid[]) AND status='inactive'",[b,added])).rowCount)ruleFail('MEMBER_INACTIVE');
+}
 const named=t=>[t.roles.R,t.roles.A,...t.roles.C,...t.roles.I,...t.viewer_ids].filter(Boolean);
 async function writePeople(c,b,id,before,after){
   if(!before||JSON.stringify(before.roles)!==JSON.stringify(after.roles)){
@@ -115,7 +121,7 @@ export async function createTask(c,b,input,viewer=viewerOf(c),{source='manual'}=
   for(const k of COLUMNS)if(!(k in after))after[k]=data[k]??(k==='acceptance_proposed'?false:null);
   after.roles.C=[...new Set(after.roles.C||[])];after.roles.I=[...new Set(after.roles.I||[])];after.roles.A_confirmed=!!after.roles.A_confirmed&&!!after.roles.A;
   const e=saveError(null,ruleTask(after));if(e)ruleFail(e);
-  await checkContexts(c,b,null,after,viewer);await checkPeople(c,b,named(after));
+  await checkContexts(c,b,null,after,viewer);await checkPeople(c,b,named(after));await checkActive(c,b,null,after);
   const access=visibilityChange(viewer,null,{visibility:after.visibility,team_id:after.team_id},{named:named(after)});if(access.error)accessFail(access.error);
   const id=randomUUID(),code=await allocate(c,b,'tasks'),values={...Object.fromEntries(COLUMNS.map(k=>[k,after[k]])),code,visibility:after.visibility,status_confirmed:true,source_kind:source,idempotency_key:key,idempotency_hash:payloadHash};
   const keys=Object.keys(values);
@@ -143,7 +149,7 @@ export async function updateTask(c,b,id,input,viewer=viewerOf(c),{campaign=false
   // A Workboard completion is kept until the task leaves Done; a new completion is a standard one (AC-010-007-04).
   after.completion_rule=after.status==='done'&&before.status==='done'?before.completion_rule:'standard';
   const e=saveError(ruleTask(before),ruleTask(after));if(e)ruleFail(e);
-  await checkContexts(c,b,before,after,viewer);await checkPeople(c,b,named(after));
+  await checkContexts(c,b,before,after,viewer);await checkPeople(c,b,named(after));await checkActive(c,b,before,after);
   const changed=after.visibility!==before.visibility||after.team_id!==before.team_id;
   if(changed||after.visibility==='restricted'){
     const access=visibilityChange(viewer,{visibility:before.visibility,team_id:before.team_id},{visibility:after.visibility,team_id:after.team_id},{accountableId:before.roles.A||after.roles.A,reason:data.visibility_reason,named:named(after)});

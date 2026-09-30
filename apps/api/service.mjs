@@ -5,11 +5,22 @@ import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.m
 import {viewerOf,taskNames,meetingNames,projectNames,readable,withholdQuotes} from './audience.mjs';
 export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
 export function fail(message,status=422){throw Object.assign(Error(message),{status});}
+// Member registry (WI-12 D3, D16). Adding a Member and changing any status need the Business admin or the local operator; a Member edits their
+// own details but not their own status; another Member's record needs the admin or the operator. `row` is the stored row (null for a new Member), `fields` the changed columns.
+export const canEditMembers=v=>v?.kind==='operator'||v?.kind==='member'&&v.admin===true;
+export const memberChanged=(row,fields)=>!row||Object.entries(fields).some(([k,v])=>v!==(row[k]??null));
+export function checkMemberWrite(viewer,row,fields){
+ if(row&&viewer?.kind==='member'&&row.id===viewer.memberId&&fields.status!==undefined&&fields.status!==row.status)fail('เปลี่ยนสถานะของตัวเองไม่ได้ ติดต่อ Business admin',403);
+ if(!canEditMembers(viewer)&&memberChanged(row,fields)&&!(row&&viewer?.kind==='member'&&row.id===viewer.memberId))fail('เฉพาะ Business admin แก้ทะเบียนสมาชิกของคนอื่นหรือเพิ่มสมาชิกได้',403);
+}
+// What a Guest may read of a Member: the ID, the PID, the display name and the status (WI-12 D16).
+export const guestMember=m=>({id:m.id,pid:m.pid,display_name:m.display_name,status:m.status});
 export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks','projects','campaign_task_details'];
 // Only the viewer's tasks, with their roles and weekly entries (FR-011-007, FR-011-008).
 export async function snapshot(c,b,viewer=viewerOf(c)){
  const business=(await c.query('SELECT * FROM businesses WHERE id=$1',[b])).rows[0];if(!business)fail('ไม่พบธุรกิจ',404);
  const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);
+ if(viewer.kind==='guest')result.members=result.members.map(guestMember);
  result.tasks=readable(viewer,result.tasks,await taskNames(c,b));const ids=new Set(result.tasks.map(t=>t.id));
  for(const t of ['task_roles','weekly_plan_tasks','campaign_task_details'])result[t]=result[t].filter(r=>ids.has(r.task_id));
  result.projects=readable(viewer,result.projects,await projectNames(c,b));
@@ -42,6 +53,7 @@ export async function save(c,b,resource,input,id=null){
  const old=id?(await c.query(`SELECT * FROM ${table} WHERE business_id=$1 AND id=$2 FOR UPDATE`,[b,id])).rows[0]:null;
  if(id&&!old)fail('ไม่พบรายการ',404);if(old&&Number(input.row_version)!==Number(old.row_version))fail('ข้อมูลถูกแก้แล้ว กรุณาโหลดใหม่',409);
  let data=Object.fromEntries(allowed.filter(k=>Object.hasOwn(input,k)).map(k=>[k,clean(input[k])]));const merged={...old,...data};
+ if(resource==='members')checkMemberWrite(viewerOf(c),old,data);
  for(const k of ['url','asset_url','published_url'])validUrl(data[k]);
  if(resource==='campaigns'){
    if(old&&data.objective&&data.objective!==old.objective)fail('เปลี่ยน objective ในตั้งค่าแคมเปญ เพื่อกำหนด KPI และเป้าหมายใหม่พร้อมกัน');

@@ -104,3 +104,26 @@ test('a task reference whose evidence is withheld validates; a missing reference
   t.sourceRefs[0].evidence={withheld:true};assert.doesNotThrow(()=>validateState(s));
   t.sourceRefs[0].reviewRevisionId='missing';assert.throws(()=>validateState(s),/ฉบับประชุม/);
 });
+test('an Inactive Member may be a named viewer or meeting participant; a new R, A, C or I still may not (WI-12 D2)',()=>{
+  const s=fresh(),id=s.members[0].id;saveMember(s,{id,status:'inactive'});
+  assert.doesNotThrow(()=>saveTask(s,{id:s.tasks[0].id,viewerIds:[id]}));assert.deepEqual(s.tasks[0].viewerIds,[id]);
+  for(const key of ['responsibleId','accountableId'])assert.throws(()=>saveTask(s,{title:'ใหม่',[key]:id}),/Active/);
+  for(const key of ['consultedIds','informedIds'])assert.throws(()=>saveTask(s,{title:'ใหม่',[key]:[id]}),/Active/);
+  assert.throws(()=>saveTask(s,{title:'ใหม่',viewerIds:['no-such-member']}),/ไม่พบ Member/,'a viewer must still exist');
+  // A restricted meeting whose participant is Inactive still commits, and the participant is in the task's audience.
+  const {s:m,choices}=meetingFixture(),people=m.members.slice(0,3).map(x=>x.id);saveMember(m,{id:people[2],status:'inactive'});
+  const ids=commitBatch(m,'batch-1',choices,null,{audience:{visibility:'restricted',viewerIds:people}});assert.deepEqual(m.tasks.find(t=>t.id===ids[0]).viewerIds,people);
+  // The chosen R is still checked: an Inactive R refuses the commit and leaves nothing behind.
+  const bad=meetingFixture();saveMember(bad.s,{id:bad.choices[0].responsibleId,status:'inactive'});assert.throws(()=>commitBatch(bad.s,'batch-1',bad.choices),/Active/);assert.equal(bad.s.receipts.length,0);
+});
+test('no priority event when neither the priority nor the note changes; a change still records one (WI-12 D12)',()=>{
+  const s=fresh(),id=s.tasks[0].id,events=()=>s.events.filter(e=>e.type==='priority'&&e.taskId===id).length;
+  setPriority(s,id,'2026-10-05');assert.equal(membership(s,id,'2026-10-05').priority,null,'the week entry is still added');assert.equal(events(),0,'null to null on a week chosen without a priority');
+  setPriority(s,id,'2026-10-05');assert.equal(events(),0,'repeating null');
+  setPriority(s,id,'2026-10-05','must','จำเป็น');assert.equal(events(),1);const change=s.events.at(-1).detail;assert.equal(change.before.priority,null);assert.equal(change.after.priority,'must');
+  setPriority(s,id,'2026-10-05','must','จำเป็น');assert.equal(events(),1,'same priority and note');
+  setPriority(s,id,'2026-10-05','must','  จำเป็น  ');assert.equal(events(),1,'the note is compared after trimming');
+  setPriority(s,id,'2026-10-05','must','เปลี่ยนโน้ต');assert.equal(events(),2,'a note change is recorded');
+  setPriority(s,id,'2026-10-05','should','เปลี่ยนโน้ต');assert.equal(events(),3,'a priority change is recorded');
+  const seeded=fresh();assert.equal(seeded.events.filter(e=>e.type==='priority').length,0,'applying the seed records no priority event');
+});

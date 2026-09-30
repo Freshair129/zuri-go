@@ -1,6 +1,6 @@
 import pg from 'pg';
 import {sessionToken,sessionCookie} from '../team-auth.mjs';
-import {saveTask,addSource,saveReview,addBatch,commitBatch,reviewHash} from '../../web/src/content/meeting/model.mjs';
+import {saveMember,saveTask,addSource,saveReview,addBatch,commitBatch,reviewHash} from '../../web/src/content/meeting/model.mjs';
 import {readFile} from 'node:fs/promises';
 import test,{after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -171,6 +171,40 @@ test('Task Manager routes on the hosted API: Guest 401 on writes, viewer-filtere
  const project=await call(base+'/projects',{method:'POST',cookie,body:{name:'โปรเจกต์ผ่าน API'}});assert.equal(project.status,200);assert.match(project.body.code,/^PRJ-/);
  assert.equal((await call(base+'/tasks/'+created.body.id+'/attachments',{cookie})).status,200,'the attachments route is not shadowed');
  assert.equal((await call(base+'/tasks&board=mine')).status,401);
+});
+test('Guests read only the ID, PID, display name and status of each Member on every hosted read path (WI-12 D16)',async()=>{
+ await asOwner("UPDATE zuri_go.members SET email='d16@example.test',phone='0899999999',notes='หมายเหตุลับ D16',nickname='ชื่อเล่น D16' WHERE business_id=$1 AND id=$2",[business,members[1].id]);
+ const base='businesses/'+business,secrets=['d16@example.test','0899999999','หมายเหตุลับ D16','ชื่อเล่น D16'],total=(await asOwner('SELECT count(*)::int n FROM zuri_go.members WHERE business_id=$1',[business])).rows[0].n;
+ const cookie=(await call('login',{method:'POST',body:{password:'isolated-qa-team-password2'}})).headers['Set-Cookie'];
+ for(const path of [base+'/workspace',base+'/state',base+'/overview','bootstrap','session']){const guest=await call(path);assert.equal(guest.status,200,path);for(const s of secrets)assert.equal(JSON.stringify(guest.body).includes(s),false,path+' '+s);}
+ const workspace=(await call(base+'/workspace')).body.meetingTaskManager.members,state=(await call(base+'/state')).body.members;
+ assert.equal(workspace.length,total);assert.equal(state.length,total);
+ for(const m of workspace)assert.deepEqual(Object.keys(m).sort(),['displayName','id','pid','status']);
+ for(const m of state)assert.deepEqual(Object.keys(m).sort(),['display_name','id','pid','status']);
+ assert.ok(workspace.every(m=>m.displayName&&m.pid),'the names and PIDs a Guest needs are there');
+ for(const path of [base+'/workspace',base+'/state'])for(const s of secrets)assert.equal(JSON.stringify((await call(path,{cookie})).body).includes(s),true,'a Member reads '+s+' on '+path);
+ assert.equal((await call(base+'/teams')).status,401,'the team routes list Members only to the signed in');
+});
+test('the registry rules hold on the hosted workspace save: 403 for another Member or a new Member, own details yes, own status no, the admin any (WI-12 D3)',async()=>{
+ const base='businesses/'+business,others='เฉพาะ Business admin แก้ทะเบียนสมาชิกของคนอื่นหรือเพิ่มสมาชิกได้',ownStatus='เปลี่ยนสถานะของตัวเองไม่ได้ ติดต่อ Business admin';
+ const loginAs=async i=>(await call('login',{method:'POST',body:{password:'isolated-qa-team-password'+i}})).headers['Set-Cookie'];
+ const put=async(cookie,change)=>{const ws=(await call(base+'/workspace',{cookie})).body,d=structuredClone(ws.meetingTaskManager);change(d);return call(base+'/workspace',{method:'PUT',cookie,body:{version:ws.version,meetingTaskManager:d}});};
+ const of=(d,m)=>d.members.find(x=>x.id===m.id),stored=m=>asOwner('SELECT nickname,status FROM zuri_go.members WHERE business_id=$1 AND id=$2',[business,m.id]).then(r=>r.rows[0]),count=()=>asOwner('SELECT count(*)::int n FROM zuri_go.members WHERE business_id=$1',[business]).then(r=>r.rows[0].n);
+ const member=await loginAs(2),start=await count(),before=await stored(members[3]);
+ let refused=await put(member,d=>{of(d,members[3]).nickname='แก้โดยคนอื่น';});assert.equal(refused.status,403);assert.equal(refused.body.error,others);
+ refused=await put(member,d=>{of(d,members[3]).status='inactive';});assert.equal(refused.status,403);assert.equal(refused.body.error,others);
+ refused=await put(member,d=>saveMember(d,{displayName:'สมาชิกใหม่ hosted'}));assert.equal(refused.status,403);assert.equal(refused.body.error,others);
+ refused=await put(member,d=>{of(d,members[2]).status='inactive';});assert.equal(refused.status,403);assert.equal(refused.body.error,ownStatus);
+ assert.deepEqual(await stored(members[3]),before);assert.equal(await count(),start);assert.equal((await stored(members[2])).status,'active');
+ const own=await put(member,d=>{of(d,members[2]).nickname='ชื่อเล่น hosted';});assert.equal(own.status,200,JSON.stringify(own.body));assert.equal((await stored(members[2])).nickname,'ชื่อเล่น hosted');
+ assert.equal((await put(member,()=>{})).status,200,'an unchanged registry saves');
+ // The Business admin edits others, changes status and adds Members (set by the operator script, never by a request).
+ await asOwner('UPDATE zuri_go.members SET is_business_admin=true WHERE business_id=$1 AND id=$2',[business,members[3].id]);
+ const admin=await loginAs(3);
+ assert.equal((await put(admin,d=>{of(d,members[2]).status='inactive';})).status,200);assert.equal((await stored(members[2])).status,'inactive');
+ assert.equal((await put(admin,d=>{of(d,members[2]).status='active';})).status,200);
+ assert.equal((await put(admin,d=>saveMember(d,{displayName:'สมาชิกใหม่ hosted โดยแอดมิน'}))).status,200);assert.equal(await count(),start+1);
+ refused=await put(admin,d=>{of(d,members[3]).status='inactive';});assert.equal(refused.status,403);assert.equal(refused.body.error,ownStatus);
 });
 test('rate limiting is persisted in PostgreSQL and denies after the per-bucket threshold',async()=>{
  await transaction(business,c=>c.query("INSERT INTO team_login_limits(business_id,bucket,attempts,resets_at) VALUES($1,'global',400,now()+interval '15 minutes') ON CONFLICT(business_id,bucket) DO UPDATE SET attempts=400",[business]));

@@ -6,7 +6,7 @@ export const WORKBOARD_STATUSES = ['Backlog','Ready','Doing','Blocked','Review',
 // Backlog and Ready become `planned`; the original stays a badge (PLAN-002 Q8).
 export const FROM_WORKBOARD = {Backlog:'planned',Ready:'planned',Doing:'doing',Blocked:'blocked',Review:'review',Done:'done'};
 export const RULE_MESSAGES = {
-  TITLE_REQUIRED:'ระบุชื่องาน', STATUS_INVALID:'สถานะไม่ถูกต้อง', BLOCKER_REQUIRED:'ระบุเหตุที่ติดขัดก่อนย้ายไป Blocked',
+  TITLE_REQUIRED:'ระบุชื่องาน', STATUS_INVALID:'สถานะไม่ถูกต้อง', MEMBER_INACTIVE:'สมาชิกนี้ปิดใช้งานอยู่ กรุณาเลือกคนที่ Active', BLOCKER_REQUIRED:'ระบุเหตุที่ติดขัดก่อนย้ายไป Blocked',
   R_REQUIRED:'ก่อน Done ต้องมี R', A_UNCONFIRMED:'ก่อน Done ต้องมี A ที่ยืนยันแล้ว', ACCEPTANCE_UNCONFIRMED:'ก่อน Done ต้องมีเกณฑ์รับงานที่ยืนยันแล้ว',
   EVIDENCE_REQUIRED:'ก่อน Done ต้องมีหลักฐานส่งงาน', RECHECK_REQUIRED:'งานที่ผูก KPI หรือ gate ต้องมีวันตรวจผลซ้ำ', DUE_REQUIRED:'งานของแคมเปญต้องมีวันส่งก่อน Done',
   CONTEXT_CONFLICT:'แคมเปญของงาน คอนเทนต์ และเป้าหมายต้องตรงกัน', NAME_REQUIRED:'ระบุชื่อโปรเจกต์', NAME_TOO_LONG:'ชื่อโปรเจกต์ยาวไม่เกิน 80 ตัวอักษร', DATES_INVALID:'วันจบต้องไม่ก่อนวันเริ่ม',

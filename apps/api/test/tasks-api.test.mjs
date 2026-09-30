@@ -17,7 +17,7 @@ import {listTasks,readTask,createTask,updateTask} from '../tasks.mjs';
 import {listProjects,readProject,createProject,updateProject} from '../projects.mjs';
 import {saveCampaignTask} from '../campaign-tasks.mjs';
 import {saveTeam} from '../teams.mjs';
-import {empty,seedWorkspace} from '../../web/src/content/meeting/model.mjs';
+import {empty,seedWorkspace,saveTask} from '../../web/src/content/meeting/model.mjs';
 import {createWorkspace} from '../../web/src/content/shared/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
 const admin=new pg.Client({connectionString:config().adminUrl});await admin.connect();
@@ -204,4 +204,42 @@ test('row-level security on projects and campaign details (NFR-010-001)',async()
  assert.ok(!(await see('guest')).includes(p.id));assert.ok((await see('operator')).includes(p.id));
  assert.equal(await as('guest',async c=>(await c.query('SELECT 1 FROM project_viewers WHERE business_id=$1',[b])).rowCount),0);
  const role=(await admin.query("SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname='zuri_go_app'")).rows[0];assert.deepEqual(role,{rolsuper:false,rolbypassrls:false});
+});
+test('an Inactive Member takes no new R, A, C or I through the API or the workspace save; a role already held is kept; viewers may be Inactive (WI-12 D2)',async()=>{
+ const refused=e=>e.status===422&&e.code==='MEMBER_INACTIVE'&&e.message==='สมาชิกนี้ปิดใช้งานอยู่ กรุณาเลือกคนที่ Active';
+ const setStatus=(m,status)=>owner('UPDATE zuri_go.members SET status=$3 WHERE business_id=$1 AND id=$2',[b,m.id,status]);
+ // Before m3 becomes Inactive: one task where m3 is R and m2 is C.
+ const kept=await write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'งาน D2 ที่ m3 ถืออยู่',roles:{R:m3.id,C:[m2.id]}},v));
+ await setStatus(m3,'inactive');
+ try{
+  for(const roles of [{R:m3.id},{R:m0.id,A:m3.id},{R:m0.id,C:[m3.id]},{R:m0.id,I:[m3.id]}])await assert.rejects(write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'งาน D2 ใหม่',roles},v)),refused,JSON.stringify(roles));
+  assert.equal((await owner("SELECT count(*)::int n FROM zuri_go.tasks WHERE business_id=$1 AND title='งาน D2 ใหม่'",[b])).rows[0].n,0,'nothing is stored by a refusal');
+  // A named viewer is access, not work.
+  const seen=await write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'งาน D2 ผู้มองเห็น',visibility:'restricted',roles:{R:m0.id},viewer_ids:[m3.id]},v));
+  assert.deepEqual(seen.viewer_ids,[m3.id]);assert.equal(seen.visibility,'restricted');
+  // Update: the same R (and the same C) are kept, a new one is refused, and the role is what counts (m3 was R, not C).
+  const titled=await write(m0,(c,v)=>updateTask(c,b,kept.id,{row_version:kept.row_version,title:'งาน D2 แก้ชื่อ',roles:{R:m3.id,C:[m2.id,m1.id]}},v));
+  assert.equal(titled.roles.R,m3.id);assert.deepEqual(titled.roles.C.sort(),[m1.id,m2.id].sort());
+  await assert.rejects(write(m0,(c,v)=>updateTask(c,b,kept.id,{row_version:titled.row_version,roles:{R:m3.id,C:[m3.id]}},v)),refused,'m3 is R, not C');
+  const moved=await write(m0,(c,v)=>updateTask(c,b,kept.id,{row_version:titled.row_version,roles:{R:m0.id,C:[m2.id,m1.id]}},v));
+  await assert.rejects(write(m0,(c,v)=>updateTask(c,b,kept.id,{row_version:moved.row_version,roles:{R:m3.id,C:[m2.id,m1.id]}},v)),refused,'once replaced, m3 cannot be put back');
+  assert.ok((await write(m0,(c,v)=>updateTask(c,b,seen.id,{row_version:seen.row_version,viewer_ids:[m3.id,m1.id]},v))).viewer_ids.includes(m3.id),'an Inactive viewer stays a viewer');
+  // The workspace save applies the same rule: m3 as R of a new task is refused; saving the state that still has m3 as R of a stored task is not.
+  const read=await as(m0,c=>readLegacy(c,b)),d=structuredClone(read.meetingTaskManager),id=saveTask(d,{title:'งาน D2 จาก PUT',responsibleId:m0.legacy});
+  assert.equal(d.members.find(m=>m.id===m3.legacy).status,'inactive');
+  d.tasks.find(t=>t.id===id).responsibleId=m3.legacy;
+  await assert.rejects(write(m0,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d})),refused,'a client that skipped its own check is refused by the server');
+  d.tasks.find(t=>t.id===id).responsibleId=m0.legacy;d.tasks.find(t=>t.id===id).consultedIds=[m3.legacy];
+  await assert.rejects(write(m0,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d})),refused,'C too');
+  d.tasks.find(t=>t.id===id).consultedIds=[];d.tasks.find(t=>t.id===id).viewerIds=[m3.legacy];
+  const saved=await write(m0,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));assert.deepEqual(saved.meetingTaskManager.tasks.find(t=>t.id===id).viewerIds,[m3.legacy],'a viewer may be Inactive');
+  const again=await write(m0,c=>saveLegacy(c,b,{version:saved.version,meetingTaskManager:saved.meetingTaskManager}));assert.ok(again.meetingTaskManager.tasks.length>0,'unchanged roles of an Inactive Member pass');
+  assert.equal((await as(m0,c=>readTask(c,b,kept.id))).roles.R,m0.id);
+  // A restore by the operator keeps the people as they were, Inactive ones included.
+  const fresh=await newBusiness('task manager D2 restore'),backupState=empty();seedWorkspace(backupState,seed);backupState.members[0].status='inactive';
+  const backup={schemaVersion:2,appId:'dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1',campaignWorkspace:createWorkspace(),meetingTaskManager:backupState};
+  const report=await transaction(fresh,OPERATOR,c=>importPreview(c,fresh,{backup,source_namespace:randomUUID()}));
+  await transaction(fresh,OPERATOR,c=>importCommit(c,fresh,report.id,{backup_sha256:report.backup_sha256}));
+  assert.ok((await owner("SELECT count(*)::int n FROM zuri_go.task_roles r JOIN zuri_go.members m ON (m.business_id,m.id)=(r.business_id,r.member_id) WHERE r.business_id=$1 AND m.status='inactive'",[fresh],fresh)).rows[0].n>0,'the restored tasks keep an Inactive R');
+ }finally{await setStatus(m3,'active');}
 });

@@ -12,12 +12,12 @@ import {pool,transaction} from '../db.mjs';
 import {OPERATOR,session} from '../viewer.mjs';
 import {authorizeWrite} from '../member-auth.mjs';
 import {passwordHash} from '../team-auth.mjs';
-import {snapshot} from '../service.mjs';
+import {snapshot,save} from '../service.mjs';
 import {readLegacy,saveLegacy,uploadTranscript} from '../workspace.mjs';
 import {commitMeeting} from '../meeting-commit.mjs';
 import {attachmentAction} from '../attachments.mjs';
 import {listTeams,saveTeam} from '../teams.mjs';
-import {empty,seedWorkspace,saveTask,addSource,saveReview,addBatch,validateState,reviewHash} from '../../web/src/content/meeting/model.mjs';
+import {empty,seedWorkspace,saveMember,saveTask,addSource,saveReview,addBatch,validateState,reviewHash} from '../../web/src/content/meeting/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
 const admin=new pg.Client({connectionString:config().adminUrl});await admin.connect();
 after(async()=>{await admin.end();await pool.end();});
@@ -300,4 +300,51 @@ test('a meeting that is not restricted keeps today\'s behaviour; one that become
  await write(m0,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:next}));
  assert.equal((await meetingRow(open.mid)).transcript_custody,'local_only');
  const rows=await revisionRows(open.mid);assert.equal(rows.filter(r=>r.legacy_metadata.withheld).length,1);assert.equal(rows.filter(r=>!r.legacy_metadata.withheld).length,2,'the source and first review stay as stored');
+});
+test('a Guest reads only the ID, PID, display name and status of each Member; Members and the operator read everything (WI-12 D16)',async()=>{
+ await owner("UPDATE zuri_go.members SET email='d16@example.test',phone='0899999999',notes='หมายเหตุลับ D16',nickname='ชื่อเล่น D16',team='ทีม D16',position='ตำแหน่ง D16',full_name='ชื่อเต็ม D16' WHERE business_id=$1 AND id=$2",[b,m0.id]);
+ const secrets=['d16@example.test','0899999999','หมายเหตุลับ D16','ชื่อเล่น D16','ทีม D16','ตำแหน่ง D16','ชื่อเต็ม D16'],total=(await owner('SELECT count(*)::int n FROM zuri_go.members WHERE business_id=$1',[b])).rows[0].n;
+ const guest=await as('guest',c=>readLegacy(c,b)),state=await as('guest',c=>snapshot(c,b));
+ for(const s of secrets){assert.equal(everywhere(guest,s),false,'workspace '+s);assert.equal(everywhere(state,s),false,'state '+s);}
+ assert.equal(guest.meetingTaskManager.members.length,total);assert.equal(state.members.length,total);
+ for(const m of guest.meetingTaskManager.members)assert.deepEqual(Object.keys(m).sort(),['displayName','id','pid','status']);
+ for(const m of state.members)assert.deepEqual(Object.keys(m).sort(),['display_name','id','pid','status']);
+ assert.doesNotThrow(()=>validateState(guest.meetingTaskManager),'the reduced members still validate on the client');
+ assert.equal(guest.meetingTaskManager.members.find(m=>m.id===m0.legacy).displayName,state.members.find(m=>m.id===m0.id).display_name,'the name a Guest needs to read the work is kept');
+ for(const [name,viewer] of [['member',m1],['admin',m3],['operator','operator']]){
+  const read=await as(viewer,c=>readLegacy(c,b)),rows=await as(viewer,c=>snapshot(c,b));
+  for(const s of secrets){assert.equal(everywhere(read,s),true,name+' workspace '+s);assert.equal(everywhere(rows,s),true,name+' state '+s);}
+ }
+});
+test('Member registry: adding a Member and any status change need the admin or the operator; own details yes, own status no (WI-12 D3)',async()=>{
+ const others='เฉพาะ Business admin แก้ทะเบียนสมาชิกของคนอื่นหรือเพิ่มสมาชิกได้',ownStatus='เปลี่ยนสถานะของตัวเองไม่ได้ ติดต่อ Business admin',denied=message=>e=>e.status===403&&e.message===message;
+ const edit=async(viewer,change)=>{const r=await as(viewer,c=>readLegacy(c,b)),d=r.meetingTaskManager;change(d);return write(viewer,c=>saveLegacy(c,b,{version:r.version,meetingTaskManager:d}));};
+ const of=(d,p)=>d.members.find(x=>x.id===p.legacy),stored=p=>owner('SELECT display_name,nickname,phone,status,row_version::int v FROM zuri_go.members WHERE business_id=$1 AND id=$2',[b,p.id]).then(r=>r.rows[0]);
+ const count=()=>owner('SELECT count(*)::int n FROM zuri_go.members WHERE business_id=$1',[b]).then(r=>r.rows[0].n),start=await count();
+ // A Member edits their own details and saves an unchanged registry.
+ await edit(m1,d=>Object.assign(of(d,m1),{nickname:'ชื่อเล่นใหม่',phone:'0811111111'}));
+ assert.deepEqual([(await stored(m1)).nickname,(await stored(m1)).phone],['ชื่อเล่นใหม่','0811111111']);
+ await edit(m1,()=>{});
+ // ...but not their own status, another Member's record, or a new Member.
+ const mine=await stored(m1),theirs=await stored(m2);
+ await assert.rejects(edit(m1,d=>{of(d,m1).status='inactive';}),denied(ownStatus));
+ await assert.rejects(edit(m1,d=>{of(d,m2).nickname='แก้โดยคนอื่น';}),denied(others));
+ await assert.rejects(edit(m1,d=>{of(d,m2).status='inactive';}),denied(others),'another record: the admin message, not the own-status one');
+ await assert.rejects(edit(m1,d=>saveMember(d,{displayName:'สมาชิกใหม่ D3'})),denied(others));
+ assert.deepEqual(await stored(m1),mine);assert.deepEqual(await stored(m2),theirs);assert.equal(await count(),start,'nothing stored by a refusal');
+ // The same rules hold on the per-record route.
+ const patch=(viewer,id,input)=>write(viewer,async c=>save(c,b,'members',{row_version:(await stored({id})).v,...input},id));
+ await assert.rejects(patch(m1,m2.id,{nickname:'x'}),denied(others));await assert.rejects(patch(m1,m1.id,{status:'inactive'}),denied(ownStatus));
+ await assert.rejects(write(m1,c=>save(c,b,'members',{display_name:'สมาชิกใหม่ D3'})),denied(others));
+ assert.equal((await patch(m1,m1.id,{nickname:'ผ่านเส้นทางรายคน'})).nickname,'ผ่านเส้นทางรายคน');
+ // The Business admin and the local operator edit any record, add Members and change status; the admin still not their own.
+ await edit(m3,d=>Object.assign(of(d,m2),{nickname:'แอดมินแก้'}));assert.equal((await stored(m2)).nickname,'แอดมินแก้');
+ await edit(m3,d=>{of(d,m2).status='inactive';});assert.equal((await stored(m2)).status,'inactive');
+ await edit(m3,d=>{of(d,m2).status='active';});assert.equal((await stored(m2)).status,'active');
+ await edit(m3,d=>Object.assign(of(d,m3),{nickname:'แอดมินแก้ตัวเอง'}));assert.equal((await stored(m3)).nickname,'แอดมินแก้ตัวเอง');
+ await assert.rejects(edit(m3,d=>{of(d,m3).status='inactive';}),denied(ownStatus));assert.equal((await stored(m3)).status,'active');
+ await edit(m3,d=>saveMember(d,{displayName:'สมาชิกใหม่ D3 โดยแอดมิน'}));assert.equal(await count(),start+1);
+ await edit('operator',d=>{of(d,m2).status='inactive';});assert.equal((await stored(m2)).status,'inactive');await edit('operator',d=>{of(d,m2).status='active';});
+ await edit('operator',d=>saveMember(d,{displayName:'สมาชิกใหม่ D3 โดยผู้ดูแลเครื่อง'}));assert.equal(await count(),start+2);
+ assert.equal((await patch(m3,m2.id,{nickname:'ผ่านเส้นทางรายคนโดยแอดมิน'})).nickname,'ผ่านเส้นทางรายคนโดยแอดมิน');
 });
