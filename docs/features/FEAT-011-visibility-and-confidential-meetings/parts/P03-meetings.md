@@ -25,4 +25,5 @@ Part of [FEAT-011](../feature.md), owned by [DOM-MTG](../../../domains/meetings/
 Hands the meeting audience to FEAT-011-P02 when a meeting creates tasks.
 
 ## Requirements
-Written as FR files once the decisions are approved ([PLAN-002](../../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+- [FR-011-006](../requirements/FR-011-006-meeting-visibility.md) — Visibility and participants of meetings
+- [FR-011-010](../requirements/FR-011-010-transcript-custody.md) — Custody of confidential transcripts

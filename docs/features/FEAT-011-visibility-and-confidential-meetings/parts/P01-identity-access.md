@@ -26,4 +26,8 @@ Part of [FEAT-011](../feature.md), owned by [DOM-IAM](../../../domains/identity-
 Provides viewer identity and team membership to FEAT-011-P02 and FEAT-011-P03; never exposes credentials.
 
 ## Requirements
-Written as FR files once the decisions are approved ([PLAN-002](../../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+- [FR-011-001](../requirements/FR-011-001-teams.md) — Teams and team membership
+- [FR-011-002](../requirements/FR-011-002-business-admin.md) — Business admin capability
+- [FR-011-003](../requirements/FR-011-003-viewer-identity.md) — Viewer identity on every read
+- [FR-011-007](../requirements/FR-011-007-guest-public-only.md) — Guests read public items only
+- [NFR-011-001](../requirements/NFR-011-001-row-level-security.md) — Row-level security enforces the same audiences

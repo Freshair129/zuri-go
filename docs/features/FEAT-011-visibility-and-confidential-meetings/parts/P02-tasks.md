@@ -24,4 +24,9 @@ Part of [FEAT-011](../feature.md), owned by [DOM-TSK](../../../domains/tasks/REA
 Filters by the viewer from FEAT-011-P01; receives the audience of a confidential meeting from FEAT-011-P03.
 
 ## Requirements
-Written as FR files once the decisions are approved ([PLAN-002](../../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+- [FR-011-004](../requirements/FR-011-004-task-project-visibility.md) — Visibility of tasks and projects
+- [FR-011-005](../requirements/FR-011-005-named-viewers.md) — Named viewers of a task
+- [FR-011-008](../requirements/FR-011-008-content-follows-item.md) — Content follows its item
+- [FR-011-009](../requirements/FR-011-009-confidential-meeting-tasks.md) — Tasks from a confidential meeting
+- [FR-011-011](../requirements/FR-011-011-widening-visibility.md) — Widening the visibility of a task or project
+- [FR-011-012](../requirements/FR-011-012-existing-data.md) — Visibility of data that exists before the change

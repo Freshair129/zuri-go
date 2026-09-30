@@ -48,17 +48,24 @@ Every department can use the workspace without exposing its work. Tasks, project
 | [FEAT-011-P02](parts/P02-tasks.md) | [DOM-TSK](../../domains/tasks/README.md) | Visibility of tasks and projects, and of their attachments and history |
 | [FEAT-011-P03](parts/P03-meetings.md) | [DOM-MTG](../../domains/meetings/README.md) | Visibility, participants and transcript custody of meetings |
 
-## Planned requirements
-These statements are proposals, not requirements yet: FR / AC files are written once the decisions are approved ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)), as STD-003 R7 requires before the feature is built.
+## Requirement index
+Approved by the owner on 2026-10-01; each file holds the requirement and its acceptance criteria. The feature, [ADR-004](../../architecture/decisions.md) and SDD-011 are still proposed, so nothing may be built yet.
 
-1. Manage teams and team membership (Business admin only).
-2. Set the visibility of a task, project or meeting; widening needs the A or the organizer and a reason, and is audited.
-3. Guests read only public items, on every endpoint.
-4. A Member reads only items whose audience includes them.
-5. A task created from a confidential meeting starts restricted to the meeting’s participants; its evidence quotes stay hidden from anyone outside the meeting.
-6. A confidential meeting’s transcript stays on the recording machine unless it is uploaded by an explicit, audited choice.
-7. The overview, AI summary, search, exports and backups contain only what the viewer may see.
-8. Row-level security enforces the same audiences as the API (non-functional).
+| ID | Requirement | Part | Delivery |
+|---|---|---|---|
+| [FR-011-001](requirements/FR-011-001-teams.md) | Teams and team membership | FEAT-011-P01 | declared |
+| [FR-011-002](requirements/FR-011-002-business-admin.md) | Business admin capability | FEAT-011-P01 | declared |
+| [FR-011-003](requirements/FR-011-003-viewer-identity.md) | Viewer identity on every read | FEAT-011-P01 | declared |
+| [FR-011-004](requirements/FR-011-004-task-project-visibility.md) | Visibility of tasks and projects | FEAT-011-P02 | declared |
+| [FR-011-005](requirements/FR-011-005-named-viewers.md) | Named viewers of a task | FEAT-011-P02 | declared |
+| [FR-011-006](requirements/FR-011-006-meeting-visibility.md) | Visibility and participants of meetings | FEAT-011-P03 | declared |
+| [FR-011-007](requirements/FR-011-007-guest-public-only.md) | Guests read public items only | FEAT-011-P01 | declared |
+| [FR-011-008](requirements/FR-011-008-content-follows-item.md) | Content follows its item | FEAT-011-P02 | declared |
+| [FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) | Tasks from a confidential meeting | FEAT-011-P02 | declared |
+| [FR-011-010](requirements/FR-011-010-transcript-custody.md) | Custody of confidential transcripts | FEAT-011-P03 | declared |
+| [FR-011-011](requirements/FR-011-011-widening-visibility.md) | Widening the visibility of a task or project | FEAT-011-P02 | declared |
+| [FR-011-012](requirements/FR-011-012-existing-data.md) | Visibility of data that exists before the change | FEAT-011-P02 | declared |
+| [NFR-011-001](requirements/NFR-011-001-row-level-security.md) | Row-level security enforces the same audiences | FEAT-011-P01 | declared |
 
 ## Delivery evidence
 - None: declared, not built.
