@@ -205,7 +205,7 @@ TC IDs are not assigned yet (PLAN-001 WI-08); these are the planned tests and th
 
 ## Decisions (2026-10-01)
 
-Taken by the owner with the approval, or, where marked *default*, taken for P2 as the reversible, conservative reading, for the owner to confirm.
+Taken by the owner with the approval, or, where marked *default*, taken for P2 as the reversible, conservative reading, for the owner to confirm. The *default* items were confirmed on 2026-10-01 (delegated by the owner, PLAN-002 Q16).
 
 - **PLAN-002 Q6–Q11 as recommended:** a task may have a campaign and a project at once; a task with a campaign context needs a due date before Done; Backlog and Ready become `planned` with the original status as a badge; menu names “Task Manager” and “Meetings”; no reordering within a lane yet; DOM-TSK and DOM-MTG are adopted and frozen. Q12 is asked again at P4.
 - **People named on a project (owner):** its owner and an explicit viewers list, `project_viewers`, like `task_viewers`. A project must have an owner Member.

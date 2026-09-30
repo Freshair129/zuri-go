@@ -40,10 +40,10 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 | WI-06 | Migration: projects; `project_id`, `team_id`, `owner_label`, `completion_rule` and `idempotency_key` on tasks; `campaign_task_details` | P2 | `007_tasks_projects.sql` (plus `project_viewers`; `team_id` exists since 006); applied locally 2026-10-01 after a backup, counts reconciled; production not migrated |
 | WI-07 | Task API, shared task rules, deployment allowlist | P2 | Built locally 2026-10-01: `tasks.mjs`, `projects.mjs`, `campaign-tasks.mjs`, `shared/task-rules.mjs`; allowlist 54 files |
 | WI-08 | Boards, Projects view, context pickers, Workboard as a view | P2 | Built 2026-10-01 (`meeting/Boards.jsx`, Workboard five lanes, “Task Manager” / “Meetings” menu); passed a verify gate; partly browser-checked locally |
-| WI-09 | Meeting participants, confidential meetings, transcript custody, server-side meeting commit | P3 | FR-011-009/010 built locally 2026-10-01 (stubs, audited upload); server-side commit designed as a proposed amendment to SDD-004, not built |
+| WI-09 | Meeting participants, confidential meetings, transcript custody, server-side meeting commit | P3 | FR-011-009/010 built locally 2026-10-01 (stubs, audited upload); the server-side commit amendment to SDD-004 approved 2026-10-01 (Q15), being built |
 | WI-10 | Workboard backfill | P4 | `backfill-workboard.mjs` built and rehearsed 2026-10-01; read-only dry runs found 0 Workboard tasks in production and locally, so nothing is moved; repeat the dry run after the P5 migration |
 | WI-11 | ARCH-002 amendment; PRD-001, BRD-001 and AGENTS.md updates | After approval | Done 2026-10-01 for ADR-004 / FEAT-011 (schema 6 local only); ADR-002/003 parts wait for their approval |
-| WI-12 | FEAT-004 split: FEAT-010 carries the task requirements, and meeting intake moves to DOM-MTG | With WI-05 | Proposed split plan in FEAT-004 `feature.md` (2026-10-01); no file or ID moved |
+| WI-12 | FEAT-004 split: FEAT-010 carries the task requirements, and meeting intake moves to DOM-MTG | With WI-05 | Split plan in FEAT-004 `feature.md` approved 2026-10-01 (delegated by the owner), with its open items decided there; the new DOM-MTG feature and the FR files are still to write; no file or ID moved yet |
 
 ## Execution DAG
 
@@ -63,7 +63,7 @@ Nothing runs in production until P5; the interim rule above still applies.
 
 ## Decisions needed
 
-Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day. ADR-002, ADR-003, FEAT-010, its requirements and SDD-010 were approved later on 2026-10-01, with Q6–Q11 as recommended and part of Q16; Q12 is asked again at P4.
+Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day. ADR-002, ADR-003, FEAT-010, its requirements and SDD-010 were approved later on 2026-10-01, with Q6–Q11 as recommended and part of Q16; Q12 is asked again at P4. The owner delegated the remaining questions (Q13–Q16) and WI-12 on 2026-10-01, and they were decided as recommended; the production backup, migration and deployment of P5 still need the owner's own authorization.
 
 | # | Question | Recommendation |
 |---|---|---|
@@ -79,7 +79,7 @@ Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was ap
 | Q10 | Drag to reorder cards within a lane | **Decided (owner, 2026-10-01):** later |
 | Q11 | Domain codes DOM-TSK and DOM-MTG | **Decided (owner, 2026-10-01):** adopt; they freeze once adopted |
 | Q12 | Production backfill of Workboard tasks (P4) | Dry run 2026-10-01: production holds 0 Workboard tasks, so no backfill is needed now; asked again only if a later dry run finds some |
-| Q13 | Do evidence quotes kept inside a task's `sourceRefs`, and meeting text copied into a task description, count as transcript under FR-011-010? | Today they are withheld only from readers who cannot read the meeting; WI-09 proposes keeping quotes only in `meeting_task_links` |
-| Q14 | When a restricted meeting is widened, does its transcript custody return to `cloud` automatically? | No — stays `local_only` until an explicit, audited upload |
-| Q15 | The WI-09 open questions (update/link of existing tasks, `team` meetings, viewer snapshot, quote spans, who may commit, release staging) | See the proposed amendment at the end of SDD-004 |
-| Q16 | FEAT-010 open items (people named on a project, project progress, “my tasks”, blocked Workboard tasks without blocker text) | **Decided (owner, 2026-10-01):** a project’s owner and its listed viewers are named on it, and a project must have an owner; “my tasks” are those whose R or A is the Member. The remaining items are P2 defaults in SDD-010 “Decisions”, for confirmation |
+| Q13 | Do evidence quotes kept inside a task's `sourceRefs`, and meeting text copied into a task description, count as transcript under FR-011-010? | **Decided (delegated by the owner, 2026-10-01):** evidence quotes are transcript: they are kept only in `meeting_task_links` and follow the meeting (WI-09); tasks written before WI-09 keep them inline, withheld from readers who cannot read the meeting. Text a person writes or copies into a task's title or description is task content: it follows the task's audience, which for a restricted meeting is its participants (FR-011-009), not transcript custody |
+| Q14 | When a restricted meeting is widened, does its transcript custody return to `cloud` automatically? | **Decided (delegated by the owner, 2026-10-01):** no — it stays `local_only` until an explicit, audited upload, as built in P3 |
+| Q15 | The WI-09 open questions (update/link of existing tasks, `team` meetings, viewer snapshot, quote spans, who may commit, release staging) | **Decided (owner, 2026-10-01):** as recommended — see “Decisions” in the SDD-004 amendment, which the owner approved the same day |
+| Q16 | FEAT-010 open items (people named on a project, project progress, “my tasks”, blocked Workboard tasks without blocker text) | **Decided (owner, 2026-10-01):** a project’s owner and its listed viewers are named on it, and a project must have an owner; “my tasks” are those whose R or A is the Member. The P2 defaults in SDD-010 “Decisions” were confirmed the same day (delegated by the owner) |

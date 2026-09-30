@@ -33,19 +33,20 @@ The work of every department — sales, production, accounting, HR and marketing
 - `weekly_plans`
 - `weekly_plan_tasks`
 - `task_attachments`
-- Planned ([ADR-003](../../architecture/decisions.md), [ADR-004](../../architecture/decisions.md)): `projects`, `task_viewers`; on `tasks`: `project_id`, `team_id`, `visibility`, `owner_label`, `completion_rule`, `idempotency_key`
+- Built locally, not in production ([ADR-003](../../architecture/decisions.md), [ADR-004](../../architecture/decisions.md); schema 6 and 7): `projects`, `project_viewers`, `task_viewers`; on `tasks`: `project_id`, `team_id`, `visibility`, `owner_label`, `completion_rule`, `idempotency_key`, `idempotency_hash`.
+- `campaign_task_details` (schema 7) holds the campaign-only fields of a campaign task; it belongs to [DOM-CAM](../campaign/README.md) and is written in the same transaction as the task ([ADR-003](../../architecture/decisions.md) D4).
 - Table definitions: [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) and `apps/api/migrations/`.
 
 ## Business rules
 - A task can be created from a name alone; details and RACI are filled in later ([FEAT-004 brief](../../features/FEAT-004-meeting-task-manager/brief.md)).
 - MoSCoW priority is per task and week; Won’t is shelved, not Done, and unprioritised tasks are shown separately ([FEAT-004 guide](../../features/FEAT-004-meeting-task-manager/guide.md)).
 - Evidence files: at most 5 active files per task and 2 MiB each ([FEAT-005 spec](../../features/FEAT-005-guest-access/spec.md)).
-- Approved 2026-10-01, being built: every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
-- Approved 2026-10-01, being built: a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)).
+- Approved 2026-10-01, phase P2 built locally (schema 7), not released: every task of every department is one record; campaign, project and team are contexts of it, and the campaign Workboard is a view of those records ([ADR-003](../../architecture/decisions.md)). Its requirements are listed under “Requirements” below.
+- Approved 2026-10-01, phase P1 built locally (schema 6), not released: a task is seen only by its audience — `public`, `business`, `team` or `restricted` — and a task created from a confidential meeting starts restricted ([ADR-004](../../architecture/decisions.md)). Until it is released the interim rule of ADR-004 D9 applies: no confidential content in production.
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. A proposed outline of the per-task API is in [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed); it declares nothing.
+Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. An outline of the per-task API, approved with [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed) and built locally in phase P2, declares no API- artifact.
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
@@ -57,25 +58,27 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 | Feature | Title | Delivery |
 |---|---|---|
 | [FEAT-004](../../features/FEAT-004-meeting-task-manager/feature.md) | Meeting & Task Manager | implemented |
-| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | building (design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
+| [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | Task Manager for every department | building — phase P2 built locally, not released (approved; design [SDD-010](../../features/FEAT-010-task-manager/design.md)) |
 
-**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
+The server-side meeting commit, an amendment to the design of FEAT-004 ([SDD-004](../../features/FEAT-004-meeting-task-manager/design.md)), was approved on 2026-10-01 (PLAN-002 WI-09, Q15). It changes how a meeting creates tasks and calls the idempotent create of FR-010-009; no FEAT-004 file is moved or renumbered.
 
-| Requirement | Part | Title |
-|---|---|---|
-| [FR-010-001](../../features/FEAT-010-task-manager/requirements/FR-010-001-create-task-from-title.md) | [FEAT-010-P01](../../features/FEAT-010-task-manager/parts/P01-tasks.md) | Create a task from a title alone |
-| [FR-010-002](../../features/FEAT-010-task-manager/requirements/FR-010-002-task-contexts.md) | FEAT-010-P01 | Contexts of a task |
-| [FR-010-003](../../features/FEAT-010-task-manager/requirements/FR-010-003-projects.md) | FEAT-010-P01 | Projects |
-| [FR-010-004](../../features/FEAT-010-task-manager/requirements/FR-010-004-project-label-link.md) | FEAT-010-P01 | Linking a project label to a project |
-| [FR-010-005](../../features/FEAT-010-task-manager/requirements/FR-010-005-boards.md) | FEAT-010-P01 | Boards for all work, a campaign, a project, a team, unlinked work and my tasks |
-| [FR-010-006](../../features/FEAT-010-task-manager/requirements/FR-010-006-move-task-status.md) | FEAT-010-P01 | Moving a task through the five statuses |
-| [FR-010-007](../../features/FEAT-010-task-manager/requirements/FR-010-007-completion-rule.md) | FEAT-010-P01 | Completion rule |
-| [FR-010-008](../../features/FEAT-010-task-manager/requirements/FR-010-008-owner-label.md) | FEAT-010-P01 | Owner label until a Member is bound |
-| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | FEAT-010-P01 | Task API — idempotent create and versioned update |
-| [FR-010-010](../../features/FEAT-010-task-manager/requirements/FR-010-010-task-api-rules-identity.md) | FEAT-010-P01 | Task API — rules, identity and audience on the server |
-| [FR-010-011](../../features/FEAT-010-task-manager/requirements/FR-010-011-workspace-save-compatible.md) | FEAT-010-P01 | The whole-workspace save stays compatible |
-| [NFR-010-001](../../features/FEAT-010-task-manager/requirements/NFR-010-001-row-level-security-new-tables.md) | FEAT-010-P01 | Row-level security covers the new task tables |
-| [NFR-010-002](../../features/FEAT-010-task-manager/requirements/NFR-010-002-additive-schema.md) | FEAT-010-P01 | The schema change is additive and reconcilable |
+**Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003; delivery as in the [FEAT-010 index](../../features/FEAT-010-task-manager/feature.md#requirement-index), built locally and not released. Requirement files sit in their feature’s `requirements/` folder; the owning domain is the one of the part.
+
+| Requirement | Part | Title | Delivery |
+|---|---|---|---|
+| [FR-010-001](../../features/FEAT-010-task-manager/requirements/FR-010-001-create-task-from-title.md) | [FEAT-010-P01](../../features/FEAT-010-task-manager/parts/P01-tasks.md) | Create a task from a title alone | implemented |
+| [FR-010-002](../../features/FEAT-010-task-manager/requirements/FR-010-002-task-contexts.md) | FEAT-010-P01 | Contexts of a task | implemented |
+| [FR-010-003](../../features/FEAT-010-task-manager/requirements/FR-010-003-projects.md) | FEAT-010-P01 | Projects | implemented |
+| [FR-010-004](../../features/FEAT-010-task-manager/requirements/FR-010-004-project-label-link.md) | FEAT-010-P01 | Linking a project label to a project | implemented |
+| [FR-010-005](../../features/FEAT-010-task-manager/requirements/FR-010-005-boards.md) | FEAT-010-P01 | Boards for all work, a campaign, a project, a team, unlinked work and my tasks | implemented |
+| [FR-010-006](../../features/FEAT-010-task-manager/requirements/FR-010-006-move-task-status.md) | FEAT-010-P01 | Moving a task through the five statuses | implemented |
+| [FR-010-007](../../features/FEAT-010-task-manager/requirements/FR-010-007-completion-rule.md) | FEAT-010-P01 | Completion rule | implemented |
+| [FR-010-008](../../features/FEAT-010-task-manager/requirements/FR-010-008-owner-label.md) | FEAT-010-P01 | Owner label until a Member is bound | implemented |
+| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | FEAT-010-P01 | Task API — idempotent create and versioned update | implemented |
+| [FR-010-010](../../features/FEAT-010-task-manager/requirements/FR-010-010-task-api-rules-identity.md) | FEAT-010-P01 | Task API — rules, identity and audience on the server | implemented |
+| [FR-010-011](../../features/FEAT-010-task-manager/requirements/FR-010-011-workspace-save-compatible.md) | FEAT-010-P01 | The whole-workspace save stays compatible | implemented |
+| [NFR-010-001](../../features/FEAT-010-task-manager/requirements/NFR-010-001-row-level-security-new-tables.md) | FEAT-010-P01 | Row-level security covers the new task tables | implemented |
+| [NFR-010-002](../../features/FEAT-010-task-manager/requirements/NFR-010-002-additive-schema.md) | FEAT-010-P01 | The schema change is additive and reconcilable | implemented |
 
 The campaign half of FEAT-010 (FR-010-012…016, part [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md)) is owned by [DOM-CAM](../campaign/README.md). The visibility requirements of tasks and projects (FR-011-004, -005, -008, -009, -011, -012) are in FEAT-011-P02 below. FEAT-004 would hand its task requirements to FEAT-010 (see its “Proposed split”).
 

@@ -3,8 +3,8 @@ id: BRD-001
 title: Zuri-Go — business requirements
 status: draft
 relations:
-  decided_by: [ADR-004]
-  relates_to: [PRD-001]
+  decided_by: [ADR-002, ADR-003, ADR-004]
+  relates_to: [PRD-001, FEAT-010]
 ---
 
 # BRD-001 — Zuri-Go: business requirements
@@ -35,7 +35,8 @@ As recorded in existing documents:
 
 - Public Guest reading with authenticated writes ([PRD-001](PRD-001-zuri-go.md), rule 1).
 - Credentials and secrets are never exposed to users ([PRD-001](PRD-001-zuri-go.md), rule 3).
-- Some meetings are confidential (owner, 2026-10-01): their content must stay with their participants ([ADR-004](../architecture/decisions.md), approved 2026-10-01). [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) delivers this; phase P1 is built locally and is not released, so production still lets Guests read the whole workspace and the interim rule (no confidential content in production, ADR-004 D9) applies. [ADR-002](../architecture/decisions.md) and ADR-003 remain proposed.
+- Some meetings are confidential (owner, 2026-10-01): their content must stay with their participants ([ADR-004](../architecture/decisions.md), approved 2026-10-01). [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) delivers this; phase P1 is built locally and is not released, so production still lets Guests read the whole workspace and the interim rule (no confidential content in production, ADR-004 D9) applies.
+- One Task Manager for every department ([ADR-002](../architecture/decisions.md) and ADR-003, approved 2026-10-01): [FEAT-010](../features/FEAT-010-task-manager/feature.md) phase P2 is built locally (schema 7) and is not released; production is unchanged. The site menu names, “Task Manager” and “Meetings”, are decided (PLAN-002 Q9).
 - Brand rules and approved assets apply; brand promotion is human-only ([DOM-BRN](../domains/brand/README.md)).
 - Figures are never fabricated: plan figures are labelled as plan, and actuals are entered, not invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 
@@ -45,4 +46,4 @@ As recorded in existing documents:
 
 ## Sources
 
-[FEAT-001](../features/FEAT-001-business-overview/feature.md) · [FEAT-002](../features/FEAT-002-campaign-mission-control/feature.md) · [FEAT-003](../features/FEAT-003-metrics-map/feature.md) · [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) · [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) · [root README](../../README.md) · [AGENTS.md](../../AGENTS.md)
+[FEAT-001](../features/FEAT-001-business-overview/feature.md) · [FEAT-002](../features/FEAT-002-campaign-mission-control/feature.md) · [FEAT-003](../features/FEAT-003-metrics-map/feature.md) · [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) · [FEAT-010](../features/FEAT-010-task-manager/feature.md) · [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) · [root README](../../README.md) · [AGENTS.md](../../AGENTS.md)

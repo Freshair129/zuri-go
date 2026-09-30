@@ -228,7 +228,7 @@ Authored dashboard content build สำเร็จโดยคง app ID แล
 
 ## Proposed amendment — server-side meeting commit (PLAN-002 WI-09)
 
-> **Proposed, not approved. This section changes nothing yet:** sections 1–9 above stay in force until the owner approves it, and it authorizes no code, schema change, migration or deployment. It designs how [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-09 (phase P3) moves the meeting commit to the server, for [FR-011-009](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md) and [FR-011-010](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md), following [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) “Meetings (P3)” and [ADR-003 / ADR-004](../../architecture/decisions.md). If approved, it supersedes the “IndexedDB transaction” bullet of section 5 (line 184) and the `CommitReceipt` row of section 4 (line 138) for the PostgreSQL stores; the payload-conflict, stale-batch and link/update/create review rules are kept.
+> **Approved by the owner on 2026-10-01**, with its open questions answered as recommended ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) Q15; see “Decisions” below). It authorizes the code of WI-09; it authorizes no migration or deployment, which stay with the release (PLAN-002 P5). It designs how [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-09 (phase P3) moves the meeting commit to the server, for [FR-011-009](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md) and [FR-011-010](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md), following [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) “Meetings (P3)” and [ADR-003 / ADR-004](../../architecture/decisions.md). If approved, it supersedes the “IndexedDB transaction” bullet of section 5 (line 184) and the `CommitReceipt` row of section 4 (line 138) for the PostgreSQL stores; the payload-conflict, stale-batch and link/update/create review rules are kept.
 
 ### How the commit works today
 
@@ -422,7 +422,23 @@ Same style as SDD-011. **Pure** signatures have no I/O; the boundaries are in-pr
 - **FR-011-009, -010** · `apps/web/src/content/meeting/Meetings.jsx` · `commit(batch, choices)` (changed): the FUNG comparison, then the endpoint call, then state replaced from `workspace`.
 - **FR-011-009, -010** · `apps/api/api.mjs` · one route branch for `meeting-commits`; `scripts/deploy/build_cloud.py` · `meeting-commit.mjs` added to the package list.
 
-### Open questions for the owner
+### Decisions (owner, 2026-10-01)
+
+The owner answered the open questions of this amendment as recommended (PLAN-002 Q15).
+
+1. **`update` and `link` on an existing task from a restricted meeting.** `link` is allowed; `update` only onto a `restricted` task whose named people are all participants, otherwise 422 `AUDIENCE_WIDER`.
+2. **Tasks from a `team` meeting** stay `business`; only a restricted meeting gives its tasks an audience.
+3. **Audience snapshot.** Fixed at commit; later changes of the meeting's participants do not change existing tasks.
+4. **Quote text for a `local_only` meeting.** Only spans reach production; a Member who is not at the recording machine never sees a quote.
+5. **Transcript upload.** Built in P3 as its own endpoint (FR-011-010, `POST /businesses/:b/meetings/:id/transcript`, SDD-011 “Changes found while building P3”); WI-09 does not change it. Stub batches keep span-only evidence after an upload.
+6. **Decisions** stay inside the stored batch items, as today; no decision record.
+7. **Who may commit.** Anyone who can read the meeting (for a restricted meeting, a participant).
+8. **Staging.** One release when production still holds no meetings at release time (checked read-only before the release); otherwise Release A, then Release B.
+
+### Open questions (answered)
+
+Kept as asked; the answers are in “Decisions” above.
+
 
 1. **`update` and `link` on an existing task from a restricted meeting.** FR-011-009 covers created tasks only. Proposed: `link` allowed, `update` only onto a `restricted` task whose named people are all participants. The alternative is to allow `create` and `skip` only in the first release.
 2. **Tasks from a `team` meeting.** SDD-011 gives an audience to restricted meetings only. Proposed: a `team` meeting’s tasks stay `business`. Should they inherit `team`?
@@ -432,3 +448,23 @@ Same style as SDD-011. **Pure** signatures have no I/O; the boundaries are in-pr
 6. **Decisions.** AC-011-010-01 lets “approved tasks and decisions” reach production, but no table holds decisions. Proposed: decisions stay inside the stored batch items, as today. Is a decision record needed?
 7. **Who may commit.** Proposed: anyone who can read the meeting (for a restricted meeting, a participant). Should it be limited to the organizer or the A?
 8. **Staging.** One release, or Release A and Release B apart, once production is checked for meetings?
+
+### Changes found while building WI-09 (2026-10-01)
+
+These refine the approved amendment without changing a decision; the owner reviews them with the WI-09 change. The endpoint is built locally and not deployed (PLAN-002 P5 owns the release).
+
+- **The commit writes through `writeDomain`.** `commitMeeting` (`apps/api/meeting-commit.mjs`) reads the viewer's workspace (`readLegacy`), runs `commitBatch` on that copy and stores the result with the same `writeDomain` a `PUT` uses, so a created task looks like every other task (TSK code, roles, viewers, week entry, history, links, the batch's `commit_key` and payload hash). The write therefore covers the viewer's whole readable state, like a `PUT`, and `writeDomain` adds its own audit events (for example the viewers of a new task) next to the one `commit` event on the meeting. `writeDomain` is exported and takes `{refuseNewReceipts}`; only `saveLegacy` sets it.
+- **`commitBatch` options.** `{audience, allowStub}`: `allowStub` lets the server commit a stub review on its spans, while the client still refuses a stub (`keptLocal`, existing test). `AUDIENCE_WIDER` is thrown by the pure function with `code`. A restricted meeting with no participants is refused there too.
+- **Concurrent requests.** A transaction runs at `REPEATABLE READ`, so the second of two identical requests fails to serialize (`40001`) when the first commits, instead of waiting and replaying. The route retries it (at most twice) in a new transaction, which finds the receipt and replays.
+- **Withheld evidence.** As built in P3, a task reference to a meeting the viewer cannot read is removed with `sourceRefsWithheld: true`, so AC-011-009-02 holds that way (existing tests). `evidence: {withheld: true}` is returned only when the viewer can read the meeting but no link holds the evidence; `validateState` accepts it.
+- **When a reference loses its `evidence`.** `writeDomain` stores a task reference without `evidence` when `meeting_task_links` holds it (stored, or written by the same save) and the task row did not already hold it inline. A reference with no link, such as a task made by hand from a meeting, keeps its evidence, so nothing is lost.
+- **Span-only evidence stays valid after an upload.** A link written from a stub batch holds spans and no quote, and is not back-filled (Decision 5). `validateEvidence` takes `{spans}` and `validateState` uses it for task references, so such a reference validates against the uploaded review.
+- **Targets.** `taskVersion` of `null` is no guard, as in `commitBatch` (the client sends `null` until a task is picked). An empty `taskId` gets the existing 422; an unknown or hidden one gets 404.
+- **Replay answer.** A receipt from the old client is returned as stored (no `origin`).
+- **Tests that moved.** Five tests in `visibility-db.test.mjs` created receipts through `PUT /workspace` (`restricted meetings…`, `a task created from a restricted meeting…`, `a task from a business meeting…`, and the `savedByMember` helper behind `a Member saves a restricted meeting as stubs…` and `a participant uploads the transcript…`); they now save the meeting and then call `commitMeeting`. The assertion that `/state` shows a participant the quote in a task row was turned around: the row holds no quote any more, and the workspace read is asserted as before. `database.test.mjs` still imports its backup through `importCommit`, which stores receipts.
+
+### Open items from the WI-09 build
+
+- **An inactive participant blocks a commit.** The viewers of a created task pass through `saveTask`'s person check, so a participant who is inactive makes the commit answer 422. Dropping such a person from the viewers is a product choice and is not made here.
+- **History events still carry quotes.** The `task-created` and `source-linked` events hold the task snapshot with its references, as for a `PUT`; `withholdQuotes` removes the quotes on read, but a direct query of `change_events` by someone who can read the task still finds them.
+- **The UI.** `Meetings.jsx` calling the endpoint and showing the returned state was built but not checked in a browser.

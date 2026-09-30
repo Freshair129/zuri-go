@@ -6,8 +6,8 @@ version: 0.2.0
 date: 2026-09-30
 legacy: [ZGO-DATA-001]
 relations:
-  decided_by: [ADR-004]
-  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-011]
+  decided_by: [ADR-002, ADR-003, ADR-004]
+  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-010, FEAT-011]
 legacy_status: implemented-local-verified
 complexity: C-3
 risk: HIGH
@@ -363,3 +363,41 @@ Migration `006_visibility.sql` (schema 6) is applied to the **local** PostgreSQL
 The runtime role is granted DELETE on `team_members`, `task_viewers` and `meeting_participants` only (`apps/api/migrate.mjs`); `teams` are archived, not deleted. `ai_briefs` is closed to Guests here; the API additionally filters every read by the viewer. The migration defines no policy for projects, which have no table yet.
 
 **Operating facts.** A server started before schema 6 sets no viewer, reads as a Guest and shows no business work, so restart the local server after migrating. Code from before FEAT-011 on a schema-6 database behaves the same way; plan a rollback together with the schema. See [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) and [ADR-004](decisions.md).
+
+## Schema 7 amendment: tasks, projects and campaign task details (FEAT-010 phase P2) — live locally, not in production
+
+Migration `007_tasks_projects.sql` (schema 7) is applied to the **local** PostgreSQL only (2026-10-01, after `npm run backup`). **Production is still schema 5**; a release applies 006 and 007 together with their code and needs its own authorization ([RB-001](../operations/RB-001-runbook.md#task-manager-feat-010-schema-7); [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md)). Decided by [ADR-002 and ADR-003](decisions.md) and designed in [SDD-010](../features/FEAT-010-task-manager/design.md) (all approved 2026-10-01). The migration is additive (NFR-010-002): no `DROP`, `TRUNCATE`, `DELETE` or `UPDATE` of existing rows and no type change. Existing tasks get `project_id` NULL, `owner_label` NULL and `completion_rule` `standard`. There is no down-migration. The move of existing campaign Workboard tasks into these tables is a separate operator tool, not part of the migration.
+
+**New tables.** Each has forced Business RLS (`business_scope`, as in `001_core.sql`) and composite Business FKs.
+
+| Table | Key and columns |
+|---|---|
+| `projects` | `id uuid` PK, `business_id`, `code text` (`PRJ-nnnn`), `name text` (1–80 characters after trim), `description?`, `status` CHECK `active`/`on_hold`/`done`/`archived` (default `active`), `owner_member_id` NOT NULL composite FK to `members`, `team_id?` composite FK to `teams`, `planned_start?`, `planned_end?` (CHECK `project_dates`: end not before start), `visibility` CHECK `public`/`business`/`team`/`restricted` (default `business`; CHECK `project_team_required` needs a team when `visibility='team'`), `created_at`, `updated_at`, `row_version`; UQ `(business_id,id)` and `(business_id,code)`; the `stamp` trigger |
+| `project_viewers` | PK `(business_id,project_id,member_id)`; composite FKs to `projects` and `members`; `added_by_member_id?` composite FK to `members`; `created_at`; index `(business_id,member_id)` |
+| `campaign_task_details` | PK `(business_id,task_id)` with composite FK to `tasks`; `gate`, `offer`, `hypothesis`, `action` text; `estimate numeric`; `priority` CHECK `Low`/`Medium`/`High`; `original_status` CHECK `Backlog`/`Ready`/`Doing`/`Blocked`/`Review`/`Done`; `outcome`; `created_at`, `updated_at`, `row_version`; the `stamp` trigger |
+
+`campaign_task_details` belongs to DOM-CAM and holds the campaign-only fields of a campaign task; Low/Medium/High is never converted to MoSCoW ([ADR-003](decisions.md) D4). `project_viewers` holds the people named on a project besides its owner (owner decision 2026-10-01, [SDD-010](../features/FEAT-010-task-manager/design.md) “Decisions”).
+
+**Added columns.**
+
+- `businesses.next_project_no bigint NOT NULL DEFAULT 1`, the counter behind `PRJ-nnnn` codes.
+- `tasks.project_id uuid`: nullable, composite FK `(business_id,project_id)` → `projects`; index `task_project (business_id,project_id)`.
+- `tasks.owner_label text`: nullable, the Workboard owner text until a Member is bound.
+- `tasks.completion_rule text NOT NULL DEFAULT 'standard'` CHECK `standard`/`workboard`.
+- `tasks.idempotency_key uuid` and `tasks.idempotency_hash text`: both nullable; partial UQ `task_idempotency (business_id,idempotency_key) WHERE idempotency_key IS NOT NULL`. The hash tells a replay of the same create body from a different one ([SDD-010](../features/FEAT-010-task-manager/design.md) “Data”).
+- `tasks.team_id` and `tasks.visibility` already exist since 006 and are not added again.
+
+**Audience function.** `project_audience(b,project,level,team,owner)` is `STABLE` and reads only `team_members` and `project_viewers`. The operator reads every level and everyone reads `public`. A signed-in `member` (with a Member UUID) reads `business`; `team` needs membership of the project's team, being its owner or being a named viewer; `restricted` needs being its owner or a named viewer. Being a Business admin adds nothing.
+
+**Restrictive policies** (additive to `business_scope`; every restrictive policy must pass, and 006's policies are unchanged):
+
+| Level | Tables | Rule |
+|---|---|---|
+| L0 — membership | `project_viewers` | policy `signed_in`: `viewer_kind() IN ('member','operator')`, so Guests read and write nothing here |
+| L1 — items | `projects` | policies `audience_read` (SELECT), `audience_update` (UPDATE, `WITH CHECK (true)`) and `audience_delete` (DELETE) use `project_audience`. Inserts keep `business_scope` only, so the named people can be written after the row |
+| L2 — content follows its item | `campaign_task_details` | policy `follows_task`: an `EXISTS` through the task's own policies, as for `task_attachments` |
+| L2 — history | `change_events` | SELECT policy `follows_project`, added beside 006's `follows_entity`: entity types `projects`, `project_viewers` and `project_visibility` require the named project to be visible, `campaign_task_details` requires the named task to be visible, other entity types pass |
+
+The schema 6 sentence that the migration defines no policy for projects described 006, before the table existed; 007 adds them. The runtime role gets `SELECT, INSERT, UPDATE` on the new tables through the `ALL TABLES` grant in `apps/api/migrate.mjs`, and `DELETE` on `project_viewers` only; there is no `DELETE` on `projects` or `campaign_task_details`.
+
+**Operating facts.** Restart the local server after migrating, as for schema 6. Code from before FEAT-010 ignores the new columns and tables; plan a rollback together with the schema and FEAT-011's note above. See [FEAT-010](../features/FEAT-010-task-manager/feature.md), [ADR-002 and ADR-003](decisions.md).

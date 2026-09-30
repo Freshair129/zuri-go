@@ -30,14 +30,16 @@ Meetings of every department turned into a reviewed record and owned work: recor
 - `meeting_revisions`
 - `meeting_draft_batches`
 - `meeting_task_links`
-- Planned ([ADR-004](../../architecture/decisions.md)): `meeting_participants`; on `meetings`: `visibility`, `team_id`, `project_id`, `transcript_custody`
+- Built locally, not in production ([ADR-004](../../architecture/decisions.md); schema 6): `meeting_participants`; on `meetings`: `visibility`, `team_id`, `transcript_custody`.
+- Planned, no migration yet: `meetings.project_id`.
 - Table definitions: [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) and `apps/api/migrations/`.
 
 ## Business rules
 - A task created from a transcript comes from a reviewed revision and is idempotent: replaying the same request leaves one task ([FEAT-004 verification](../../features/FEAT-004-meeting-task-manager/verification.md)).
 - Sending a transcript to the cloud sends its content to a new destination: the user chooses and sees the scope first ([ARCH-001 §5](../../architecture/ARCH-001-baseline-architecture.md)).
 - Approved 2026-10-01: a meeting creates tasks only through the task records’ contract ([ADR-002](../../architecture/decisions.md)); the contract is the idempotent create of [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) ([SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed)), and tasks from a confidential meeting follow [FR-011-009](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md).
-- Approved 2026-10-01, being built: a confidential meeting is `restricted` to its participants, and its transcript stays on the recording machine unless someone uploads it by an explicit, audited choice ([ADR-004](../../architecture/decisions.md)).
+- Approved 2026-10-01, built locally (schema 6), not released: a confidential meeting is `restricted` to its participants, and its transcript stays on the recording machine unless someone uploads it by an explicit, audited choice ([ADR-004](../../architecture/decisions.md)). Until it is released the interim rule of ADR-004 D9 applies: no confidential content in production.
+- Approved 2026-10-01, being built (not yet delivered): the server-side meeting commit, an amendment to [SDD-004](../../features/FEAT-004-meeting-task-manager/design.md#proposed-amendment--server-side-meeting-commit-plan-002-wi-09) ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-09, Q15). Tasks of a restricted meeting get its audience, fixed at commit; tasks of a `team` meeting stay `business`; anyone who can read the meeting may commit.
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
@@ -57,8 +59,9 @@ None yet. Proposed, not declared: the meeting intake that would leave FEAT-004 b
 | Requirement | Status | Title |
 |---|---|---|
 | [FR-011-006](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-006-meeting-visibility.md) | approved, implemented locally | Visibility and participants of meetings |
-| [FR-011-010](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md) | approved, declared | Custody of confidential transcripts |
-| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | approved, implemented | Task API — idempotent create (consumed by the meeting commit) |
+| [FR-011-010](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md) | approved, implemented locally | Custody of confidential transcripts |
+| [FR-011-009](../../features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md) | approved, implemented locally | Tasks from a confidential meeting (owned by the DOM-TSK part of FEAT-011) |
+| [FR-010-009](../../features/FEAT-010-task-manager/requirements/FR-010-009-task-api-create-update.md) | approved, implemented locally | Task API — idempotent create (consumed by the meeting commit) |
 
 **Participating cross-domain features**
 

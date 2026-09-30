@@ -3,8 +3,8 @@ id: PRD-001
 title: Zuri-Go — product requirements (product level)
 status: proposed
 relations:
-  decided_by: [ADR-004]
-  relates_to: [BRD-001, FEAT-011]
+  decided_by: [ADR-002, ADR-003, ADR-004]
+  relates_to: [BRD-001, FEAT-010, FEAT-011]
 ---
 
 # PRD-001 — Zuri-Go: product requirements (product level)
@@ -28,6 +28,8 @@ This is the product-level index: it says which surfaces exist and which feature 
 | Site menu: Marketing · Meeting & Task Manager · ความรู้ Metrics · Graph View | every part of the site | [FEAT-008](../features/FEAT-008-unified-site/feature.md) | DOM-PLT |
 | Logo and brand marks | headers, navigation, guide mastheads, graph header | [FEAT-009](../features/FEAT-009-logo-placement/feature.md) | DOM-BRN |
 
+Locally the site menu already reads “Task Manager” and “Meetings” ([FEAT-010](../features/FEAT-010-task-manager/feature.md), PLAN-002 Q9, decided 2026-10-01); production keeps the names in the table until release.
+
 The tabs and routes are defined in [FEAT-001 spec §4](../features/FEAT-001-business-overview/spec.md) and [FEAT-008 spec](../features/FEAT-008-unified-site/spec.md). Delivery status of each feature is in the [documentation map](../README.md#features).
 
 ## Scope chain
@@ -46,18 +48,14 @@ Every row belongs to exactly one Business, and a session reads the one configure
 
 ## Approved, built locally, not released
 
-[ADR-004](../architecture/decisions.md) and [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md) were approved by the owner on 2026-10-01. [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) phase P1 is built locally (PostgreSQL schema 6, migration `006_visibility.sql` on the local database only); production is still schema 5 and nothing is released.
+[ADR-004](../architecture/decisions.md) and [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md), then [ADR-002 and ADR-003](../architecture/decisions.md) and [FEAT-010](../features/FEAT-010-task-manager/feature.md), were approved by the owner on 2026-10-01. [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) phase P1 (PostgreSQL schema 6, migration `006_visibility.sql`) and phase P2 (schema 7, migration `007_tasks_projects.sql`) are built locally, on the local database only; production is still schema 5 and nothing is released.
 
 - **Visibility, teams and confidential meetings.** Tasks and meetings carry a level — `public`, `business`, `team` or `restricted` — and named people. Guests would see public items only, and a confidential meeting only its participants. Teams are managed by a Business admin, a flag set by the operator only ([ARCH-002](../architecture/ARCH-002-postgresql-data-model.md), schema 6 amendment).
-- **Product-wide rule 7** above comes from this decision.
+- **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md), delivery `building`). One task record for every department, with campaign, project and team as contexts; projects; boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; and the campaign Workboard as a view of the same tasks ([ARCH-002](../architecture/ARCH-002-postgresql-data-model.md), schema 7 amendment). The site menu names it “Task Manager” next to “Meetings” (PLAN-002 Q9, decided 2026-10-01). The reviewed move of existing Workboard tasks is an operator tool; its dry runs on 2026-10-01 found no Workboard tasks in production, so nothing is moved.
+- **Server-side meeting commit.** The design amendment to [SDD-004](../features/FEAT-004-meeting-task-manager/design.md) (PLAN-002 WI-09) was approved on 2026-10-01 and is being built; it is not delivered.
+- **Product-wide rule 7** above comes from the visibility decision.
 
 Until PLAN-002 phase P1 is released to production, the interim rule of ADR-004 D9 applies: no HR, accounting, salary, customer-personal or other confidential content in production, because Guests can read it today.
-
-## Proposed changes (not approved)
-
-[ADR-002 and ADR-003](../architecture/decisions.md) were approved on 2026-10-01; phase P2 of [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) is being built:
-
-- **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md)). Boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; a Projects view; and the campaign Workboard as a view of the same tasks. The site menu names it “Task Manager” next to “Meetings” (PLAN-002 Q9, decided 2026-10-01).
 
 ## Document notes
 
