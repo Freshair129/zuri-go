@@ -91,6 +91,8 @@ The owner asked for the gaps recorded in the WI-12 requirement files to be decid
 | D15 | FUNG status screens are narrower than MT-06, MT-07, MT-09 and MT-11 describe | Unchanged for now | None |
 | D16 | Guests read Member contact details (email, phone, notes) in production | Guests read only a Member's ID, PID, display name and status | Yes |
 
+The code was released as 0.5.1 on 2026-10-01. The acceptance criteria added to the requirement files for these decisions were approved by the owner the same day; AC-006-003-02 is superseded for named viewers by AC-006-003-06, and the notice text of AC-006-008-04 by AC-006-008-05.
+
 ## Decisions needed
 
 Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day. ADR-002, ADR-003, FEAT-010, its requirements and SDD-010 were approved later on 2026-10-01, with Q6–Q11 as recommended and part of Q16; Q12 is asked again at P4. The owner delegated the remaining questions (Q13–Q16) and WI-12 on 2026-10-01, and they were decided as recommended; the production backup, migration and deployment of P5 were authorized by the owner on 2026-10-01 and carried out the same day.
