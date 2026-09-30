@@ -26,6 +26,8 @@ export function BusinessWorkspace({view='overview',cloud=false,legacyCampaigns,l
  const generation=useRef(0),pendingFilter=useRef(null);const [businessId,setBusinessId]=useState(null);
  async function load(){const version=++generation.current;setLoading(true);setError('');try{const info=await request('/bootstrap'),value=await scoped(info.business.id,'/state');if(version!==generation.current)return;setBusinessId(info.business.id);setData(value);setBrief(null);}catch(e){if(version===generation.current)setError(e.message);}finally{if(version===generation.current)setLoading(false);}}
  useEffect(()=>{load();return()=>{generation.current++;};},[]);
+ // Signing in or out changes which tasks the overview may count (FR-011-008).
+ useEffect(()=>{const changed=()=>load();window.addEventListener('zuri-go-viewer-changed',changed);return()=>window.removeEventListener('zuri-go-viewer-changed',changed);},[]);
  useEffect(()=>{setFilter(pendingFilter.current?.view===view?pendingFilter.current.value:'all');pendingFilter.current=null;},[view]);
  async function mutate(path,method,payload,message='บันทึกแล้ว'){setBusy(true);try{await scoped(businessId,path,method,payload);setModal(null);setNotice(message);await load();}catch(e){setError(e.message);throw e;}finally{setBusy(false);}}
  const result=data?overview(data,{date,kind}):null;

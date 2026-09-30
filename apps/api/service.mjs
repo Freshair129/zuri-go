@@ -2,13 +2,22 @@ import {randomUUID,createHash} from 'node:crypto';
 import {rows,hashable} from './db.mjs';
 import {overview,summaryFacts,validateSummarySelection,periodFor,midnight} from '../web/src/content/business/model.mjs';
 import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.mjs';
+import {viewerOf,taskNames,readable} from './audience.mjs';
 export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
 export function fail(message,status=422){throw Object.assign(Error(message),{status});}
 export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks'];
-export async function snapshot(c,b){
+// Only the viewer's tasks, with their roles and weekly entries (FR-011-007, FR-011-008).
+export async function snapshot(c,b,viewer=viewerOf(c)){
  const business=(await c.query('SELECT * FROM businesses WHERE id=$1',[b])).rows[0];if(!business)fail('ไม่พบธุรกิจ',404);
- const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);return JSON.parse(hashable(result));
+ const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);
+ result.tasks=readable(viewer,result.tasks,await taskNames(c,b));const ids=new Set(result.tasks.map(t=>t.id));
+ for(const t of ['task_roles','weekly_plan_tasks'])result[t]=result[t].filter(r=>ids.has(r.task_id));
+ // A stored week also lists entries (task IDs, priority notes) of tasks the viewer cannot read.
+ const shown=new Set(result.tasks.map(t=>t.legacy_metadata?.id||t.id));result.weekly_plans=result.weekly_plans.map(w=>Array.isArray(w.legacy_metadata?.entries)?{...w,legacy_metadata:{...w.legacy_metadata,entries:w.legacy_metadata.entries.filter(e=>shown.has(e.taskId))}}:w);
+ return JSON.parse(hashable(result));
 }
+// Changes whenever the set of visible tasks or their versions changes, so a cached brief never crosses audiences.
+export const audienceKey=data=>hash(data.tasks.map(t=>t.id+':'+t.row_version).sort());
 const CONFIG={
  members:['members','display_name full_name nickname team position email phone notes status'],
  channels:['channel_accounts','platform display_name external_account_id url status default_freshness_hours'],
@@ -88,8 +97,8 @@ export async function observe(c,b,input){
  if(previous)await c.query('UPDATE metric_observations SET is_current=false WHERE business_id=$1 AND id=$2',[b,previous.id]);
  const row=(await c.query('INSERT INTO metric_observations(business_id,series_id,effective_at,period_start,value,coverage,source_ref,revision,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[b,s.id,effective,periodStart,value,input.coverage||'complete',input.source_ref,(previous?.revision||0)+1,previous?.id||null,input.correction_reason||null])).rows[0];await audit(c,b,'metric_observations',row.id,previous,row,'observe');return row;
 }
-export async function brief(c,b,options){
- const data=await snapshot(c,b),view=overview(data,options),facts=summaryFacts(view),inputHash=hash({facts,goals:view.goals,counts:view.counts,asOf:view.asOf,period:view.period});
+export async function brief(c,b,options,viewer=viewerOf(c)){
+ const data=await snapshot(c,b,viewer),view=overview(data,options),facts=summaryFacts(view),inputHash=hash({facts,goals:view.goals,counts:view.counts,asOf:view.asOf,period:view.period,audience:audienceKey(data)});
  let summary=facts.filter(f=>f.id!=='campaigns').slice(0,3);if(!summary.length)summary=facts.slice(0,3);
  let mode='rule_based',model=null,error=null;
  // Optional, explicitly configured local model. No cloud fallback and no tools.

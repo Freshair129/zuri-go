@@ -39,6 +39,10 @@ export function saveTask(s,input,{week,priority=null,priorityNote=null}={}){
   for(const key of ['responsibleId','accountableId'])t[key]=person(s,Object.hasOwn(input,key)?input[key]:old?.[key],old?.[key]);
   for(const key of ['consultedIds','informedIds'])t[key]=[...new Set((input[key]??old?.[key]??[]).map(id=>person(s,id,old?.[key]?.includes(id)?id:null)).filter(Boolean))];
   t.accountableConfirmed=input.accountableConfirmed??old?.accountableConfirmed??false;
+  // Visibility (FR-011-004, -005, -011) is enforced by the server; a widening reason is sent once and never kept.
+  if(Object.hasOwn(input,'visibility'))t.visibility=input.visibility||null;if(Object.hasOwn(input,'teamId'))t.teamId=input.teamId||null;
+  if(Object.hasOwn(input,'viewerIds'))t.viewerIds=[...new Set((input.viewerIds||[]).map(id=>person(s,id,old?.viewerIds?.includes(id)?id:null)).filter(Boolean))];
+  if(text(input.visibilityReason))t.visibilityReason=text(input.visibilityReason);else delete t.visibilityReason;
   t.acceptanceProposed=input.acceptanceProposed??old?.acceptanceProposed??false;t.raciProposed=input.raciProposed??old?.raciProposed??false;
   if(old&&t.accountableId!==old.accountableId&&!Object.hasOwn(input,'accountableConfirmed'))t.accountableConfirmed=false;
   t.status=input.status??old?.status??'planned';t.statusConfirmed=input.statusConfirmed??old?.statusConfirmed??true;

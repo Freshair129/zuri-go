@@ -6,17 +6,18 @@ import {allowedRequest} from './http.mjs';
 import {handleApi,sendError} from './api.mjs';
 import {config} from './config.mjs';
 import {pool,transaction} from './db.mjs';
+import {OPERATOR} from './viewer.mjs';
 import {fail} from './service.mjs';
 const cfg=config(),publicRoot=resolve(fileURLToPath(new URL('../../build/site/',import.meta.url))),businessId=cfg.businessId;
 if(!businessId||!cfg.databaseUrl)throw Error('Configure a local Business and PostgreSQL before starting.');
-await transaction(businessId,async c=>{await c.query("INSERT INTO businesses(id,name,slug) VALUES($1,'ธุรกิจของฉัน',$2) ON CONFLICT(id) DO NOTHING",[businessId,'local-'+businessId]);});
+await transaction(businessId,OPERATOR,async c=>{await c.query("INSERT INTO businesses(id,name,slug) VALUES($1,'ธุรกิจของฉัน',$2) ON CONFLICT(id) DO NOTHING",[businessId,'local-'+businessId]);});
 const media={'.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.jpeg':'image/jpeg','.ttf':'font/ttf','.txt':'text/plain; charset=utf-8'};
 const server=createServer(async(req,res)=>{
  res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','same-origin');
  try{
   if(!allowedRequest(req,cfg.port))fail('Local access only',403);
   const url=new URL(req.url,`http://127.0.0.1:${cfg.port}`),path=url.pathname;
-  if(path.startsWith('/api/zuri-go/v1')){await handleApi(req,res,url,{businessId,storage:'postgresql-local'});return;}
+  if(path.startsWith('/api/zuri-go/v1')){await handleApi(req,res,url,{businessId,storage:'postgresql-local',principal:OPERATOR});return;}
   if(req.method!=='GET'&&req.method!=='HEAD')fail('Method not allowed',405);
   const decoded=decodeURIComponent(path);if(decoded.includes('\0')||decoded.split('/').some(s=>s.startsWith('.')))fail('Not found',404);
   const candidate=resolve(publicRoot,'.'+decoded,decoded.endsWith('/')?'index.html':'');

@@ -23,9 +23,10 @@ export async function resolveMember(c,b,claims){
  const r=(await c.query('SELECT m.id,m.pid,m.display_name,m.status,a.credential_version,a.enabled FROM members m JOIN member_credentials a ON (a.business_id,a.member_id)=(m.business_id,m.id) WHERE m.business_id=$1 AND m.id=$2',[b,claims.m])).rows[0];
  return r?.enabled&&r.status==='active'&&Number(r.credential_version)===claims.cv?identity(r):null;
 }
-export async function authorizeWrite(c,b,claims){
+// The viewer was already rechecked when the transaction started (viewer.mjs); reuse it.
+export async function authorizeWrite(c,b){
  await c.query('SELECT id FROM businesses WHERE id=$1 FOR UPDATE',[b]);
- const member=await resolveMember(c,b,claims);
+ const member=c.zuriViewer?.kind==='member'?c.zuriViewer.member:null;
  if(!member)throw Object.assign(Error('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน'),{status:401,code:'AUTH_REQUIRED'});
  c.zuriActor=member;return member;
 }
