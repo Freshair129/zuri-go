@@ -229,6 +229,17 @@ Taken by the owner with the approval, or, where marked *default*, taken for P2 a
 - **Response shapes** (as built): a single task or project is returned as the object itself; lists are `{tasks}` and `{projects}`; a project page is `{project, tasks, counts}`.
 - **Hosted query parameters** reach the handler through the rewrite's query string (`route=…&board=…`).
 
+## Design gaps decided (2026-10-01)
+
+The owner decided the gaps of the WI-12 requirement files on 2026-10-01 ([PLAN-002 “Design gaps decided”](../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01)). Only the decisions that change what this design says are listed. The code of D2, D3 and D12 is built locally and not released (production still runs 0.5.0).
+
+- **D1 — the meeting commit is the task domain’s contract.** The table “Scope and delivery” says the commit of WI-09 “calls the same create operation”. It does not: it writes its tasks through `writeDomain`. Accepted: that in-process call applies the same task rules, audit and single transaction, and counts as the contract of ADR-002 D2 and AC-010-009-05. No code change ([FR-010-009](requirements/FR-010-009-task-api-create-update.md) Notes).
+- **D2 — the server refuses an Inactive Member in a new role.** After `checkPeople`, `createTask` and `updateTask` call `checkActive` (`apps/api/tasks.mjs`): a new R, A, C or I naming an Inactive Member is refused with 422 `MEMBER_INACTIVE`; a role the task already had with that Member is kept; named viewers are access, not work, and may be Inactive. `writeDomain` applies the same rule to the workspace save and so to the meeting commit, except for the operator’s backup import. As a failure mode (not yet a row of the table above): a new R, A, C or I naming an Inactive Member answers 422 `MEMBER_INACTIVE` and nothing is stored ([FR-010-019](requirements/FR-010-019-assign-by-member.md) AC-010-019-05).
+- **D3 — who adds a Member from the task form.** The quick add “＋ เพิ่ม Member จากฟอร์มนี้” is offered only to the Business admin and the local operator; the server refuses a Member added by anyone else with 403 (DOM-IAM, [FR-006-001](../FEAT-006-member-identity/requirements/FR-006-001-register-member.md) AC-006-001-07). Other Members pick from the registered Members.
+- **D5 — R and A may be the same Member.** `task_roles` and the task rules keep allowing it; nothing is added ([FR-010-018](requirements/FR-010-018-raci-rules.md) AC-010-018-07).
+- **D10 — no per-task weekly MoSCoW operation yet.** The API contract above carries no weekly priority; it is written through the workspace save and the meeting commit, and a per-task operation is later ([FR-010-020](requirements/FR-010-020-moscow-values.md)).
+- **D12 — no history event for an unchanged weekly priority.** The workspace model (`model.mjs:setPriority`) writes the `priority` event only when the priority or the note changes, so choosing a week with no priority, and the seed, leave no event ([FR-010-022](requirements/FR-010-022-priority-per-week.md) AC-010-022-06).
+
 ## Open items
 
 - **API- / EVT- contracts.** The boundaries are in-process calls within SRV-001; their declarations wait for PLAN-001 WI-09.

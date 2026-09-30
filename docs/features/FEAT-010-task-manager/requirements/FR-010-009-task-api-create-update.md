@@ -25,8 +25,10 @@ The system SHALL provide per-task operations to create a task with an idempotenc
 
 ## Implementation
 - Built locally 2026-10-01: `idempotency_key` / `idempotency_hash` with a unique partial index; `idempotencyOutcome`; `row_version` compared before every update, which raises it by exactly one; one transaction per request.
-- Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (hosted routes). AC-010-009-05 waits for the server-side meeting commit (WI-09).
+- Tests: `apps/api/test/tasks-api.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (hosted routes). AC-010-009-05 is met by the server-side meeting commit (WI-09, released with 0.5.0): `apps/api/meeting-commit.mjs:commitMeeting` with `apps/api/workspace.mjs:writeDomain`, tested in `apps/api/test/meeting-commit.test.mjs` ([FR-012-008](../../FEAT-012-meeting-intake/requirements/FR-012-008-idempotent-commit.md)).
 - Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).
 
 ## Notes
 - The whole-workspace save stays for compatibility (FR-010-011).
+- Decided 2026-10-01 ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D1): the meeting commit writes its tasks through `writeDomain`, not through `createTask`; the in-process call applies the same task rules, audit and single transaction, and counts as the task domain’s contract (ADR-002 D2). It derives one key per batch rather than one per draft item. No code change.
+- Wording of AC-010-009-05, left as written: it speaks of “the same operation with the keys of its draft items”, which differs from that mechanism; its outcome (a replay returns the same tasks) holds. Re-approval of the wording is for the owner.

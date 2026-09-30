@@ -24,5 +24,6 @@ The system SHALL give attachments, history entries, overview task lists, AI-summ
 ## Implementation
 - Built locally 2026-10-01: snapshot, overview and AI-brief input from the viewer's rows; `audienceKey` in the brief cache key (`service.mjs`); attachments answer 404 when unseen; history (`change_events`) and weekly entries follow their task; the UI backup is built from the filtered workspace.
 - Tests: `apps/api/test/visibility-db.test.mjs`, `apps/api/test/cloud-handler.test.mjs`.
+- History events stored with a task’s snapshot keep no evidence quote that `meeting_task_links` holds (built locally 2026-10-01, not released): [FR-011-009](FR-011-009-confidential-meeting-tasks.md) AC-011-009-05, D14.
 - Overview task rows today: `apps/web/src/content/business/model.mjs:54`; history: `change_events` read in `apps/api/workspace.mjs:28`; attachments: `apps/api/attachments.mjs`.
 - Released to production on 2026-10-01 with 0.5.0 (schema 7): the hosted Guest checks passed; the Member, participant and Business-admin checks and the browser checks are not yet run ([verification](../../../releases/0.5.0/verification.md)).

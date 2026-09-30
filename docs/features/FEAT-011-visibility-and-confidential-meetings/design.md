@@ -288,6 +288,14 @@ These refine the approved design without changing a requirement; the owner revie
 
 - **Quotes in task JSON (integration, 2026-10-01).** Meeting quotes copied into a task's metadata and history snapshots follow the meeting, not the task: `withholdQuotes` (`apps/api/audience.mjs`) removes them in `readLegacy` and `snapshot` for a viewer who cannot read the meeting ([RCA](../../../.brain/rca/zuri-go-meeting-quotes-outside-meeting-audience.md)).
 
+## Design gaps decided (2026-10-01)
+
+The owner decided the gaps of the WI-12 requirement files on 2026-10-01 ([PLAN-002 “Design gaps decided”](../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01)). Only the decisions that change what this design says are listed. The code of D2, D14 and D16 is built locally and not released (production still runs 0.5.0, where a Guest reads every Member field, the history events keep their quotes, and an Inactive participant blocks a restricted meeting’s commit).
+
+- **D16 — what a Guest reads of a Member.** “Campaign records and Member profiles are out of scope” (Scope and delivery) still holds for the audience levels, but the fields are narrowed: `readLegacy` and `snapshot` return a Guest, for each Member, only the ID, the PID, the display name and the status (`guestMember` in `apps/api/service.mjs`); Members, a Business admin and the operator read every field. The `members` table keeps its `business_scope` policy only, so this is an application filter like the others on those paths, not row-level security; `/overview`, `/bootstrap` and `/session` list no Member to a Guest and the team routes answer a Guest 401 ([FR-011-007](requirements/FR-011-007-guest-public-only.md) AC-011-007-06, -07). A level such as `business` or `team` for a Member’s profile stays the later step of PLAN-002 Q1.
+- **D2 — an Inactive participant is access, not work.** The audience a restricted meeting gives its tasks (“Tasks from a confidential meeting (FR-011-009)”) includes every participant, Inactive ones too: viewers and participants are checked for existence only, while a new R, A, C or I must be Active ([FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) AC-011-009-04).
+- **D14 — history events keep no quote.** “Found while building: history leaked quotes” describes withholding on read (`withholdQuotes`). New events are now also stored without the quote: `writeDomain` applies the `bare()` rule of the task row to the snapshots in an event, so a reference whose evidence lives in `meeting_task_links` is stored without it. Events written before stay as stored and stay withheld on read ([FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) AC-011-009-05, NFR-011-001).
+
 ## Open items
 
 - **Guests and the people on public tasks.** Guests see public tasks without their RACI (row-level security design), as approved with this SDD. Showing those names to Guests later needs another shape for the L0 policy.

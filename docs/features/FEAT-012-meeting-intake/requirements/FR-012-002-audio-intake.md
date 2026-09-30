@@ -26,5 +26,5 @@ The system SHALL send an audio or video file to FUNG’s import only when the us
 
 ## Notes
 - Origin: FEAT-004 MT-06. Delivery is `building`: the [verification](../../FEAT-004-meeting-task-manager/verification.md) row says the client, the receipt and the contract are implemented but a real upload and Whisper transcription are NOT_RUN.
-- Not run: an upload to an installed FUNG, real transcription, and the failed-job and empty-transcript paths against a real FUNG. The spec’s four states (Uploading, Transcribing, Ready, Failed) are shown as the raw status text FUNG returns, not as four labelled states.
+- Not run: an upload to an installed FUNG, real transcription, and the failed-job and empty-transcript paths against a real FUNG. The spec’s four states (Uploading, Transcribing, Ready, Failed) are shown as the raw status text FUNG returns, not as four labelled states. Decided 2026-10-01 ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D15): unchanged for now — the status screens stay narrower than MT-06, MT-07, MT-09 and MT-11 describe. No code change.
 - How a meeting becomes a stored source snapshot is FR-012-003.

@@ -62,11 +62,34 @@ State after release 0.5.0 (2026-10-01, Bangkok). Production runs application 0.5
 **Remains**
 
 - The owner's hosted checks as a Member and as Business admin: sign in, see all 12 tasks with RACI, weekly MoSCoW and the 2 attachments, create a task and a project, and open a restricted meeting with two participants (release plan, “Hosted checks per viewer kind”). They need a real Member code, which the agent does not use.
-- The design gaps recorded in the WI-12 requirement files (approved 2026-10-01): the meeting commit's write path against ADR-002 D2, Inactive Members on the API, who may edit the Member registry, committing without FUNG, R and A being one person, stale Member-screen copy, and PIDs after a restore.
+- The design gaps of the WI-12 requirement files were decided on 2026-10-01 (see “Design gaps decided” below); the code changes they need (D2, D3, D4, D6, D12, D14, D16) were built on 2026-10-01 and released as 0.5.1 ([record](../../releases/0.5.1/verification.md)).
 - Browser visual and interaction checks on production, and a restore drill of the pre-release backup.
 - Q1 follow-up: the same levels for Member profiles and campaign records, which Guests still read.
 
 **Rollback.** There is no down-migration. The fallback chosen is to fix forward on schema 7; code from before 0.5.0 on schema 7 reads as a Guest and shows no business work.
+
+## Design gaps decided (2026-10-01)
+
+The owner asked for the gaps recorded in the WI-12 requirement files to be decided as recommended. D-numbers are local to this list.
+
+| # | Gap | Decision | Code |
+|---|---|---|---|
+| D1 | The meeting commit writes tasks through `writeDomain`, not the per-task create of FR-010-009 (ADR-002 D2, AC-010-009-05) | Accepted: the in-process call applies the same task rules, audit and single transaction, and counts as the task domain's contract | None |
+| D2 | The API does not refuse an Inactive Member; an Inactive participant blocks a restricted meeting's commit (422) | The server refuses naming an Inactive Member in a new R, A, C or I role and keeps a role the task already had; named viewers and meeting participants may be Inactive (access, not work) | Yes |
+| D3 | Any Member may add Members and change anyone's record or status | Adding a Member and changing any status need the Business admin or the operator; a Member may edit their own details but not their own status; another Member's record needs the admin | Yes |
+| D4 | A meeting commit needs a connected FUNG | With a server workspace the commit is allowed without FUNG; the server checks the stored hashes and the screen says the FUNG comparison was skipped | Yes |
+| D5 | R and A may be the same Member | Allowed, as today | None |
+| D6 | Stale screen text (Members stored “on this machine”, a Member save reported as a task save, the commit note) | Corrected | Yes |
+| D7 | A restore into an empty Business assigns new PIDs and restores no credentials | Intended: a restore is not an identity migration | None |
+| D8 | PostgreSQL Businesses are never seeded with the weekly seed | Intended; the seed stays a browser-workspace start | None |
+| D9 | Restore over a populated PostgreSQL workspace is unsupported | Stays unsupported | None |
+| D10 | No per-task operation for weekly MoSCoW | Later; the workspace save and the meeting commit remain the paths | None |
+| D11 | RACI confirmation is stored differently by the task API and the workspace save | Unchanged; only the A confirmation is read | None |
+| D12 | A history event is written when a weekly priority does not change | No event when priority and note are unchanged | Yes |
+| D13 | Campaign owner text binds to a Member by a unique exact name | Unchanged: it is the campaign owner, not the task owner text of FR-010-008 | None |
+| D14 | Task history events store evidence quotes in `change_events` | New events store no quote whose evidence lives in `meeting_task_links`; older events stay withheld on read | Yes |
+| D15 | FUNG status screens are narrower than MT-06, MT-07, MT-09 and MT-11 describe | Unchanged for now | None |
+| D16 | Guests read Member contact details (email, phone, notes) in production | Guests read only a Member's ID, PID, display name and status | Yes |
 
 ## Decisions needed
 
