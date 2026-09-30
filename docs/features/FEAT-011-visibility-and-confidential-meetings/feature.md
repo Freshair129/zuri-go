@@ -49,7 +49,7 @@ Every department can use the workspace without exposing its work. Tasks, project
 | [FEAT-011-P03](parts/P03-meetings.md) | [DOM-MTG](../../domains/meetings/README.md) | Visibility, participants and transcript custody of meetings |
 
 ## Requirement index
-Approved by the owner on 2026-10-01; each file holds the requirement and its acceptance criteria. The feature, [ADR-004](../../architecture/decisions.md) and SDD-011 are still proposed, so nothing may be built yet.
+Approved by the owner on 2026-10-01; each file holds the requirement and its acceptance criteria. The design [SDD-011](design.md) was approved the same day. The feature and [ADR-004](../../architecture/decisions.md) are still proposed, so nothing may be built yet.
 
 | ID | Requirement | Part | Delivery |
 |---|---|---|---|

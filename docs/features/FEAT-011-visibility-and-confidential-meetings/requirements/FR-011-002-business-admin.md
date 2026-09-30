@@ -6,6 +6,7 @@ owner: DOM-IAM
 delivery: declared
 status: approved
 relations:
+  specified_by: [SDD-011]
   decided_by: [ADR-004]
 ---
 

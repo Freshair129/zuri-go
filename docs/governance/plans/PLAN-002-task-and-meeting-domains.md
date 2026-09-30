@@ -32,7 +32,7 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 
 | ID | Work item | Phase | Note |
 |---|---|---|---|
-| WI-01 | FR / AC files for FEAT-011; SDD-011 with `## Interfaces` | P1 | FR-011-001…012 and NFR-011-001 approved by the owner 2026-10-01; SDD-011 in progress |
+| WI-01 | FR / AC files for FEAT-011; SDD-011 with `## Interfaces` | P1 | FR-011-001…012 and NFR-011-001 approved by the owner 2026-10-01; [SDD-011](../../features/FEAT-011-visibility-and-confidential-meetings/design.md) approved by the owner 2026-10-01 |
 | WI-02 | Migration: teams, team members, admin flag, visibility, task viewers, meeting participants, row-level security viewer policies | P1 | Additive; existing rows readable by Members |
 | WI-03 | Viewer-aware reads: `/state`, `/overview`, `/workspace`, attachments, history, AI-summary input, backups | P1 | Test each read as Guest, Member outside the team, team Member, named person and local operator |
 | WI-04 | UI: visibility and team pickers, team management, a sign-in prompt for Guests where work is hidden | P1 | Data App authored content only |

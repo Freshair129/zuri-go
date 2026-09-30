@@ -6,6 +6,7 @@ runtime: SRV-001
 delivery: declared
 status: proposed
 relations:
+  specified_by: [SDD-011]
   decided_by: [ADR-004]
 ---
 
