@@ -101,7 +101,7 @@ Relations: relates_to: ADR-002, ADR-004, FEAT-002, FEAT-004, FEAT-010, ARCH-002,
 ### ADR-004 — Who may see tasks and meetings: visibility levels, confidential meetings and a public-only Guest view
 Relations: relates_to: ADR-002, ADR-003, FEAT-005, FEAT-006, FEAT-011, PLAN-002
 
-**Status:** proposed — for owner review. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (authorization and confidential data).
+**Status:** approved — by the owner, 2026-10-01. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (authorization and confidential data).
 
 **Context.**
 

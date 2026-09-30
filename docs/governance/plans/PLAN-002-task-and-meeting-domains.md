@@ -9,7 +9,7 @@ relations:
 
 # PLAN-002 — Task and meeting domains for every department
 
-Delivery plan for [ADR-002, ADR-003 and ADR-004](../../architecture/decisions.md): a Task Manager for every department ([FEAT-010](../../features/FEAT-010-task-manager/feature.md)) and visibility with confidential meetings ([FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). Nothing here is approved. Each phase starts only after the owner approves the ADRs and the phase's FR files. This document changes no application code, schema or data.
+Delivery plan for [ADR-002, ADR-003 and ADR-004](../../architecture/decisions.md): a Task Manager for every department ([FEAT-010](../../features/FEAT-010-task-manager/feature.md)) and visibility with confidential meetings ([FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). ADR-004, FEAT-011, its requirements and SDD-011 were approved on 2026-10-01, and P1 has started; ADR-002 and ADR-003 are still proposed. Each phase starts only after the owner approves its ADRs and FR files. This document changes no application code, schema or data.
 
 ## Interim rule — applies now
 
@@ -33,9 +33,9 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 | ID | Work item | Phase | Note |
 |---|---|---|---|
 | WI-01 | FR / AC files for FEAT-011; SDD-011 with `## Interfaces` | P1 | FR-011-001…012 and NFR-011-001 approved by the owner 2026-10-01; [SDD-011](../../features/FEAT-011-visibility-and-confidential-meetings/design.md) approved by the owner 2026-10-01 |
-| WI-02 | Migration: teams, team members, admin flag, visibility, task viewers, meeting participants, row-level security viewer policies | P1 | Additive; existing rows readable by Members |
-| WI-03 | Viewer-aware reads: `/state`, `/overview`, `/workspace`, attachments, history, AI-summary input, backups | P1 | Test each read as Guest, Member outside the team, team Member, named person and local operator |
-| WI-04 | UI: visibility and team pickers, team management, a sign-in prompt for Guests where work is hidden | P1 | Data App authored content only |
+| WI-02 | Migration: teams, team members, admin flag, visibility, task viewers, meeting participants, row-level security viewer policies | P1 | `006_visibility.sql`; applied locally 2026-10-01 after a backup (counts reconciled); production not migrated |
+| WI-03 | Viewer-aware reads: `/state`, `/overview`, `/workspace`, attachments, history, AI-summary input, backups | P1 | Built locally 2026-10-01; `apps/api/test/visibility-db.test.mjs` covers all five viewer kinds |
+| WI-04 | UI: visibility and team pickers, team management, a sign-in prompt for Guests where work is hidden | P1 | Built 2026-10-01 (`meeting/Visibility.jsx`); partly browser-checked locally — see FEAT-011 delivery evidence |
 | WI-05 | FR / AC files for FEAT-010; SDD-010; API contract | P2 | |
 | WI-06 | Migration: projects; `project_id`, `team_id`, `owner_label`, `completion_rule` and `idempotency_key` on tasks; `campaign_task_details` | P2 | Additive |
 | WI-07 | Task API, shared task rules, deployment allowlist | P2 | `scripts/deploy/build_cloud.py:25` |
@@ -47,7 +47,7 @@ P1 comes first because tasks and meetings from HR and accounting must not become
 
 ## Decisions needed
 
-Q1–Q5 were answered by the owner on 2026-10-01, as recommended. The ADRs themselves remain `proposed`; Q6–Q12 are still open.
+Q1–Q5 were answered by the owner on 2026-10-01, as recommended. ADR-004 was approved the same day; ADR-002 and ADR-003 remain `proposed`, and Q6–Q12 are still open.
 
 | # | Question | Recommendation |
 |---|---|---|

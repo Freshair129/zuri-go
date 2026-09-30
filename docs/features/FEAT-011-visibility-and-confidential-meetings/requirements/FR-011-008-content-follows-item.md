@@ -3,7 +3,7 @@ id: FR-011-008
 title: Content follows its item
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -22,5 +22,6 @@ The system SHALL give attachments, history entries, overview task lists, AI-summ
 - AC-011-008-05 — Given a failed request on a restricted item, then logs hold the error code and IDs only, never titles, text or transcript content.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: snapshot, overview and AI-brief input from the viewer's rows; `audienceKey` in the brief cache key (`service.mjs`); attachments answer 404 when unseen; history (`change_events`) and weekly entries follow their task; the UI backup is built from the filtered workspace.
+- Tests: `apps/api/test/visibility-db.test.mjs`, `apps/api/test/cloud-handler.test.mjs`.
 - Overview task rows today: `apps/web/src/content/business/model.mjs:54`; history: `change_events` read in `apps/api/workspace.mjs:28`; attachments: `apps/api/attachments.mjs`.

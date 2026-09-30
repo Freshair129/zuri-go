@@ -3,7 +3,7 @@ id: FR-011-012
 title: Visibility of data that exists before the change
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -20,5 +20,5 @@ The system SHALL give every task and meeting that exists when this feature is re
 - AC-011-012-03 — Given production, then the migration runs only after a backup and with the owner’s specific authorization.
 
 ## Implementation
-- Not built.
+- Built: `ADD COLUMN … DEFAULT 'business'` in `006_visibility.sql`. Applied to the local database 2026-10-01 after a backup, with the owner's authorization: counts before and after were equal (tasks 17, task_roles 86, weekly_plan_tasks 17, change_events 73, members 8 in the non-QA Businesses) and every task became `business`. Not applied to production.
 - Additive schema change: PLAN-002 WI-02.

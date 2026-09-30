@@ -3,7 +3,7 @@ id: FR-011-007
 title: Guests read public items only
 part: FEAT-011-P01
 owner: DOM-IAM
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -22,7 +22,8 @@ The system SHALL return to a Guest only items whose visibility is `public`, on e
 - AC-011-007-05 — Given a Member whose session expires, then their next read gets the Guest view.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: `/workspace`, `/state`, `/overview` and attachments filter by the viewer (`workspace.mjs`, `service.mjs`, `attachments.mjs`); `GuestNotice` in the Task Manager.
+- Tests: `apps/api/test/cloud-handler.test.mjs` (Guest read paths, 404 for attachments). The Guest notice was not browser-checked (it needs the hosted site).
 - Read paths today: `apps/api/api.mjs:15-16` (session, bootstrap), `:17-24` (attachments), `:30` (state), `:31` (overview), `:35` (workspace); the hosted handler lets every GET through (`apps/api/cloud.mjs:27`).
 - Campaign records and Member profiles are outside this requirement; applying the same levels to them follows (PLAN-002 Q1).
 

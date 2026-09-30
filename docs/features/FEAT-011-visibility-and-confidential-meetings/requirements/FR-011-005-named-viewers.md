@@ -3,7 +3,7 @@ id: FR-011-005
 title: Named viewers of a task
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -21,5 +21,6 @@ The system SHALL treat the R, A, C and I of a task, with its explicit viewers, a
 - AC-011-005-04 — Given any change to viewers, then an audit event records it with the session actor.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: table `task_viewers`; `viewerIds` on the task payload, written with an audit event (`task_viewers`) in `apps/api/workspace.mjs`.
+- Tests: `apps/api/test/visibility-db.test.mjs`.
 - Planned table `task_viewers`; RACI stays in `task_roles`.

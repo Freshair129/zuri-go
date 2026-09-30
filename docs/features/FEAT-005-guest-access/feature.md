@@ -39,4 +39,4 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 ## Notes
 - Amended by [FEAT-006](../FEAT-006-member-identity/feature.md) (shared-team password replaced) and [FEAT-007](../FEAT-007-single-code-login/feature.md) (single code). Guest visibility, the write-intent modal, action resume, file limits and downloads are unchanged.
 - The attachments section is a candidate for its own DOM-TSK feature (PLAN-001 WI-14).
-- Proposed ([ADR-004](../../architecture/decisions.md), [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)): the Guest view narrows to items marked public, and attachments follow the visibility of their task.
+- Approved 2026-10-01, being built ([ADR-004](../../architecture/decisions.md), [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)): the Guest view narrows to items marked public, and attachments follow the visibility of their task.

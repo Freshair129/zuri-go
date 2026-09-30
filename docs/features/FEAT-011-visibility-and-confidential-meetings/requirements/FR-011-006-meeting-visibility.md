@@ -3,7 +3,7 @@ id: FR-011-006
 title: Visibility and participants of meetings
 part: FEAT-011-P03
 owner: DOM-MTG
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -21,7 +21,8 @@ The system SHALL store a visibility level and a participant list on every meetin
 - AC-011-006-04 — Given a meeting whose visibility is widened, then only its organizer may do so, with a reason, and the change is audited; any editor who can see it may narrow it.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: columns `visibility`, `team_id`, `transcript_custody` on `meetings`; table `meeting_participants`; `participantIds` and `organizerId` on the meeting payload (`apps/api/workspace.mjs`); meeting form in `apps/web/src/content/meeting/Meetings.jsx`. `project_id` follows with FEAT-010.
+- Tests: `apps/api/test/visibility-db.test.mjs` (restricted meetings). The meeting form was not browser-checked (no local meetings).
 - Planned table `meeting_participants`; planned columns `visibility`, `team_id` and `project_id` on `meetings`.
 
 ## Notes

@@ -3,8 +3,8 @@ id: FEAT-011-P02
 title: Visibility, teams and confidential meetings — Tasks & projects
 owner: DOM-TSK
 runtime: SRV-001
-delivery: declared
-status: proposed
+delivery: building
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-004]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-011-P02 — Visibility of tasks and projects, and of their attachments and history
 
-Part of [FEAT-011](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Proposed, not built.
+Part of [FEAT-011](../feature.md), owned by [DOM-TSK](../../../domains/tasks/README.md). Approved 2026-10-01; built locally for P1, not deployed.
 
 ## Scope
 - Visibility and named viewers on tasks and projects; defaults and inheritance from meetings.

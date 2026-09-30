@@ -2,7 +2,7 @@
 id: NFR-011-001
 title: Row-level security enforces the same audiences
 part: FEAT-011-P01
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   decided_by: [ADR-004]
@@ -18,7 +18,8 @@ The database SHALL enforce the audiences of FR-011-004, FR-011-006 and FR-011-00
 - Given the local operator viewer, then every row of the local database is visible, as today.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: restrictive policies layered L0 (membership) → L1 (tasks, meetings) → L2 (attachments, weekly entries, revisions, batches, links, history) in `006_visibility.sql`.
+- Measured: `apps/api/test/visibility-db.test.mjs` queries each layer directly as a Guest and as Members outside the audience; the runtime role stays `NOSUPERUSER NOBYPASSRLS`.
 - Extends the `business_scope` policies of `001_core.sql:166-176` with the viewer settings of FR-011-003.
 
 ## Notes

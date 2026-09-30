@@ -3,7 +3,7 @@ id: FR-011-003
 title: Viewer identity on every read
 part: FEAT-011-P01
 owner: DOM-IAM
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -22,7 +22,8 @@ The system SHALL resolve, for every request including reads, one viewer — Gues
 - AC-011-003-05 — Given any transaction, when it starts, then the viewer kind and member ID are set with `set_config` next to `zuri_go.business_id`.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: `apps/api/viewer.mjs` (`resolveViewer`, `viewerSettings`); `transaction(businessId, principal, fn)` in `apps/api/db.mjs` sets `zuri_go.viewer_kind` and `zuri_go.viewer_member`; `cloud.mjs` passes `session(claims)` on every request, `server.mjs` passes `OPERATOR`.
+- Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/cloud-handler.test.mjs` (operator refused on the hosted runtime).
 - Today reads do not resolve the Member: `authorizeWrite` sets the actor for writes only (`apps/api/member-auth.mjs:26-31`, `apps/api/api.mjs:12`), and `transaction()` sets only the Business (`apps/api/db.mjs:6`).
 
 ## Notes

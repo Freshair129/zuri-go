@@ -3,7 +3,7 @@ id: FR-011-002
 title: Business admin capability
 part: FEAT-011-P01
 owner: DOM-IAM
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -21,7 +21,8 @@ The system SHALL mark Business admins on their Member record, set only through t
 - AC-011-002-04 — Given an admin is set or removed, then an audit event records the change and the operator path used.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: `members.is_business_admin`, guarded by the trigger `members_admin_guard` (only the table owner may change it) in `006_visibility.sql`; operator flags `--admin <PID>` and `--no-admin <PID>` in `apps/api/provision-members.mjs`, each with an audit event.
+- Tests: `apps/api/test/visibility-db.test.mjs` (admin reads nothing extra; runtime role refused).
 - Operator path: an extension of `apps/api/provision-members.mjs`, which today supports `--cloud`, `--reset`, `--disable` and `--enable`; no browser endpoint grants admin.
 
 ## Notes

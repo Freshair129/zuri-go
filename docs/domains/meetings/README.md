@@ -37,7 +37,7 @@ Meetings of every department turned into a reviewed record and owned work: recor
 - A task created from a transcript comes from a reviewed revision and is idempotent: replaying the same request leaves one task ([FEAT-004 verification](../../features/FEAT-004-meeting-task-manager/verification.md)).
 - Sending a transcript to the cloud sends its content to a new destination: the user chooses and sees the scope first ([ARCH-001 §5](../../architecture/ARCH-001-baseline-architecture.md)).
 - Proposed: a meeting creates tasks only through the task records’ contract ([ADR-002](../../architecture/decisions.md)).
-- Proposed: a confidential meeting is `restricted` to its participants, and its transcript stays on the recording machine unless someone uploads it by an explicit, audited choice ([ADR-004](../../architecture/decisions.md)).
+- Approved 2026-10-01, being built: a confidential meeting is `restricted` to its participants, and its transcript stays on the recording machine unless someone uploads it by an explicit, audited choice ([ADR-004](../../architecture/decisions.md)).
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
@@ -56,7 +56,7 @@ None yet.
 
 | Feature | Part | Role | Delivery |
 |---|---|---|---|
-| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P03](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P03-meetings.md) | Visibility, participants and transcript custody of meetings | declared |
+| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P03](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P03-meetings.md) | Visibility, participants and transcript custody of meetings | building |
 
 **Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md)
 <!-- END GENERATED -->

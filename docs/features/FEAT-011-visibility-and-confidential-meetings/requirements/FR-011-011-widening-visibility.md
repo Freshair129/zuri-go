@@ -3,7 +3,7 @@ id: FR-011-011
 title: Widening the visibility of a task or project
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -20,7 +20,8 @@ The system SHALL let only a task’s A, or a project’s owner, widen its visibi
 - AC-011-011-03 — Given a `business` task, when an editor narrows it to `team`, then no reason is needed.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: `visibilityChange` (`shared/visibility.mjs`) applied on save in `apps/api/workspace.mjs`, audited as `task_visibility` / `meeting_visibility` with the reason; the reason is never stored on the item.
+- Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/visibility-db.test.mjs`.
 
 ## Notes
 - Meetings follow the same rule through their organizer (FR-011-006).

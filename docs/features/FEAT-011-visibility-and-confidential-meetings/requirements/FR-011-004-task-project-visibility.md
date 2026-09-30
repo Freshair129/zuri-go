@@ -3,7 +3,7 @@ id: FR-011-004
 title: Visibility of tasks and projects
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: declared
+delivery: implemented
 status: approved
 relations:
   specified_by: [SDD-011]
@@ -22,7 +22,8 @@ The system SHALL store one visibility level on every task and project — `publi
 - AC-011-004-05 — Given any board, list, RACI view, search or “my tasks” view, then it shows exactly the items the viewer may read.
 
 ## Implementation
-- Not built.
+- Built locally 2026-10-01: columns `visibility`, `team_id` on `tasks`; `canRead` in `apps/web/src/content/shared/visibility.mjs`; application filter `apps/api/audience.mjs`; row-level security `audience_read` in `006_visibility.sql`; UI `VisibilityFields` in the task form. `projects` follows with FEAT-010.
+- Tests: `apps/api/test/visibility.test.mjs`, `apps/api/test/visibility-db.test.mjs`.
 - Planned columns `visibility` and `team_id` on `tasks`, and on `projects` when FEAT-010 adds them.
 
 ## Notes

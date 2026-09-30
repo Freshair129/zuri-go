@@ -32,6 +32,14 @@ For rollback, stop only the identified new Zuri-Go listener and run the previous
 ## Documentation history
 `docs/history/` retains release evidence, screenshots and diffs from prior versions. Paths inside preserved evidence describe where files were when verified; before-snapshots and temporary test data remain in the original checkpoint. Current commands are in the root README and this runbook. Existing external FUNG/AI limitations remain; extraction did not exercise external providers or publish social content.
 
+## Visibility and teams (FEAT-011, schema 6)
+
+Migration `006_visibility.sql` adds teams, the Business-admin flag, visibility levels, task viewers and meeting participants, with row-level security that reads the viewer from `zuri_go.viewer_kind` and `zuri_go.viewer_member`. It is additive: existing tasks and meetings become `business`. It was applied to the local database on 2026-10-01 after `npm run backup`; production is still schema 5 and needs its own authorization, a backup first, and the release that carries the matching code.
+
+- **Restart after migrating.** A server started before schema 6 sets no viewer, so the database treats it as a Guest and it shows no business work. Stop only the identified Zuri-Go listener on 4319 and run `npm start`.
+- **Business admin.** `npm run members -- --admin ZGO-Pnnnn` grants it and `--no-admin ZGO-Pnnnn` removes it (add `--cloud` for production). Each change is audited; the runtime role cannot change the flag. An admin manages teams but reads nothing extra.
+- **Rollback.** Code from before FEAT-011 on a schema-6 database reads as a Guest and shows no business work. Plan a rollback together with the schema; there is no down-migration.
+
 ## Identity-code login (0.4.2)
 
 Members enter their existing personal code in the single masked field **รหัสระบุตัวตน**; no PID input is needed. PID remains on Member records and in operator reset commands. An ambiguous code is denied even if another matching credential is disabled; only an explicitly authorized operator reset can resolve it. No code rotation or migration is needed for this release. Login evaluates all credentials within the Business (currently four scrypt checks); rate limits remain enabled.

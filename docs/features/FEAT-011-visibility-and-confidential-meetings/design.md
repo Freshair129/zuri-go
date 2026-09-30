@@ -9,7 +9,7 @@ relations:
 
 # SDD-011 — Visibility, teams and confidential meetings — design
 
-> **Approved by the owner on 2026-10-01, not built.** Designs the approved requirements [FR-011-001…012 and NFR-011-001](feature.md#requirement-index) under [ADR-004](../../architecture/decisions.md), which is still proposed. Nothing here is built; the schema change (migration 006) and any production change each need their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
+> **Approved by the owner on 2026-10-01, not built.** Designs the approved requirements [FR-011-001…012 and NFR-011-001](feature.md#requirement-index) under [ADR-004](../../architecture/decisions.md) (approved). Nothing here is built yet; the schema change (migration 006) and any production change each need their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)).
 
 ## Scope and delivery
 
@@ -33,12 +33,13 @@ relations:
 | `apps/api/api.mjs` | DOM-PLT | changed | Passes the viewer through and adds the `teams` routes |
 | `apps/api/teams.mjs` | DOM-IAM | new | Teams and team membership; admin check |
 | `apps/web/src/content/shared/visibility.mjs` | DOM-TSK | new | Pure audience and change rules, shared by the API and the UI |
+| `apps/api/audience.mjs` | DOM-TSK / DOM-MTG | new | Application filter: loads the people named on tasks and meetings and keeps the rows `canRead` allows (added while building) |
 | `apps/api/service.mjs` | DOM-BIZ | changed | `snapshot()` and `brief()` see only the viewer's rows; the brief cache key includes the audience |
 | `apps/api/workspace.mjs` | DOM-TSK / DOM-MTG | changed | Viewer-scoped read; viewer-scoped merge on save |
 | `apps/api/attachments.mjs` | DOM-TSK | changed | Attachments of an unseen task answer 404 |
 | `apps/api/provision-members.mjs` | DOM-IAM | changed | `--admin <PID>` and `--no-admin <PID>` operator flags |
 | `apps/api/migrations/006_visibility.sql`, `apps/api/migrate.mjs` | DOM-PLT | new / changed | Additive schema, policies and grants (schema 6) |
-| Data App UI (`business/`, `meeting/`) | DOM-TSK / DOM-MTG | changed | Visibility, team and people pickers; team management; sign-in prompt for Guests (PLAN-002 WI-04) |
+| Data App UI (`business/`, `meeting/`, new `meeting/Visibility.jsx`) | DOM-TSK / DOM-MTG | changed | Visibility, team and people pickers; team management; sign-in prompt for Guests (PLAN-002 WI-04) |
 
 Components have no CMP IDs yet; the module path identifies them until PLAN-001 declares components.
 
@@ -225,7 +226,7 @@ Signatures marked **pure** have no I/O; each lists acceptance examples, and hold
 - **FR-011-004, -006, -007** · `shared/visibility.mjs` · `canRead(viewer, item, named) → boolean` — **pure**.
   - acceptance: Guest with `public` → true; Guest with `business` → false; a Member of the item's team with `team` → true; a Member not in the team but named, with `team` → true; an admin who is not named, with `restricted` → false.
   - holdout: operator with `restricted` → true; a Member not named, with `restricted` → false; a Member in another team, not named, with `team` → false.
-- **FR-011-011, -006** · `shared/visibility.mjs` · `visibilityChange(viewer, before, after, {accountableId, organizerId, reason}) → {ok:true} | {error}` — **pure**. `error` is one of `WIDEN_DENIED`, `REASON_REQUIRED`, `TEAM_REQUIRED`, `NAMED_REQUIRED` or `SELF_EXCLUDED`.
+- **FR-011-011, -006** · `shared/visibility.mjs` · `visibilityChange(viewer, before, after, {accountableId, organizerId, reason, named}) → {ok:true} | {error}` — **pure**. `error` is one of `LEVEL_INVALID`, `WIDEN_DENIED`, `REASON_REQUIRED`, `TEAM_REQUIRED`, `NAMED_REQUIRED` or `SELF_EXCLUDED`.
   - acceptance: the R widens `restricted` → `business` → `WIDEN_DENIED`; the A does so with a reason → ok; any editor narrows `business` → `team` with a team and no reason → ok.
   - holdout: the A widens without a reason → `REASON_REQUIRED`; `team` without a team → `TEAM_REQUIRED`; an actor narrows to `restricted` without being named → `SELF_EXCLUDED`.
 - **FR-011-001** · `apps/api/teams.mjs` · `listTeams(client, businessId, viewer) → Team[]`; `saveTeam(client, businessId, viewer, input, id?) → Team`. Owns `teams` and `team_members`; exposes `GET`, `POST /teams` and `PATCH /teams/:id`.
@@ -259,8 +260,21 @@ TC IDs are not assigned yet (PLAN-001 WI-08); these are the planned tests and th
 5. Migration 006 on a QA Business: equal reconciliation counts before and after; every existing row is `business`.
 6. The UI (sign-in prompt, pickers): checked with approved browser tools, or reported as not run.
 
+## Changes found while building P1 (2026-10-01)
+
+These refine the approved design without changing a requirement; the owner reviews them with the P1 change.
+
+- **Restrictive policies.** The audience policies are `AS RESTRICTIVE`, so they add to the existing permissive `business_scope` instead of replacing it. L0 also covers `teams` and `ai_briefs` (`signed_in`).
+- **Write order, for updates.** PostgreSQL checks an `UPDATE … WHERE` against the read policy for the new row too. An existing task or meeting is therefore updated with its old visibility first; its RACI, viewers or participants are written next; the new visibility and team are set last (`setAccess` in `workspace.mjs`).
+- **Weekly plans.** A stored week (`weekly_plans.legacy_metadata`) lists every entry, with task IDs and priority notes. `/state` filters that list to visible tasks, and a save keeps the entries of hidden tasks. Weekly entries are returned in the order the client saved, because row order changes once row-level security joins another table.
+- **Withheld references and receipts.** A task's `sourceRefs` to a meeting the viewer cannot read are removed on read, with `sourceRefsWithheld: true`, and restored on save. A receipt that names a hidden task is left out on read and kept on save.
+- **New history events** that name a task the viewer cannot read are refused with 409.
+- **Admin guard.** A trigger lets only the table owner (the operator path) change `members.is_business_admin`; the runtime role gets `42501`.
+- **`transaction(businessId, fn)`** without a principal runs as a Guest; service code and tests that need the whole database pass `OPERATOR`.
+- **The client refreshes on sign-in and sign-out** (`zuri-go-viewer-changed`), because a Guest no longer sees the same data as a Member.
+
 ## Open items
 
 - **Guests and the people on public tasks.** Guests see public tasks without their RACI (row-level security design), as approved with this SDD. Showing those names to Guests later needs another shape for the L0 policy.
 - **API-/EVT- contracts.** STD-001 R5 asks for them at each domain boundary; here they are in-process calls (PLAN-001 WI-09).
-- **Before building:** ADR-004 is still `proposed`, and migration 006 needs its own authorization.
+- **Before building the schema:** migration 006 needs its own authorization, locally and again for production.
