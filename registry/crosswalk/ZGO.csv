@@ -29,3 +29,5 @@ docs/product/unified-site-verification.md,FEAT-008,moved,docs/product/unified-si
 docs/operations/runbook.md,RB-001,renamed,docs/operations/runbook.md -> docs/operations/RB-001-runbook.md
 docs/operations/github-repository.md,RB-002,renamed,docs/operations/github-repository.md -> docs/operations/RB-002-github-repository.md
 ZGO-STRUCT-001,,kept-as-evidence,"docs/migrations/001-project-extraction.md stays in place: extraction plan and provenance, not an artifact (ADR-001 D3)"
+DOM-WRK,DOM-TSK,split (proposed),"tasks, task_roles, weekly_plans, weekly_plan_tasks, task_attachments and FEAT-004 go to DOM-TSK (ADR-002); DOM-WRK was never adopted and is not reused"
+DOM-WRK,DOM-MTG,split (proposed),"meetings, meeting_revisions, meeting_draft_batches and meeting_task_links go to DOM-MTG (ADR-002)"

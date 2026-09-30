@@ -22,7 +22,7 @@ An anonymous visitor reads the live workspace immediately in Guest mode; any cre
 - Evidence attachments: signature-checked raster previews only, every other file downloads as octet-stream with nosniff and a sandbox CSP; removal is a soft delete; changes are audited without file bytes.
 
 ## Ownership
-- Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature. Provisional: the evidence attachments are DOM-WRK data (`task_attachments`), which would make this a cross-domain feature under STD-001 R4 — open in PLAN-001 WI-14 (question 1).
+- Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature. Provisional: the evidence attachments are DOM-TSK data (`task_attachments`), which would make this a cross-domain feature under STD-001 R4 — PLAN-001 WI-14 (question 1).
 - Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md). The local runtime [SRV-002](../../services/SRV-002-local/SERVICE.md) is a trusted operator workspace without Guest mode or Member sign-in; only the evidence-attachment endpoints run there, without Guest restrictions.
 
 ## Documents
@@ -38,4 +38,5 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 
 ## Notes
 - Amended by [FEAT-006](../FEAT-006-member-identity/feature.md) (shared-team password replaced) and [FEAT-007](../FEAT-007-single-code-login/feature.md) (single code). Guest visibility, the write-intent modal, action resume, file limits and downloads are unchanged.
-- The attachments section is a candidate for its own DOM-WRK feature (PLAN-001 WI-14).
+- The attachments section is a candidate for its own DOM-TSK feature (PLAN-001 WI-14).
+- Proposed ([ADR-004](../../architecture/decisions.md), [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)): the Guest view narrows to items marked public, and attachments follow the visibility of their task.

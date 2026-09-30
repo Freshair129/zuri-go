@@ -2,13 +2,13 @@
 id: FEAT-004
 title: Meeting & Task Manager
 type: domain-feature
-owner: DOM-WRK
+owner: DOM-TSK
 runtime: SRV-001
 delivery: implemented
 status: proposed
 legacy: []
 relations:
-  relates_to: [FEAT-002, ARCH-002]
+  relates_to: [FEAT-002, FEAT-010, ARCH-002]
 ---
 
 # FEAT-004 — Meeting & Task Manager
@@ -23,7 +23,7 @@ Weekly To-do / Kanban / List / RACI, a simple Member registry, manual tasks, MoS
 - Combined Backup v2 with v1 compatibility.
 
 ## Ownership
-- Feature owner: [DOM-WRK](../../domains/work/README.md) — Work (tasks & meetings). Type: domain feature. Provisional: the Member registry writes DOM-IAM data (`members`), which would make this a cross-domain feature under STD-001 R4 — open in PLAN-001 WI-14 (question 2).
+- Feature owner: [DOM-TSK](../../domains/tasks/README.md) — Tasks & projects. Type: domain feature. Provisional: its meeting intake writes DOM-MTG data (`meetings`, `meeting_revisions`, `meeting_draft_batches`, `meeting_task_links`) and its Member registry writes DOM-IAM data (`members`), so it may be cross-domain under STD-001 R4 — PLAN-001 WI-14 (question 2) and PLAN-002 WI-12.
 - Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
@@ -47,3 +47,4 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 
 ## Notes
 - The v0.3.0 documents describe browser storage (IndexedDB); the current system persists the same entities in PostgreSQL ([ARCH-002 §5–6](../../architecture/ARCH-002-postgresql-data-model.md)).
+- Proposed ([ADR-002](../../architecture/decisions.md), [ADR-003](../../architecture/decisions.md)): owner moves from DOM-WRK to DOM-TSK. Once FR files exist, its task-manager requirements are carried by [FEAT-010](../FEAT-010-task-manager/feature.md) and its meeting intake moves to DOM-MTG ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-12).

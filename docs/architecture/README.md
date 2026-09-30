@@ -23,5 +23,6 @@ Current source version: 0.4.2 (layout introduced in 0.4.1). Deployment evidence:
 | ARCH-001 | [Baseline architecture](ARCH-001-baseline-architecture.md) | Original local-only design; its local-only statements are superseded by ARCH-003 and the amendments above |
 | ARCH-002 | [PostgreSQL data model](ARCH-002-postgresql-data-model.md) | Physical schema, with the 0.3.1 and 0.4.0 amendments |
 | ARCH-003 | [Hosted deployment](ARCH-003-hosted-deployment.md) | PostgreSQL on Vercel (0.3.0) and its amendments; its shared-team-password statements are superseded by [FEAT-006](../features/FEAT-006-member-identity/spec.md) and [FEAT-007](../features/FEAT-007-single-code-login/spec.md) |
+| ADR-002 – ADR-004 | [System decisions](decisions.md) | Proposed, not approved: task and meeting domains for every department, one task record with contexts, and visibility with confidential meetings |
 
 The Business Overview, Guest access, Member identity, single-code login and logo specifications that used to live here are feature documents now — see the [documentation map](../README.md) and [features/](../features/). The links above already point to their new locations.

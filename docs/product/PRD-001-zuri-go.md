@@ -20,7 +20,7 @@ This is the product-level index: it says which surfaces exist and which feature 
 | Content list and calendar | `tab=content` | FEAT-001 | DOM-BIZ |
 | Goals (weekly / monthly, actual vs target) | `tab=goals` | FEAT-001 | DOM-BIZ |
 | Campaign workspace: Overview, Performance, Plan & Gates, Workboard, Review & Decisions | `tab=campaign-overview&campaign=<id>` and the campaign tabs | [FEAT-002](../features/FEAT-002-campaign-mission-control/feature.md) | DOM-CAM |
-| Meeting & Task Manager | `/?view=1&tab=meeting-task-manager` | [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) | DOM-WRK |
+| Meeting & Task Manager | `/?view=1&tab=meeting-task-manager` | [FEAT-004](../features/FEAT-004-meeting-task-manager/feature.md) | DOM-TSK (proposed, ADR-002) |
 | ความรู้ Metrics (guide) | `/metrics/#overview` | [FEAT-003](../features/FEAT-003-metrics-map/feature.md) | DOM-MET |
 | Graph View | `/metrics/#metrics-graph` | FEAT-003 | DOM-MET |
 | Guest mode, sign-in modal, Member badge | upper-right toolbar; write-intent modal | [FEAT-005](../features/FEAT-005-guest-access/feature.md), [FEAT-006](../features/FEAT-006-member-identity/feature.md), [FEAT-007](../features/FEAT-007-single-code-login/feature.md) | DOM-IAM |
@@ -41,6 +41,16 @@ Every row belongs to exactly one Business, and a session reads the one configure
 4. User-facing copy is Thai with the existing English technical and product labels; the brand rules and approved assets govern visuals ([DOM-BRN](../domains/brand/README.md), [FEAT-009](../features/FEAT-009-logo-placement/feature.md)).
 5. Plan and scenario figures are labelled as such; actuals and benchmarks are never invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 6. Navigation, deployment and repository-layout changes do not reinterpret KPI definitions, formulas, targets, RACI, MoSCoW, Guest policy or Member identity ([FEAT-008 spec](../features/FEAT-008-unified-site/spec.md); [migration record](../migrations/verification.md)).
+
+## Proposed changes (not approved)
+
+[ADR-002 to ADR-004](../architecture/decisions.md) and [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) propose, for the owner's review:
+
+- **Task Manager for every department** ([FEAT-010](../features/FEAT-010-task-manager/feature.md)). Boards for all work, a campaign, a project, a team, unlinked work and “my tasks”; a Projects view; and the campaign Workboard as a view of the same tasks. The site menu would name it “Task Manager” next to “Meetings” (PLAN-002 Q9).
+- **Visibility, teams and confidential meetings** ([FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). Tasks, projects and meetings would be `public`, `business`, `team` or `restricted`. Guests would see public items only, and confidential meetings only their participants.
+- **A seventh product-wide rule.** Content is shown only to its audience, and the API and the database both enforce it (ADR-004).
+
+Until PLAN-002 phase P1 is live, the interim rule of ADR-004 D9 applies: no HR, accounting, salary, customer-personal or other confidential content in production.
 
 ## Document notes
 

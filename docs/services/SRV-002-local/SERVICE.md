@@ -2,7 +2,7 @@
 id: SRV-002
 title: Local operator runtime (Node server + Docker PostgreSQL)
 status: proposed
-hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-WRK, DOM-IAM, DOM-PLT, DOM-BRN]
+hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN]
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009]
 ---
 

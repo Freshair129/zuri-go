@@ -22,7 +22,7 @@ A campaign workspace that shows where each campaign stands against its target, w
 - Date / offer / channel filters, original-source inspector, scoped JSON export, full local backup and reviewed restore.
 
 ## Ownership
-- Feature owner: [DOM-CAM](../../domains/campaign/README.md) — Campaign & content. Type: domain feature. Provisional: saving a campaign also writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`, `apps/api/workspace.mjs`), which is DOM-WRK data, so the feature may be cross-domain under STD-001 R4 — open in PLAN-001 WI-14 (question 7).
+- Feature owner: [DOM-CAM](../../domains/campaign/README.md) — Campaign & content. Type: domain feature. Provisional: saving a campaign also writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`, `apps/api/workspace.mjs`), which is DOM-TSK data, so the feature may be cross-domain under STD-001 R4 — PLAN-001 WI-14 (question 7).
 - Runtime owner: [SRV-001](../../services/SRV-001-hosted/SERVICE.md) in production; the trusted local operator also runs it on [SRV-002](../../services/SRV-002-local/SERVICE.md).
 
 ## Documents
@@ -45,3 +45,4 @@ FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governanc
 
 ## Notes
 - Served from the unified site ([FEAT-008](../FEAT-008-unified-site/feature.md)); the documents describe the feature as delivered in 0.2.0 and their file paths describe the original repository.
+- Proposed ([ADR-003](../../architecture/decisions.md)): the Workboard becomes a view of the task records, delivered by part P02 of [FEAT-010](../FEAT-010-task-manager/feature.md); the approved text here stays until FR files supersede it.

@@ -17,11 +17,15 @@ Who may read, who may write, and who did it: public Guest reads, Member sign-in 
 - Session
 - Write intent
 - Trusted local operator
+- Viewer (Guest / Member / local operator)
+- Team (ฝ่าย) — planned
+- Business admin — planned
 
 ## Owned data
 - `members` (including the immutable `pid`)
 - `member_credentials`
 - `team_login_limits` (persistent sign-in rate-limit counters; defined in [ARCH-003](../../architecture/ARCH-003-hosted-deployment.md), “Authentication data model amendment”)
+- Planned ([ADR-004](../../architecture/decisions.md)): `teams`, `team_members`, and a Business-admin flag on Members
 - Table definitions: [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) and `apps/api/migrations/`.
 
 ## Business rules
@@ -30,6 +34,7 @@ Who may read, who may write, and who did it: public Guest reads, Member sign-in 
 - PID is the stable public identifier; UUID stays the primary/foreign key and canonical actor identity ([FEAT-006 spec](../../features/FEAT-006-member-identity/spec.md)).
 - Sessions are signed and versioned; the credential is rechecked in the write transaction; origin checks and persistent rate limits apply; there is no shared-password fallback ([FEAT-006 spec](../../features/FEAT-006-member-identity/spec.md)).
 - Local access is a trusted operator on `127.0.0.1:4319`, never an authenticated Member session ([SRV-002](../../services/SRV-002-local/SERVICE.md)).
+- Proposed: Guests read only items marked `public`; every other task, project and meeting needs a Member session whose Member is in its audience, enforced by the API and by row-level security ([ADR-004](../../architecture/decisions.md)).
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
@@ -47,6 +52,7 @@ _Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits 
 | [FEAT-005](../../features/FEAT-005-guest-access/feature.md) | Guest read-only access and task evidence | implemented |
 | [FEAT-006](../../features/FEAT-006-member-identity/feature.md) | Member identity (PID and individual sign-in) | implemented |
 | [FEAT-007](../../features/FEAT-007-single-code-login/feature.md) | Single-code login | implemented |
+| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | Visibility, teams and confidential meetings | declared |
 
 **Participating cross-domain features** — none.
 

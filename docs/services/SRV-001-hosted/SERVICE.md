@@ -2,7 +2,7 @@
 id: SRV-001
 title: Hosted site and API (Vercel + Neon PostgreSQL)
 status: proposed
-hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-WRK, DOM-IAM, DOM-PLT, DOM-BRN]
+hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN]
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-005, FEAT-006, FEAT-007, FEAT-008, FEAT-009]
 ---
 

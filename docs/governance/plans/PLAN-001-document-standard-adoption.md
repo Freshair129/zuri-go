@@ -39,13 +39,13 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 
 ### WI-14 — ownership questions
 
-1. **Task evidence attachments** are specified inside FEAT-005 (Guest access) but are DOM-WRK data: split into their own feature?
+1. **Task evidence attachments** are specified inside FEAT-005 (Guest access) but are task data (DOM-WRK; DOM-TSK under ADR-002): split into their own feature? *Proposed answer: the data belongs to DOM-TSK, and its visibility follows its task ([ADR-002](../../architecture/decisions.md), [ADR-004](../../architecture/decisions.md)).*
 2. **Members registry**: the registry screens belong to FEAT-004, the data (`members`, PID) to DOM-IAM. Is FEAT-004 a cross-domain feature with a DOM-IAM part?
 3. **Business Overview** bundles three surfaces — overview, content calendar, goals. The latter two may be features of DOM-CAM and DOM-MET.
 4. **Placement of shared tables**: `channel_accounts` and `change_events` are assigned to DOM-BIZ; `members` to DOM-IAM.
 5. **Metrics Map** sits in DOM-MET with the metric vocabulary; it could be a separate knowledge domain.
 6. **DOM-BRN** has one feature today; merge into another domain or keep?
-7. **Campaign Workboard tasks**: saving a campaign in FEAT-002 writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`), which is DOM-WRK data. Declare FEAT-002 cross-domain, or move the Workboard into the task domain?
+7. **Campaign Workboard tasks**: saving a campaign in FEAT-002 writes its Workboard tasks as `tasks` rows (`source_kind` `campaign-legacy`), which is task data. Declare FEAT-002 cross-domain, or move the Workboard into the task domain? *Proposed answer: move it — the Workboard becomes a view of the task records ([ADR-003](../../architecture/decisions.md), [PLAN-002](PLAN-002-task-and-meeting-domains.md)).*
 8. **RB-002** records the one-off creation of the GitHub repository rather than a procedure. Keep it as a runbook and add the repository procedures, or move it to `history/` as evidence?
 
 ## Acceptance for closing the plan

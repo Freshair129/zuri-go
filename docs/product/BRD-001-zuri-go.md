@@ -8,7 +8,7 @@ relations:
 
 # BRD-001 — Zuri-Go: business requirements
 
-> Draft assembled from statements already recorded in this repository; it adds no new requirement. Sections that the existing documents do not cover are marked **Not recorded** for the owner to complete before this document is proposed for approval.
+> Draft assembled from statements already recorded in this repository and, where marked, from statements the owner made on 2026-10-01; it adds no requirement of its own. Sections that the existing documents do not cover are marked **Not recorded** for the owner to complete before this document is proposed for approval.
 
 ## Why the business needs the product
 
@@ -22,10 +22,11 @@ The recorded concept is “Marketing for everyone · Marketing made simple” ([
 | Campaign owners, marketing, sales and product / merchandise owners | Know where a campaign stands against its target, what to do next, who owns it, and whether the evidence is enough to change an offer or add budget | [FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md) |
 | Thai SME owners and junior marketers | A reference that connects marketing metrics to customer growth, team responsibilities and planning | [FEAT-003 brief](../features/FEAT-003-metrics-map/brief.md) |
 | The team | Meetings become owned, prioritised tasks with RACI and MoSCoW, trackable in a weekly plan | [FEAT-004 brief](../features/FEAT-004-meeting-task-manager/brief.md) |
+| Every department — sales, production, accounting, HR and marketing | Create, assign and follow work and meetings in one place, linked to a campaign, a project or a team, or to nothing | Owner, 2026-10-01 ([ADR-002](../architecture/decisions.md)) |
 
 ## Stakeholders
 
-As recorded: the business owner; campaign owners, marketing, sales and product / merchandise owners; Thai SME owners and junior marketers; and the team Members who hold a PID ([FEAT-006](../features/FEAT-006-member-identity/feature.md)). Names, roles and responsibilities beyond this are **Not recorded**.
+As recorded: the business owner; campaign owners, marketing, sales and product / merchandise owners; Thai SME owners and junior marketers; and the team Members who hold a PID ([FEAT-006](../features/FEAT-006-member-identity/feature.md)). The owner added the sales, production, accounting and HR departments on 2026-10-01. Names, roles and responsibilities beyond this are **Not recorded**.
 
 ## Constraints
 
@@ -33,6 +34,7 @@ As recorded in existing documents:
 
 - Public Guest reading with authenticated writes ([PRD-001](PRD-001-zuri-go.md), rule 1).
 - Credentials and secrets are never exposed to users ([PRD-001](PRD-001-zuri-go.md), rule 3).
+- Some meetings are confidential (owner, 2026-10-01): their content must stay with their participants ([ADR-004](../architecture/decisions.md)).
 - Brand rules and approved assets apply; brand promotion is human-only ([DOM-BRN](../domains/brand/README.md)).
 - Figures are never fabricated: plan figures are labelled as plan, and actuals are entered, not invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 
