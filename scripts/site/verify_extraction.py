@@ -39,7 +39,7 @@ for path in (ROOT / 'build/vercel').rglob('*'):
         continue
     relative = path.relative_to(ROOT / 'build/vercel')
     assert '.local' not in relative.parts and not path.name.startswith('.env'), str(relative)
-    assert path.name not in ['provision-members.mjs', 'setup-local.mjs', 'migrate.mjs'], str(relative)
+    assert path.name not in ['provision-members.mjs', 'setup-local.mjs', 'migrate.mjs', 'backfill-workboard.mjs'], str(relative)
     data = path.read_bytes()
     assert all(secret.encode() not in data for secret in secrets), 'Private value in package'
     count += 1
