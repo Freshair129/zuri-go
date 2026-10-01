@@ -24,10 +24,36 @@ Root-cause records: `.brain/rca/zuri-go-guest-reads-member-contact-details.md`, 
   - the served HTML equals the build.
 - Production database after the release: schema 7; every table count equal to the 0.5.0 record except one more `change_events` row, the `admin_granted` event of ZGO-P0002 made after 0.5.0.
 
+## Browser checks (after the release, 2026-10-01)
+
+Claude Browser pane; read-only, nothing saved.
+
+- **Production, Guest (desktop):**
+  - The overview loads with “Guest mode”, and the menu reads “Task Manager” and “Meetings”. No console error.
+  - Task Manager shows the note that Guests see public items only, with a sign-in button (AC-011-007-03). The Boards lanes are empty.
+  - “＋ เพิ่มงาน” opens the sign-in prompt (single masked field “รหัสระบุตัวตน”), and “ดูต่อใน Guest mode” closes it.
+  - Projects is empty.
+  - Members:
+    - 4 cards with display name, PID and status, and no “ลงทะเบียน Member” button.
+    - The footer reads “บันทึกรายชื่อใน PostgreSQL ของทีม” (D6).
+    - A Member card opens read-only, with the status field disabled (“เฉพาะ Business admin เปลี่ยนสถานะได้”).
+  - Meetings shows “ยังไม่เชื่อม FUNG”.
+- **Production, Guest (375 px):** no horizontal page scroll (scrollWidth equals clientWidth).
+- **Local server, operator:**
+  - Boards shows the 11 local tasks in five lanes, with the context filters.
+  - Projects is empty, with “＋ เพิ่มโปรเจกต์”.
+  - Members shows “＋ ลงทะเบียน Member” and “บันทึกรายชื่อใน PostgreSQL ในเครื่อง”.
+  - The campaign Workboard counts five lanes (“Planned · Backlog + Ready”, Doing, Blocked, Review, Done).
+  - No console error.
+
+Findings, fixed in the source the same day (the fix is not deployed; production still serves 0.5.1 as recorded above):
+- At 375 px the Task Manager sub-tabs are cut to “B…”, “Pr…”, “Wee…” and similar. The view switcher now wraps onto two rows at 650 px and below; checked on the local build at 375 px, where no label is cut.
+- A Guest's Member card says “รายละเอียดติดต่อยังว่าง” (no contact details), although the details are withheld from Guests rather than empty. Now a Guest's card says “ทีม ตำแหน่ง และข้อมูลติดต่อแสดงหลังเข้าสู่ระบบ” and “ซ่อนจาก Guest”.
+
 ## Not run
 
 - Member, Business-admin and restricted-meeting checks on the hosted site (they need a real Member code): a non-admin Member being refused when adding a Member, the admin adding one, a Member editing their own details, a commit without FUNG.
-- Browser checks on production. Locally, only the operator's Members view was checked in the browser pane.
+- Browser checks that write or need a session: drag and drop, the task and project editors' saves, a Member session, a restricted meeting, the meeting commit screen (no meeting exists locally or in production).
 
 ## Rollback
 
