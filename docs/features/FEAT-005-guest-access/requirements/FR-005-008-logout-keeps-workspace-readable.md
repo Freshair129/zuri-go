@@ -2,7 +2,7 @@
 id: FR-005-008
 title: Logout clears the session and keeps the workspace readable
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

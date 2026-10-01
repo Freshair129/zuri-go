@@ -2,7 +2,7 @@
 id: FR-006-012
 title: Provisioning is idempotent and a Member registered later has a PID but no code
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

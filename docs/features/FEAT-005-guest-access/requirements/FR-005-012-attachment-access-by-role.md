@@ -2,7 +2,7 @@
 id: FR-005-012
 title: A Guest lists and downloads evidence files; a Member uploads and removes them
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: [ADR-004]

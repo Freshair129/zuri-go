@@ -2,7 +2,7 @@
 id: NFR-006-001
 title: The database isolates the credential table from the runtime role
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

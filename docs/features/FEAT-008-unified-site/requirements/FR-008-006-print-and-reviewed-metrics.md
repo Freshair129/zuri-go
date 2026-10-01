@@ -2,7 +2,7 @@
 id: FR-008-006
 title: The site menu is hidden in print and no reviewed metric changes
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

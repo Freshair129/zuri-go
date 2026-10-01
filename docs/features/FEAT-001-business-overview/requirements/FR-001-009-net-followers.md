@@ -2,7 +2,7 @@
 id: FR-001-009
 title: Net follower growth is the latest stock minus the stock at the start of the period
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

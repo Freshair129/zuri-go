@@ -2,7 +2,7 @@
 id: FR-006-017
 title: The session answer carries the public identity only
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: [ADR-004]

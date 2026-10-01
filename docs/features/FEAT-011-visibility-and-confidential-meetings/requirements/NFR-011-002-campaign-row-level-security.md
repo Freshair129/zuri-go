@@ -3,7 +3,7 @@ id: NFR-011-002
 title: Row-level security enforces the campaign audiences
 part: FEAT-011-P04
 delivery: declared
-status: proposed
+status: approved
 relations:
   decided_by: [ADR-005, ADR-004]
   relates_to: [NFR-011-001]
@@ -22,7 +22,7 @@ The database SHALL enforce the audiences of FR-011-013, FR-011-014 and FR-011-01
 - Given the migration, then a test creates the policies and queries each table once, so a policy that refers back to itself fails.
 
 ## Implementation
-- Proposed 2026-10-01; not built. Layers L0 (membership), L1 (`campaigns`), L2 (attached records, ledger), L3 (derived records) and the history policy in SDD-011 “Row-level security”; the test extends `apps/api/test/visibility-db.test.mjs`.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. Layers L0 (membership), L1 (`campaigns`), L2 (attached records, ledger), L3 (derived records) and the history policy in SDD-011 “Row-level security”; the test extends `apps/api/test/visibility-db.test.mjs`.
 
 ## Notes
 - Extends [NFR-011-001](NFR-011-001-row-level-security.md) to campaign records. An NFR carries a measurement, not AC IDs (STD-002 R1).

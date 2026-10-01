@@ -2,7 +2,7 @@
 id: FR-005-006
 title: Navigation, filtering, metric details and read-only views need no sign-in
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: [ADR-004]

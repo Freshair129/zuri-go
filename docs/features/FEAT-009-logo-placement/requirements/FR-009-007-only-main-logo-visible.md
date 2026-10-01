@@ -2,7 +2,7 @@
 id: FR-009-007
 title: Only the Main Logo artwork is visible; the rest of the brand sheet is clipped
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

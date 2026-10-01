@@ -2,7 +2,7 @@
 id: FR-003-003
 title: Every metric keeps its definition, unit, basis, example and how to read it
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

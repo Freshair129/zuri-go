@@ -2,7 +2,7 @@
 id: FR-008-007
 title: One verified folder, one deployment, only allowlisted files
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003, ARCH-003]

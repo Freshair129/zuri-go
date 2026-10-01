@@ -2,7 +2,7 @@
 id: FR-005-013
 title: Only signature-checked raster images preview; every other file downloads inert
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

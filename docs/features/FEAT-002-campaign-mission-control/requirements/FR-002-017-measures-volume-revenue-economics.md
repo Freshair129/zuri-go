@@ -2,7 +2,7 @@
 id: FR-002-017
 title: Net units, orders, net revenue, contribution and spend are counted as defined
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-003]

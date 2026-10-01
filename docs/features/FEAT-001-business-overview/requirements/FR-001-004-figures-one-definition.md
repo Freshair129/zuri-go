@@ -2,7 +2,7 @@
 id: FR-001-004
 title: Every overview figure has one definition shared by screen, API and database
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-002]

@@ -2,7 +2,7 @@
 id: FR-002-007
 title: Performance target bands and their boundary rules
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-002-003
 title: The Overview answers what to decide or fix now
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

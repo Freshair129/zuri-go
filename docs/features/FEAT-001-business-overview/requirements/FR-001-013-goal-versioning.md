@@ -2,7 +2,7 @@
 id: FR-001-013
 title: A change of a target or account scope keeps its version, reason and author
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-002]

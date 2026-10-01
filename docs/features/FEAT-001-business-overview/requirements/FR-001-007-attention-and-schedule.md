@@ -2,7 +2,7 @@
 id: FR-001-007
 title: What to do today, what is about to be posted and what needs attention
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-010, FEAT-011]

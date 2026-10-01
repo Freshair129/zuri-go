@@ -2,7 +2,7 @@
 id: FR-005-001
 title: An anonymous visitor opens the live workspace in Guest mode with no login wall
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: [ADR-004]

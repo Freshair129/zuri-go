@@ -2,7 +2,7 @@
 id: FR-005-015
 title: Attachment changes are explicit saves, audited without bytes; removal is a soft delete
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

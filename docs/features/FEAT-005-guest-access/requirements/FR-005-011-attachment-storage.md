@@ -2,7 +2,7 @@
 id: FR-005-011
 title: Files are stored in PostgreSQL with their metadata and hash, scoped to the Business
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

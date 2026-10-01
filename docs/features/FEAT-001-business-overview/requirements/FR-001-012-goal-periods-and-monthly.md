@@ -2,7 +2,7 @@
 id: FR-001-012
 title: Weekly and monthly goals use their own boundaries and targets
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-002]

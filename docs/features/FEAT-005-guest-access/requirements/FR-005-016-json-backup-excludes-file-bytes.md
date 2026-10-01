@@ -2,7 +2,7 @@
 id: FR-005-016
 title: The JSON export carries no file bytes; the full PostgreSQL backup does
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

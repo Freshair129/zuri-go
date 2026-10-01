@@ -2,7 +2,7 @@
 id: FR-002-014
 title: Short stock blocks an offer and a slow response holds the scale (G-09, G-10)
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-002-024
 title: Saving, backup and a reviewed restore never replace saved work silently
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-005, FEAT-011]

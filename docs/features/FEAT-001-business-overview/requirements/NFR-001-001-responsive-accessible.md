@@ -2,7 +2,7 @@
 id: NFR-001-001
 title: The Overview works on a phone, with a keyboard and with enough contrast
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009]

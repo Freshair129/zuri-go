@@ -2,7 +2,7 @@
 id: FR-002-015
 title: Pace below the Low path and too little time to test again (G-11, G-12)
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

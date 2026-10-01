@@ -2,7 +2,7 @@
 id: FR-002-004
 title: The original plan is read-only evidence and actuals start empty
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

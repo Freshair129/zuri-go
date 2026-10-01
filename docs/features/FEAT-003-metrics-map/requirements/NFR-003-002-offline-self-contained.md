@@ -2,7 +2,7 @@
 id: NFR-003-002
 title: The guide can be read and printed with no network and no script
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

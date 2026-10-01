@@ -2,7 +2,7 @@
 id: FR-002-011
 title: Stale data and an immature sample hold the verdict (G-01, G-02)
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

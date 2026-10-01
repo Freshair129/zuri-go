@@ -2,7 +2,7 @@
 id: FR-005-004
 title: A write intent opens the sign-in modal before the action starts
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

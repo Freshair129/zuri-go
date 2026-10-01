@@ -2,7 +2,7 @@
 id: FR-002-022
 title: Missing setup is shown as a setup requirement and sources must be declared
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-005, FEAT-006]

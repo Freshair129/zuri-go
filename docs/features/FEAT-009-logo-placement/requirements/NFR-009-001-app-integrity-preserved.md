@@ -2,7 +2,7 @@
 id: NFR-009-001
 title: Placing the logo changes no business data, KPI, interaction, protected shell or app identity
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

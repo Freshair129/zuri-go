@@ -2,7 +2,7 @@
 id: FR-002-021
 title: Daily and weekly reviews and decisions are saved as dated snapshots
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

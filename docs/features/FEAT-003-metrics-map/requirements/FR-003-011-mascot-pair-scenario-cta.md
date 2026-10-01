@@ -2,7 +2,7 @@
 id: FR-003-011
 title: Both mascots, a short scenario and an action on every page
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009]

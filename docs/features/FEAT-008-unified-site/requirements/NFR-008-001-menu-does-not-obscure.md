@@ -2,7 +2,7 @@
 id: NFR-008-001
 title: The site menu never covers content
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

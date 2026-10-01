@@ -2,7 +2,7 @@
 id: FR-001-005
 title: Running and queued campaigns come from a lifecycle the user confirms
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002]

@@ -2,7 +2,7 @@
 id: FR-003-015
 title: Search, category browse and a detail panel that explain each term
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

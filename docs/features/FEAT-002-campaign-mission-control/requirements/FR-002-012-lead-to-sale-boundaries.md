@@ -2,7 +2,7 @@
 id: FR-002-012
 title: Lead-to-Sale boundaries at 2%, 5% and 10% give exactly one result (G-03 to G-06)
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-002-019
 title: Cohorts, scopes and platforms are never mixed into one total
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

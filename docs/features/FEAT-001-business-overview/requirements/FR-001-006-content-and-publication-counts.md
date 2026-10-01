@@ -2,7 +2,7 @@
 id: FR-001-006
 title: Content items and scheduled publications are counted separately
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002]

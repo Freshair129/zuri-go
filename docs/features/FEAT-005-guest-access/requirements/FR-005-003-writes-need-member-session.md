@@ -2,7 +2,7 @@
 id: FR-005-003
 title: Every write needs a Member session; a Guest write answers 401 and changes nothing
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

@@ -2,7 +2,7 @@
 id: FR-003-001
 title: An 18-page guide in six categories with a linked contents
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

@@ -2,7 +2,7 @@
 id: FR-002-023
 title: Filters, the detail panel and exports use the same population
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

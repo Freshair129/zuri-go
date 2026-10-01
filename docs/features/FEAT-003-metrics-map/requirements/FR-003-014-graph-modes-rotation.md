@@ -2,7 +2,7 @@
 id: FR-003-014
 title: A 2D and a 3D graph that rotate, zoom and fit
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

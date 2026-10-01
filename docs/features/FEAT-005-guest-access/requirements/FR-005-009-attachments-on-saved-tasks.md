@@ -2,7 +2,7 @@
 id: FR-005-009
 title: Files and images attach to a saved task only, beside the existing evidence text
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

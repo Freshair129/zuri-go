@@ -2,7 +2,7 @@
 id: FR-005-005
 title: After a successful sign-in the chosen action continues
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

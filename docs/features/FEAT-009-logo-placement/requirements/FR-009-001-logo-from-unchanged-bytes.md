@@ -2,7 +2,7 @@
 id: FR-009-001
 title: The logo is rendered from the unchanged bytes of the approved brand sheet
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

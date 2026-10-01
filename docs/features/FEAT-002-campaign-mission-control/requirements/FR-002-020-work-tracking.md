@@ -2,7 +2,7 @@
 id: FR-002-020
 title: Work that keeps a campaign moving, with evidence and a KPI recheck
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-010]

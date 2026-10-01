@@ -2,7 +2,7 @@
 id: FR-007-002
 title: The typed code is cleared when the modal closes or sign-in succeeds
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

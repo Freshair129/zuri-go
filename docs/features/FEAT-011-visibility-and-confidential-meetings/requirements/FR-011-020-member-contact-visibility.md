@@ -4,7 +4,7 @@ title: Visibility of Member contact details
 part: FEAT-011-P01
 owner: DOM-IAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -26,7 +26,7 @@ The system SHALL give each Member a contact level — `business` (the default), 
 - AC-011-020-08 — Given the migration, then it adds one column with the default `business`, changes no other field and the counts of `members` and `change_events` are equal before and after.
 
 ## Implementation
-- Proposed 2026-10-01; not built. `members.contact_visibility` in a new migration (schema 9); `memberView` (`apps/api/audience.mjs`) used by `snapshot` (`apps/api/service.mjs`) and `readLegacy` (`apps/api/workspace.mjs`); the comparison of the Member save uses the viewer's view of the row.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `members.contact_visibility` in a new migration (schema 9); `memberView` (`apps/api/audience.mjs`) used by `snapshot` (`apps/api/service.mjs`) and `readLegacy` (`apps/api/workspace.mjs`); the comparison of the Member save uses the viewer's view of the row.
 - Today (0.5.1): a Guest reads only the ID, PID, display name and status (`guestMember`, `apps/api/service.mjs:17`); every Member reads every field, `legacy_metadata` included.
 
 ## Notes

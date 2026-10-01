@@ -2,7 +2,7 @@
 id: FR-002-009
 title: Pace to date, remaining need and forecast are shown with their basis
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

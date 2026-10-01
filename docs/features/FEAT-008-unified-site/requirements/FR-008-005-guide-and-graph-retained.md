@@ -2,7 +2,7 @@
 id: FR-008-005
 title: The merge leaves the guide and the Graph View unchanged
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

@@ -2,7 +2,7 @@
 id: FR-008-009
 title: Verify, deploy and report only what was checked
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-003]

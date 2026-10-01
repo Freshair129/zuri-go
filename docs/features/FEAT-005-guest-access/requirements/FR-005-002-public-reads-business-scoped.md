@@ -2,7 +2,7 @@
 id: FR-005-002
 title: Session, bootstrap and Business reads are public and limited to the configured Business
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

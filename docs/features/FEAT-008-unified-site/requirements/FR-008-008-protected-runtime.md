@@ -2,7 +2,7 @@
 id: FR-008-008
 title: The protected runtime and its manifest stay intact
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002]

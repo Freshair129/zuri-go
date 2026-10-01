@@ -2,7 +2,7 @@
 id: FR-001-010
 title: A goal card shows the real numbers, with the bar clamped
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-002]

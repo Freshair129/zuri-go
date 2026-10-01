@@ -2,7 +2,7 @@
 id: FR-001-016
 title: The AI summary reads evidence only and takes no action
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-011, ARCH-001]

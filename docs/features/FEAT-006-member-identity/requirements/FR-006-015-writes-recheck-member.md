@@ -2,7 +2,7 @@
 id: FR-006-015
 title: Every write rechecks the Member and the credential in its own transaction
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

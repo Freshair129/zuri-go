@@ -2,7 +2,7 @@
 id: FR-003-010
 title: Every source image and supporting source is accounted for
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

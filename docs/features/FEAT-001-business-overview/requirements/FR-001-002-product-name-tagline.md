@@ -2,7 +2,7 @@
 id: FR-001-002
 title: The product is named Zuri-Go with its tagline
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009, FEAT-008]

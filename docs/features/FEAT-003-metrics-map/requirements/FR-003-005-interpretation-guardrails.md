@@ -2,7 +2,7 @@
 id: FR-003-005
 title: The guide does not claim a cause or a profit its numbers cannot show
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

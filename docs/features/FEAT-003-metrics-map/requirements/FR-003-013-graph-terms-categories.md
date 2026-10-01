@@ -2,7 +2,7 @@
 id: FR-003-013
 title: The graph holds 40 unique terms in three groups
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

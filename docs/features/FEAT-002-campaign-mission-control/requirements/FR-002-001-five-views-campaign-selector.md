@@ -2,7 +2,7 @@
 id: FR-002-001
 title: Five views and a campaign selector that moves everything together
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-010]

@@ -2,7 +2,7 @@
 id: FR-005-007
 title: An expired session falls back to Guest mode and the next write asks to sign in
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

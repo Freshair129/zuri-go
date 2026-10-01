@@ -4,7 +4,7 @@ title: Visibility levels of a campaign
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -24,7 +24,7 @@ The system SHALL give every campaign one of the levels `public`, `business`, `te
 - AC-011-013-06 — Given a new `restricted` campaign created by a Member who is not named on it, then it is refused with 422 (`SELF_EXCLUDED`).
 
 ## Implementation
-- Proposed 2026-10-01; not built. `campaigns.visibility`, `campaigns.team_id`, `campaign_viewers` and `campaign_audience()` in a new migration (SDD-011 “Data”); `scopeCampaignRecords` and `campaignNames` (`apps/api/audience.mjs`); `writeCampaigns` and `save()` carry the level, with the write order of SDD-011 “Row-level security”.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `campaigns.visibility`, `campaigns.team_id`, `campaign_viewers` and `campaign_audience()` in a new migration (SDD-011 “Data”); `scopeCampaignRecords` and `campaignNames` (`apps/api/audience.mjs`); `writeCampaigns` and `save()` carry the level, with the write order of SDD-011 “Row-level security”.
 - Today (0.5.1): campaigns carry the Business boundary only (`001_core.sql:166-176`); a Guest reads every campaign (`apps/api/service.mjs:18`, `apps/api/workspace.mjs:46`).
 
 ## Notes

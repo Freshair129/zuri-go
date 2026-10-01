@@ -2,7 +2,7 @@
 id: FR-001-020
 title: No anonymous write, and database credentials stay on the server
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-005, FEAT-007, FEAT-011]

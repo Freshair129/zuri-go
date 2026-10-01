@@ -4,7 +4,7 @@ title: Visibility of campaigns that exist before the change
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -22,7 +22,7 @@ The system SHALL give every campaign that exists when this feature is released t
 - AC-011-019-04 — Given the migration file, then it adds columns, a table, a function and policies, and contains no `DROP`, `TRUNCATE`, `DELETE`, type change or `UPDATE` of existing rows.
 
 ## Implementation
-- Proposed 2026-10-01; not built. `ADD COLUMN … DEFAULT 'business'` in a new migration (schema 8; SDD-011 “Data”); the reconciliation query runs before and after on a QA Business first, then on production.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `ADD COLUMN … DEFAULT 'business'` in a new migration (schema 8; SDD-011 “Data”); the reconciliation query runs before and after on a QA Business first, then on production.
 - Today (0.5.1): production schema is 7; the last migration is `007_tasks_projects.sql`.
 
 ## Notes

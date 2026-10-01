@@ -2,7 +2,7 @@
 id: FR-007-009
 title: The session, the top bar and the audit show the real owner of the code
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

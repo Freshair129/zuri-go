@@ -2,7 +2,7 @@
 id: FR-008-003
 title: The existing app identity keeps Marketing and the Task Manager working
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-002, FEAT-004]

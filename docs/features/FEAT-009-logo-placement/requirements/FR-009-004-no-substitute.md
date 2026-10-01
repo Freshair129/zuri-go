@@ -2,7 +2,7 @@
 id: FR-009-004
 title: No typeset substitute or corporate ZURI SVG stands in for the logo
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

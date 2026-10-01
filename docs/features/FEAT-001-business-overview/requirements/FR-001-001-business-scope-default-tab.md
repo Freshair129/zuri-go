@@ -2,7 +2,7 @@
 id: FR-001-001
 title: The Business Overview opens first and covers the whole Business
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002, ARCH-002]

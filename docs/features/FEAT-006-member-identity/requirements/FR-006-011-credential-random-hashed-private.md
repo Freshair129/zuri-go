@@ -2,7 +2,7 @@
 id: FR-006-011
 title: Each Member’s code is independent and random, stored only as a salted hash
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

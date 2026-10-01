@@ -2,7 +2,7 @@
 id: FR-006-014
 title: Reset, disable and enable name their target and raise the credential version
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

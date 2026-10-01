@@ -2,7 +2,7 @@
 id: FR-001-019
 title: Existing browser data is imported only after a preview that checks counts and totals
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-004, FEAT-008, ARCH-002]

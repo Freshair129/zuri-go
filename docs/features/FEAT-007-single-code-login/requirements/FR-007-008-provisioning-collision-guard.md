@@ -2,7 +2,7 @@
 id: FR-007-008
 title: Provisioning and reset refuse a code that collides with another credential
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

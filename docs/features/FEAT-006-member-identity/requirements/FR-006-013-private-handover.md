@@ -2,7 +2,7 @@
 id: FR-006-013
 title: A code is handed over once, privately, and nobody is messaged
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

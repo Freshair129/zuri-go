@@ -2,7 +2,7 @@
 id: FR-008-004
 title: Saved work survives navigation and reload; backup and restore stay usable
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-004, FEAT-006, ARCH-003]

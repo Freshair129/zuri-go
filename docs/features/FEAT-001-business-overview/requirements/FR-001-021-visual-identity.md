@@ -2,7 +2,7 @@
 id: FR-001-021
 title: The Overview follows the brand tokens and places the two mascots by role
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009]

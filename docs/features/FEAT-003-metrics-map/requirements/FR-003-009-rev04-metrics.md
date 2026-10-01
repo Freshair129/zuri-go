@@ -2,7 +2,7 @@
 id: FR-003-009
 title: Media Spend, Revenue and Overstock SKU are added with their guardrails
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-002]

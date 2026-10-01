@@ -2,7 +2,7 @@
 id: FR-009-005
 title: The logo has an accessible Zuri-Go label, with the tagline on a full lockup
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

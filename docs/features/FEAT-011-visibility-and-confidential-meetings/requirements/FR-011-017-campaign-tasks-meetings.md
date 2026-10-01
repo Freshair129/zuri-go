@@ -4,7 +4,7 @@ title: Tasks and meetings of a campaign
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -25,7 +25,7 @@ The system SHALL keep the audience of a task or meeting independent of its campa
 - AC-011-017-07 — Given a meeting that names a campaign, then it follows the same rules as a task.
 
 ## Implementation
-- Proposed 2026-10-01; not built. `workboardDefault` and `broaderTasks` (`apps/web/src/content/shared/visibility.mjs`); `saveCampaignTask` and `writeWorkboardEntry` (`apps/api/campaign-tasks.mjs`); `checkContexts` (`apps/api/tasks.mjs`) looks up the campaign, content item and goal only when that link changes; `writeDomain` (`apps/api/workspace.mjs`) refuses a new link to a hidden campaign.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `workboardDefault` and `broaderTasks` (`apps/web/src/content/shared/visibility.mjs`); `saveCampaignTask` and `writeWorkboardEntry` (`apps/api/campaign-tasks.mjs`); `checkContexts` (`apps/api/tasks.mjs`) looks up the campaign, content item and goal only when that link changes; `writeDomain` (`apps/api/workspace.mjs`) refuses a new link to a hidden campaign.
 - Today (0.5.1): `checkContexts` runs `SELECT id FROM campaigns` on every create and update, and the Workboard default is `business`. [SDD-011](../design.md) (“Audience rule”) says the API refuses another level for `campaign-legacy` tasks; the code has no such check.
 
 ## Notes

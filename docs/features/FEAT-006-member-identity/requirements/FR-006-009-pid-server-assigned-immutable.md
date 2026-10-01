@@ -2,7 +2,7 @@
 id: FR-006-009
 title: A Member’s PID is assigned by the server, unique in the Business, immutable and never reused
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

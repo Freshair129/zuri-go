@@ -2,7 +2,7 @@
 id: FR-003-004
 title: Worked examples are hypothetical, reconcile, and say when a result cannot be calculated
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

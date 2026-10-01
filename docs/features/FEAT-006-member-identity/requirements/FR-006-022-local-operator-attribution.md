@@ -2,7 +2,7 @@
 id: FR-006-022
 title: A local write is attributed to the trusted local operator and never to a Member
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

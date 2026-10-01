@@ -2,7 +2,7 @@
 id: FR-001-018
 title: PostgreSQL keeps the data whole, scoped to one Business and free of duplicates
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-002, FEAT-011, NFR-011-001]

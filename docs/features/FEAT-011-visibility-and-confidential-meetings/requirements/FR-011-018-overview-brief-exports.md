@@ -4,7 +4,7 @@ title: Overview, brief, exports and backups follow campaign records
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -23,7 +23,7 @@ The system SHALL build the Business overview, the AI-summary input and its cache
 - AC-011-018-05 — Given an error while reading or saving a campaign of any level, then the logs hold the error code and IDs only, never a title, figure or customer ID.
 
 ## Implementation
-- Proposed 2026-10-01; not built. `snapshot` and `audienceKey` (`apps/api/service.mjs`) take the campaigns and the viewer kind into the key; `readLegacy` (`apps/api/workspace.mjs`) scopes the campaigns the backup is built from.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `snapshot` and `audienceKey` (`apps/api/service.mjs`) take the campaigns and the viewer kind into the key; `readLegacy` (`apps/api/workspace.mjs`) scopes the campaigns the backup is built from.
 - Today (0.5.1): the key hashes the visible tasks only (`audienceKey`, `apps/api/service.mjs:35`); the overview is built from the full campaign snapshot (`apps/api/api.mjs:46`).
 
 ## Notes

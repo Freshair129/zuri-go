@@ -2,7 +2,7 @@
 id: FR-007-004
 title: A code that matches more than one credential is refused
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

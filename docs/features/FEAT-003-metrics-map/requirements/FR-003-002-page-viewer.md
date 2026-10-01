@@ -2,7 +2,7 @@
 id: FR-003-002
 title: The guide shows one page at a time with previous, next and a linkable hash
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

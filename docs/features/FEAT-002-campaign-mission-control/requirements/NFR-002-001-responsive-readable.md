@@ -2,7 +2,7 @@
 id: NFR-002-001
 title: The campaign views are readable and fit desktop and phone
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009]

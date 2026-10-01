@@ -2,7 +2,7 @@
 id: FR-009-008
 title: No new logo master is created and no draft asset is promoted
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

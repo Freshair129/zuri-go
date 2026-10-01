@@ -2,7 +2,7 @@
 id: FR-008-001
 title: One site menu on every section
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-003, FEAT-004, FEAT-010]

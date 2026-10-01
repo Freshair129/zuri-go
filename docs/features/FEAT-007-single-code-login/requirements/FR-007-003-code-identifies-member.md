@@ -2,7 +2,7 @@
 id: FR-007-003
 title: The server identifies the Member from the code alone
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

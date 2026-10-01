@@ -2,7 +2,7 @@
 id: FR-006-020
 title: History written before Member sign-in keeps its original label
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

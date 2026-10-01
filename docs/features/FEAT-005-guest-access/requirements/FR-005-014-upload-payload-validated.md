@@ -2,7 +2,7 @@
 id: FR-005-014
 title: An upload is a bounded JSON and base64 payload that is validated
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

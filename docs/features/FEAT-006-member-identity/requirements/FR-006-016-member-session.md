@@ -2,7 +2,7 @@
 id: FR-006-016
 title: A Member session is signed, versioned, bounded and distinct from the team cookie
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

@@ -2,7 +2,7 @@
 id: FR-007-007
 title: A PID or member ID sent by the caller never selects the signed-in Member
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

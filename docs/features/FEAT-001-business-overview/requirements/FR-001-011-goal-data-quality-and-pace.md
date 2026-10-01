@@ -2,7 +2,7 @@
 id: FR-001-011
 title: Missing, partial and stale data are shown as such, and pace only when data is complete
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

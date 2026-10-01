@@ -2,7 +2,7 @@
 id: NFR-007-001
 title: A sign-in attempt costs at most one scrypt check per credential
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

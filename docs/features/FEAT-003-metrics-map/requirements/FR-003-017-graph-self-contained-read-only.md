@@ -2,7 +2,7 @@
 id: FR-003-017
 title: The graph is self-contained and shows no live data
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

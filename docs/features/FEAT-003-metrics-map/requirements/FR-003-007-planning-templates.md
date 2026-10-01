@@ -2,7 +2,7 @@
 id: FR-003-007
 title: KPI & Budget, RACI, the 90-day roadmap and the 12-month outlook are labelled templates
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

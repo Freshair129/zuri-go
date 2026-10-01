@@ -2,7 +2,7 @@
 id: FR-002-016
 title: An alert is one open item, acknowledged is not resolved, and overrides expire
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-001-003
 title: Tabs, deep links and card drill-downs
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002, FEAT-008, PRD-001]

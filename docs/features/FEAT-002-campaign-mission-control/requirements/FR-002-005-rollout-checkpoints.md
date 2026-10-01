@@ -2,7 +2,7 @@
 id: FR-002-005
 title: Normal sales first, a conditional DESTINY release, and a checkpoint at each week
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-010]

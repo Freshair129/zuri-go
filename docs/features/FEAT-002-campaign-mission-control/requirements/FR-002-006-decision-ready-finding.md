@@ -2,7 +2,7 @@
 id: FR-002-006
 title: A finding is decision-ready only with data, sample, a missed threshold and a feasible action
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-006-010
 title: The Members view and the Member details show the PID, with a copy action
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

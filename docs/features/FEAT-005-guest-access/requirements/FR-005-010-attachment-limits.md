@@ -2,7 +2,7 @@
 id: FR-005-010
 title: A file is at most 2 MiB and a task holds at most 5 active files
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

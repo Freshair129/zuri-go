@@ -2,7 +2,7 @@
 id: FR-003-016
 title: Three approved backgrounds for the graph stage only
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

@@ -2,7 +2,7 @@
 id: FR-006-023
 title: Both Member save paths resolve the canonical Member and assign the PID the same way
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

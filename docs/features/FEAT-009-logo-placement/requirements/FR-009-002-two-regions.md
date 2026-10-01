@@ -2,7 +2,7 @@
 id: FR-009-002
 title: The logo is shown as a full lockup or as a small navigation mark
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

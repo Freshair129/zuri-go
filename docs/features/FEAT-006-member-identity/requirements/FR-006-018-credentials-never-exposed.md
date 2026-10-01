@@ -2,7 +2,7 @@
 id: FR-006-018
 title: Credentials never appear in a response, a bundle, an export or a Member’s profile
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

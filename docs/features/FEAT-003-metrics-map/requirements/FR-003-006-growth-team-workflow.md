@@ -2,7 +2,7 @@
 id: FR-003-006
 title: AARRR, the team and the working loop are explained as frames
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

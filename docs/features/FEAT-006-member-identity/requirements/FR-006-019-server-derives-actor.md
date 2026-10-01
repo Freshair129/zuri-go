@@ -2,7 +2,7 @@
 id: FR-006-019
 title: The server derives the actor of every new write from the session
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

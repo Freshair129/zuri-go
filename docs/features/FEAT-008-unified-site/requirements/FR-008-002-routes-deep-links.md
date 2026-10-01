@@ -2,7 +2,7 @@
 id: FR-008-002
 title: Four routes and deep links that survive a reload
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001, FEAT-003]

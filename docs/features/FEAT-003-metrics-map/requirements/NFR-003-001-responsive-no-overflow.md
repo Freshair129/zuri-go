@@ -2,7 +2,7 @@
 id: NFR-003-001
 title: The guide and the graph fit a phone and a desktop in both themes
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

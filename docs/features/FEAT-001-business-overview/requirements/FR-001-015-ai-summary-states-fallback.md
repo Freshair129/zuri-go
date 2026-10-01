@@ -2,7 +2,7 @@
 id: FR-001-015
 title: Empty, outdated and unavailable summaries are labelled
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-001]

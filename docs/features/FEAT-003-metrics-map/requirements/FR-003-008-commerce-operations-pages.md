@@ -2,7 +2,7 @@
 id: FR-003-008
 title: Lead, order, contribution and inventory metrics are defined in general terms
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002]

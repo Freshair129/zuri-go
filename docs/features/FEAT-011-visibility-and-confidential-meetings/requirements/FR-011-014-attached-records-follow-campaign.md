@@ -4,7 +4,7 @@ title: Records attached to a campaign follow it
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -24,7 +24,7 @@ The system SHALL serve the channel links, ledger, content items, publications, g
 - AC-011-014-06 — Given the channel accounts, then they are readable as today, Guests included, because they name public pages.
 
 ## Implementation
-- Proposed 2026-10-01; not built. Restrictive policies `follows_campaign` on `campaign_channels`, `content_items`, `goals` and `metric_series`, and through the parent on `publications`, `goal_series` and `metric_observations` (SDD-011 “Row-level security”); `scopeCampaignRecords` filters the snapshot in the application.
+- Approved 2026-10-01 (ADR-005, gate G2); not built. Restrictive policies `follows_campaign` on `campaign_channels`, `content_items`, `goals` and `metric_series`, and through the parent on `publications`, `goal_series` and `metric_observations` (SDD-011 “Row-level security”); `scopeCampaignRecords` filters the snapshot in the application.
 - Today (0.5.1): all of them carry `business_scope` only. A foreign-key check bypasses row-level security, so `tasks` and `meetings` need an application check (FR-011-017).
 
 ## Notes

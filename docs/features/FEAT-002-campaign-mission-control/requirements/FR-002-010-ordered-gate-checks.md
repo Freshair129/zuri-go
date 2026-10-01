@@ -2,7 +2,7 @@
 id: FR-002-010
 title: Gate checks run in a fixed order and a hard breach is never hidden
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

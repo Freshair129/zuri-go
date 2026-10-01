@@ -2,7 +2,7 @@
 id: FR-007-005
 title: A code whose owner is Inactive or whose credential is disabled is refused
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

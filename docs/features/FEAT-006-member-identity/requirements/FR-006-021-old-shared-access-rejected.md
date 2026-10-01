@@ -2,7 +2,7 @@
 id: FR-006-021
 title: The shared team password and the team cookie are rejected, with no fallback
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

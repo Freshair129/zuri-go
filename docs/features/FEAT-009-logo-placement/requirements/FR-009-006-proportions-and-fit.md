@@ -2,7 +2,7 @@
 id: FR-009-006
 title: The logo and its tagline keep their proportions and fit desktop and mobile layouts
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

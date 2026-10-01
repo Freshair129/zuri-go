@@ -2,7 +2,7 @@
 id: FR-002-013
 title: Spend caps and margin floors block a release or a scale (G-07, G-08)
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

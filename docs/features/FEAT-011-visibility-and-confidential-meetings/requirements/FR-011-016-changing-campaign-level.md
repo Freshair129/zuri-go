@@ -4,7 +4,7 @@ title: Changing the level of a campaign
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -25,7 +25,7 @@ The system SHALL let only the campaign's owner, as stored before the request, or
 - AC-011-016-07 — Given a Business admin who is not named on a `restricted` campaign, then they cannot read or change it.
 
 ## Implementation
-- Proposed 2026-10-01; not built. `visibilityChange` (`apps/web/src/content/shared/visibility.mjs`) is reused with the stored owner as `accountableId`; `keepOwner` and the level fields in `writeCampaigns` (`apps/api/workspace.mjs`); `visibility`, `team_id`, `viewer_ids` and `visibility_reason` in `save()` for campaigns (`apps/api/service.mjs`).
+- Approved 2026-10-01 (ADR-005, gate G2); not built. `visibilityChange` (`apps/web/src/content/shared/visibility.mjs`) is reused with the stored owner as `accountableId`; `keepOwner` and the level fields in `writeCampaigns` (`apps/api/workspace.mjs`); `visibility`, `team_id`, `viewer_ids` and `visibility_reason` in `save()` for campaigns (`apps/api/service.mjs`).
 - Today (0.5.1): `writeCampaigns` rebinds `owner_member_id` from the owner text on every save and writes NULL unless exactly one Member matches (`apps/api/workspace.mjs:74`).
 
 ## Notes

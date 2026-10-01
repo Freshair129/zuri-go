@@ -2,7 +2,7 @@
 id: FR-002-018
 title: Leads, qualification, conversion, cost per lead, acquisition cost and response are counted as defined
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003]

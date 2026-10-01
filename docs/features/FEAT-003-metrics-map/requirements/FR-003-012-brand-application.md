@@ -2,7 +2,7 @@
 id: FR-003-012
 title: The guide follows the brand tokens, fonts, wordmark and tone
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009]

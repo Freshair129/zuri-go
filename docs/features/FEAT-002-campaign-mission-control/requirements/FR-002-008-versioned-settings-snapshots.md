@@ -2,7 +2,7 @@
 id: FR-002-008
 title: Settings are versioned and saved results keep the version they used
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-001]

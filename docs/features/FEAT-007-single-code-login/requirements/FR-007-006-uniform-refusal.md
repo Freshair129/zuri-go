@@ -2,7 +2,7 @@
 id: FR-007-006
 title: Every refused sign-in gets the same answer and leaks no credential data
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

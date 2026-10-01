@@ -2,7 +2,7 @@
 id: FR-002-025
 title: The campaign views follow the brand and the interaction rules
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-009, FEAT-001]

@@ -2,7 +2,7 @@
 id: FR-001-008
 title: A goal is set from a metric, its accounts, a period, a target and an owner
 delivery: building
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-003, ARCH-002]

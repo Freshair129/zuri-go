@@ -4,7 +4,7 @@ title: What a Guest reads of a public campaign
 part: FEAT-011-P04
 owner: DOM-CAM
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -24,7 +24,7 @@ The system SHALL return to a Guest, for a `public` campaign, its header, content
 - AC-011-015-06 — Given a direct query of `campaign_states` as a Guest, then no row is returned, whatever the campaign's level.
 
 ## Implementation
-- Proposed 2026-10-01; not built. Policy `follows_campaign_ledger` on `campaign_states`; `ledgerFor` (`apps/api/audience.mjs`) shapes the Guest's campaign in `readLegacy`; a notice component beside `GuestNotice` (`apps/web/src/content/meeting/Visibility.jsx`).
+- Approved 2026-10-01 (ADR-005, gate G2); not built. Policy `follows_campaign_ledger` on `campaign_states`; `ledgerFor` (`apps/api/audience.mjs`) shapes the Guest's campaign in `readLegacy`; a notice component beside `GuestNotice` (`apps/web/src/content/meeting/Visibility.jsx`).
 - Today (0.5.1): a Guest reads each campaign with its whole stored state (`apps/api/workspace.mjs:46`).
 
 ## Notes

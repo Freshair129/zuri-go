@@ -2,7 +2,7 @@
 id: FR-003-018
 title: The guide prints as 18 sheets with both mascots, and nothing interactive
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-008]

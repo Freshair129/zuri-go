@@ -2,7 +2,7 @@
 id: FR-007-010
 title: Single-code sign-in keeps the controls of Member sign-in
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

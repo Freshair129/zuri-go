@@ -2,7 +2,7 @@
 id: FR-007-001
 title: The sign-in modal has one masked field, รหัสระบุตัวตน, and no PID field
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

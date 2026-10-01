@@ -2,7 +2,7 @@
 id: FR-009-003
 title: The logo appears in the Business header, the campaign toolbar, the site navigation, the 18 guide mastheads and the graph header
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   decided_by: []

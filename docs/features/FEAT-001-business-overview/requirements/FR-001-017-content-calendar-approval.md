@@ -2,7 +2,7 @@
 id: FR-001-017
 title: The content calendar and approval queue are the source of the content figures
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [FEAT-002, ARCH-002]

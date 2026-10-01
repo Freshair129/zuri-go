@@ -2,7 +2,7 @@
 id: FR-001-014
 title: The summary is short and every statement traces to evidence
 delivery: implemented
-status: proposed
+status: approved
 legacy: []
 relations:
   relates_to: [ARCH-001, ARCH-002]
