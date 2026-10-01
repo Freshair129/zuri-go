@@ -25,7 +25,7 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 
 | ID | Work item | Standard | Suggested order / note |
 |---|---|---|---|
-| WI-06 | Decompose each feature's requirements into FR / NFR / AC files (and parts when cross-domain); old labels (`MT-01`–`MT-29`, `AC-01`–`AC-18`) go to `legacy:` | STD-001 R5, STD-003 R3 | Written 2026-10-01 as `proposed` for every feature (PLAN-003 S1; FEAT-004 by the WI-12 split, FEAT-010 to FEAT-012 earlier); owner review per feature (PLAN-003 G4) |
+| WI-06 | Decompose each feature's requirements into FR / NFR / AC files (and parts when cross-domain); old labels (`MT-01`–`MT-29`, `AC-01`–`AC-18`) go to `legacy:` | STD-001 R5, STD-003 R3 | Done 2026-10-01: every feature has FR / NFR files, approved by the owner (PLAN-003 S1, G4; FEAT-004 through the WI-12 split, FEAT-010 to FEAT-012 earlier) |
 | WI-07 | SDD with an `## Interfaces` section for features that persist data or call outside systems | STD-001 R5, STD-005 R2 | SDD-004 exists but has no `## Interfaces` |
 | WI-08 | Bind TC headings in each `verification.md` to the tests that prove them | STD-001 R7 | Tests: `apps/api/test/`, `tests/campaign/`, `apps/web/src/content/meeting/model.test.mjs`. Three existing `verification.md` files are pre-standard reports (ADR-001 D5); a feature can become `live` only after this item |
 | WI-09 | Declare API- / EVT- contracts (`/api/zuri-go/v1`, the FUNG connector) | STD-001 R1 | Written 2026-10-01 as `proposed`: API-001…022 and EVT-001 in `docs/domains/*/contracts.md` (PLAN-003 S3) |

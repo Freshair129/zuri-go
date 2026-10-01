@@ -47,8 +47,8 @@ Gates G1, G5 and G7 (WI-16) were decided by the owner on 2026-10-01 as recommend
 | R1 | Done: [restore drill](../../releases/0.5.0/restore-drill.md), every table count matched |
 | R2 | Done: SDD-004 correction note, ARCH-003 “Hosted deployment after 0.5.0” amendment, FEAT-011 “planned” wording (P01, FR-011-001) |
 | R3 | Built locally (G1): `npm run deploy` always stages, `npm run promote -- <url>`, `npm run db:migrate -- --cloud`; tests in `apps/api/test/operator-guards.test.mjs`; not yet used for a release |
-| V1 | Written, `proposed`: ADR-005, FEAT-011-P04, FR-011-013…020, NFR-011-002/003, a proposed SDD-011 section; waits for G2 (owner questions Q-V1…Q-V9 in ADR-005) |
-| S1 | Written, `proposed`: FR / NFR files for FEAT-007, 005, 009, 006 (PID and sign-in), 008, 001, 002, 003; wait for G4 |
+| V1 | Approved 2026-10-01 (G2): ADR-005 with Q-V1…Q-V9 answered as recommended, FEAT-011-P04, FR-011-013…020, NFR-011-002/003 and the SDD-011 section; next V2a (campaigns, migration 008), then V2b (Member contact, migration 009) |
+| S1 | Approved 2026-10-01 (G4): FR / NFR files for FEAT-007, 005, 009, 006 (PID and sign-in), 008, 001, 002, 003; S2, S4 and S5 can start |
 | S3, S7 | Written, `proposed`: API-001…022, EVT-001 (`docs/domains/*/contracts.md`), BR-001…021 (`docs/domains/*/rules.md`), SEC-001…020 (`architecture/requirements/security-requirements.md`); the placement of `rules.md` is an owner question (STD-003 R2 names no such file) |
 | S8 | Done (G5): `scripts/docs/` — `npm run docs:validate`, `npm run docs:views`, `npm run docs:next-id`; `npm test` runs them. On this tree: 0 errors; warnings are the 131 FRs without a `verifies` edge (S4), the 10 historical links and the recorded standard gaps |
 | G5, G7 | Done: STD-001…005 and ADR-001 approved; the ten historical links annotated |

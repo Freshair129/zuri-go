@@ -4,7 +4,7 @@ title: Visibility, teams and confidential meetings — Campaign records
 owner: DOM-CAM
 runtime: SRV-001
 delivery: declared
-status: proposed
+status: approved
 relations:
   specified_by: [SDD-011]
   decided_by: [ADR-005, ADR-004]
@@ -12,7 +12,7 @@ relations:
 
 # FEAT-011-P04 — Visibility of campaign records
 
-Part of [FEAT-011](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). **Proposed 2026-10-01 (PLAN-003 node V1); not approved, not built.** Declared by [ADR-005](../../../architecture/decisions.md) (proposed), which carries the owner's open questions; designed in [SDD-011](../design.md#proposed-visibility-of-campaign-records-and-member-profiles-v1-2026-10-01). It applies the levels of [ADR-004](../../../architecture/decisions.md) to the campaign records that Guests still read whole (PLAN-002 Q1).
+Part of [FEAT-011](../feature.md), owned by [DOM-CAM](../../../domains/campaign/README.md). **Approved by the owner on 2026-10-01 (PLAN-003 node V1, gate G2); not built.** Declared by [ADR-005](../../../architecture/decisions.md) (approved, questions answered as recommended); designed in [SDD-011](../design.md#proposed-visibility-of-campaign-records-and-member-profiles-v1-2026-10-01). It applies the levels of [ADR-004](../../../architecture/decisions.md) to the campaign records that Guests still read whole (PLAN-002 Q1).
 
 ## Scope
 - A level (`public`, `business`, `team`, `restricted`) and named people on each campaign; the records attached to it follow.

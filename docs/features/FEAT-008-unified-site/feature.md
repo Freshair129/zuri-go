@@ -34,7 +34,7 @@ One website, one origin and one deployment, with a shared menu — Marketing · 
 Text inside these documents may still name a sibling by its original file name; the **Original location** column maps each to its current file.
 
 ## Requirement index
-The requirement files below were written from the approved [spec.md](spec.md) ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, [PLAN-003](../../governance/plans/PLAN-003-remaining-work.md) S1) and are `status: proposed` until the owner approves them (PLAN-003 G4). Each file holds one requirement with its acceptance criteria, cites the section of the spec it comes from, and gives the spec’s own label (US01 to US10) in its notes; those labels are not IDs. Delivery is `implemented` only where [verification.md](verification.md), the release records, the current code or a test show it. TC bindings do not exist yet (WI-08).
+The requirement files below were written from the approved [spec.md](spec.md) ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, [PLAN-003](../../governance/plans/PLAN-003-remaining-work.md) S1) and were approved by the owner on 2026-10-01 (PLAN-003 G4). Each file holds one requirement with its acceptance criteria, cites the section of the spec it comes from, and gives the spec’s own label (US01 to US10) in its notes; those labels are not IDs. Delivery is `implemented` only where [verification.md](verification.md), the release records, the current code or a test show it. TC bindings do not exist yet (WI-08).
 
 | ID | Requirement | Delivery |
 |---|---|---|

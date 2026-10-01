@@ -26,7 +26,7 @@ One site, one origin, one deployment: navigation across the surfaces, the Data A
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Declared on 2026-10-01, all `proposed`: API-001 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-013…BR-017 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared.
+Declared on 2026-10-01, all `proposed`: API-001 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-013…BR-017 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` is added to this folder when the first ADR owned by this domain is declared.
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
@@ -41,7 +41,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 
 **Participating cross-domain features** — none.
 
-**Requirements of [FEAT-008](../../features/FEAT-008-unified-site/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), `status: proposed` until the owner approves them (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-008-unified-site/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
+**Requirements of [FEAT-008](../../features/FEAT-008-unified-site/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), approved by the owner the same day (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-008-unified-site/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
 
 | Requirement | Title | Delivery |
 |---|---|---|

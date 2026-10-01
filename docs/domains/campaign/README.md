@@ -37,7 +37,7 @@ Plan and run campaigns and their content: an objective and targets per campaign,
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Declared on 2026-10-01, all `proposed`: API-010…API-013 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-003…BR-007 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared.
+Declared on 2026-10-01, all `proposed`: API-010…API-013 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-003…BR-007 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` is added to this folder when the first ADR owned by this domain is declared.
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
@@ -55,7 +55,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 | Feature | Part | Role | Delivery |
 |---|---|---|---|
 | [FEAT-010](../../features/FEAT-010-task-manager/feature.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Campaign task details and the campaign Workboard as a view of the task records | implemented |
-| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P04](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P04-campaign-records.md) | Visibility of campaign records (proposed 2026-10-01 by PLAN-003 V1; not approved, not built) | declared |
+| [FEAT-011](../../features/FEAT-011-visibility-and-confidential-meetings/feature.md) | [FEAT-011-P04](../../features/FEAT-011-visibility-and-confidential-meetings/parts/P04-campaign-records.md) | Visibility of campaign records (approved 2026-10-01, PLAN-003 V1; not built) | declared |
 
 **Requirements** — approved on 2026-10-01 with ADR-002 and ADR-003.
 
@@ -67,7 +67,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 | [FR-010-015](../../features/FEAT-010-task-manager/requirements/FR-010-015-campaign-tasks-projection.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | campaign.tasks stays complete as a projection |
 | [FR-010-016](../../features/FEAT-010-task-manager/requirements/FR-010-016-move-workboard-tasks.md) | [FEAT-010-P02](../../features/FEAT-010-task-manager/parts/P02-campaign.md) | Moving the existing Workboard tasks |
 
-**Requirements of [FEAT-002](../../features/FEAT-002-campaign-mission-control/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), `status: proposed` until the owner approves them (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-002-campaign-mission-control/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
+**Requirements of [FEAT-002](../../features/FEAT-002-campaign-mission-control/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), approved by the owner the same day (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-002-campaign-mission-control/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
 
 | Requirement | Title | Delivery |
 |---|---|---|

@@ -164,7 +164,7 @@ Relations: relates_to: ADR-002, ADR-003, FEAT-005, FEAT-006, FEAT-011, PLAN-002
 ### ADR-005 — Who may see campaign records and Member profiles: the levels of ADR-004 applied to the rest of the Business
 Relations: decided_by: ADR-004; relates_to: ADR-003, FEAT-002, FEAT-005, FEAT-006, FEAT-011, SDD-011, PLAN-002
 
-**Status:** proposed — drafted 2026-10-01 for the owner's decision ([PLAN-003](../governance/plans/PLAN-003-remaining-work.md) node V1, gate G2). Nothing in it is built, migrated or released, and it changes no approved text: it adds to ADR-004, whose Consequences deferred this step to PLAN-002 Q1. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (authorization, customer-level business data and a schema change).
+**Status:** approved — by the owner, 2026-10-01, with Q-V1…Q-V9 answered as recommended ([PLAN-003](../governance/plans/PLAN-003-remaining-work.md) node V1, gate G2). Nothing in it is built, migrated or released yet, and it changes no approved text: it adds to ADR-004, whose Consequences deferred this step to PLAN-002 Q1. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (authorization, customer-level business data and a schema change).
 
 **Context.** Verified against the 0.5.1 code and migrations 001–007.
 
@@ -198,7 +198,7 @@ Relations: decided_by: ADR-004; relates_to: ADR-003, FEAT-002, FEAT-005, FEAT-00
 - **D9 — Enforcement.** Campaign records are enforced twice, as tasks are: the API filters by the viewer and row-level security repeats the rule, so one missed filter cannot leak a row. Contact details are enforced in the API alone, by one function used on every path that returns a Member, because a policy cannot withhold a column; history rows of Member changes are closed to everyone but the Member concerned, a Business admin and the operator.
 - **D10 — Delivery in two steps**, each additive, each with its own migration and its own owner authorization for production: V2a campaign records (D1–D7, D9), V2b Member contact details (D8, D9). The interim rule of ADR-004 D9 ends for each family when its step is released.
 
-**Decisions needed (owner).** Each row is a question for the owner; the recommendation is what D1–D10 above assume.
+**Decisions (owner, 2026-10-01).** The owner answered every question below as recommended, so D1–D10 above stand as written: the campaign carries the level (Q-V1 a); the existing campaign becomes `business` (Q-V2 a); a Guest of a `public` campaign reads its header and marketing records, never the ledger (Q-V3 a); records attached to no campaign are for signed-in Members only (Q-V4 a); the owner widens with a reason, any reader narrows, the operator handles a campaign with no owner (Q-V5 a); tasks and meetings keep their own audiences, new Workboard tasks start at the campaign's team or restricted level (Q-V6 a); Member contact details get a level enforced in the API, the Business admin reads all (Q-V7 a); delivery in two steps, V2a campaigns then V2b contact details (Q-V8 a); the stored campaign owner is kept unless the owner text names another Member (Q-V9 a).
 
 | Q | Question | Options | Recommendation |
 |---|---|---|---|

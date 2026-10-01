@@ -64,7 +64,7 @@ State after release 0.5.0 (2026-10-01, Bangkok). Production runs application 0.5
 
 - The design gaps of the WI-12 requirement files were decided on 2026-10-01 (see “Design gaps decided” below); the code changes they need (D2, D3, D4, D6, D12, D14, D16) were built on 2026-10-01 and released as 0.5.1 ([record](../../releases/0.5.1/verification.md)).
 - Browser checks that write (drag and drop, editor saves) and of a restricted meeting. The restore drill of the pre-release backup was done on 2026-10-01 ([record](../../releases/0.5.0/restore-drill.md)); the rest is tracked in [PLAN-003](PLAN-003-remaining-work.md).
-- Q1 follow-up: the same levels for Member profiles and campaign records, which Guests still read.
+- Q1 follow-up: the same levels for campaign records and Member contact details — designed and approved on 2026-10-01 as ADR-005 (PLAN-003 V1); not built.
 
 **Rollback.** There is no down-migration. The fallback chosen is to fix forward on schema 7; code from before 0.5.0 on schema 7 reads as a Guest and shows no business work.
 

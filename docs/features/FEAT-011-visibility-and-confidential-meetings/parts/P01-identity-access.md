@@ -33,4 +33,4 @@ Provides viewer identity and team membership to FEAT-011-P02 and FEAT-011-P03; n
 - [FR-011-003](../requirements/FR-011-003-viewer-identity.md) — Viewer identity on every read
 - [FR-011-007](../requirements/FR-011-007-guest-public-only.md) — Guests read public items only
 - [NFR-011-001](../requirements/NFR-011-001-row-level-security.md) — Row-level security enforces the same audiences
-- Proposed 2026-10-01, not approved: [FR-011-020](../requirements/FR-011-020-member-contact-visibility.md) — Visibility of Member contact details ([ADR-005](../../../architecture/decisions.md)); the campaign records are in [FEAT-011-P04](P04-campaign-records.md)
+- Approved 2026-10-01, not built: [FR-011-020](../requirements/FR-011-020-member-contact-visibility.md) — Visibility of Member contact details ([ADR-005](../../../architecture/decisions.md)); the campaign records are in [FEAT-011-P04](P04-campaign-records.md)

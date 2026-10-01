@@ -32,7 +32,7 @@ The Business is the tenant scope everything else hangs from, and the Business Ov
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Declared on 2026-10-01, all `proposed`: API-005…API-009 and EVT-001 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-001, BR-002 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared.
+Declared on 2026-10-01, all `proposed`: API-005…API-009 and EVT-001 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-001, BR-002 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` is added to this folder when the first ADR owned by this domain is declared.
 
 <!-- BEGIN GENERATED: feature-index -->
 _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
@@ -47,7 +47,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 
 **Participating cross-domain features** — none.
 
-**Requirements of [FEAT-001](../../features/FEAT-001-business-overview/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), `status: proposed` until the owner approves them (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-001-business-overview/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
+**Requirements of [FEAT-001](../../features/FEAT-001-business-overview/feature.md)** — written from the approved specification on 2026-10-01 (PLAN-001 WI-06), approved by the owner the same day (PLAN-003 G4); delivery as in the [feature’s index](../../features/FEAT-001-business-overview/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
 
 | Requirement | Title | Delivery |
 |---|---|---|

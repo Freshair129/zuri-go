@@ -16,7 +16,7 @@ participants:
     role: Visibility, participants and transcript custody of meetings
   - domain: DOM-CAM
     part: FEAT-011-P04
-    role: Visibility of campaign records (proposed 2026-10-01, not approved)
+    role: Visibility of campaign records (approved 2026-10-01, not built)
 delivery: implemented
 status: approved
 legacy: []
@@ -30,7 +30,7 @@ relations:
 
 > **Approved 2026-10-01; phases P1 and P3 released to production the same day with 0.5.0 (schema 6 and 7; [verification](../../releases/0.5.0/verification.md)).** Declared by [ADR-004](../../architecture/decisions.md); the delivery plan is [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md).
 
-> **Proposed 2026-10-01, not approved (PLAN-003 node V1):** the same levels for campaign records and Member contact details, which Guests and Members still read whole (PLAN-002 Q1). Declared by [ADR-005](../../architecture/decisions.md); requirements FR-011-013…020 and NFR-011-002…003 below; designed in the last section of [SDD-011](design.md#proposed-visibility-of-campaign-records-and-member-profiles-v1-2026-10-01). Everything above this note is unchanged and describes release 0.5.1.
+> **Approved by the owner on 2026-10-01 (PLAN-003 node V1, gate G2), not built:** the same levels for campaign records and Member contact details, which Guests and Members still read whole (PLAN-002 Q1). Declared by [ADR-005](../../architecture/decisions.md); requirements FR-011-013…020 and NFR-011-002…003 below; designed in the last section of [SDD-011](design.md#proposed-visibility-of-campaign-records-and-member-profiles-v1-2026-10-01). Everything above this note is unchanged and describes release 0.5.1.
 
 Every department can use the workspace without exposing its work. Tasks, projects and meetings carry a visibility level — public, business, team or restricted — which the API and row-level security both enforce. Guests see only public items; confidential meetings are seen only by their participants, and their transcripts stay on the recording machine unless someone chooses to upload them.
 
@@ -52,7 +52,7 @@ Every department can use the workspace without exposing its work. Tasks, project
 | [FEAT-011-P01](parts/P01-identity-access.md) | [DOM-IAM](../../domains/identity-access/README.md) | Teams, Business admin, viewer identity and the Guest rule |
 | [FEAT-011-P02](parts/P02-tasks.md) | [DOM-TSK](../../domains/tasks/README.md) | Visibility of tasks and projects, and of their attachments and history |
 | [FEAT-011-P03](parts/P03-meetings.md) | [DOM-MTG](../../domains/meetings/README.md) | Visibility, participants and transcript custody of meetings |
-| [FEAT-011-P04](parts/P04-campaign-records.md) | [DOM-CAM](../../domains/campaign/README.md) | Visibility of campaign records (proposed 2026-10-01, not approved) |
+| [FEAT-011-P04](parts/P04-campaign-records.md) | [DOM-CAM](../../domains/campaign/README.md) | Visibility of campaign records (approved 2026-10-01, not built) |
 
 ## Requirement index
 Approved by the owner on 2026-10-01; each file holds the requirement and its acceptance criteria. The design [SDD-011](design.md), this feature and [ADR-004](../../architecture/decisions.md) were approved the same day.
@@ -73,7 +73,7 @@ Approved by the owner on 2026-10-01; each file holds the requirement and its acc
 | [FR-011-012](requirements/FR-011-012-existing-data.md) | Visibility of data that exists before the change | FEAT-011-P02 | implemented |
 | [NFR-011-001](requirements/NFR-011-001-row-level-security.md) | Row-level security enforces the same audiences | FEAT-011-P01 | implemented |
 
-Proposed 2026-10-01 for the owner's approval ([ADR-005](../../architecture/decisions.md); status `proposed`; nothing built):
+Approved by the owner on 2026-10-01 with ADR-005's questions answered as recommended ([ADR-005](../../architecture/decisions.md); nothing built yet):
 
 | ID | Requirement | Part | Delivery |
 |---|---|---|---|

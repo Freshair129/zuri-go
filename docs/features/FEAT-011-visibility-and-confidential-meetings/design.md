@@ -304,14 +304,14 @@ The owner decided the gaps of the WI-12 requirement files on 2026-10-01 ([PLAN-0
 
 ## Proposed: visibility of campaign records and Member profiles (V1, 2026-10-01)
 
-> **Proposed, not approved; nothing here is built, migrated or released.** Designs [FR-011-013…020 and NFR-011-002…003](feature.md#requirement-index) under [ADR-005](../../architecture/decisions.md) (proposed; PLAN-003 node V1, gate G2). The approved text above is unchanged. If the owner approves, the bullets “Campaign records and Member profiles are out of scope” (Scope and delivery) and “Campaign tasks … stay `business` in P1” (Audience rule) stop describing the next release; they stay true for 0.5.1. Every code statement below was checked against `apps/api/*.mjs` and migrations 001–007 on 2026-10-01.
+> **Approved by the owner on 2026-10-01 (PLAN-003 gate G2), with ADR-005's questions Q-V1…Q-V9 answered as recommended; nothing here is built, migrated or released yet.** The heading keeps its original wording so that links to it stay valid. Designs [FR-011-013…020 and NFR-011-002…003](feature.md#requirement-index) under [ADR-005](../../architecture/decisions.md) (proposed; PLAN-003 node V1, gate G2). The approved text above is unchanged. If the owner approves, the bullets “Campaign records and Member profiles are out of scope” (Scope and delivery) and “Campaign tasks … stay `business` in P1” (Audience rule) stop describing the next release; they stay true for 0.5.1. Every code statement below was checked against `apps/api/*.mjs` and migrations 001–007 on 2026-10-01.
 
 ### Delivery
 
 | Step | Requirements | Schema | Note |
 |---|---|---|---|
 | V2a — Campaign records | FR-011-013…019, NFR-011-002, NFR-011-003 | 8: `008_campaign_visibility.sql` | The larger exposure: the ledger holds orders, leads and customer IDs |
-| V2b — Member contact details | FR-011-020 | 9: `009_member_contact_visibility.sql` | One column; waits for ADR-005 Q-V7 |
+| V2b — Member contact details | FR-011-020 | 9: `009_member_contact_visibility.sql` | One column; ADR-005 Q-V7 answered (a) on 2026-10-01 |
 
 File numbers are the next free ones today (the last migration is `007_tasks_projects.sql`); take the next free number at build time. Each migration and each production change needs its own authorization (AGENTS.md).
 
