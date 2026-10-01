@@ -1,0 +1,53 @@
+{
+  "mode": "stage",
+  "url": "https://zuri-metrics-c8x0nklnc-pornpons-projects.vercel.app",
+  "version": "0.5.1",
+  "checks": {
+    "guestSession": "200, not authenticated",
+    "guestWorkspace": {
+      "tasks": 0,
+      "meetings": 0,
+      "receipts": 0,
+      "weeksEntries": 0,
+      "events": 0,
+      "members": 4,
+      "campaigns": 1
+    },
+    "guestMemberKeysWorkspace": [
+      "displayName",
+      "id",
+      "pid",
+      "status"
+    ],
+    "guestState": {
+      "tasks": 0,
+      "task_roles": 0,
+      "task_attachments": null,
+      "meetings": null
+    },
+    "guestMemberKeysState": [
+      "display_name",
+      "id",
+      "pid",
+      "status"
+    ],
+    "guestOverviewStatus": 200,
+    "guestTaskList": {
+      "status": 200,
+      "tasks": 0
+    },
+    "guestWritesDenied": {
+      "createTask": 401,
+      "createProject": 401,
+      "meetingCommit": 401,
+      "saveWorkspace": 401,
+      "team": 401
+    },
+    "crossOriginWrite": 403,
+    "htmlMatchesBuild": true,
+    "htmlSha256": "49f39604c025f5a95606796c1b3bb86b592d75120a6928f03869b032d9d3f08d"
+  },
+  "memberChecks": "NOT_RUN by the agent - Member, participant and Business-admin checks need a real Member code and are the owner's",
+  "browserVisual": "NOT_RUN",
+  "at": "2026-10-01T00:42:35.519Z"
+}

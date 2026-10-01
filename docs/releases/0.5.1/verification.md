@@ -58,3 +58,12 @@ Findings, fixed in the source the same day (the fix is not deployed; production 
 ## Rollback
 
 Code only: promoting the 0.5.0 deployment (`dpl_BWZ6s6Uqd8oZnuqdAuX5VV7Qo14v`) restores the previous behavior on the same schema, including the Guest read of Member contact details.
+
+## Follow-up deployment: Guest Member cards and phone tabs (2026-10-01)
+
+Deployed at the owner's request (“deploy”) from commit `ae72a77`, still application 0.5.1 with no migration: the two browser findings above.
+
+- Local: `npm run build` and `npm test` passed (169 Node tests, 5 Python tests, metrics and extraction checks) before the commit.
+- Staged deployment `dpl_59cfbogB4DijtVovhQkVW1SyTFtC` (`https://zuri-metrics-c8x0nklnc-pornpons-projects.vercel.app`, `--prod --skip-domain`), then promoted to `https://zuri-metrics-map.vercel.app/`. The same Guest checks passed on both ([stage-ui.json](stage-ui.json), [production-ui.json](production-ui.json)): Member fields limited to ID, PID, display name and status; 0 tasks and meetings; Guest writes 401, cross-origin 403; served HTML equals the build (SHA-256 `49f39604…f08d`).
+- Browser, production at 375 px as a Guest: the Task Manager view switcher wraps with no label cut and no horizontal scroll; the four Member cards say “ซ่อนจาก Guest” and none says “รายละเอียดติดต่อยังว่าง”; no console error.
+- Rollback: promote `dpl_x33mhdiZRPynAd5ZrA1dMHrscC25` (the first 0.5.1 deployment).
