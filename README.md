@@ -28,10 +28,11 @@ npm start
 | `npm start` | เปิด local PostgreSQL/server เดิมที่พอร์ต 4319 |
 | `npm test` | backend, campaign, meeting, packaging, metrics และ extraction checks; ต้องเปิด local server ก่อน |
 | `npm run backup` | full local PostgreSQL dump ลง .local/backups |
-| `npm run db:migrate` | operator ใช้เมื่ออนุมัติ migration; ไม่ต้องรันซ้ำเพื่อย้าย source |
+| `npm run db:migrate` | operator ใช้เมื่ออนุมัติ migration; ไม่ต้องรันซ้ำเพื่อย้าย source; ปฏิเสธ target ที่ไม่ใช่ local และใช้ `-- --cloud` สำหรับ production |
 | `npm run members -- --cloud` | provision สมาชิกที่ยังไม่มี credential; ไม่หมุนรหัสเดิม |
 | `npm run members -- --cloud --reset ZGO-P0001` | operator เปลี่ยนรหัสของ PID ที่ระบุและ revoke sessions เดิม |
-| `npm run deploy` | เผยแพร่ build/vercel ไป production ของ project เดิม; build/test ให้ผ่านก่อน |
+| `npm run deploy` | deploy build/vercel ของ project เดิมแบบ staged (`--skip-domain`) และพิมพ์ URL ของ deployment; โดเมนสาธารณะยังไม่ย้าย; build/test ให้ผ่านก่อน |
+| `npm run promote -- <deployment-url>` | ย้ายโดเมนสาธารณะไปยัง deployment ที่ตรวจแล้ว; ปฏิเสธ URL ที่ไม่ตรง `https://zuri-metrics-*-pornpons-projects.vercel.app` |
 
 คำสั่ง build ใช้ Data plugin 1.0.11 และ Codex Node ใน user profile ปัจจุบัน ถ้าย้ายเครื่องให้กำหนด `ZURI_GO_DATA_PLUGIN`, `ZURI_GO_BUILD_NODE` และหากจำเป็น `ZURI_GO_PYTHON` เป็นตำแหน่งติดตั้งของเครื่องนั้น ไม่ต้องคัดลอก plugin runtime เข้า source หรือปรับ protected integrity manifests
 

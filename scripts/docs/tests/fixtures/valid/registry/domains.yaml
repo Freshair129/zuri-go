@@ -1,0 +1,20 @@
+# Fixture registry (same shape as the repository's).
+domains:
+  - code: DOM-AAA
+    slug: alpha
+    name: Alpha
+    subdomain: core
+    role: business
+  - code: DOM-BBB
+    slug: beta
+    name: Beta
+    subdomain: supporting
+    role: business
+    supersedes: [DOM-OLD]
+  - code: DOM-OLD
+    slug: old
+    name: Old
+    subdomain: supporting
+    role: business
+    status: superseded
+    superseded_by: [DOM-BBB]

@@ -11,6 +11,10 @@
     "backup": "node apps/api/backup-local.mjs",
     "db:migrate": "node apps/api/migrate.mjs",
     "members": "node apps/api/provision-members.mjs",
-    "deploy": "node scripts/run.mjs deploy"
+    "deploy": "node scripts/run.mjs deploy",
+    "promote": "node scripts/run.mjs promote",
+    "docs:validate": "node scripts/run.mjs docs validate",
+    "docs:views": "node scripts/run.mjs docs views",
+    "docs:next-id": "node scripts/run.mjs docs next-id"
   }
 }

@@ -1,0 +1,2 @@
+legacy_id,new_id,disposition,note
+OLD-1,FEAT-001,moved,docs/old.md -> docs/features/FEAT-001-alpha/feature.md

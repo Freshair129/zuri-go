@@ -1,0 +1,6 @@
+services:
+  - id: SRV-001
+    slug: main
+    name: Main service
+    deploy_unit: "Main deploy, started by `npm start`"
+    code_roots: [src]
