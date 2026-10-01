@@ -47,10 +47,10 @@ The work of every department — sales, production, accounting, HR and marketing
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. An outline of the per-task API, approved with [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed) and released in phase P2 (0.5.0), declares no API- artifact.
+Declared on 2026-10-01, all `proposed`: API-016…API-018 in [contracts.md](contracts.md) (PLAN-001 WI-09); business rules BR-018, BR-019 in [rules.md](rules.md) (PLAN-001 WI-10). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared. An outline of the per-task API, approved with [SDD-010](../../features/FEAT-010-task-manager/design.md#api-contract-proposed) and released in phase P2 (0.5.0), declares no API- artifact.
 
 <!-- BEGIN GENERATED: feature-index -->
-_Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
+_Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
 
 **Classification** — subdomain `supporting` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
 

@@ -35,7 +35,9 @@ Every Member has a stable PID and an individual credential. Writes require a Mem
 | [spec.md](spec.md) | Approved contract “Member PID and individual sign-in” | `docs/architecture/member-identity-spec.md` | v0.4.0 · 2026-09-30 · legacy `ZGO-AUTH-002` |
 
 ## Requirement index
-Approved by the owner on 2026-10-01: the files below hold the Member-registry requirements of [FEAT-004](../FEAT-004-meeting-task-manager/feature.md) written here under its approved split (PLAN-002 WI-12, decided 2026-10-01, delegated by the owner); FEAT-004 and its MT numbers are unchanged. Each file records its FEAT-004 origin in its notes and holds its acceptance criteria. The PID and individual sign-in requirements themselves have no FR / NFR files yet ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, WI-08); they remain in [spec.md](spec.md), whose acceptance / success / exit criteria are in §6. No TC binds to these FRs yet.
+FR-006-001 to -008 were approved by the owner on 2026-10-01: they hold the Member-registry requirements of [FEAT-004](../FEAT-004-meeting-task-manager/feature.md) written here under its approved split (PLAN-002 WI-12, decided 2026-10-01, delegated by the owner); FEAT-004 and its MT numbers are unchanged. Each of those files records its FEAT-004 origin in its notes and holds its acceptance criteria. FR-006-009 to -023 and NFR-006-001 were written on 2026-10-01 from the approved PID and individual sign-in contract, [spec.md](spec.md) (PLAN-001 WI-06), as `status: proposed`; the owner approves them (PLAN-003 G4). Each cites the spec section it comes from and records its delivery evidence. No TC binds to these requirements yet (WI-08).
+
+Spec map for the sign-in contract: §6 “Acceptance / success / exit criteria” bullet 1 (four credentials authenticate the intended Member; a correct password with another PID fails) is now the single-code sign-in of [FEAT-007](../FEAT-007-single-code-login/feature.md) (FR-007-003, FR-007-007); bullet 2 to FR-006-009 and FR-006-023; bullet 3 (Guest reads, writes need an individual session) to [FEAT-005](../FEAT-005-guest-access/feature.md) FR-005-001 and FR-005-003; bullet 4 to FR-006-019 and FR-006-020; bullet 5 to FR-006-014, -015, -016 and -021; bullet 6 to FR-006-013 and FR-006-018; bullets 7 and 8 (tests, staged and production checks, document amendments) are obligations of release 0.4.0, met in its [record](../../history/zuri-go-member-review/verification.md). §2 (the modal asking for a PID and a personal password) is superseded by FR-007-001. §1 assumption 2 (all active Members have the same editor permissions, no permission matrix) was changed on 2026-10-01 by [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md) (the Business admin, visibility) and decision D3 (FR-006-001 AC-006-001-07); it is cited, not restated. §5 and the one-time migration, handover and rollout steps are release procedure, not requirements.
 
 | ID | Requirement | Delivery |
 |---|---|---|
@@ -47,8 +49,26 @@ Approved by the owner on 2026-10-01: the files below hold the Member-registry re
 | [FR-006-006](requirements/FR-006-006-backup-restore-keeps-members.md) | Export and restore keep Member references and never merge Members by name | building |
 | [FR-006-007](requirements/FR-006-007-registry-needs-no-provider.md) | The Member registry needs no provider and contacts nobody | implemented |
 | [FR-006-008](requirements/FR-006-008-failed-save-not-reported-saved.md) | A failed Member save is never reported as saved | implemented |
+| [FR-006-009](requirements/FR-006-009-pid-server-assigned-immutable.md) | A Member’s PID is assigned by the server, unique in the Business, immutable and never reused | implemented |
+| [FR-006-010](requirements/FR-006-010-pid-shown-with-copy.md) | The Members view and the Member details show the PID, with a copy action | implemented |
+| [FR-006-011](requirements/FR-006-011-credential-random-hashed-private.md) | Each Member’s code is independent and random, stored only as a salted hash | implemented |
+| [FR-006-012](requirements/FR-006-012-provisioning-idempotent.md) | Provisioning is idempotent and a Member registered later has a PID but no code | implemented |
+| [FR-006-013](requirements/FR-006-013-private-handover.md) | A code is handed over once, privately, and nobody is messaged | implemented |
+| [FR-006-014](requirements/FR-006-014-reset-raises-version.md) | Reset, disable and enable name their target and raise the credential version | implemented |
+| [FR-006-015](requirements/FR-006-015-writes-recheck-member.md) | Every write rechecks the Member and the credential in its own transaction | implemented |
+| [FR-006-016](requirements/FR-006-016-member-session.md) | A Member session is signed, versioned, bounded and distinct from the team cookie | implemented |
+| [FR-006-017](requirements/FR-006-017-session-public-identity-only.md) | The session answer carries the public identity only | implemented |
+| [FR-006-018](requirements/FR-006-018-credentials-never-exposed.md) | Credentials never appear in a response, a bundle, an export or a Member’s profile | implemented |
+| [FR-006-019](requirements/FR-006-019-server-derives-actor.md) | The server derives the actor of every new write from the session | implemented |
+| [FR-006-020](requirements/FR-006-020-earlier-history-keeps-label.md) | History written before Member sign-in keeps its original label | implemented |
+| [FR-006-021](requirements/FR-006-021-old-shared-access-rejected.md) | The shared team password and the team cookie are rejected, with no fallback | implemented |
+| [FR-006-022](requirements/FR-006-022-local-operator-attribution.md) | A local write is attributed to the trusted local operator and never to a Member | implemented |
+| [FR-006-023](requirements/FR-006-023-member-save-paths-keep-identity.md) | Both Member save paths resolve the canonical Member and assign the PID the same way | implemented |
+| [NFR-006-001](requirements/NFR-006-001-credential-table-isolation.md) | The database isolates the credential table from the runtime role | implemented |
 
 FR-006-006 is `building`: restoring a backup over a PostgreSQL workspace is not supported from the screen, and no restore has been run on production. The other delivery values rest on the current code and the model tests named in each file; the hosted Member checks and the browser checks are not yet run ([release verification](../../releases/0.5.0/verification.md)).
+
+The delivery values of FR-006-009 to -023 and NFR-006-001 rest on the current code, the tests named in each file (run on 2026-10-01 against the local database: 15 tests of `cloud-handler` and `member-auth`, 13 of `meeting-commit`, 38 of the meeting model) and the 0.4.0 and 0.4.2 records; the owner reported on 2026-10-01 that production sign-in as a Member passed ([0.5.1 verification](../../releases/0.5.1/verification.md)), which the agent did not observe. Not covered by a committed test: concurrency of a reset against a write, the PID of a Member created by a workspace save, the profile metadata and export checks, and the screens.
 
 ## Delivery evidence
 - Deployed and promoted to production: [history/zuri-go-member-review](../../history/zuri-go-member-review/verification.md).

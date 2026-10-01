@@ -190,7 +190,7 @@ MoSCoW (ยังไม่จัดลำดับ)      สถานะ / เ�
 
 ## 3. Weekly seed ที่ต้องนำเข้า
 
-รายการตรวจได้ใน [meeting-task-manager-weekly-seed.json](../../product/meeting-task-manager-weekly-seed.json); ชื่องานและ PIC มาจากผู้ใช้ C/I/สิ่งส่งมอบใช้ร่างเดิม
+รายการตรวจได้ใน [meeting-task-manager-weekly-seed.json](../../product/meeting-task-manager-weekly-seed.json) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*; ชื่องานและ PIC มาจากผู้ใช้ C/I/สิ่งส่งมอบใช้ร่างเดิม
 
 | ID | งาน | R ยืนยัน | A | C/I |
 |---|---|---|---|---|

@@ -1,7 +1,7 @@
 ---
 id: STD-002
 title: Identity, Traceability & Annotation Standard
-status: proposed
+status: approved
 version: 0.1.0
 owner: governance
 relations:

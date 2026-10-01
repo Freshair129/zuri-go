@@ -17,7 +17,7 @@ Existing source modifications are captured in [version-diff.patch](version-diff.
 
 ## Verified
 
-- **79 Node tests passed**: 63 existing campaign/meeting tests and 16 new business model / actual PostgreSQL / HTTP tests. [Raw output](../../zuri-go-review/tests.txt).
+- **79 Node tests passed**: 63 existing campaign/meeting tests and 16 new business model / actual PostgreSQL / HTTP tests. [Raw output](../../zuri-go-review/tests.txt) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*.
 - **5 packaging tests passed**; the existing manifest-driven static packager remains intact.
 - Protected Data app authoring/build verification passed. App ID unchanged: `dashboard:354c0a91-d04c-431c-9fe5-06bc3f703be1`. Runtime SHA `9e3ede84b28aded3c7379b6e6a5611f0d95b9977eb0f781e279ceefabfcbd27e`.
 - Real PostgreSQL tests: runtime role is neither superuser nor BYPASSRLS; cross-Business reads/writes/FKs rejected, R/A uniqueness, optimistic conflicts, publication approval, immutable briefs, observation revisions, and import/save/retry/reload with stable task IDs and FUNG evidence.

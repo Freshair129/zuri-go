@@ -37,7 +37,7 @@ attributes:
 ## Evidence
 
 - [HTML](../../../apps/metrics/index.html)
-- [PDF print output](../../product/campaign-01_metrics-map-review/metrics-map-rev02-print.pdf)
+- [PDF print output](../../product/campaign-01_metrics-map-review/metrics-map-rev02-print.pdf) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*
 - [Browser checks](../../history/campaign-01_metrics-map-review/browser-checks.json)
 - [Print checks](../../history/campaign-01_metrics-map-review/print-checks.json)
 - Review directory: desktop/mobile screenshots 01–14, dark-theme samples and print renders 01–14.

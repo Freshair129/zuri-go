@@ -4,7 +4,7 @@ title: Visibility, teams and confidential meetings — design
 status: approved
 relations:
   decided_by: [ADR-004]
-  relates_to: [SDD-004, PLAN-002]
+  relates_to: [SDD-004, PLAN-002, ADR-005]
 ---
 
 # SDD-011 — Visibility, teams and confidential meetings — design
@@ -301,3 +301,210 @@ The owner decided the gaps of the WI-12 requirement files on 2026-10-01 ([PLAN-0
 - **Guests and the people on public tasks.** Guests see public tasks without their RACI (row-level security design), as approved with this SDD. Showing those names to Guests later needs another shape for the L0 policy.
 - **API-/EVT- contracts.** STD-001 R5 asks for them at each domain boundary; here they are in-process calls (PLAN-001 WI-09).
 - **Before building the schema:** migration 006 needs its own authorization, locally and again for production. Done: applied locally and to production on 2026-10-01.
+
+## Proposed: visibility of campaign records and Member profiles (V1, 2026-10-01)
+
+> **Proposed, not approved; nothing here is built, migrated or released.** Designs [FR-011-013…020 and NFR-011-002…003](feature.md#requirement-index) under [ADR-005](../../architecture/decisions.md) (proposed; PLAN-003 node V1, gate G2). The approved text above is unchanged. If the owner approves, the bullets “Campaign records and Member profiles are out of scope” (Scope and delivery) and “Campaign tasks … stay `business` in P1” (Audience rule) stop describing the next release; they stay true for 0.5.1. Every code statement below was checked against `apps/api/*.mjs` and migrations 001–007 on 2026-10-01.
+
+### Delivery
+
+| Step | Requirements | Schema | Note |
+|---|---|---|---|
+| V2a — Campaign records | FR-011-013…019, NFR-011-002, NFR-011-003 | 8: `008_campaign_visibility.sql` | The larger exposure: the ledger holds orders, leads and customer IDs |
+| V2b — Member contact details | FR-011-020 | 9: `009_member_contact_visibility.sql` | One column; waits for ADR-005 Q-V7 |
+
+File numbers are the next free ones today (the last migration is `007_tasks_projects.sql`); take the next free number at build time. Each migration and each production change needs its own authorization (AGENTS.md).
+
+### Levels per record type
+
+| Record | Where its level comes from | Guest | Signed-in Member |
+|---|---|---|---|
+| Campaign header (`campaigns`) and `campaign_channels` | its own `campaigns.visibility` and `team_id`; named: the owner and `campaign_viewers` | a `public` campaign only | by level |
+| Ledger (`campaign_states`) | the campaign's level, but never to a Guest | never | by level |
+| `content_items`, `goals`, `metric_series` that name a campaign | the campaign's | those of a `public` campaign | by level |
+| `publications`, `goal_series`, `metric_observations` | their content item, goal or series | as the parent | as the parent |
+| The same three tables with no campaign (Business-level) | none | never | yes, as today |
+| `channel_accounts` | none; unchanged | yes (they name public pages) | yes |
+| Tasks and meetings that name a campaign | their own level (FR-011-004, FR-011-006) | their own level | their own level |
+| Member: ID, PID, display name, status | none | yes (D16) | yes |
+| Member: full name, nickname, team label, position | none | never | yes |
+| Member: email, phone, notes | `members.contact_visibility` | never | by level; the Member, a Business admin and the operator always |
+
+### Components
+
+| Module | Domain | Change | Role |
+|---|---|---|---|
+| `apps/api/migrations/008_campaign_visibility.sql` (V2a), `009_member_contact_visibility.sql` (V2b) | DOM-PLT | new | Additive schema, helper and policies |
+| `apps/api/migrate.mjs` | DOM-PLT | changed | Adds the files to its list (now 1–7), grants `DELETE` on `campaign_viewers` as on `project_viewers` (`migrate.mjs` grant line), reports the new schema number |
+| `apps/web/src/content/shared/visibility.mjs` | DOM-TSK | changed | `workboardDefault`, `broaderTasks` (pure); `canRead` and `visibilityChange` are reused unchanged |
+| `apps/api/audience.mjs` | DOM-CAM / DOM-IAM | changed | `campaignNames`, `scopeCampaignRecords`, `ledgerFor`, `memberView` |
+| `apps/api/service.mjs` | DOM-BIZ | changed | `snapshot` scopes campaign records and Members; `audienceKey` adds campaigns; `save()` takes `visibility`, `team_id`, `viewer_ids`, `visibility_reason` for campaigns and writes in the order below |
+| `apps/api/workspace.mjs` | DOM-CAM / DOM-TSK | changed | `readLegacy` (campaigns, Members), `writeCampaigns` (levels, owner, hidden IDs), `writeDomain` (hidden campaign links, Member comparison) |
+| `apps/api/campaign-tasks.mjs` | DOM-CAM | changed | A new Workboard task takes `workboardDefault` |
+| `apps/api/tasks.mjs` | DOM-TSK | changed | `checkContexts` looks up the campaign, content item and goal only when that link changes |
+| Data App UI (`dashboard/DashboardContent.jsx` campaign settings, reusing `meeting/Visibility.jsx` `VisibilityFields`; Member form) | DOM-CAM / DOM-IAM | changed | Level, team and viewers picker; level badge; ledger notice for a Guest |
+
+### Audience rule
+
+- `canRead(viewer, item, named)` is reused with the campaign row as `item` and `campaignNames` as `named`: the owner and the listed viewers. A Business admin gains nothing; the operator reads all.
+- The SQL helper `campaign_audience(b, campaign, level, team, owner)` is `STABLE` and reads only `team_members` and `campaign_viewers`, as `project_audience` does (`007_tasks_projects.sql`), so no policy refers back to the campaign tables.
+- **The ledger** (`campaign_states`) adds `viewer_kind() IN ('member','operator')` to the campaign's audience: a Guest never reads it, at any level (ADR-005 D3).
+- **Changing the level** is `visibilityChange` unchanged, called with the stored `owner_member_id` as `accountableId` and the owner plus the viewers as `named`. Widening needs that owner (or the operator) and a reason; narrowing is open to any Member who can read the campaign; `SELF_EXCLUDED`, `TEAM_REQUIRED` and `NAMED_REQUIRED` apply as for tasks.
+- **A new Workboard task** takes `workboardDefault(campaign, named)`: a `team` campaign gives `{visibility:'team', teamId}`, a `restricted` campaign gives `{visibility:'restricted', viewerIds: owner and viewers}`, any other campaign gives nothing, so the task is `business` as today. The creator can pick another level; nothing is propagated afterwards.
+- **A task or meeting** that names a campaign keeps its own audience. A viewer who cannot read the campaign gets `campaign_id` and nothing else about it; `projects` are served the same way (AC-010-002-05).
+
+### Data
+
+Both migrations are additive: they add columns, a table, a function and policies, and delete or rewrite nothing.
+
+| Object | Owner | Definition |
+|---|---|---|
+| `campaigns.visibility`, `campaigns.team_id` | DOM-CAM | `visibility text NOT NULL DEFAULT 'business'` checked against the four levels; `team_id` has a composite foreign key to `teams`; `CHECK (visibility <> 'team' OR team_id IS NOT NULL)`, as `tasks` in 006 |
+| `campaign_viewers` | DOM-CAM | `(business_id, campaign_id, member_id)` primary key, composite foreign keys to `campaigns` and `members`, `added_by_member_id`, `created_at`; index on `(business_id, member_id)`; forced Business row-level security |
+| `campaign_audience(...)` | DOM-CAM | The helper above |
+| `members.contact_visibility` (V2b) | DOM-IAM | `text NOT NULL DEFAULT 'business'` checked against `business`, `team`, `restricted`; there is no `public` value, so contact data can never be made public |
+
+- **Existing rows** (FR-011-019). `ADD COLUMN … DEFAULT 'business'` gives every campaign, and in V2b every Member, the level `business`, which is today's exposure for Members. A Guest no longer reads the campaigns until one is marked `public`.
+  - Before and after, a reconciliation query counts `campaigns`, `campaign_states`, `campaign_channels`, `content_items`, `publications`, `goals`, `goal_series`, `metric_series` and `metric_observations` per Business. The counts must be equal; `state_json`, `payload_hash` and every code stay as they are.
+  - In production the migration runs only after `npm run backup` and with the owner's specific authorization.
+- **No new `owner` data.** The owner stays `campaigns.owner_member_id`; named viewers are the new table.
+
+### Row-level security
+
+Layers, as in “Row-level security” above; policy names follow 006 and 007.
+
+| Layer | Tables | Read policy, in addition to `business_scope` |
+|---|---|---|
+| L0 — membership | `campaign_viewers` | `signed_in`: `viewer_kind() IN ('member','operator')` |
+| L1 — items | `campaigns` | `audience_read`, `audience_update` (`WITH CHECK (true)`) and `audience_delete` use `campaign_audience`. Inserts keep `business_scope` only, so the named people can be written after the row |
+| L2 — attached | `campaign_channels` | `follows_campaign`: `EXISTS` of the visible campaign |
+| L2 — attached | `content_items`, `goals`, `metric_series` | `follows_campaign`: `(campaign_id IS NULL AND viewer_kind() IN ('member','operator')) OR EXISTS` of the visible campaign |
+| L2 — ledger | `campaign_states` | `follows_campaign_ledger`: `viewer_kind() IN ('member','operator') AND EXISTS` of the visible campaign |
+| L3 — derived | `publications` (via `content_items`), `goal_series` (via `goals`), `metric_observations` (via `metric_series`) | `EXISTS` of the parent row, so the parent's policy decides |
+| History | `change_events` | `follows_campaign_entity`: entity types `campaigns`, `campaign_viewers` and `campaign_visibility` need the visible campaign; `content_items`, `publications`, `goals` and `metric_observations` need the visible record. In V2b, entity type `members` needs the viewer to be that Member, a Business admin or the operator |
+
+- **Why the history policy.** `follows_entity` in 006 and `follows_project` in 007 end with `ELSE true`, and the generic `save()` and `observe()` audit with the table name as `entity_type` and the whole old and new row as data (`service.mjs`, `audit`). Those events, which for Members hold email and phone, are readable by any signed-in viewer that queries `change_events` directly. No API route lists them, so this is a defence-in-depth gap, closed here.
+- **Inserts.** A policy without a `FOR` clause also checks new rows, as `follows_task` does for attachments. The database therefore refuses a content item, goal or series that names a campaign the actor cannot read. Foreign-key checks bypass row-level security, so `tasks` and `meetings`, whose policies do not look at campaigns, need the application check in “Write paths”.
+- **Depth and cycles.** The deepest chain is `metric_observations` → `metric_series` → `campaigns`, and `campaigns` refers only to `team_members` and `campaign_viewers`, so no policy refers back to itself. A migration test creates the policies and queries each table once (as 006).
+- **Write order.** `save()` ends `INSERT … RETURNING *` and `UPDATE … RETURNING *` (`service.mjs:91-92`), which apply the read policy to the new row. A campaign therefore follows the 006 order: the row without `RETURNING` (an update keeps its old level first), then `campaign_viewers`, then the new level, then the read back; for a new campaign its `campaign_states` row is inserted after the viewers (`service.mjs:95`).
+
+### Read paths
+
+| Path | Today | After V2a |
+|---|---|---|
+| `GET /state` | Every table of `TABLES` and `campaign_channels` (`service.mjs:18`, `api.mjs:45`) | `snapshot` returns the campaigns the viewer may read and what follows them (`scopeCampaignRecords`); row-level security filters the same rows |
+| `GET /overview` | Built from the full snapshot (`api.mjs:46`) | Built from the viewer's snapshot, so counts, goals, upcoming publications and pending content cover only readable campaigns (FR-011-018) |
+| `POST /briefs` | Cache key from the visible tasks only (`audienceKey`, `service.mjs:35`) | The key also hashes the readable campaigns' IDs and versions and the viewer kind, so a brief built for a wider audience is never returned to a narrower one |
+| `GET /workspace` | Every non-archived campaign with its stored state (`workspace.mjs:46`) | Only readable campaigns. A Guest gets the header and the readable tasks with blank ledger collections and `ledgerWithheld: true` (`ledgerFor`). Each campaign still carries only the tasks the viewer may read. The UI backup is built from this response |
+| `GET /bootstrap`, `GET /session` | No campaign data and no other Member's data | Unchanged |
+| `GET /tasks`, `/projects` | A task carries `campaign_id` | Unchanged: the ID only |
+| `POST`/`PATCH /businesses/:b/campaigns`, `content`, `publications`, `goals`, `observations` | `save()` and `observe()` find the row by ID | A hidden row answers 404 or the existing “not found” 422, as a missing one; nothing says it exists |
+| Imports | Local operator only | Unchanged; a campaign restored from a backup gets the level and viewers in it, `business` when it has none |
+
+### Write paths
+
+- **Campaign payloads** gain `visibility`, `teamId`, `viewerIds` and `visibilityReason` in `/workspace`, and `visibility`, `team_id`, `viewer_ids` and `visibility_reason` in `CONFIG.campaigns` (`service.mjs:36`, which today allows only columns and `channel_ids`). `writeCampaigns` removes the four from the stored state, as it removes `id`, `name` and `owner` (`workspace.mjs:75`).
+- **A hidden ID.** `writeCampaigns` finds known campaigns among the rows the viewer reads (`workspace.mjs:70`) and upserts with `ON CONFLICT` (`:76`). For an ID that exists but is hidden, row-level security would raise `42501`, which `sendError` answers as 500. It writes the item as `writeItem` does for tasks instead: an existing hidden ID answers the generic 409 “reload”, which does not reveal the campaign.
+- **The owner.** `writeCampaigns` rebinds `owner_member_id` from the owner text on every save (`workspace.mjs:74`). `keepOwner` keeps the stored owner when the text equals that owner's display name, and rebinds otherwise as today; a change of owner writes an audit event. Widening reads the stored owner before the request, never the one in the same request.
+- **Named viewers** are written in the same transaction, each change audited with entity type `campaign_viewers` and the campaign ID, so the history policy finds the campaign; a level change is audited as `campaign_visibility` with the old and new level, the reason and the session actor.
+- **A link to a hidden campaign.**
+  - `writeDomain` refuses with the generic 409 a task or meeting whose `campaignId` differs from the stored one and names a campaign the viewer cannot read; an unchanged link is kept.
+  - `checkContexts` (`tasks.mjs`) runs `SELECT id FROM campaigns` on every create and update. With row-level security that query returns nothing for a hidden campaign, so a status change on a task the editor can read but whose campaign they cannot would fail with `CONTEXT_NOT_FOUND`. Each lookup (campaign, content item, goal) therefore runs only when its link changes, as the project lookup already does. A new link to a hidden campaign is still refused 422.
+  - `saveCampaignTask` already answers 404 for a campaign the actor cannot read (`campaign-tasks.mjs`, its `SELECT 1 FROM campaigns`).
+- **A new Workboard task** takes `workboardDefault` in `saveCampaignTask` and in `writeWorkboardEntry`, the path an older client uses to add a Workboard entry through `PUT /workspace`.
+- **A Member's save of Member records** compares the incoming fields with the viewer's view of the row (`memberView`), not with the stored row: today `memberChanged` compares with the stored row (`service.mjs:11`), so a withheld contact field returned as `null` would look like an edit and a non-admin would be refused with 403. A withheld field is never written. A Member sets `contact_visibility` on their own record; another Member's record needs the admin or the operator (`checkMemberWrite`).
+
+### The Workboard and the campaign level
+
+| The campaign is | The task is | Result |
+|---|---|---|
+| readable | readable | On the campaign's Workboard and on the Task Manager boards, as today (FR-010-013 AC-010-013-01) |
+| readable | not readable | Neither on the Workboard nor anywhere else (FR-011-004) |
+| not readable | readable | On the Task Manager boards only, with `campaign_id` and no other campaign field; the campaign's Workboard is not served |
+| not readable | not readable | Not served |
+
+- **A level change does not move tasks.** The response of a change that narrows a campaign carries `broaderTasks`, the number of linked tasks that stay broader than the new level, and the UI lists them; each is narrowed by any Member who can read it (FR-011-011). Nothing is narrowed automatically, so a task's A keeps control of the task (ADR-005 D6).
+- **Meetings** that name a campaign (`meetings.campaign_id`) follow the same table.
+
+### Member profiles
+
+- **`memberView(viewer, row, teamsOf)`** is the one function that shapes a Member for a viewer, used by `snapshot` (`/state`) and `readLegacy` (`/workspace`), the only two paths that return Members.
+  - A Guest gets `guestMember` (D16).
+  - The Member concerned, a Business admin and the operator get the row.
+  - Another Member gets the row, but when `contact_visibility` is `restricted`, or `team` without a shared team, `email`, `phone` and `notes` are `null`, `contact_withheld: true` is set, and the same three keys are removed from `legacy_metadata`, which repeats them.
+- **Teams.** `teamsOf` maps each Member to their teams from `team_members` (readable to Members), archived teams included, as the viewer's `teamIds` do.
+- **Level changes** are open to the Member for their own record and to the admin or the operator for any record, as the rest of the registry (`checkMemberWrite`).
+- **Residual gap, stated.** Row-level security keeps the Business boundary only for `members`, so contact withholding is an application filter, like D16, and not a second layer. The history policy above closes the other direct-query path; a sidecar table with a policy (ADR-005 Q-V7 option c) is the alternative.
+
+### Failure modes
+
+| Failure | Behavior |
+|---|---|
+| The viewer settings are missing in a transaction | The policies read `guest`: only public campaigns and no ledger, never more |
+| A workspace save carries a campaign ID that exists but is hidden from the actor | Generic 409 “reload”; nothing changes. Without the change it is a 500 from `42501` |
+| A Member edits a task whose campaign they cannot read, without changing the link | Saves; the campaign lookup runs only when the link changes |
+| A Member links a task, meeting, content item, goal or series to a campaign they cannot read | Tasks and meetings: 422 `CONTEXT_NOT_FOUND` or 409; content, goals, series: refused by the database |
+| A Guest opens Mission Control on a public campaign | The notice that the ledger needs sign-in, not zeros; a Guest cannot write, so the blank ledger is never saved |
+| A narrowing would lock the actor out | 422 `SELF_EXCLUDED`; nothing changes |
+| A campaign has no owner (an unmatched owner text) | Only the operator widens it; naming an owner is an ordinary edit, audited |
+| A Business-level aggregate, such as a goal of published posts with no campaign, is computed for two viewers | It counts the publications each reads, so the figures can differ; the screen labels it “ตามข้อมูลที่คุณเห็น” |
+| A read path forgets to filter | Row-level security still returns only the viewer's campaign rows (NFR-011-002); contact fields have no second layer |
+| Two Members share a display name | `keepOwner` keeps the stored owner. A campaign whose owner text is ambiguous when first saved still gets no owner, as today |
+| The source is rolled back after the migration | Old code ignores the new columns and shows the ledger to Guests again; a rollback needs its own decision (as 006) |
+| Performance | Each observation costs two `EXISTS` through indexed unique keys; measured by NFR-011-003 before release |
+
+### Interfaces
+
+Signatures marked **pure** have no I/O; each lists acceptance and holdout examples (STD-005 R2 shape). These add to the Interfaces above.
+
+- **FR-011-013, -014** · `apps/api/audience.mjs` · `campaignNames(c, businessId) → Map<campaignId, memberId[]>`: the owner and the rows of `campaign_viewers`, as `projectNames`.
+- **FR-011-014, -015** · `apps/api/audience.mjs` · `scopeCampaignRecords(viewer, data, names) → data` — **pure**. `data` is a snapshot.
+  - acceptance: a Guest with one `public` and one `business` campaign, a content item in each and one content item with no campaign → only the public campaign and its content item remain, with their publications and series; a Member of the team of a `team` campaign → that campaign and its records remain.
+  - holdout: the operator → everything; a Member outside the team and not named, with a `team` campaign → none of its records, including a publication whose content item is hidden and the observations of a hidden series; a Member with a content item that has no campaign → it remains.
+- **FR-011-015** · `apps/api/audience.mjs` · `ledgerFor(viewer, payload, row) → payload` — **pure**.
+  - acceptance: a Guest → the blank collections of `createCampaign(row.name, row.objective, false)` and `ledgerWithheld: true`; a Member → the stored payload.
+  - holdout: the operator → the stored payload; a Guest with no stored payload → blank with the flag.
+- **FR-011-016** · `shared/visibility.mjs` · `visibilityChange` — unchanged, called with the stored owner as `accountableId`.
+  - acceptance: the owner widens `restricted` → `business` with a reason → ok; a named viewer who is not the owner widens → `WIDEN_DENIED`.
+  - holdout: a campaign with no owner, a Member widens → `WIDEN_DENIED`, the operator with a reason → ok; the owner narrows to `restricted` without being named → `SELF_EXCLUDED`.
+- **FR-011-016** · `apps/api/workspace.mjs` · `keepOwner(stored, ownerText, members) → memberId | null` — **pure**. `stored` is the stored `owner_member_id`; `members` are the Members with their display names.
+  - acceptance: the text equals the stored owner's display name → the stored owner; the text names one other Member → that Member.
+  - holdout: two Members share the stored owner's name → the stored owner; the text names nobody → `null`, as today.
+- **FR-011-017** · `shared/visibility.mjs` · `workboardDefault(campaign, named) → {visibility, teamId, viewerIds} | null` — **pure**.
+  - acceptance: a `restricted` campaign with an owner and two viewers → `{visibility:'restricted', teamId:null, viewerIds:[the three]}`; a `team` campaign → `{visibility:'team', teamId, viewerIds:[]}`.
+  - holdout: a `business` campaign → `null`; a `public` campaign → `null`.
+- **FR-011-017** · `shared/visibility.mjs` · `broaderTasks(level, tasks) → number` — **pure**: how many tasks have a level broader than `level`.
+  - acceptance: `restricted` with tasks `business`, `restricted`, `public` → 2.
+  - holdout: `public` → 0.
+- **FR-011-017** · `apps/api/campaign-tasks.mjs` · `saveCampaignTask(c, businessId, campaignId, input, viewer, taskId) → Task` and `writeWorkboardEntry(…)` — signatures unchanged; both apply `workboardDefault` to a new task.
+- **FR-011-018** · `apps/api/service.mjs` · `audienceKey(data) → string` — **pure**, now over the tasks, the campaigns and the viewer kind.
+  - acceptance: the same readable tasks and campaigns → the same key; one extra readable campaign → a different key.
+  - holdout: the same campaigns in another order → the same key; a Guest and a Member reading the same records → different keys.
+- **FR-011-016, -013** · `apps/api/service.mjs` · `save(c, businessId, 'campaigns', input, id?) → Campaign` and `readLegacy` / `saveLegacy` in `workspace.mjs` — signatures unchanged; they carry the level fields above.
+- **FR-011-019, NFR-011-002** · `apps/api/migrations/008_campaign_visibility.sql` · the schema, helper and policies in Data and Row-level security.
+- **FR-011-020** · `apps/api/audience.mjs` · `memberView(viewer, row, teamsOf) → row` — **pure**.
+  - acceptance: a Member with no shared team reads a Member whose level is `restricted` → `email`, `phone`, `notes` `null`, `contact_withheld: true`, and none of them in `legacy_metadata`; the Member reads their own row → whole.
+  - holdout: a Business admin → whole; level `team` with a shared team → whole; a Guest → the `guestMember` shape.
+- **FR-011-020** · `apps/api/migrations/009_member_contact_visibility.sql` · `members.contact_visibility` and the `members` history policy.
+
+### Tests
+
+TC IDs are not assigned yet (PLAN-001 WI-08). Every read path runs for the five viewers of the Tests above: a Guest, a Member outside the team, a team Member, a named person and the local operator.
+
+1. `apps/api/test/visibility.test.mjs`: the pure functions above, holdout examples included.
+2. `apps/api/test/visibility-db.test.mjs`, extended: direct queries of each campaign table as each viewer kind, with the application filter bypassed; an insert naming a hidden campaign is refused; the runtime role stays `NOSUPERUSER NOBYPASSRLS`; `change_events` of campaign records and, in V2b, of Members (NFR-011-002).
+3. `apps/api/test/cloud-handler.test.mjs`, extended: a QA campaign with an order that carries a customer ID and a lead; a Guest reads `/state`, `/workspace` and `/overview` of a `public` and a `business` campaign and finds no order, lead, ad, inventory record or customer ID, `ledgerWithheld: true` on the public one and nothing of the other; an expired session reads as a Guest.
+4. `apps/api/test/tasks-api.test.mjs`, extended: a status change on a task whose campaign the editor cannot read saves; a new link to such a campaign is refused; a task created on the Workboard of a `restricted` campaign is `restricted` with its people.
+5. A workspace save that carries a hidden campaign ID answers 409 and changes nothing; an unrelated save keeps the owner.
+6. Migration 008 on a QA Business: equal reconciliation counts before and after; every campaign `business`. Migration 009 likewise for Members.
+7. Member contact: each level for each viewer on `/state` and `/workspace`, `legacy_metadata` included; a save that returns a withheld record unchanged is accepted and writes nothing.
+8. NFR-011-003: the timing of `/state` as a Member on a QA Business, before and after, recorded in the release record.
+9. The UI (level picker, ledger notice, contact level): checked with approved browser tools, or reported as not run.
+
+### Open items for the owner
+
+- **Nine owner questions** are in [ADR-005](../../architecture/decisions.md) (“Decisions needed”); this section follows the recommendations.
+- **Thresholds.** NFR-011-003 proposes a threshold the owner confirms.
+- **`notes`.** The recommendation keeps `notes` in the contact group; whether it should be admin-only by default is open.
+- **API-/EVT- contracts.** The new fields extend the `/api/zuri-go/v1` bodies; their declarations wait for PLAN-001 WI-09.
+- **DOM-CAM index.** FEAT-011-P04 needs a row in the generated participation list of the DOM-CAM README when this is approved.

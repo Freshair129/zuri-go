@@ -1,7 +1,7 @@
 ---
 id: STD-001
 title: Document & Engineering Artifact Standard
-status: proposed
+status: approved
 version: 0.1.0
 owner: governance
 ---

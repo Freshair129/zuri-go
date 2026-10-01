@@ -30,7 +30,7 @@ The structure follows the standards in [governance/standards/](governance/standa
 | `history/` · `migrations/` · `releases/` | evidence, see below | not artifacts (STD-001 R1) |
 
 <!-- BEGIN GENERATED: doc-map -->
-_Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11): the tables below are views of `feature.md`, `SERVICE.md` and [registry/domains.yaml](../registry/domains.yaml), which remain the only places these values are written._
+_Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the tables below are views of `feature.md`, `SERVICE.md` and [registry/domains.yaml](../registry/domains.yaml), which remain the only places these values are written._
 
 ## Features
 

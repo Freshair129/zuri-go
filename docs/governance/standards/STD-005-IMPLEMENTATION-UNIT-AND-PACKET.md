@@ -1,7 +1,7 @@
 ---
 id: STD-005
 title: Implementation Unit & Packet Standard
-status: proposed
+status: approved
 version: 0.2.0
 owner: governance
 relations:

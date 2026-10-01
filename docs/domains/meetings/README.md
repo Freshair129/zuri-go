@@ -44,10 +44,10 @@ Meetings of every department turned into a reviewed record and owned work: recor
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
-Not yet declared as API- / EVT- artifacts (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. The one write endpoint of this domain’s intake, `POST /businesses/{businessId}/meeting-commits`, is specified by [FR-012-008](../../features/FEAT-012-meeting-intake/requirements/FR-012-008-idempotent-commit.md) and the SDD-004 amendment, and is the candidate first API- artifact. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared.
+Declared on 2026-10-01, all `proposed`: API-019…API-022 in [contracts.md](contracts.md) (PLAN-001 WI-09). The HTTP API under `/api/zuri-go/v1` is outlined in [ARCH-001 §3](../../architecture/ARCH-001-baseline-architecture.md) and in the feature specifications below. The one write endpoint of this domain’s intake, `POST /businesses/{businessId}/meeting-commits`, is specified by [FR-012-008](../../features/FEAT-012-meeting-intake/requirements/FR-012-008-idempotent-commit.md) and the SDD-004 amendment, and is the candidate first API- artifact. `decisions.md` and `contracts.md` are added to this folder when the first ADR-, API- or EVT- owned by this domain is declared.
 
 <!-- BEGIN GENERATED: feature-index -->
-_Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
+_Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
 
 **Classification** — subdomain `supporting` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml).
 

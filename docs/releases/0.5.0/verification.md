@@ -18,7 +18,7 @@ Released 2026-10-01 (Bangkok) under the owner's authorization of PLAN-002 phase 
 |---|---|---|
 | before 04:55 | `npm run build`, `npm test` on the release commit | Build passed (55 packaged files, HTML SHA-256 `aa2f233b…75dd`); 160 Node tests, 5 Python tests, metrics and extraction checks passed |
 | 04:54 | Read-only production checks | Schema 5; 0 meetings, so WI-09 ships in one release (SDD-004 amendment Decision 8); Workboard backfill dry run: 0 Workboard tasks; the admin connection owns `members` |
-| 04:55 | Production backup | `pg_dump` 18.6 against PostgreSQL 18.6 with full certificate verification, `--no-owner --no-privileges`; 661,955 bytes, 29 COPY sections, dump complete. Kept privately under `.local/backups/` (file `cloud-pre-0.5.0-…`). Restore not exercised |
+| 04:55 | Production backup | `pg_dump` 18.6 against PostgreSQL 18.6 with full certificate verification, `--no-owner --no-privileges`; 661,955 bytes, 29 COPY sections, dump complete. Kept privately under `.local/backups/` (file `cloud-pre-0.5.0-…`). Restore drilled afterwards, see [restore-drill.md](restore-drill.md) |
 | 04:56 | Staged deployment | `vercel deploy --prod --skip-domain`; deployment `dpl_BWZ6s6Uqd8oZnuqdAuX5VV7Qo14v`, unique URL `https://zuri-metrics-2e2jj6pi4-pornpons-projects.vercel.app`; the public domain did not move |
 | 04:57 | Production migration | `apps/api/migrate.mjs` with the production admin connection for that process only: 006 and 007 and the grants in 1.2 s; schema 7 |
 | 04:59 | Hosted checks on the unique deployment | Passed (see below, [stage.json](stage.json)) |
@@ -49,7 +49,7 @@ Run by the operator script `.local/verify-0.5.0.mjs` (private), on the unique de
 
 - **Member, restricted-meeting participant and Business-admin checks.** They need a real Member's code; the agent does not sign in with real credentials. The owner runs them: sign in, check that all 12 tasks with RACI, weekly MoSCoW and the 2 attachments are present, create a task and a project, and open a restricted meeting with two participants (release plan, “Hosted checks per viewer kind”).
 - **Browser visual and interaction checks** on production: not run.
-- **Restore of the backup:** not exercised.
+- **Restore of the backup:** not exercised at release; a restore drill into a throw-away PostgreSQL 18 container on 2026-10-01 matched every table count ([restore-drill.md](restore-drill.md)).
 
 ## Rollback
 

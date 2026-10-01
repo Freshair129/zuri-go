@@ -34,7 +34,30 @@ A Thai reference guide that connects marketing metrics to customer growth, team 
 Text inside these documents may still name a sibling by its original file name; the **Original location** column maps each to its current file.
 
 ## Requirement index
-FR / NFR / AC files and TC bindings do not exist yet ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, WI-08): the approved requirements remain in the documents above. Acceptance and exit criteria `AC-01`–`AC-12`: [spec-content.md](spec-content.md) §15; results in [qc.md](qc.md). These labels are local to the documents and do not follow the STD-002 AC grammar.
+The requirement files below were written from the approved [spec-content.md](spec-content.md), [spec-graph.md](spec-graph.md) and [brief.md](brief.md) at their current revision, REV 04 ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-06, [PLAN-003](../../governance/plans/PLAN-003-remaining-work.md) S1), and are `status: proposed` until the owner approves them (PLAN-003 G4). Each file holds one requirement with its acceptance criteria, cites the section it comes from, and gives the spec’s own label (AC-01 to AC-12 of spec-content §15, local to the document) in its notes; those labels are not IDs. Delivery is `implemented` only where the static audit, the REV 03 / REV 04 browser and print records, the production check of [FEAT-008](../FEAT-008-unified-site/verification.md) or the current code show it. TC bindings do not exist yet (WI-08).
+
+| ID | Requirement | Delivery |
+|---|---|---|
+| [FR-003-001](requirements/FR-003-001-guide-structure.md) | An 18-page guide in six categories with a linked contents | implemented |
+| [FR-003-002](requirements/FR-003-002-page-viewer.md) | The guide shows one page at a time with previous, next and a linkable hash | implemented |
+| [FR-003-003](requirements/FR-003-003-metric-definitions.md) | Every metric keeps its definition, unit, basis, example and how to read it | implemented |
+| [FR-003-004](requirements/FR-003-004-worked-examples.md) | Worked examples are hypothetical, reconcile, and say when a result cannot be calculated | implemented |
+| [FR-003-005](requirements/FR-003-005-interpretation-guardrails.md) | The guide does not claim a cause or a profit its numbers cannot show | implemented |
+| [FR-003-006](requirements/FR-003-006-growth-team-workflow.md) | AARRR, the team and the working loop are explained as frames | implemented |
+| [FR-003-007](requirements/FR-003-007-planning-templates.md) | KPI & Budget, RACI, the 90-day roadmap and the 12-month outlook are labelled templates | implemented |
+| [FR-003-008](requirements/FR-003-008-commerce-operations-pages.md) | Lead, order, contribution and inventory metrics are defined in general terms | implemented |
+| [FR-003-009](requirements/FR-003-009-rev04-metrics.md) | Media Spend, Revenue and Overstock SKU are added with their guardrails | implemented |
+| [FR-003-010](requirements/FR-003-010-source-coverage.md) | Every source image and supporting source is accounted for | implemented |
+| [FR-003-011](requirements/FR-003-011-mascot-pair-scenario-cta.md) | Both mascots, a short scenario and an action on every page | implemented |
+| [FR-003-012](requirements/FR-003-012-brand-application.md) | The guide follows the brand tokens, fonts, wordmark and tone | implemented |
+| [FR-003-013](requirements/FR-003-013-graph-terms-categories.md) | The graph holds 40 unique terms in three groups | implemented |
+| [FR-003-014](requirements/FR-003-014-graph-modes-rotation.md) | A 2D and a 3D graph that rotate, zoom and fit | implemented |
+| [FR-003-015](requirements/FR-003-015-graph-search-detail.md) | Search, category browse and a detail panel that explain each term | implemented |
+| [FR-003-016](requirements/FR-003-016-graph-backgrounds.md) | Three approved backgrounds for the graph stage only | implemented |
+| [FR-003-017](requirements/FR-003-017-graph-self-contained-read-only.md) | The graph is self-contained and shows no live data | implemented |
+| [FR-003-018](requirements/FR-003-018-print-output.md) | The guide prints as 18 sheets with both mascots, and nothing interactive | implemented |
+| [NFR-003-001](requirements/NFR-003-001-responsive-no-overflow.md) | The guide and the graph fit a phone and a desktop in both themes | implemented |
+| [NFR-003-002](requirements/NFR-003-002-offline-self-contained.md) | The guide can be read and printed with no network and no script | implemented |
 
 ## Delivery evidence
 - REV 04 passed static, browser and 18-page print checks: `docs/history/campaign-01_metrics-map-review*/`. At that time [brief.md](brief.md) recorded production deployment as blocked by the Vercel connector permission.

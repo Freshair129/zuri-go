@@ -1,7 +1,7 @@
 ﻿---
 id: STD-004
 title: Engineering Graph Schema (SQL)
-status: proposed
+status: approved
 version: 0.2.0
 owner: governance
 relations:
@@ -13,8 +13,8 @@ relations:
 How documents, code and their relations are stored in SQL so the links can be
 queried. The database is an **index** built from a git revision (STD-002 R7):
 drop it and rebuild it from the repository at any time. Executable DDL:
-[`tools/graph-schema.sql`](../../../tools/graph-schema.sql); vocabulary seed:
-[`tools/graph-seed.sql`](../../../tools/graph-seed.sql). Both run unchanged on SQLite
+[`tools/graph-schema.sql`](../../../tools/graph-schema.sql) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*; vocabulary seed:
+[`tools/graph-seed.sql`](../../../tools/graph-seed.sql) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*. Both run unchanged on SQLite
 3.38+ and PostgreSQL 14+ (use identity columns for the surrogate keys there).
 
 ## R1 — Decisions

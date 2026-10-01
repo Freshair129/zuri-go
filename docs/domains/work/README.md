@@ -16,7 +16,7 @@ Turn decisions and meetings into owned, prioritised, evidenced work: tasks with 
 - `meetings`, `meeting_revisions`, `meeting_draft_batches`, `meeting_task_links` → [DOM-MTG](../meetings/README.md)
 
 <!-- BEGIN GENERATED: feature-index -->
-_Maintained by hand until `tools/generate-views` exists (PLAN-001 WI-11); edits inside this block are overwritten by that tool._
+_Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --check, PLAN-001 WI-11) reports any drift from `feature.md` and the registry._
 
 **Classification** — superseded; was subdomain `supporting` · role `business` ([registry/domains.yaml](../../../registry/domains.yaml)).
 

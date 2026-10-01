@@ -5,7 +5,7 @@ Governance-level ADRs ([STD-003 R1](standards/STD-003-REPOSITORY-DOCUMENT-STRUCT
 ### ADR-001 — Adopt STD-001 to STD-003 for the Zuri-Go documents, in two phases
 Relations: relates_to: STD-001, STD-002, STD-003, STD-004, STD-005, PROC-001, PLAN-001
 
-**Status:** proposed — for owner review. **Date:** 2026-10-01. **Complexity / risk:** C-2 / MEDIUM (many file moves; no code, schema or deployment change).
+**Status:** approved by the owner on 2026-10-01, together with STD-001…STD-005 (PLAN-003 gate G5); the gaps of D8 stay recorded, not edited. **Date:** 2026-10-01. **Complexity / risk:** C-2 / MEDIUM (many file moves; no code, schema or deployment change).
 
 **Context.** The owner added STD-001…STD-005 and PROC-001 to `docs/governance/` (commit `d5f04c4`) and asked for the existing documents to follow them. The standards were written for another repository, so they cite domains, ADRs, runbooks and tools that do not exist here (D8). Before this decision the documents were organised by kind (`architecture/`, `product/`, `operations/`), used three different frontmatter styles, and had no stable IDs apart from six `ZGO-…` document IDs.
 

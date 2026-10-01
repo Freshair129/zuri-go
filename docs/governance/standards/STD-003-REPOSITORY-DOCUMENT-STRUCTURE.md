@@ -1,7 +1,7 @@
 ---
 id: STD-003
 title: Repository & Document Structure Standard
-status: proposed
+status: approved
 version: 0.3.0
 owner: governance
 relations:

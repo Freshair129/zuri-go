@@ -67,3 +67,7 @@ Deployed at the owner's request (“deploy”) from commit `ae72a77`, still appl
 - Staged deployment `dpl_59cfbogB4DijtVovhQkVW1SyTFtC` (`https://zuri-metrics-c8x0nklnc-pornpons-projects.vercel.app`, `--prod --skip-domain`), then promoted to `https://zuri-metrics-map.vercel.app/`. The same Guest checks passed on both ([stage-ui.json](stage-ui.json), [production-ui.json](production-ui.json)): Member fields limited to ID, PID, display name and status; 0 tasks and meetings; Guest writes 401, cross-origin 403; served HTML equals the build (SHA-256 `49f39604…f08d`).
 - Browser, production at 375 px as a Guest: the Task Manager view switcher wraps with no label cut and no horizontal scroll; the four Member cards say “ซ่อนจาก Guest” and none says “รายละเอียดติดต่อยังว่าง”; no console error.
 - Rollback: promote `dpl_x33mhdiZRPynAd5ZrA1dMHrscC25` (the first 0.5.1 deployment).
+
+## Owner's hosted checks (2026-10-01)
+
+After the 0.5.1 follow-up deployment the owner signed in on production as a Member and as the Business admin and reported that the checks passed (“ตรวจแล้วผ่าน”). The agent did not observe these checks and holds no record of their individual results; the checks named under “Not run” above are therefore owner-reported as passed, not agent-verified.

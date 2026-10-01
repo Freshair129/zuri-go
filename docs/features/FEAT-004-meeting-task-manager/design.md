@@ -226,6 +226,10 @@ v0.2 → v0.3: เพิ่ม nullable details และ update semantics ส�
 
 Authored dashboard content build สำเร็จโดยคง app ID และ protected runtime เดิม; ฟังก์ชัน local ทดสอบแล้ว FUNG adapter ผ่าน source/production-handler fixture แต่ยังไม่เปลี่ยนแอป FUNG ที่ติดตั้งอยู่ จึงยังไม่ปิด acceptance การทดสอบเสียงและโมเดลจริงครบเส้นทาง
 
+## Correction note — Member sign-in since 0.4.0 (2026-10-01)
+
+ข้อความใน §4 ว่า Member “ไม่ใช่ authenticated account” และว่า TaskEvent “ไม่อ้าง authenticated audit” เป็นข้อเท็จจริงของ v0.3 (2026-09-30) ซึ่งเป็นประวัติ ไม่ใช่สถานะปัจจุบัน: ตั้งแต่ 0.4.0 Member เข้าสู่ระบบด้วยรหัสประจำตัวรายบุคคล ([Member identity](../FEAT-006-member-identity/spec.md)) และตั้งแต่ 0.4.2 กรอกรหัสเดียวในช่อง **รหัสระบุตัวตน** ([single-code login](../FEAT-007-single-code-login/spec.md)); การเขียนต้องมี session ของ Member และ audit ผูกกับ actor จาก session ไม่ใช่ค่าที่ client ส่งมา ส่วนที่เหลือของ §1–§9 ไม่เปลี่ยน
+
 ## Proposed amendment — server-side meeting commit (PLAN-002 WI-09)
 
 > **Approved by the owner on 2026-10-01**, with its open questions answered as recommended ([PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) Q15; see “Decisions” below). It authorizes the code of WI-09; it authorizes no migration or deployment, which stay with the release (PLAN-002 P5). It designs how [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md) WI-09 (phase P3) moves the meeting commit to the server, for [FR-011-009](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-009-confidential-meeting-tasks.md) and [FR-011-010](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md), following [SDD-011](../FEAT-011-visibility-and-confidential-meetings/design.md) “Meetings (P3)” and [ADR-003 / ADR-004](../../architecture/decisions.md). If approved, it supersedes the “IndexedDB transaction” bullet of section 5 (line 184) and the `CommitReceipt` row of section 4 (line 138) for the PostgreSQL stores; the payload-conflict, stale-batch and link/update/create review rules are kept.

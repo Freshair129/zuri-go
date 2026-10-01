@@ -25,17 +25,17 @@ Work items for bringing the Zuri-Go documents under [STD-001](../standards/STD-0
 
 | ID | Work item | Standard | Suggested order / note |
 |---|---|---|---|
-| WI-06 | Decompose each feature's requirements into FR / NFR / AC files (and parts when cross-domain); old labels (`MT-01`–`MT-29`, `AC-01`–`AC-18`) go to `legacy:` | STD-001 R5, STD-003 R3 | Smallest first: FEAT-007, 005, 009, 006, 008, 001, 002, 003, 004. One feature per change, owner-reviewed |
+| WI-06 | Decompose each feature's requirements into FR / NFR / AC files (and parts when cross-domain); old labels (`MT-01`–`MT-29`, `AC-01`–`AC-18`) go to `legacy:` | STD-001 R5, STD-003 R3 | Written 2026-10-01 as `proposed` for every feature (PLAN-003 S1; FEAT-004 by the WI-12 split, FEAT-010 to FEAT-012 earlier); owner review per feature (PLAN-003 G4) |
 | WI-07 | SDD with an `## Interfaces` section for features that persist data or call outside systems | STD-001 R5, STD-005 R2 | SDD-004 exists but has no `## Interfaces` |
 | WI-08 | Bind TC headings in each `verification.md` to the tests that prove them | STD-001 R7 | Tests: `apps/api/test/`, `tests/campaign/`, `apps/web/src/content/meeting/model.test.mjs`. Three existing `verification.md` files are pre-standard reports (ADR-001 D5); a feature can become `live` only after this item |
-| WI-09 | Declare API- / EVT- contracts (`/api/zuri-go/v1`, the FUNG connector) | STD-001 R1 | Today outlined in ARCH-001 §3 and the feature specs |
-| WI-10 | Promote the rules now written in AGENTS.md and the specs to BR- / SEC- / NFR- artifacts; record system ADRs in `architecture/decisions.md` | STD-001 R1, STD-003 R1 | See the “Business rules” section of each domain README |
-| WI-11 | Tooling: `next-id`, `validate-docs`, `generate-views` | STD-002 R8, STD-003 R2 | Until then the domain README feature index is maintained by hand |
+| WI-09 | Declare API- / EVT- contracts (`/api/zuri-go/v1`, the FUNG connector) | STD-001 R1 | Written 2026-10-01 as `proposed`: API-001…022 and EVT-001 in `docs/domains/*/contracts.md` (PLAN-003 S3) |
+| WI-10 | Promote the rules now written in AGENTS.md and the specs to BR- / SEC- / NFR- artifacts; record system ADRs in `architecture/decisions.md` | STD-001 R1, STD-003 R1 | Written 2026-10-01 as `proposed`: BR-001…021 in `docs/domains/*/rules.md` and SEC-001…020 (PLAN-003 S7) |
+| WI-11 | Tooling: `next-id`, `validate-docs`, `generate-views` | STD-002 R8, STD-003 R2 | Done 2026-10-01: `scripts/docs/` next-id, validate-docs, generate-views (`--check`); run by `npm test` (PLAN-003 S8) |
 | WI-12 | `@trace` annotations at code boundaries | STD-002 R6 | After WI-06 gives requirements to point at |
 | WI-13 | `registry/relations.yaml`: external systems (FUNG, Vercel, Neon, Docker PostgreSQL) and the context map between domains | STD-003 R5 | Needs API-/EVT- contracts from WI-09 for evidence |
 | WI-14 | Ownership review and candidate splits (see below) | STD-001 R3, R4 | Owner decision |
-| WI-15 | Resolve the gaps in the imported standards (ADR-001 D8) and decide whether to approve STD-001…005 | STD-001 R6 | Owner decision; the standards are still `proposed` |
-| WI-16 | Decide what to do with the ten links that were already broken before Phase 1 | — | Fix the pointer, restore the missing record, or annotate as historical |
+| WI-15 | Resolve the gaps in the imported standards (ADR-001 D8) and decide whether to approve STD-001…005 | STD-001 R6 | Done 2026-10-01: the owner approved STD-001…005 and ADR-001 (PLAN-003 G5); the D8 gaps stay recorded |
+| WI-16 | Decide what to do with the ten links that were already broken before Phase 1 | — | Done 2026-10-01: the ten links are marked as historical where they appear (the files were not carried into this repository) |
 
 ### WI-14 — ownership questions
 

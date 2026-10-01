@@ -58,12 +58,12 @@ State after release 0.5.0 (2026-10-01, Bangkok). Production runs application 0.5
 - The Business-admin flag set for the owner's Member (Q3), after the release, on 2026-10-01.
 - P0 decisions; P1 visibility (WI-01 to WI-04); P2 Task Manager (WI-05 to WI-08); P3 meetings (WI-09, including the server-side meeting commit); P4 Workboard tool (WI-10, dry run repeated on schema 7: 0 Workboard tasks, nothing moved); P5 release (production backup, staged deployment, migrations 006 and 007, hosted Guest checks on the unique deployment and on the public URL, promotion).
 - WI-11 documentation updates for the release.
+- The owner's hosted checks as a Member and as Business admin, reported passed by the owner on 2026-10-01 after the 0.5.1 follow-up deployment ([record](../../releases/0.5.1/verification.md#owners-hosted-checks-2026-10-01)); browser checks as a Guest and as the local operator ran the same day.
 
 **Remains**
 
-- The owner's hosted checks as a Member and as Business admin: sign in, see all 12 tasks with RACI, weekly MoSCoW and the 2 attachments, create a task and a project, and open a restricted meeting with two participants (release plan, “Hosted checks per viewer kind”). They need a real Member code, which the agent does not use.
 - The design gaps of the WI-12 requirement files were decided on 2026-10-01 (see “Design gaps decided” below); the code changes they need (D2, D3, D4, D6, D12, D14, D16) were built on 2026-10-01 and released as 0.5.1 ([record](../../releases/0.5.1/verification.md)).
-- Browser visual and interaction checks on production, and a restore drill of the pre-release backup.
+- Browser checks that write (drag and drop, editor saves) and of a restricted meeting. The restore drill of the pre-release backup was done on 2026-10-01 ([record](../../releases/0.5.0/restore-drill.md)); the rest is tracked in [PLAN-003](PLAN-003-remaining-work.md).
 - Q1 follow-up: the same levels for Member profiles and campaign records, which Guests still read.
 
 **Rollback.** There is no down-migration. The fallback chosen is to fix forward on schema 7; code from before 0.5.0 on schema 7 reads as a Guest and shows no business work.

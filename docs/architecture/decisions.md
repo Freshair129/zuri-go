@@ -160,3 +160,73 @@ Relations: relates_to: ADR-002, ADR-003, FEAT-005, FEAT-006, FEAT-011, PLAN-002
 - **Other public data is untouched for now.** Campaign records (orders, revenue, lead and customer IDs) and Member contact details are Guest-readable today too. This ADR does not change them; applying the same levels to them is part of PLAN-002 Q1.
 - **Personal data in HR content.** HR content can include personal data about employees, so the owner decides retention and access in line with PDPA duties. This is a design note, not legal advice.
 - **Tests.** Tests cover every read path for each viewer kind: Guest, a Member outside the team, a team Member, a named person and the local operator.
+
+### ADR-005 — Who may see campaign records and Member profiles: the levels of ADR-004 applied to the rest of the Business
+Relations: decided_by: ADR-004; relates_to: ADR-003, FEAT-002, FEAT-005, FEAT-006, FEAT-011, SDD-011, PLAN-002
+
+**Status:** proposed — drafted 2026-10-01 for the owner's decision ([PLAN-003](../governance/plans/PLAN-003-remaining-work.md) node V1, gate G2). Nothing in it is built, migrated or released, and it changes no approved text: it adds to ADR-004, whose Consequences deferred this step to PLAN-002 Q1. **Date:** 2026-10-01. **Complexity / risk:** C-3 / HIGH (authorization, customer-level business data and a schema change).
+
+**Context.** Verified against the 0.5.1 code and migrations 001–007.
+
+- **The owner's direction.** Q1 (2026-10-01): Guests see public items only, and “the same levels later apply to campaign records and Member profiles” ([PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md), Q1). Release 0.5.1 narrowed the Members a Guest reads to ID, PID, display name and status (PLAN-002 D16); nothing else about these two record families changed.
+- **Campaign records have no audience rule.**
+  - `campaigns`, `campaign_channels`, `campaign_states`, `content_items`, `publications`, `goals`, `goal_series`, `metric_series` and `metric_observations` carry only the Business boundary (`001_core.sql:166-176`). Migrations 006 and 007 add audience policies for tasks, meetings, projects and what follows them.
+  - A Guest reads them whole: `/state` returns every table of `TABLES` (`apps/api/service.mjs:18`) and the campaign channels (`apps/api/api.mjs:45`); `/workspace` returns each campaign with its stored state (`apps/api/workspace.mjs:36`, `:46`); `/overview` is built from the same snapshot.
+- **The stored state is the sensitive part.** `campaign_states.state_json` holds the ledger collections `ads`, `leads`, `orders`, `inventory`, `decisions`, `releases`, `history`, `reviews` and `alertActions` (`apps/web/src/content/shared/model.mjs:6`). An order holds amounts, costs, `leadId` and `customerId` (`validateRecord`, `shared/model.mjs:44-94`), so a public Guest read includes customer-level business data.
+- **Member profiles.** Members read every field of every Member: `snapshot` returns `SELECT *` of `members` (`service.mjs:22`; `db.mjs` `rows`), including `legacy_metadata`, which repeats the contact fields (`writeDomain` stores the whole Member object there, `workspace.mjs:126`). Only a Guest is narrowed (`guestMember`, `service.mjs:17`). Row-level security cannot hide one column of a row that stays visible, so any rule on contact fields is an application filter.
+- **The campaign owner is fragile.** `campaigns.owner_member_id` is nullable, and `writeCampaigns` rebinds it from the owner's display name on every workspace save, writing NULL unless exactly one Member matches (`workspace.mjs:74`). A rule that depends on the owner needs a stable owner.
+- **Tasks already link to campaigns.** Workboard tasks are `tasks` rows with `campaign_id` and their own visibility (ADR-003 D1, D2; FEAT-010). A campaign level must say how it meets them.
+- **Production** held 1 campaign, 12 tasks and 4 Members, and no meeting, at the 0.5.0 record ([verification](../releases/0.5.0/verification.md)).
+
+**Decision (proposed).**
+
+- **D1 — The campaign is the unit.**
+  - `campaigns` gets a level (the four levels of ADR-004 D1) and, for `team`, a team. The named people are the campaign's owner and its listed viewers (a new `campaign_viewers`, as `project_viewers`). The rule is ADR-004 D1 unchanged: `public` anyone, `business` signed-in Members, `team` the team and the named, `restricted` the named; the operator reads all; a Business admin gains nothing (ADR-004 D7).
+  - Everything attached to a campaign follows it: `campaign_states`, `campaign_channels`, `content_items`, `publications`, `goals`, `goal_series`, `metric_series` and `metric_observations`, as attachments follow their task (ADR-004 D4). Naming a Member the owner of a content item or goal gives no access to its campaign.
+- **D2 — Records attached to no campaign are Business-level.** A content item, goal or metric series with no campaign is readable by signed-in Members and never by Guests, and has no level of its own. Channel accounts are unchanged: they name public pages and a public campaign needs their names.
+- **D3 — A Guest of a public campaign never reads its ledger.** For a `public` campaign a Guest reads the header, channels, content, publications, goals, series and observations. `campaign_states` is Member-only at every level, because it holds orders, leads and customer IDs; the campaign reaches a Guest with `ledgerWithheld: true`, and Mission Control shows a sign-in notice instead of figures computed from an empty ledger.
+- **D4 — Defaults.** A new campaign is `business` (ADR-004 D1). Every existing campaign becomes `business` in an additive migration: Members see no change, and a Guest no longer reads the production campaign until someone with the right marks it `public` (as tasks in FR-011-012). The production migration needs a backup and the owner's specific authorization.
+- **D5 — Changing a campaign's level** follows ADR-004 D8 with the campaign's owner as the accountable person: widening needs the owner, as stored before the request, and a reason; any Member who can read the campaign may narrow it; every change is audited; a change that locks the actor out is refused. A campaign with no owner can be widened only by the local operator. A workspace save keeps the stored owner unless the owner text names another Member.
+- **D6 — Tasks and meetings keep their own audiences.**
+  - A task or meeting is never hidden or shown by its campaign's level. A task whose campaign the viewer cannot read is served with the campaign's ID only, as a task whose project is hidden is served without the project's code and name (FR-010-002 AC-010-002-05).
+  - A task created on the Workboard of a `team` or `restricted` campaign starts at that level, with the campaign's team or named people, unless the creator picks another level. A change of the campaign's level never changes a task; the response says how many linked tasks are broader than the new level.
+- **D7 — Overview, brief, exports and backups** contain only the campaign records the viewer may read (ADR-004 D4 extended). The brief's cache key adds the campaign IDs and versions the viewer reads.
+- **D8 — Member contact details get a level.**
+  - `members.contact_visibility` is `business` (default, today's exposure), `team` (Members who share a team with that Member) or `restricted` (that Member only). It covers `email`, `phone` and `notes`.
+  - ID, PID, display name and status stay as in PLAN-002 D16; full name, nickname, team label and position stay readable to every Member; a Guest never reads a contact field.
+  - The Member sets the level of their own record; a Business admin or the operator sets any (registry duty, PLAN-002 D3). A Business admin and the operator always read every contact field: an exception to ADR-004 D7 for this group only, because they maintain the registry.
+- **D9 — Enforcement.** Campaign records are enforced twice, as tasks are: the API filters by the viewer and row-level security repeats the rule, so one missed filter cannot leak a row. Contact details are enforced in the API alone, by one function used on every path that returns a Member, because a policy cannot withhold a column; history rows of Member changes are closed to everyone but the Member concerned, a Business admin and the operator.
+- **D10 — Delivery in two steps**, each additive, each with its own migration and its own owner authorization for production: V2a campaign records (D1–D7, D9), V2b Member contact details (D8, D9). The interim rule of ADR-004 D9 ends for each family when its step is released.
+
+**Decisions needed (owner).** Each row is a question for the owner; the recommendation is what D1–D10 above assume.
+
+| Q | Question | Options | Recommendation |
+|---|---|---|---|
+| Q-V1 | What carries the level? | (a) the campaign, attached records follow; (b) every record family its own level; (c) one Business-wide switch for all campaign data | (a): one decision per campaign; (b) multiplies pickers and invalid combinations; (c) cannot publish one campaign |
+| Q-V2 | Level of the campaign that exists today | (a) `business`; (b) `public` | (a): consistent with tasks (FR-011-012). With (b) nothing changes for anyone, but the ledger stays public |
+| Q-V3 | What a Guest reads of a `public` campaign | (a) header and marketing records, never the ledger; (b) the whole campaign, ledger included, as today; (c) header only | (a): the owner can publish a campaign without publishing customers and costs |
+| Q-V4 | Records attached to no campaign | (a) signed-in Members only, no level of their own; (b) Guest-readable as today; (c) their own level columns | (a). Revenue and follower series that belong to no campaign leave the Guest view; (c) can follow if the owner wants public follower counts |
+| Q-V5 | Who changes a campaign's level | (a) the owner widens with a reason, any reader narrows, the operator handles a campaign with no owner; (b) the owner only; (c) a Business admin may also widen | (a), as ADR-004 D8. (c) would make the admin a reader of campaigns they are not named on |
+| Q-V6 | Tasks and meetings of a campaign | (a) own audiences, new Workboard tasks start at the campaign's team or restricted level; (b) fully independent, new tasks `business`; (c) never broader than the campaign | (a). (b) puts titles of a confidential campaign's tasks in front of every Member; (c) is stricter and refuses valid cases |
+| Q-V7 | Member contact details | (a) a level per Member, enforced in the API, admin reads all; (b) no levels, D16 is final; (c) a sidecar table with row-level security | (a). (c) gives database enforcement but copies data and breaks a code rollback; `notes` stays with the group until the owner says otherwise |
+| Q-V8 | Delivery | (a) V2a then V2b; (b) one release | (a): the campaign ledger is the larger exposure and V2b waits for Q-V7 |
+| Q-V9 | The campaign owner | (a) keep the stored owner unless the owner text names another Member; (b) leave the rebinding as it is | (a), or a restricted campaign can lose its owner on an unrelated save |
+
+**Alternatives considered.**
+
+1. **A level on every campaign table.** Rejected: one campaign would hold content, goals and series at different levels, and every picker and policy is multiplied.
+2. **One switch “campaign data is for Members only”.** Simplest and safe. Kept as the fallback if the owner wants no public campaign; it cannot publish a single campaign.
+3. **Leave both families Guest-readable and keep ADR-004 D9.** Not recommended: D9 asks the team to keep customer data out of campaign records, and the ledger holds it by design.
+4. **Tasks follow their campaign's level.** Rejected: it contradicts ADR-003 D1 (one record, many contexts) and FR-011-004.
+5. **A Business admin reads every campaign and contact field.** Rejected for campaigns (ADR-004 D7). Kept only for contact fields, D8.
+6. **Encrypt the ledger.** Deferred, as ADR-004 alternative 4.
+
+**Consequences.**
+
+- **FEAT-011 gains a part** owned by DOM-CAM for campaign records (FEAT-011-P04) and a requirement in P01 for contact details; DOM-CAM and DOM-IAM keep their README indexes in step.
+- **FEAT-002 is amended:** a Guest no longer reads a whole campaign, and Mission Control shows the ledger notice. FEAT-005 narrows again. AGENTS.md (“Guest mode”) and ADR-004 D9 are updated after approval, not by this record.
+- **Schema.** V2a adds columns and a table (`campaigns.visibility`, `campaigns.team_id`, `campaign_viewers`) and V2b one column (`members.contact_visibility`); ARCH-002 gets an amendment after each is built. Neither deletes or rewrites a row.
+- **A rollback reopens the exposure,** as for migration 006: code from before the change ignores the new columns and shows the ledger to Guests again, so it needs its own decision.
+- **Aggregates differ by audience.** A Business-level goal of published posts is computed from the publications the viewer reads, so two viewers can see different figures (ADR-004 D4); the screens label such figures.
+- **Personal data.** The ledger and the contact fields can hold personal data of customers and colleagues; the owner decides retention and access in line with PDPA duties. This is a design note, not legal advice.
+- **Tests** cover every read path for each viewer kind (ADR-004 Consequences), plus direct queries of every campaign table as a Guest and as a Member outside the audience.

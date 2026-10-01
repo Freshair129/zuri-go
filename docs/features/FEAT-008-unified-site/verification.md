@@ -14,7 +14,7 @@
 | Menu อาจหลุดจากจอเมื่อเปลี่ยน hash | เมนูคู่มือ sticky และวัดความสูงตามการขึ้นบรรทัดบนมือถือ |
 | ต้องประกอบไฟล์เผยแพร่เอง | Packager ตรวจ manifest/hash และปฏิเสธไฟล์ที่ไม่อยู่ในรายการ |
 
-ดู [source diff](../../history/unified-site-review/version-diff.patch); ไฟล์ใหม่คือ `projects/campaign-mission-control/build_unified_site.py`, `test_unified_site.py`, spec/verification นี้ และ [RCA ของ navigation](../../../.brain/rca/unified-site-navigation.md)
+ดู [source diff](../../history/unified-site-review/version-diff.patch); ไฟล์ใหม่คือ `projects/campaign-mission-control/build_unified_site.py`, `test_unified_site.py`, spec/verification นี้ และ [RCA ของ navigation](../../../.brain/rca/unified-site-navigation.md) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*
 
 Graph JavaScript, Graph CSS, Graph HTML และ CSS ของคู่มือเดิมตรงกับสำเนาก่อนแก้ทุก byte ใน string constant ตาม [ผลเปรียบเทียบ](../../history/unified-site-review/preserved-graph.json) ไม่มีการเปลี่ยน KPI หรือ formulas
 

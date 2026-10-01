@@ -1,0 +1,11 @@
+# DOM-IAM — business rules
+
+The invariants of [DOM-IAM](README.md) ([STD-001 R1](../../governance/standards/STD-001-DOCUMENT-ARTIFACT-STANDARD.md): BR). Each is declared by its heading ([STD-002 R2](../../governance/standards/STD-002-IDENTITY-AND-TRACEABILITY.md)) and promoted, without changing the source, from a sentence of the “Business rules” of the domain README or of [AGENTS.md](../../../AGENTS.md) ([PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10); each quotes that sentence. All are `proposed`. Most rules of this domain are security controls and are in the [security requirements](../../architecture/requirements/security-requirements.md) (SEC-001 to SEC-008, SEC-010 to SEC-014); the Member-registry and visibility rules the README also lists are already stated by FR-006-001 to FR-006-008 and FR-011-001, FR-011-002 and FR-011-007. The location of this file extends [STD-003 R2](../../governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md), which names no file for a domain's rules (see the notes of this change).
+
+### BR-008 — PID is a stable public identifier; the UUID is the key and the canonical actor identity
+Relations: relates_to: FEAT-006, FR-006-002, API-004, SEC-003
+Owner: DOM-IAM
+
+**Status:** proposed. **Statement.** A Member's PID SHALL be assigned by the server, be unique within the Business, never change and never be given to another person; it is a public identifier, not a secret. The Member's UUID SHALL remain the primary and foreign key and the canonical identity of the actor in sessions and audit.
+
+**Source.** [AGENTS.md](../../../AGENTS.md): “PID remains a stable public Member identifier; UUID remains PK/FK and canonical actor identity.” and [DOM-IAM README](README.md): “PID is the stable public identifier; UUID stays the primary/foreign key and canonical actor identity” ([FEAT-006 spec](../../features/FEAT-006-member-identity/spec.md): “PID is a public, stable identifier … never reassigned to another person”). **Enforced by.** the trigger `members_pid` (function `member_pid`) and the unique `(business_id, pid)` of `apps/api/migrations/005_member_identity.sql` (a PID sent by a client is refused, a change to a stored PID raises `23514`); the session and `change_events.actor_member_id` carry the UUID.

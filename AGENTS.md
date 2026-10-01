@@ -28,8 +28,8 @@
 | `assets/`, `brand/` | Approved logo sources and brand rules. |
 | `scripts/` | Local startup, metrics generation, site assembly and Vercel packaging. |
 | `tests/campaign/` | Campaign regression tests; meeting tests also live with authored models. |
-| `docs/features/`, `docs/domains/`, `docs/architecture/`, `docs/services/`, `docs/operations/`, `docs/product/`, `docs/templates/`, `registry/` | Current contracts, product requirements, ownership metadata and operator instructions, structured by the governance standards: one canonical location per artifact, stable IDs, ownership in metadata. Start at [docs/README.md](docs/README.md); add or move documents following [STD-003 R7](docs/governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md) and never change an ID. The standards and ADR-001 are still `proposed`. |
-| `docs/governance/` | Standards (STD) and procedures (PROC), both still `proposed`; governance decisions (ADR) and adoption plans. |
+| `docs/features/`, `docs/domains/`, `docs/architecture/`, `docs/services/`, `docs/operations/`, `docs/product/`, `docs/templates/`, `registry/` | Current contracts, product requirements, ownership metadata and operator instructions, structured by the governance standards: one canonical location per artifact, stable IDs, ownership in metadata. Start at [docs/README.md](docs/README.md); add or move documents following [STD-003 R7](docs/governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md) and never change an ID. The standards STD-001…005 and ADR-001 were approved by the owner on 2026-10-01. |
+| `docs/governance/` | Standards (STD, approved 2026-10-01) and procedures (PROC, still `proposed`); governance decisions (ADR) and adoption plans. |
 | `docs/history/`, `docs/migrations/`, `docs/releases/` | Historical evidence, extraction provenance and versioned verification. |
 | `build/site/`, `build/vercel/`, `apps/web/dist/` | Generated output; rebuild rather than hand-edit. |
 | `.local/` | Private configuration, member-code handovers, backups, logs and test payloads; never commit or deploy. |
@@ -64,9 +64,10 @@ Run from the project root. See [runbook](docs/operations/RB-001-runbook.md) for 
 | `npm run build` | Verify/build the Data App and metrics guide, then assemble the allowlisted site and Vercel package. |
 | `npm test` | Node suites, Python packaging tests, metrics checks and extraction checks; requires local PostgreSQL and HTTP server. Tests create isolated QA data. |
 | `npm run backup` | Create a private local PostgreSQL dump. |
-| `npm run db:migrate` | Explicit operator schema operation; not a routine build/start prerequisite. |
+| `npm run db:migrate` | Explicit operator schema operation; not a routine build/start prerequisite. Refuses a non-local target host; `-- --cloud` migrates production from `.local/cloud-config.json` and prints only the host's last two labels and the database name. |
 | `npm run members -- --cloud` | Operator credential provisioning; use only when requested, not as a login test. |
-| `npm run deploy` | Direct production deploy of the existing package/project; use only within deployment authorization. |
+| `npm run deploy` | Always staged (`--prod --skip-domain`): deploys the existing package/project and prints the unique deployment URL; the public domain does not move. Use only within deployment authorization. |
+| `npm run promote -- <deployment-url>` | Moves the public domain to a verified staged deployment; refuses a URL that does not match `https://zuri-metrics-*-pornpons-projects.vercel.app`. Use only within deployment authorization. |
 
 Build uses the installed Codex Data plugin and Node runtime. Machine overrides are `ZURI_GO_DATA_PLUGIN`, `ZURI_GO_BUILD_NODE`, and `ZURI_GO_PYTHON`. Do not copy plugin infrastructure into the repo or bypass protected-runtime checks. Read the runner and README for current defaults.
 

@@ -51,7 +51,7 @@ Applied `qc/image-checklist.md` to the authored interface. Existing outlined SVG
 
 ## Findings resolved
 
-See [preflight RCA](../../../.brain/rca/campaign-mission-control-preflight.md): inherited centered-dialog animation, native-field accessible labels, mobile viewport-width overshoot, and final-goal versus to-date pace caption. Authored fixes passed repeated affected checks; no protected runtime files were edited.
+See [preflight RCA](../../../.brain/rca/campaign-mission-control-preflight.md) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)*: inherited centered-dialog animation, native-field accessible labels, mobile viewport-width overshoot, and final-goal versus to-date pace caption. Authored fixes passed repeated affected checks; no protected runtime files were edited.
 
 ## Operational boundaries
 

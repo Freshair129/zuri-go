@@ -64,3 +64,23 @@ The approved [Member identity contract](../features/FEAT-006-member-identity/spe
 ## 0.4.2 login amendment
 
 Approved [single-code login](../features/FEAT-007-single-code-login/spec.md) supersedes PID + password input: the user enters one masked **รหัสระบุตัวตน**. Existing personal codes remain valid; the server resolves exactly one active/enabled owner across all Business credentials. PID remains a stable internal/public member identifier and audit identity. Guest access, sessions, RLS and schema remain unchanged. See [verification](../releases/0.4.2/verification.md).
+
+## Hosted deployment after 0.5.0 (amendment, 2026-10-01)
+
+Added after releases [0.5.0](../releases/0.5.0/verification.md) and [0.5.1](../releases/0.5.1/verification.md); the text above is unchanged. Production runs PostgreSQL **schema 7** (`006_visibility.sql`, `007_tasks_projects.sql`, applied at the 0.5.0 release; 0.5.1 carried no migration). The architecture, the same-origin API, the Vercel project binding and the Guest, session and write rules above stand; what changed is the packaged code and the way a release is made.
+
+### Hosted package
+- `scripts/deploy/build_cloud.py` is the allowlist; it copies only the listed files and fails on any file outside its expected set. The API modules now include `viewer.mjs`, `audience.mjs`, `teams.mjs`, `tasks.mjs`, `projects.mjs`, `campaign-tasks.mjs` and `meeting-commit.mjs` beside the earlier `api.mjs`, `cloud.mjs`, `config.mjs`, `db.mjs`, `http.mjs`, `service.mjs`, `workspace.mjs`, `team-auth.mjs`, `attachments.mjs` and `member-auth.mjs`. Authored modules shared with the browser are packaged too: `shared/model.mjs`, `shared/visibility.mjs`, `shared/task-rules.mjs`, `meeting/model.mjs` and `business/model.mjs` under `apps/web/src/content/`. Read the script for the current list rather than this paragraph.
+- Operator scripts (`migrate.mjs`, `provision-members.mjs`, `backfill-workboard.mjs`, `backup-local.mjs`, `setup-local.mjs`, `server.mjs`) are not packaged; the hosted function is `api/index.mjs`, which re-exports `cloud.mjs`.
+- Every read resolves a viewer and row-level security enforces visibility ([FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)); production Guests read public items only, and Member profiles are limited for Guests since 0.5.1. Meeting tasks commit on the server (`meeting-commit.mjs`); `PUT /workspace` refuses receipts the server did not write.
+
+### Release procedure used for 0.5.0 and 0.5.1
+The runbook is [RB-001, “Production release procedure”](../operations/RB-001-runbook.md); each step needs the owner's authorization for that release, and no connection string is printed or stored in the repository. In order:
+1. `npm run build` and `npm test` on the release commit.
+2. Read-only production checks: schema version, row counts of every table of the Business, backfill dry run.
+3. Production backup with `pg_dump` 18 (matching the server major), `--no-owner --no-privileges`, kept privately under `.local/backups/`. The 0.5.0 dump was restored once into a throw-away PostgreSQL 18 container and its counts matched ([restore drill](../releases/0.5.0/restore-drill.md)); that is not a production restore.
+4. Staged deployment: `vercel deploy --prod --skip-domain`; the public domain does not move. Verify the unique URL with authenticated Vercel access.
+5. Migration, only when the release carries one (0.5.0 did, 0.5.1 did not): `apps/api/migrate.mjs` with the admin connection supplied for that one process, after the staged deployment and before promotion, because code and schema must match. For 0.5.0 `migrate.mjs` had no production guard and the host was checked by hand; since PLAN-003 R3 it takes `--cloud` and refuses a non-local target without it ([RB-001](../operations/RB-001-runbook.md)).
+6. Hosted checks on the unique deployment, then `vercel promote`, then the same checks on the public URL and the count comparison. Record the deployment ID, URLs, HTML digest and what was not run under `docs/releases/<version>/`.
+
+There is no down-migration. Promoting the previous deployment does not restore previous behavior on a migrated schema; the fallback is to fix forward ([0.5.0 rollback](../releases/0.5.0/verification.md)). The 0.5.1 rollback target is the first 0.5.1 deployment, on the same schema ([0.5.1 record](../releases/0.5.1/verification.md)). Deployment is not authorization to migrate, restore or roll back.

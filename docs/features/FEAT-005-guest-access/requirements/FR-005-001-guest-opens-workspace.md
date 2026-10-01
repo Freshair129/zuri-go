@@ -1,0 +1,29 @@
+---
+id: FR-005-001
+title: An anonymous visitor opens the live workspace in Guest mode with no login wall
+delivery: implemented
+status: proposed
+legacy: []
+relations:
+  decided_by: [ADR-004]
+  relates_to: [FEAT-005, FR-011-007]
+---
+
+# FR-005-001 — An anonymous visitor opens the live workspace in Guest mode with no login wall
+
+The system SHALL let an anonymous visitor open the live PostgreSQL workspace of the hosted site at once, with no login wall, and SHALL show **Guest mode** in the upper-right authored toolbar together with an explicit sign-in action.
+
+## Acceptance criteria
+- AC-005-001-01 — Given a visitor with no session, when the site is opened, reloaded or opened afresh, then the Business Overview renders and no sign-in is requested.
+- AC-005-001-02 — Given the same visitor, then the upper-right toolbar shows “Guest mode” and a button “เข้าสู่ระบบเพื่อแก้ไข”.
+- AC-005-001-03 — Given a Guest, then which tasks, projects and meetings the views hold is decided by the Guest rule of [FR-011-007](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-007-guest-public-only.md), not by this requirement.
+
+## Implementation
+- `apps/web/src/content/business/TeamAccess.jsx:TeamAccess` — the `zg-team-bar` badge reads “Guest mode” when there is no session and the button reads “เข้าสู่ระบบเพื่อแก้ไข”; the session check on load never blocks the page.
+- `apps/api/cloud.mjs:handler` — every GET is answered without a session.
+- Evidence: 0.3.1 production browser, “no login wall after logout/reload/fresh navigation; Guest badge” ([guest review](../../../history/zuri-go-guest-review/verification.md)); 0.5.1 production browser as a Guest, “The overview loads with ‘Guest mode’” ([0.5.1 verification](../../../releases/0.5.1/verification.md), “Browser checks”). No committed test covers the badge.
+
+## Notes
+- Spec: [spec.md](../spec.md) “Behavior” bullet 1, “Verification” item 1.
+- The 0.3.1 text lists “Overview and current tasks” as readable without sign-in; since 2026-10-01 a Guest reads only public tasks and meetings (FR-011-007, [ADR-004](../../../architecture/decisions.md) D3), which is why AC-005-001-03 cites it instead of restating the old sentence.
+- Amended by [FEAT-011](../../FEAT-011-visibility-and-confidential-meetings/feature.md); the original rule “a Guest reads the whole workspace” no longer holds.

@@ -29,7 +29,7 @@ parent: projects/campaign-mission-control/brief.md
 
 - [สเปกโดเมน](spec.md) — ขอบเขต หน้าจอ RACI งานรายสัปดาห์ เกณฑ์ยอมรับ และแผนลงมือ
 - [สถาปัตยกรรมและ FUNG contract](design.md) — การแบ่งเจ้าของข้อมูล การเชื่อมต่อ revision และการกันงานซ้ำ
-- [Weekly seed](../../../output/draft/meeting-task-manager-weekly-seed.json) — รายการ 5 งานสำหรับนำเข้าหลังอนุมัติ
+- [Weekly seed](../../../output/draft/meeting-task-manager-weekly-seed.json) *(historical link: the file was not carried into this repository; PLAN-001 WI-16)* — รายการ 5 งานสำหรับนำเข้าหลังอนุมัติ
 - [Weekly Kanban เดิม](weekly-kanban-2026-09-28.md) — ต้นทางของชื่องาน PIC และเกณฑ์ปิดงาน
 
 ## ความเสี่ยงและขอบเขต
