@@ -16,6 +16,8 @@ relations:
 
 The local Zuri-Go operator can discover and open the standalone Emar email execution service from the Zuri-Go site.
 
+The initial 2026-10-03 local QA found an Emar cross-site navigation rejection. After separate owner approval and the external Emar guard fix, the actual launcher delivered a new tab and loaded the standalone UI with HTTP 200 in disposable Memory QA. See [verification](verification.md#approved-external-emar-fix--2026-10-03) and the [RCA](../../../.brain/rca/FEAT-013-emar-cross-site-navigation.md). Zuri-Go API/database and production runtime remain unverified; approved FEAT-013 scope/version is unchanged.
+
 ## Scope
 - Register Emar as external local service SRV-003 in the Zuri-Go service catalog.
 - Show a separate Emar service launcher only in the canonical local Zuri-Go UI.
