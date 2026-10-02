@@ -17,5 +17,5 @@ services:
     deploy_unit: "http://localhost:8788/ — Emar 0.3.0-beta.0, started separately"
     code_roots: [] # External source; no Emar code is owned by this repository.
 
-# Proposed DOM-VIS component is hosted inside SRV-002 (ADR-006); no new deployable.
-# See docs/services/SRV-002-local/CMP-001-visual-marketing.md; implementation pending approval.
+# Approved DOM-VIS component is hosted inside SRV-002 (ADR-006); no new deployable.
+# See docs/services/SRV-002-local/CMP-001-visual-marketing.md; first local slice implemented; no deployment.

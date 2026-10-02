@@ -1,8 +1,8 @@
 ---
 id: NFR-014-001
 title: Bound request and provider execution
-status: proposed
-delivery: declared
+status: approved
+delivery: implemented
 relations:
   decided_by: [ADR-006]
 ---

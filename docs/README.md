@@ -49,7 +49,7 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [FEAT-011](features/FEAT-011-visibility-and-confidential-meetings/feature.md) | Visibility, teams and confidential meetings | DOM-IAM | implemented | `features/FEAT-011-visibility-and-confidential-meetings/` |
 | [FEAT-012](features/FEAT-012-meeting-intake/feature.md) | Meeting intake | DOM-MTG | building | `features/FEAT-012-meeting-intake/` |
 | [FEAT-013](features/FEAT-013-emar-local-access/feature.md) | Emar local service access from Zuri-Go | DOM-PLT | implemented | `features/FEAT-013-emar-local-access/` |
-| [FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | DOM-VIS | declared | `features/FEAT-014-visual-marketing-team/` |
+| [FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | DOM-VIS | implemented | `features/FEAT-014-visual-marketing-team/` |
 
 ## Domains
 

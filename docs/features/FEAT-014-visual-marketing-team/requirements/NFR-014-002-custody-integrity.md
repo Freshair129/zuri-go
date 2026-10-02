@@ -1,8 +1,8 @@
 ---
 id: NFR-014-002
 title: Preserve custody and protected product integrity
-status: proposed
-delivery: declared
+status: approved
+delivery: implemented
 relations:
   decided_by: [ADR-006]
 ---

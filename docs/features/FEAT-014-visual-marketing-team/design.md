@@ -1,7 +1,7 @@
 ---
 id: SDD-014
 title: Visual Marketing Team — orchestration design
-status: proposed
+status: approved
 version: 0.1.0
 relations:
   decided_by: [ADR-006]
@@ -121,3 +121,19 @@ Every signature listed below belongs to CMP-001, owns DOM-VIS data, reads curren
 - FR-014-012 · CMP-001 · `forkVariant(c, artifactId, input, viewer) → VariantDto` · owns creative records; consumes Project/current viewer; API-023 / EVT-002.
 
 - FR-014-013 · CMP-001 · `deriveLearning(c, variantId, observationRefs, viewer) → LearningDraft` · owns creative records; consumes Project/current viewer; API-023 / EVT-002.
+
+## Approved implementation ordering and concrete storage
+
+Owner approved this package on 2026-10-02. Initialize the Project extension with POST /projects (strategy_approval_required optional), then confirm BrandProfile, then create its immutable brief. This resolves the FK ordering without creating a duplicate Project master. Once a brief exists it becomes current; a later brief starts a new production revision and revokes pending work/approval. Project audience is frozen at extension creation and intersected with current Project access, including named members; widening never exposes earlier inputs.
+
+First slice includes prompt-only assets (text/plain metadata with content checksum and opaque artifact key); binary stores/image adapters return UNSUPPORTED until configured. QA combines schema/claim checks with explicit per-category human assessment in manual mode; local LLM output never silently turns unassessed claims or pixel checks into pass. Approval concerns copy/visual prompt only. Final decisions can publish a minimal approved-output projection only for an originally public Project.
+
+Local worker processes only jobs initiated by the trusted operator; hosted run creation returns EXECUTOR_UNAVAILABLE. A one-job-at-a-time loop, 60-second lease and fenced result commit implement EVT-002 without any new service. Configuration is feature-specific and server-only; default automatic loopback calls require an explicit run grant. All unrelated summary behavior is unchanged.
+
+## Implemented signatures and execution constraints
+
+The conceptual interface lock above maps to these concrete exports (all SQL clients are created by the existing viewer-scoped transaction): `initialize/brand/brief(c,b,input)`, `project/context/detail(c,b,p)`, `manual/commitStage(c,b,p,input,parent?)`, `run(c,b,p,stage,inputHash,parent?)`, `review/approve(c,b,artifactId,input)`, `strategy(c,b,p,input)`, `enqueue(c,b,p,input)`, `claim(c,b)`, `finish(c,b,lease,result,error?)` and `visualApi(c,b,path,method,input,params)`. The service reads `c.zuriViewer`; it has no caller-controlled viewer parameter. run validates persisted parent lineage; the normal workflow schedules specialists at depth one, while the dispatcher supports the approved depth-two bound. Tools are fixed server operations and declared capabilities; model output cannot invoke any tool. The LLM receives only this revision's Brief, Brand and stage outputs.
+
+Initial adapter is local Ollama only, endpoint + model configured on the server; explicit operator grant lasts ten minutes and is checked before call and commit. One attempt per claim, two claims maximum for an expired-lease stage. Definite errors become failed and a fresh human grant is required for retry. There is no billable provider and no ambiguous paid submission retry. The reusable provider port tests authorized fallback and returns sanitized attempt records; the runtime has only one adapter. Unknown token usage/cost stays null. The worker waits 1.5 seconds between claims and aborts its active request during server shutdown. It never holds a SQL transaction during a network call.
+
+A GENERATION artifact records skipped_optional; Creative QA persists a reviewer run, QA artifact and exact-bundle review. Manual QA is synchronous, because schema/evidence checks need no network. Failed jobs retain their failed stage in job history; Project remains on the actionable stage so manual recovery is possible. Each initial production plus two revisions has at most 16 role runs. Repeated QA/strategy actions consume that same limit. Stage decisions and final approval cannot be manufactured by provider output. A cancelled or stale lease can never publish its result.

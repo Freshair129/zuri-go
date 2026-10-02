@@ -2,7 +2,7 @@
 id: FR-014-012
 title: Keep variants independent of parent approval
 owner: DOM-VIS
-status: proposed
+status: approved
 delivery: declared
 relations:
   derived_from: [PRD-001]

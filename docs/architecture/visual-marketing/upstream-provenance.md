@@ -63,3 +63,7 @@ No remaining failing documentation check. Initial table-placement drift and adde
 - Licenses: THIRD_PARTY_NOTICES.md and three exact upstream LICENSE files.
 - Credentials/provider keys: none accessed, provisioned or committed. Planned keys remain server-side. Tools deny by default; no shell/MCP catalogue import. Agents cannot approve, widen scope or write historical performance. Viewer/RLS applies to every planned data/status/asset route.
 - Runtime behavior/version: 0.5.1 unchanged. Proposed feature spec: 0.1.0. No production action, merge or visibility change.
+
+## Implementation follow-up — 2026-10-03
+
+Owner approved the documentation and the C/D first slice is implemented on the same draft PR. The earlier NOT RUN/BLOCKED rows above are the historical Phase A/B record. Current source/test/QA/browser results and remaining gates are in [verification](../../features/FEAT-014-visual-marketing-team/verification.md). The three license pins and copied license bytes are unchanged. New JavaScript/SQL/JSX are independent Zuri-Go implementations; no upstream app or runtime source was copied.

@@ -1,6 +1,6 @@
-# Visual Marketing — proposed amendment to ARCH-002
+# Visual Marketing — approved amendment to ARCH-002
 
-Canonical physical design detail for SDD-014/ADR-006, proposed 2026-10-02. No migration created or executed. Use the next available migration number after approval and refreshed main; current source ends at 007. No reset, reimport or reinterpretation of existing records.
+Canonical physical design detail for SDD-014/ADR-006, approved 2026-10-02. Additive migration `apps/api/migrations/008_visual_marketing.sql` implements the C/D slice and was applied only to isolated QA on 2026-10-03. No reset, reimport or reinterpretation of existing records.
 
 ## Common custody
 
@@ -8,9 +8,9 @@ Every table has business_id, UUID identity (or composite link identity), timesta
 
 Every brief requires an existing project_id. All creative descendants follow that Project's public/business/team/restricted audience, including jobs, logs, counts, assets and decisions. Intermediate artifacts, prompts, brief context, run details and approval audit additionally require Member/operator access. Guests may read only a minimal approved-output projection of a public project; it does not embed private input context. Related labels must independently pass their own viewer gates.
 
-Destination audience must be a subset of every source audience. If this cannot be proved, linking/reuse is denied. C confines context to the same Project, public-safe Campaign fields and human-confirmed brand snapshots. No shared memory access that bypasses source RLS, and no independent child visibility setting. A later parent audience change must not expose a previously private child; immutable production audience constraints intersect current parent access, and widening requires a new human-reviewed input revision. Narrowing takes effect immediately.
+Destination audience must be a subset of every source audience. If this cannot be proved, linking/reuse is denied. C confines context to the same Project, public-safe Campaign fields and human-confirmed brand snapshots. No shared memory access that bypasses source RLS, and no independent child visibility setting. A later parent audience change must not expose a previously private child; immutable production audience constraints intersect current parent access, and a widened audience requires a separately initialized Project context; a revision never widens this extension. Narrowing takes effect immediately.
 
-## Physical proposal
+## Physical design
 
 | Entity / table | Key data and invariants | Phase |
 |---|---|---|
@@ -46,3 +46,9 @@ Maximum JSON 64 KiB, text fields 4,000 characters, arrays 50 entries. Reject unk
 No image/video binaries in PostgreSQL. Store metadata and server-generated opaque object keys; validate MIME/dimensions/checksum. Downloads pass viewer authorization and never expose filesystem paths. An optional local store is private and outside static/package paths. No new object-store dependency in C; absent provider/store yields visual prompt only, never a fake image preview.
 
 No destructive retention operation is introduced. Metadata and private assets need operator backup coverage. Secrets and byte stores remain excluded from Git, deployment and public exports. Existing snapshot/export paths do not gain these tables automatically.
+
+## Concrete first-slice mapping
+
+The SQL migration is authoritative for physical column names. Brand snapshots have immutable UUIDs and input hashes; Brief has the per-Project revision counter. Human PIC is the existing Project owner, read through a join. Stage assignments use visual_runs, with no task mutation or extra Task table. visual_receipts stores action idempotency keys, input hashes and responses; visual_public_outputs stores only human-approved copy/prompt plus the approval hash, never the source context. Project, job and run state are mutable; briefs, brands, artifacts, provider attempts, reviews, decisions and receipts are append-only for the runtime role.
+
+Only local loopback text generation is executable. Provider submission references, binary stores, variant tables and learning tables are not fabricated. ProviderRun links job → run → brief for provenance. CreativeReview links the exact BUNDLE/hash, while the matching QA artifact and role run persist separately. Asset provenance links asset → artifact → run → actor; its checksum is SHA-256 of downloadable UTF-8 text. Its dimensions/duration are null. Artifact approval uses a separate canonical JSON hash.

@@ -1,7 +1,7 @@
 ---
 id: DOM-VIS
 title: Visual Marketing
-status: proposed
+status: approved
 relations:
   decided_by: [ADR-006]
 ---
@@ -19,7 +19,7 @@ Agents cannot grant approval, broaden visibility, write peer records or publish.
 
 ## Public contracts
 
-[API-023 and EVT-002](contracts.md), proposed. [FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md), [ADR-006](../../architecture/decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries).
+[API-023 and EVT-002](contracts.md), approved. [FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md), [ADR-006](../../architecture/decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries).
 
 <!-- BEGIN GENERATED: feature-index -->
 **Classification** — subdomain `core` · role `business`, from [registry/domains.yaml](../../../registry/domains.yaml). Proposed.
@@ -28,9 +28,9 @@ Agents cannot grant approval, broaden visibility, write peer records or publish.
 
 | Feature | Title | Delivery |
 |---|---|---|
-| [FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | declared |
+| [FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | implemented |
 
 **Participating cross-domain features** — none.
 
-**Services that host it** — [SRV-002](../../services/SRV-002-local/SERVICE.md) (proposed; no deployed behavior).
+**Services that host it** — [SRV-002](../../services/SRV-002-local/SERVICE.md) (local first slice; no production deployment).
 <!-- END GENERATED -->

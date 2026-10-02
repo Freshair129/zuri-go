@@ -234,7 +234,7 @@ Relations: decided_by: ADR-004; relates_to: ADR-003, FEAT-002, FEAT-005, FEAT-00
 Relations: relates_to: ARCH-004, FEAT-014, ARCH-002, API-001, API-017; decided_by: ADR-004
 Owner: DOM-VIS
 
-**Status:** proposed. **Date:** 2026-10-02. **Complexity:** C-3. **Risk:** HIGH. Owner approval pending.
+**Status:** approved. **Date:** 2026-10-02. **Complexity:** C-3. **Risk:** HIGH. Owner approved the Phase A/B package in this chat on 2026-10-02.
 
 **Context.** Upstreams offer coordination and creative patterns but introduce Python/AgentScope, Claude SDK, shell/file tools, Telegram and provider-specific assumptions. Zuri-Go already has a Node API, PostgreSQL viewer transactions, Project identity and a protected authored UI. Its hosted function has no durable worker contract.
 

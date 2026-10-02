@@ -58,4 +58,4 @@ domains:
     name: Visual Marketing
     subdomain: core
     role: business
-    status: proposed
+    status: approved

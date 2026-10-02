@@ -2,7 +2,7 @@
 id: FR-014-013
 title: Separate measurements from interpretation
 owner: DOM-VIS
-status: proposed
+status: approved
 delivery: declared
 relations:
   derived_from: [PRD-001]

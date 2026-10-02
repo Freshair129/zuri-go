@@ -69,3 +69,15 @@ After 0.5.0, the Business-admin flag was set for the owner's Member (`npm run me
 ## Identity-code login (0.4.2)
 
 Members enter their existing personal code in the single masked field **รหัสระบุตัวตน**; no PID input is needed. PID remains on Member records and in operator reset commands. An ambiguous code is denied even if another matching credential is disabled; only an explicitly authorized operator reset can resolve it. No code rotation or migration is needed for this release. Login evaluates all credentials within the Business (currently four scrypt checks); rate limits remain enabled.
+
+## Visual Studio — FEAT-014 local first slice
+
+Code requires schema 8 (`008_visual_marketing.sql`). `npm run db:migrate` is an explicit operator action, not part of startup/build; do not run it against user or cloud data without that authorization. This PR applied it only to a separate PostgreSQL 17 QA container on port 54339. Before schema 8, Visual Studio returns FEATURE_UNAVAILABLE; other domains continue working. Existing database backups include all new tables. Existing workspace JSON export does not include creative records; retain PostgreSQL backups.
+
+Use Task Manager to create an ordinary Project with owner/audience, then open Visual Studio and select it. Confirm brand context, save Brief, complete manual stages, check QA and obtain the Project owner's final approval (or explicit local-operator decision). This creates text assets only. Revisions retain previous records and retract the current public projection. There is no automatic publishing or Campaign/Task write.
+
+Optional server-only variables: `ZURI_GO_VISUAL_ENDPOINT=http://127.0.0.1:11434` and `ZURI_GO_VISUAL_MODEL=<installed-model>`. Set both before starting the existing server. These are independent of the summary configuration. Only loopback HTTP is accepted; no model is installed or downloaded by this feature. A user must authorize the exact revision before enqueue. Do not put credentials in these values. Unconfigured models leave manual mode available. Model context contains the selected Brief, confirmed Brand and prior same-revision outputs; no shell, general HTTP or MCP access exists.
+
+The local server owns one worker loop. SIGINT/SIGTERM aborts its request before closing PostgreSQL. A crashed process leaves a 60-second lease; a restarted server can reclaim up to two attempts, with token/hash/revision fencing. Cancel first to switch a running job to manual. Retry failed/cancelled work only with a fresh operator grant and unchanged revision; old history remains. The image provider, hosted executor, variants and performance learning return unavailable. Do not launch another server against the same Business merely to add capacity.
+
+No source rollback/down migration is supplied. Keep schema 8 data and assess code compatibility; build, push and local tests are not production migration/deployment authorization. [Verification](../features/FEAT-014-visual-marketing-team/verification.md) records current evidence and remaining gates.

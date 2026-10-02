@@ -1,6 +1,6 @@
-# DOM-VIS — proposed API and job contracts
+# DOM-VIS — API and job contracts
 
-Status proposed, 2026-10-02. No routes currently implemented. Transport, same-origin authorization and error envelope inherit [API-001](../platform/contracts.md). Never create a second API surface.
+Approved by the owner in this chat on 2026-10-02; C/D implementation in progress. Transport, same-origin authorization and error envelope inherit [API-001](../platform/contracts.md). Never create a second API surface.
 
 ### API-023 — Visual Marketing production API
 Relations: relates_to: FEAT-014, SDD-014, API-001, API-005, API-010, API-017; decided_by: ADR-006
@@ -12,9 +12,9 @@ Prefix: `/api/zuri-go/v1/businesses/{b}/visual-marketing`. b must be the server-
 |---|---|---|
 | GET /team | none | 200 {agents}; definitions and only readable run summaries, no provider settings/secrets |
 | POST /brand-profiles | project_id, idempotency_key, profile, source_refs, human confirmation | 200 immutable confirmed BrandProfile revision |
-| POST /briefs | project_id, idempotency_key, structured snake_case brief fields | 200 BriefDto with id/revision/input_hash |
+| POST /briefs | project_id, row_version, idempotency_key, brief: {structured snake_case fields} | 200 BriefDto with id/revision/input_hash |
 | GET /briefs/{id} | none | 200 BriefDto for Member/operator with Project access |
-| POST /projects | project_id, brief_id, idempotency_key | 200 creative extension of existing Project; does not create a Project master |
+| POST /projects | project_id, idempotency_key, strategy_approval_required optional | 200 creative extension of existing Project; does not create a Project master |
 | GET /projects | cursor, limit <=50 | 200 {projects,next_cursor}; viewer-filtered board projection |
 | GET /projects/{id} | id is existing project UUID | 200 workflow/stage/cards/readable artifacts; no private DTO to Guest |
 | POST /projects/{id}/run | row_version, idempotency_key, input_hash, bounded provider authorization | 202 {job_id,run_id,status,status_url}; no long provider wait |
@@ -22,12 +22,12 @@ Prefix: `/api/zuri-go/v1/businesses/{b}/visual-marketing`. b must be the server-
 | POST /projects/{id}/strategy-decision | row_version, input_hash, decision, reason, idempotency_key | 200 decision; same human-authority rule as final approval |
 | GET /runs/{id} | none | 200 role/stage/status, safe metadata, artifact IDs |
 | GET /jobs/{id} | none | 200 job state/attempt/last safe error; retry_after_ms |
-| POST /jobs/{id}/cancel | row_version, idempotency_key | 200 cancellation state, including cancel_unknown if necessary |
-| POST /jobs/{id}/retry | row_version, idempotency_key, renewed grant if expired | 202 safe retry; 409 when unresolved ambiguous submission |
-| POST /artifacts/{id}/review | row_version, idempotency_key | 202 QA job; result always binds the artifact hash |
+| POST /jobs/{id}/cancel | row_version, idempotency_key | 200 cancellation state, queued/running local text job only |
+| POST /jobs/{id}/retry | row_version, idempotency_key, authorize_local_model=true for a new grant | 202 replacement job retaining the old terminal history; 409 for ambiguous submission or changed revision |
+| POST /artifacts/{id}/review | row_version, idempotency_key, assessment: {category: boolean} | 200 synchronous structured QA; result always binds the artifact hash |
 | POST /artifacts/{id}/approve | row_version, artifact_hash, qa_revision, decision=approve/request_changes/reject, reason, idempotency_key | 200 immutable decision and resulting workflow state |
-| GET /assets/{id} | none | 200 protected metadata; bytes available only via viewer-gated download |
-| GET /assets/{id}/download | none | authorized bytes with safe Content-Type/Disposition; no path or raw store credentials |
+| GET /assets/{id} | none | 200 protected metadata; text available only via viewer-gated download |
+| GET /assets/{id}/download | none | protected JSON {filename, mime_type, text}; UI creates UTF-8 download; no path or raw store credentials |
 | POST /artifacts/{id}/variants | E only: row_version, hypothesis, changed_dimensions, idempotency_key | C: 409 FEATURE_UNAVAILABLE; E: 202 child generation job, unapproved |
 
 All create/action idempotency keys are UUID, unique by Business, actor, operation and key; persist canonical payload hash. Same key/same payload returns original result, different payload 409 IDEMPOTENCY_CONFLICT. Version/hash conflicts return 409 STALE. API derives actor, timestamps, stage, run lineage and provider eligibility; caller supplied authority fields are rejected. Body validation 422 FIELD_INVALID/FIELD_UNKNOWN; permission denied 403; missing provider 503 PROVIDER_UNAVAILABLE; hosted missing executor 503 EXECUTOR_UNAVAILABLE with no runnable job. No raw provider error/body or connection string in responses.

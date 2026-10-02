@@ -2,8 +2,8 @@
 id: FR-014-005
 title: Call replaceable bounded providers
 owner: DOM-VIS
-status: proposed
-delivery: declared
+status: approved
+delivery: implemented
 relations:
   derived_from: [PRD-001]
   specified_by: [SDD-014, API-023]

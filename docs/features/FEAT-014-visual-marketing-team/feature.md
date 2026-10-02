@@ -4,8 +4,8 @@ title: Visual Marketing Team
 type: domain-feature
 owner: DOM-VIS
 runtime: SRV-002
-delivery: declared
-status: proposed
+delivery: implemented
+status: approved
 version: 0.1.0
 relations:
   depends_on: [FEAT-007, FEAT-010, FEAT-011, API-005, API-010, API-017]
@@ -15,7 +15,7 @@ relations:
 
 A marketing owner creates a structured brief inside Zuri-Go, follows research, concepts, copy and art direction, reviews evidence and QA findings, and makes the final creative decision. Zuri-Go remains the host and source of truth.
 
-**Approval:** Phase A/B proposal, 2026-10-02. C-3, HIGH risk. Owner approval pending before application code. Application remains 0.5.1; no database or deployment change.
+**Approval:** Owner approved Phase A/B in this chat on 2026-10-02. C-3, HIGH risk. C/D implementation may proceed; no production deployment or cloud migration authorization.
 
 ## Scope and phase gates
 
@@ -59,17 +59,17 @@ Thai actions: อนุมัติ / ขอแก้ไข / ไม่อนุ
 
 | ID | Requirement | Delivery |
 |---|---|---|
-| [FR-014-001](requirements/FR-014-001-structured-brief.md) | Validate and persist a structured brief | declared |
-| [FR-014-002](requirements/FR-014-002-agent-registry.md) | Register independent marketing roles | declared |
-| [FR-014-003](requirements/FR-014-003-bounded-workflow.md) | Execute a finite creative workflow | declared |
-| [FR-014-004](requirements/FR-014-004-delegation.md) | Enforce delegation lineage and scope | declared |
-| [FR-014-005](requirements/FR-014-005-providers.md) | Call replaceable bounded providers | declared |
-| [FR-014-006](requirements/FR-014-006-durable-jobs.md) | Persist and reconcile durable jobs | declared |
-| [FR-014-007](requirements/FR-014-007-creative-qa.md) | Return structured creative findings | declared |
-| [FR-014-008](requirements/FR-014-008-human-approval.md) | Authorize attributable human decisions | declared |
-| [FR-014-009](requirements/FR-014-009-visibility.md) | Enforce viewer scope on all creative records | declared |
-| [FR-014-010](requirements/FR-014-010-asset-metadata.md) | Store protected asset metadata | declared |
-| [FR-014-011](requirements/FR-014-011-studio-ui.md) | Show production state inside Marketing | declared |
+| [FR-014-001](requirements/FR-014-001-structured-brief.md) | Validate and persist a structured brief | implemented |
+| [FR-014-002](requirements/FR-014-002-agent-registry.md) | Register independent marketing roles | implemented |
+| [FR-014-003](requirements/FR-014-003-bounded-workflow.md) | Execute a finite creative workflow | implemented |
+| [FR-014-004](requirements/FR-014-004-delegation.md) | Enforce delegation lineage and scope | implemented |
+| [FR-014-005](requirements/FR-014-005-providers.md) | Call replaceable bounded providers | implemented |
+| [FR-014-006](requirements/FR-014-006-durable-jobs.md) | Persist and reconcile durable jobs | implemented |
+| [FR-014-007](requirements/FR-014-007-creative-qa.md) | Return structured creative findings | implemented |
+| [FR-014-008](requirements/FR-014-008-human-approval.md) | Authorize attributable human decisions | implemented |
+| [FR-014-009](requirements/FR-014-009-visibility.md) | Enforce viewer scope on all creative records | implemented |
+| [FR-014-010](requirements/FR-014-010-asset-metadata.md) | Store protected asset metadata | implemented |
+| [FR-014-011](requirements/FR-014-011-studio-ui.md) | Show production state inside Marketing | implemented |
 | [FR-014-012](requirements/FR-014-012-variants-contract.md) | Keep variants independent of parent approval | declared |
 | [FR-014-013](requirements/FR-014-013-performance-contract.md) | Separate measurements from interpretation | declared |
 
