@@ -1,10 +1,10 @@
 # Visual Marketing — approved amendment to ARCH-002
 
-Canonical physical design detail for SDD-014/ADR-006, approved 2026-10-02. Additive migration `apps/api/migrations/008_visual_marketing.sql` implements the C/D slice and was applied only to isolated QA on 2026-10-03. No reset, reimport or reinterpretation of existing records.
+Canonical physical design detail for SDD-014/ADR-006, approved 2026-10-02. Additive migration `008_visual_marketing.sql` implements the C/D slice; migration `009_visual_public_output_immutability.sql` protects its approved public projection. Both are applied only to isolated synthetic QA on 2026-10-03; user-local/cloud and production databases were not migrated. No reset, reimport or reinterpretation of existing records.
 
 ## Common custody
 
-Every table has business_id, UUID identity (or composite link identity), timestamps and composite Business foreign keys. Mutable records use row_version; outputs/decisions are append-only revisions with hashes. ENABLE/FORCE RLS, Business scope, audience policies and Member/operator write checks apply to every operation. The runtime role has no owner/BYPASSRLS powers. Missing viewer fails closed.
+Every table has business_id, UUID identity (or composite link identity), timestamps and composite Business foreign keys. Mutable records use row_version; outputs/decisions are append-only revisions with hashes. Public outputs are immutable after insertion except for one-way retraction by changing active from true to false; payload, approval hash and provenance remain immutable. ENABLE/FORCE RLS, Business scope, audience policies and Member/operator write checks apply to every operation. The runtime role has no owner/BYPASSRLS powers. Missing viewer fails closed.
 
 Every brief requires an existing project_id. All creative descendants follow that Project's public/business/team/restricted audience, including jobs, logs, counts, assets and decisions. Intermediate artifacts, prompts, brief context, run details and approval audit additionally require Member/operator access. Guests may read only a minimal approved-output projection of a public project; it does not embed private input context. Related labels must independently pass their own viewer gates.
 
@@ -24,6 +24,7 @@ Destination audience must be a subset of every source audience. If this cannot b
 | ProviderRun / visual_provider_runs | id, job_id, provider/model, attempt, input hash, external ref, status, nullable usage/cost, timestamps, sanitized error | C |
 | CreativeReview / visual_reviews | id, artifact_id/hash, structured findings/evidence/blockers/suggestions, reviewer run; immutable | C |
 | ApprovalDecision / visual_decisions | id, artifact_id/hash, decision/reason, actor kind/member, reviewed revision, timestamp, idempotency key; append-only | C |
+| PublicProjection / visual_public_outputs | project_id, artifact_id, decision_id, approved copy/prompt and approval hash; immutable except one-way active retraction | C |
 | CreativeAsset / visual_assets | id, project_id, artifact_id, later variant_id, MIME, width/height/duration, storage_provider/object_key, checksum, created_by_agent_run, approved_by through decision | C metadata |
 | CreativeVariant / visual_variants | id, project_id, parent variant/artifact, brief revision, hypothesis, changed dimensions, branch status; fresh approval | E |
 | PerformanceObservation | references existing immutable observation IDs and read timestamps; no editable copy of actuals | F |
@@ -49,6 +50,6 @@ No destructive retention operation is introduced. Metadata and private assets ne
 
 ## Concrete first-slice mapping
 
-The SQL migration is authoritative for physical column names. Brand snapshots have immutable UUIDs and input hashes; Brief has the per-Project revision counter. Human PIC is the existing Project owner, read through a join. Stage assignments use visual_runs, with no task mutation or extra Task table. visual_receipts stores action idempotency keys, input hashes and responses; visual_public_outputs stores only human-approved copy/prompt plus the approval hash, never the source context. Project, job and run state are mutable; briefs, brands, artifacts, provider attempts, reviews, decisions and receipts are append-only for the runtime role.
+The SQL migration is authoritative for physical column names. Brand snapshots have immutable UUIDs and input hashes; Brief has the per-Project revision counter. Human PIC is the existing Project owner, read through a join. Stage assignments use visual_runs, with no task mutation or extra Task table. visual_receipts stores action idempotency keys, input hashes and responses; visual_public_outputs stores only human-approved copy/prompt plus the approval hash, never the source context. Its runtime update is limited to active=true to active=false retraction; payload and approval references cannot be changed or reactivated. Project, job and run state are mutable; briefs, brands, artifacts, provider attempts, reviews, decisions and receipts are append-only for the runtime role.
 
 Only local loopback text generation is executable. Provider submission references, binary stores, variant tables and learning tables are not fabricated. ProviderRun links job → run → brief for provenance. CreativeReview links the exact BUNDLE/hash, while the matching QA artifact and role run persist separately. Asset provenance links asset → artifact → run → actor; its checksum is SHA-256 of downloadable UTF-8 text. Its dimensions/duration are null. Artifact approval uses a separate canonical JSON hash.

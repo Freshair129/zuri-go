@@ -68,6 +68,25 @@ test('AC-014-008-01 public projection contains only approved output; private con
  assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false);
  assert.equal((await api('/projects/'+p.id)).decisions.length,1,'approval is historical');
 });
+test('R2 runtime role keeps approved public output immutable except one-way retraction',async()=>{
+ const {p,brief}=await setup('public');let d=await complete(p,brief);const item=d.artifacts.find(a=>a.kind==='BUNDLE');
+ const qa=await api(`/artifacts/${item.id}/review`,'POST',{row_version:d.project.row_version,idempotency_key:key(),assessment:Object.fromEntries(CHECKS.map(c=>[c,true]))},m1);d=await api('/projects/'+p.id);
+ await api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m0);
+ const projection=(await as(m1,c=>c.query('SELECT * FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rows[0];assert.ok(projection);
+ try{
+  const forged={...projection.payload,copy:'UNAPPROVED QA MARKER',content_hash:'f'.repeat(64)};
+  await assert.rejects(as(m1,c=>c.query('UPDATE visual_public_outputs SET payload=$3 WHERE business_id=$1 AND project_id=$2 AND artifact_id=$4',[b,p.id,forged,item.id])),{code:'42501'});
+  await assert.rejects(as(m1,c=>c.query('UPDATE visual_public_outputs SET artifact_id=$3 WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])),{code:'42501'});
+  await assert.rejects(as(m1,c=>c.query('UPDATE visual_public_outputs SET decision_id=$3 WHERE business_id=$1 AND project_id=$2 AND artifact_id=$4',[b,p.id,projection.decision_id,item.id])),{code:'42501'});
+  const unchanged=(await as(m1,c=>c.query('SELECT payload,artifact_id,decision_id FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rows[0];
+  assert.deepEqual(unchanged,{payload:projection.payload,artifact_id:projection.artifact_id,decision_id:projection.decision_id});
+  assert.equal((await as(m1,c=>c.query('UPDATE visual_public_outputs SET active=false WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rowCount,1);
+  assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false);
+  assert.equal((await as(m1,c=>c.query('UPDATE visual_public_outputs SET active=true WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rowCount,0);
+ }finally{
+  await admin.query('UPDATE zuri_go.visual_public_outputs SET payload=$1,active=$2 WHERE business_id=$3 AND project_id=$4 AND artifact_id=$5',[projection.payload,projection.active,b,p.id,item.id]);
+ }
+});
 test('AC-014-006-01 / AC-014-006-02 job lease, restart, cancellation fence and bounded execution',async()=>{
  process.env.ZURI_GO_VISUAL_ENDPOINT='http://127.0.0.1:11434';process.env.ZURI_GO_VISUAL_MODEL='qa-fake';
  try{
