@@ -45,9 +45,9 @@ if(command==='build'){
  run(python,['scripts/deploy/build_cloud.py']);
 }else if(command==='test'){
  run(process.execPath,['--test','apps/api/test/*.test.mjs','tests/campaign/*.test.mjs','apps/web/src/content/meeting/model.test.mjs','apps/web/src/content/meeting/emar-launcher.test.mjs']);
- run(python,['-m','unittest','discover','-s','scripts/site','-p','test_unified_site.py']);
+ run(python,['-m','unittest','discover','-s','scripts/site','-p','test_*.py']);
  run(python,['scripts/metrics/verify_metrics_map_static.py']);
- run(python,['scripts/site/verify_extraction.py']);
+ run(python,['scripts/site/verify_extraction.py','--no-write']);
  // Documentation tooling (PLAN-001 WI-11): its own tests, then the repository's documents.
  run(python,['-m','unittest','discover','-s','scripts/docs/tests']);
  run(python,['scripts/docs/validate_docs.py']);
