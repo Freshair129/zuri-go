@@ -401,3 +401,7 @@ Migration `007_tasks_projects.sql` (schema 7) was applied to the local PostgreSQ
 The schema 6 sentence that the migration defines no policy for projects described 006, before the table existed; 007 adds them. The runtime role gets `SELECT, INSERT, UPDATE` on the new tables through the `ALL TABLES` grant in `apps/api/migrate.mjs`, and `DELETE` on `project_viewers` only; there is no `DELETE` on `projects` or `campaign_task_details`.
 
 **Operating facts.** Restart the local server after migrating, as for schema 6. Code from before FEAT-010 ignores the new columns and tables; plan a rollback together with the schema and FEAT-011's note above. See [FEAT-010](../features/FEAT-010-task-manager/feature.md), [ADR-002 and ADR-003](decisions.md).
+
+## Proposed Visual Marketing amendment
+
+[Visual Marketing data model](visual-marketing/data-model.md) is the canonical proposed amendment for FEAT-014 / ADR-006. No schema change is applied by this document; approval and additive migration verification are pending.

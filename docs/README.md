@@ -49,6 +49,7 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [FEAT-011](features/FEAT-011-visibility-and-confidential-meetings/feature.md) | Visibility, teams and confidential meetings | DOM-IAM | implemented | `features/FEAT-011-visibility-and-confidential-meetings/` |
 | [FEAT-012](features/FEAT-012-meeting-intake/feature.md) | Meeting intake | DOM-MTG | building | `features/FEAT-012-meeting-intake/` |
 | [FEAT-013](features/FEAT-013-emar-local-access/feature.md) | Emar local service access from Zuri-Go | DOM-PLT | implemented | `features/FEAT-013-emar-local-access/` |
+| [FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | DOM-VIS | declared | `features/FEAT-014-visual-marketing-team/` |
 
 ## Domains
 
@@ -62,6 +63,7 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [DOM-IAM](domains/identity-access/README.md) | Identity & access | generic / foundation | FEAT-005, FEAT-006, FEAT-007, FEAT-011 |
 | [DOM-PLT](domains/platform/README.md) | Platform & delivery | generic / platform | FEAT-008, FEAT-013 |
 | [DOM-BRN](domains/brand/README.md) | Brand | supporting / business | FEAT-009 |
+| [DOM-VIS](domains/visual-marketing/README.md) | Visual Marketing | core / business | FEAT-014 |
 
 DOM-WRK (Work (tasks & meetings)) is superseded by DOM-TSK and DOM-MTG — [ADR-002](architecture/decisions.md), approved 2026-10-01; [its README](domains/work/README.md) stays so the code is never reused.
 
@@ -91,3 +93,7 @@ Evidence is cited but never traced to. Paths inside it describe where files live
 - File paths, repository names and infrastructure statements inside older feature documents describe their original version (the former `D:/zuri-brand-kit` checkout). Current build, start and deploy commands are in the [root README](../README.md).
 - The 0.4.1 extraction changed source layout and operational paths only; it did not reinterpret KPI formulas, targets, RACI, MoSCoW, Guest policy or Member identity.
 - Approved text was not edited to follow the rename: a moved document may still name a sibling by its former file name (for example `campaign-mission-control-verification.md`). The Documents table of each `feature.md` and the crosswalk map old names to current files.
+
+## Proposed Visual Marketing
+
+[FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) is the Phase A/B approval package, not implemented behavior. Start with [ARCH-004](architecture/ARCH-004-visual-marketing.md) and the pinned [upstream analysis](architecture/visual-marketing/upstream-analysis.md).

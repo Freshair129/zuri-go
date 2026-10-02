@@ -26,3 +26,7 @@ Current source version: 0.4.2 (layout introduced in 0.4.1). Deployment evidence:
 | ADR-002 – ADR-004 | [System decisions](decisions.md) | Task and meeting domains for every department and one task record with contexts (ADR-002, ADR-003: approved 2026-10-01); visibility with confidential meetings (ADR-004: approved 2026-10-01) |
 
 The Business Overview, Guest access, Member identity, single-code login and logo specifications that used to live here are feature documents now — see the [documentation map](../README.md) and [features/](../features/). The links above already point to their new locations.
+
+## Proposed Visual Marketing architecture
+
+[ARCH-004](ARCH-004-visual-marketing.md), [ADR-006](decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries) and the [data amendment](visual-marketing/data-model.md) are proposed for FEAT-014. They do not change approved behavior or claim deployment.

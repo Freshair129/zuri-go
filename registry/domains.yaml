@@ -53,3 +53,9 @@ domains:
     name: Brand
     subdomain: supporting
     role: business
+  - code: DOM-VIS
+    slug: visual-marketing
+    name: Visual Marketing
+    subdomain: core
+    role: business
+    status: proposed
