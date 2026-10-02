@@ -5,6 +5,8 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 import json
 import re
+import argparse
+import base64
 
 ROOT = Path(__file__).resolve().parents[2]
 APPS = ROOT / 'apps'
@@ -52,12 +54,21 @@ class References(HTMLParser):
             self.assets.add(ref)
 
 
-def metrics_files(source):
+def metrics_files(source, hosted=False):
     html = source.read_text(encoding='utf-8')
     html = html.replace('../../assets/logos/zuri-wordmark.svg', 'assets/logos/zuri-wordmark.svg')
     html = html.replace('campaign-mission-control/dist/index.html?view=1&amp;tab=', '/?view=1&amp;tab=')
-    if '127.0.0.1:4319' in html or '127.0.0.1:4321' in html:
-        raise ValueError('Local preview link in deployable guide')
+    if hosted:
+        local_service_blocks = (
+            r'<nav\b(?=[^>]*\bid="services-nav")[^>]*>.*?</nav>',
+            r'<script\b(?=[^>]*\bid="services-origin-gate")[^>]*>.*?</script>',
+        )
+        for pattern in local_service_blocks:
+            html, count = re.subn(pattern, '', html, flags=re.IGNORECASE | re.DOTALL)
+            if count != 1:
+                raise ValueError('Expected one local-only Services block in Metrics guide')
+        if '127.0.0.1:4319' in html or '127.0.0.1:4321' in html:
+            raise ValueError('Local preview link in deployable guide')
     files = {'metrics/index.html': html.encode('utf-8')}
     refs = References()
     refs.feed(html)
@@ -85,6 +96,17 @@ def metrics_files(source):
     return files
 
 
+def verify_hosted_services(files):
+    for name, data in files.items():
+        if not name.endswith('.html'):
+            continue
+        html = data.decode('utf-8')
+        scripts = re.findall(r'data:text/javascript;charset=utf-8;base64,([^"\s]+)', html)
+        decoded = html + '\n' + '\n'.join(base64.b64decode(script, validate=True).decode('utf-8') for script in scripts)
+        if any(marker in decoded for marker in ('localhost:8788', 'Emar (local)', 'http://127.0.0.1:4319', 'services-origin-gate', 'emar-local-launcher')):
+            raise ValueError(f'Local Emar launcher in hosted package: {name}')
+
+
 def write_package(output, files):
     previous = output / 'site-build.json'
     old = json.loads(previous.read_text(encoding='utf-8'))['files'] if previous.exists() else {}
@@ -109,9 +131,15 @@ def write_package(output, files):
 
 
 def main():
-    files = app_files(APPS / 'web/dist')
-    files.update(metrics_files(APPS / 'metrics/index.html'))
-    manifest = write_package(ROOT / 'build/site', files)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--hosted-app-dist', type=Path)
+    args = parser.parse_args()
+    hosted = args.hosted_app_dist is not None
+    files = app_files(args.hosted_app_dist if hosted else APPS / 'web/dist')
+    files.update(metrics_files(APPS / 'metrics/index.html', hosted=hosted))
+    if hosted:
+        verify_hosted_services(files)
+    manifest = write_package(ROOT / ('build/hosted-site' if hosted else 'build/site'), files)
     print(json.dumps({'files': len(files), 'bytes': sum(map(len, files.values())), 'appId': manifest['appId']}))
 
 

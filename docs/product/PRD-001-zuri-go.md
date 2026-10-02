@@ -26,6 +26,7 @@ This is the product-level index: it says which surfaces exist and which feature 
 | Graph View | `/metrics/#metrics-graph` | FEAT-003 | DOM-MET |
 | Guest mode, sign-in modal, Member badge | upper-right toolbar; write-intent modal | [FEAT-005](../features/FEAT-005-guest-access/feature.md), [FEAT-006](../features/FEAT-006-member-identity/feature.md), [FEAT-007](../features/FEAT-007-single-code-login/feature.md) | DOM-IAM |
 | Site menu: Marketing · Meeting & Task Manager · ความรู้ Metrics · Graph View | every part of the site | [FEAT-008](../features/FEAT-008-unified-site/feature.md) | DOM-PLT |
+| Emar service launcher (local only) | Separate **บริการ / Services** entry on the local Zuri-Go site; opens `http://localhost:8788/` | [FEAT-013](../features/FEAT-013-emar-local-access/feature.md) | DOM-PLT |
 | Logo and brand marks | headers, navigation, guide mastheads, graph header | [FEAT-009](../features/FEAT-009-logo-placement/feature.md) | DOM-BRN |
 
 Since release 0.5.0 (2026-10-01) the site menu reads “Task Manager” and “Meetings” ([FEAT-010](../features/FEAT-010-task-manager/feature.md), PLAN-002 Q9; [verification](../releases/0.5.0/verification.md)); the served page equals the verified build, but the menu was not browser-checked on production; the table keeps the feature-level names.
@@ -45,6 +46,7 @@ Every row belongs to exactly one Business, and a session reads the one configure
 5. Plan and scenario figures are labelled as such; actuals and benchmarks are never invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
 6. Navigation, deployment and repository-layout changes do not reinterpret KPI definitions, formulas, targets, RACI, MoSCoW, Guest policy or Member identity ([FEAT-008 spec](../features/FEAT-008-unified-site/spec.md); [migration record](../migrations/verification.md)).
 7. Content is shown only to its audience, and the API and the database both enforce it ([ADR-004](../architecture/decisions.md), approved 2026-10-01; [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). This rule is **in force in production for tasks and meetings since 2026-10-01** (release 0.5.0, [verification](../releases/0.5.0/verification.md)): Guests read public items only, and production tasks are all `business`. Guests still read Member profiles and campaign records, which PLAN-002 Q1 defers, so the narrower interim rule below still applies to those.
+8. Emar is a separate local service. Zuri-Go only provides a launcher from its canonical local site; Emar is started separately and has no shared Identity, CRM, Files, Marketing, or campaign data integration under FEAT-013.
 
 ## Approved and released in 0.5.0 (2026-10-01)
 

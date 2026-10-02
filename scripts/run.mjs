@@ -1,7 +1,7 @@
 import {execFileSync} from 'node:child_process';
-import {existsSync} from 'node:fs';
+import {existsSync,cpSync,mkdirSync,mkdtempSync,readFileSync,writeFileSync,rmSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {resolve,join} from 'node:path';
+import {resolve,join,dirname,basename} from 'node:path';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const vercel='npx --yes vercel@61.1.0',scope='--scope pornpons-projects --cwd ./build/vercel';
 const PROMOTABLE=/^https:\/\/zuri-metrics-[a-z0-9-]+-pornpons-projects\.vercel\.app$/;
@@ -10,6 +10,11 @@ export const deployCommand=()=>`${vercel} deploy --prod --skip-domain --yes ${sc
 export const promoteUrlProblem=url=>!url?'npm run promote needs the staged deployment URL: npm run promote -- https://zuri-metrics-<id>-pornpons-projects.vercel.app':!PROMOTABLE.test(url)?'Refusing to promote: the URL must match https://zuri-metrics-*-pornpons-projects.vercel.app (the unique deployment URL printed by npm run deploy).':null;
 export const promoteCommand=url=>{const problem=promoteUrlProblem(url);if(problem)throw Error(problem);return `${vercel} promote ${url} --yes ${scope}`;};
 export const deploymentUrl=out=>(String(out).match(/https:\/\/[^\s"']+/g)||[]).pop()||null;
+export const hostedEmarSource=source=>{
+ const begin='{/* BEGIN LOCAL: emar-launcher */}',end='{/* END LOCAL: emar-launcher */}';
+ if(source.split(begin).length!==2||source.split(end).length!==2||source.indexOf(end)<source.indexOf(begin))throw Error('Expected one marked local Emar launcher');
+ return source.slice(0,source.indexOf(begin))+source.slice(source.indexOf(end)+end.length);
+};
 const powershell=cmd=>['powershell',['-NoProfile','-Command',cmd+'; exit $LASTEXITCODE']];
 const run=(program,args,stdio='inherit')=>execFileSync(program,args,{cwd:root,stdio,windowsHide:true,env:{...process.env,PYTHONIOENCODING:'utf-8'}});
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
@@ -22,9 +27,24 @@ if(command==='build'){
  run(python,['scripts/metrics/verify_metrics_map_static.py']);
  run(node,[join(plugin,'scripts/data-app.mjs'),'build','--project-dir',resolve(root,'apps/web'),'--separate-data']);
  run(python,['scripts/site/build_unified_site.py']);
+ // Build only authored inputs in isolation; never rewrite compiled HTML or integrity manifests.
+ const stagingRoot=resolve(root,'build');mkdirSync(stagingRoot,{recursive:true});
+ const stage=mkdtempSync(join(stagingRoot,'.emar-hosted-'));
+ try{
+  for(const path of ['src/content','src/data.json','src/theme.css','src/data-app-public.jsx'])cpSync(resolve(root,'apps/web',path),join(stage,path),{recursive:true});
+  // Preserve the existing local presentation/thread marker through the normal builder.
+  mkdirSync(join(stage,'dist'));cpSync(resolve(root,'apps/web/dist/index.html'),join(stage,'dist/index.html'));
+  const meeting=join(stage,'src/content/meeting/MeetingWorkspace.jsx');
+  writeFileSync(meeting,hostedEmarSource(readFileSync(meeting,'utf8')));
+  run(node,[join(plugin,'scripts/data-app.mjs'),'build','--project-dir',stage,'--separate-data']);
+  run(python,['scripts/site/build_unified_site.py','--hosted-app-dist',join(stage,'dist')]);
+ }finally{
+  if(dirname(resolve(stage))!==stagingRoot||!basename(stage).startsWith('.emar-hosted-'))throw Error('Invalid hosted staging cleanup path');
+  rmSync(stage,{recursive:true,force:true});
+ }
  run(python,['scripts/deploy/build_cloud.py']);
 }else if(command==='test'){
- run(process.execPath,['--test','apps/api/test/*.test.mjs','tests/campaign/*.test.mjs','apps/web/src/content/meeting/model.test.mjs']);
+ run(process.execPath,['--test','apps/api/test/*.test.mjs','tests/campaign/*.test.mjs','apps/web/src/content/meeting/model.test.mjs','apps/web/src/content/meeting/emar-launcher.test.mjs']);
  run(python,['-m','unittest','discover','-s','scripts/site','-p','test_unified_site.py']);
  run(python,['scripts/metrics/verify_metrics_map_static.py']);
  run(python,['scripts/site/verify_extraction.py']);

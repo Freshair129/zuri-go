@@ -19,9 +19,9 @@ def copy(source, relative):
     copy2(ROOT / source, target)
     files.append(relative)
 
-site = ROOT / 'build/site'
+site = ROOT / 'build/hosted-site'
 for path in json.loads((site / 'site-build.json').read_text())['files']:
-    copy('build/site/' + path, 'public/' + path)
+    copy('build/hosted-site/' + path, 'public/' + path)
 for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs','workspace.mjs','team-auth.mjs','attachments.mjs','member-auth.mjs','viewer.mjs','audience.mjs','teams.mjs','tasks.mjs','projects.mjs','campaign-tasks.mjs','meeting-commit.mjs']:
     copy('apps/api/' + path, 'apps/api/' + path)
 for path in ['shared/model.mjs','shared/visibility.mjs','shared/task-rules.mjs','meeting/model.mjs','business/model.mjs']:

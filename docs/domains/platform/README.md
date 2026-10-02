@@ -15,6 +15,7 @@ One site, one origin, one deployment: navigation across the surfaces, the Data A
 - Deployment package (allowlist)
 - Hosted runtime
 - Local operator runtime
+- External local service catalog entry (Emar / SRV-003)
 
 ## Owned data
 - No PostgreSQL tables. Build and release tooling: `scripts/`; Vercel binding: `scripts/deploy/project.json`.
@@ -23,6 +24,7 @@ One site, one origin, one deployment: navigation across the surfaces, the Data A
 - UI and API share one origin; local serves `build/site` and production deploys `build/vercel` ([architecture index](../../architecture/README.md)).
 - The protected Data App runtime, its integrity manifests and the stable app ID are preserved; generated output is rebuilt, never hand-edited ([AGENTS.md](../../../AGENTS.md)).
 - A deployment is not a database migration or rollback authorization ([AGENTS.md](../../../AGENTS.md)).
+- [FEAT-013](../../features/FEAT-013-emar-local-access/feature.md) registers [Emar / SRV-003](../../services/SRV-003-emar-local/SERVICE.md) and exposes only a passive local launcher. Local `build/site` retains it; `build/hosted-site` and Vercel omit it. Execution, authentication, contacts, files and provider custody stay with their documented owners; no integration adapter is configured.
 - These rules are stated today in the feature specifications and AGENTS.md; promoting them to BR- / SEC- artifacts is [PLAN-001](../../governance/plans/PLAN-001-document-standard-adoption.md) WI-10.
 
 ## Public contracts
@@ -38,6 +40,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 | Feature | Title | Delivery |
 |---|---|---|
 | [FEAT-008](../../features/FEAT-008-unified-site/feature.md) | Unified site | implemented |
+| [FEAT-013](../../features/FEAT-013-emar-local-access/feature.md) | Emar local service access from Zuri-Go | implemented |
 
 **Participating cross-domain features** — none.
 
@@ -56,5 +59,12 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 | [FR-008-009](../../features/FEAT-008-unified-site/requirements/FR-008-009-release-and-reporting.md) | Verify, deploy and report only what was checked | implemented |
 | [NFR-008-001](../../features/FEAT-008-unified-site/requirements/NFR-008-001-menu-does-not-obscure.md) | The site menu never covers content | implemented |
 
-**Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md)
+**Requirements of [FEAT-013](../../features/FEAT-013-emar-local-access/feature.md)** — approved on 2026-10-02 and implemented locally; no production deployment is claimed. Delivery as in the [feature’s index](../../features/FEAT-013-emar-local-access/feature.md#requirement-index). Requirement files sit in the feature’s `requirements/` folder.
+
+| Requirement | Title | Delivery |
+|---|---|---|
+| [FR-013-001](../../features/FEAT-013-emar-local-access/requirements/FR-013-001-emar-local-launch.md) | The local Zuri-Go site launches the separate Emar service | implemented |
+| [NFR-013-001](../../features/FEAT-013-emar-local-access/requirements/NFR-013-001-local-service-boundary.md) | The Emar launcher stays local-only and does not exchange session or application data | implemented |
+
+**Services that host it** — [SRV-001](../../services/SRV-001-hosted/SERVICE.md), [SRV-002](../../services/SRV-002-local/SERVICE.md), [SRV-003](../../services/SRV-003-emar-local/SERVICE.md)
 <!-- END GENERATED -->

@@ -48,6 +48,7 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [FEAT-010](features/FEAT-010-task-manager/feature.md) | Task Manager for every department | DOM-TSK | implemented | `features/FEAT-010-task-manager/` |
 | [FEAT-011](features/FEAT-011-visibility-and-confidential-meetings/feature.md) | Visibility, teams and confidential meetings | DOM-IAM | implemented | `features/FEAT-011-visibility-and-confidential-meetings/` |
 | [FEAT-012](features/FEAT-012-meeting-intake/feature.md) | Meeting intake | DOM-MTG | building | `features/FEAT-012-meeting-intake/` |
+| [FEAT-013](features/FEAT-013-emar-local-access/feature.md) | Emar local service access from Zuri-Go | DOM-PLT | implemented | `features/FEAT-013-emar-local-access/` |
 
 ## Domains
 
@@ -59,7 +60,7 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [DOM-TSK](domains/tasks/README.md) | Tasks & projects | supporting / business | FEAT-004, FEAT-010 |
 | [DOM-MTG](domains/meetings/README.md) | Meetings | supporting / business | FEAT-012 |
 | [DOM-IAM](domains/identity-access/README.md) | Identity & access | generic / foundation | FEAT-005, FEAT-006, FEAT-007, FEAT-011 |
-| [DOM-PLT](domains/platform/README.md) | Platform & delivery | generic / platform | FEAT-008 |
+| [DOM-PLT](domains/platform/README.md) | Platform & delivery | generic / platform | FEAT-008, FEAT-013 |
 | [DOM-BRN](domains/brand/README.md) | Brand | supporting / business | FEAT-009 |
 
 DOM-WRK (Work (tasks & meetings)) is superseded by DOM-TSK and DOM-MTG — [ADR-002](architecture/decisions.md), approved 2026-10-01; [its README](domains/work/README.md) stays so the code is never reused.
@@ -70,6 +71,7 @@ DOM-WRK (Work (tasks & meetings)) is superseded by DOM-TSK and DOM-MTG — [ADR-
 |---|---|---|
 | [SRV-001](services/SRV-001-hosted/SERVICE.md) | Hosted site and API (Vercel + Neon PostgreSQL) | Vercel project `zuri-metrics-map` — package `build/vercel`, binding `scripts/deploy/project.json` |
 | [SRV-002](services/SRV-002-local/SERVICE.md) | Local operator runtime (Node server + Docker PostgreSQL) | `apps/api/server.mjs` on `127.0.0.1:4319` and Docker container `zuri-go-postgres`, started by `scripts/local/start.ps1` (`npm start`) |
+| [SRV-003](services/SRV-003-emar-local/SERVICE.md) | Emar standalone local email execution service | `http://localhost:8788/` — Emar 0.3.0-beta.0, started separately |
 <!-- END GENERATED -->
 
 ## Evidence (not artifacts)

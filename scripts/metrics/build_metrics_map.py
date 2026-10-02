@@ -25,6 +25,8 @@ def logo(compact=False):
     return f'<span class="zgo-logo{modifier}" role="img" aria-label="{label}"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span>'
 
 SITE_NAV = '''<nav class="site-nav" aria-label="เมนูเว็บไซต์">'''+logo(True)+'''<a href="/?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="/?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav>'''
+SERVICES_NAV = '''<nav class="services-nav" id="services-nav" aria-label="บริการ" hidden><span>บริการ</span><a id="emar-local-launcher" href="http://localhost:8788/" target="_blank" rel="noopener noreferrer" aria-label="Emar (local), opens in a new tab">Emar (local)</a></nav>'''
+SERVICES_ORIGIN_GATE = '''<script id="services-origin-gate">(()=>{const services=document.getElementById('services-nav');if(services&&location.origin==='http://127.0.0.1:4319')services.hidden=false;})();</script>'''
 SITE_CSS = '''
 .site-nav{position:sticky;top:0;z-index:40;display:flex;align-items:center;flex-wrap:wrap;gap:9px;padding:14px max(18px,calc((100% - 1390px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
 .nav{position:static}html{scroll-padding-top:calc(var(--site-nav-height,64px) + 16px)}
@@ -32,8 +34,14 @@ SITE_CSS = '''
 .site-nav>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
 .site-nav>a:hover,.site-nav>a[aria-current="page"]{border-color:var(--amber);background:var(--tint)}
 .site-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.services-nav{display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:8px max(18px,calc((100% - 1390px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
+.services-nav[hidden]{display:none}
+.services-nav>span{font:600 11px Manrope,sans-serif;letter-spacing:.12em;color:var(--muted);margin-right:4px}
+.services-nav>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
+.services-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 @media(max-width:650px){.site-nav>span{width:100%}}
-@media print{.site-nav{display:none!important}}
+@media(max-width:650px){.services-nav{justify-content:flex-start}}
+@media print{.site-nav,.services-nav{display:none!important}}
 '''
 
 CSS = r'''
@@ -758,8 +766,8 @@ page('reading','F / Reading & Sources · Evidence','Read Before Deciding','อ�
 HTML='''<!doctype html>
 <html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="description" content="คู่มือ metrics การตลาด 18 หน้า พร้อมมุมมองกราฟ 2D และ 3D, MQL, SQL, AARRR, KPI และ Budget โดย zuri"><title>Zuri-Go — Marketing Metrics Map · REV 04</title>
 <link rel="stylesheet" href="assets/fonts/metrics-map.css">
-<style>'''+CSS+GRAPH_CSS+VIEWER_CSS+'''</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>'''+GRAPH_HTML+'''<div id="guideViewer"><div class="page-controls" id="guideControls" aria-label="การนำทางหน้าคู่มือ"><button class="page-control-button" id="previousPage" type="button" aria-label="ไปหน้าก่อนหน้า">← หน้าก่อน</button><div class="page-control-current"><span class="caps">Guide page</span><strong id="pageCurrent" aria-live="polite">01 / 18</strong><span id="pageTitle">Marketing metrics, mapped.</span></div><button class="page-control-button" id="nextPage" type="button" aria-label="ไปหน้าถัดไป">หน้าถัดไป →</button></div>'''+''.join(PAGES)+'''</div></main><script>'''+GRAPH_SCRIPT+VIEWER_SCRIPT+'''</script></body></html>'''
-HTML = HTML.replace('</style>', SITE_CSS + '</style>', 1).replace('<nav class="nav"', SITE_NAV + '<nav class="nav"', 1)
+<style>'''+CSS+GRAPH_CSS+VIEWER_CSS+'''</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>'''+GRAPH_HTML+'''<div id="guideViewer"><div class="page-controls" id="guideControls" aria-label="การนำทางหน้าคู่มือ"><button class="page-control-button" id="previousPage" type="button" aria-label="ไปหน้าก่อนหน้า">← หน้าก่อน</button><div class="page-control-current"><span class="caps">Guide page</span><strong id="pageCurrent" aria-live="polite">01 / 18</strong><span id="pageTitle">Marketing metrics, mapped.</span></div><button class="page-control-button" id="nextPage" type="button" aria-label="ไปหน้าถัดไป">หน้าถัดไป →</button></div>'''+''.join(PAGES)+'''</div></main><script>'''+GRAPH_SCRIPT+VIEWER_SCRIPT+'''</script>'''+SERVICES_ORIGIN_GATE+'''</body></html>'''
+HTML = HTML.replace('</style>', SITE_CSS + '</style>', 1).replace('<nav class="nav"', SITE_NAV + SERVICES_NAV + '<nav class="nav"', 1)
 assert len(PAGES)==PAGE_TOTAL
 OUT.write_text(HTML,encoding='utf-8')
 print(f'Built {OUT} ({len(PAGES)} pages, {OUT.stat().st_size:,} bytes)')

@@ -11,3 +11,8 @@ services:
     name: Local operator runtime (Node server + Docker PostgreSQL)
     deploy_unit: "apps/api/server.mjs on 127.0.0.1:4319 and Docker container zuri-go-postgres, started by scripts/local/start.ps1 (npm start)"
     code_roots: [apps/api, scripts/local]
+  - id: SRV-003
+    slug: emar-local
+    name: Emar standalone local email execution service
+    deploy_unit: "http://localhost:8788/ — Emar 0.3.0-beta.0, started separately"
+    code_roots: [] # External source; no Emar code is owned by this repository.

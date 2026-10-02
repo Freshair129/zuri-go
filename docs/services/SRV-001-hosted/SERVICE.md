@@ -11,7 +11,7 @@ relations:
 
 # SRV-001 — Hosted site and API (Vercel + Neon PostgreSQL)
 
-Static site (`build/site`) plus one same-origin API function (`api/index.mjs` → `apps/api/cloud.mjs`) under `/api/zuri-go/v1`. Production opens in Guest mode; writes need a signed Member session. The database is the production Neon PostgreSQL instance.
+Static site (`build/hosted-site`, copied into `build/vercel/public`) plus one same-origin API function (`api/index.mjs` → `apps/api/cloud.mjs`) under `/api/zuri-go/v1`. Production opens in Guest mode; writes need a signed Member session. The database is the production Neon PostgreSQL instance.
 
 | | |
 |---|---|
@@ -21,6 +21,7 @@ Static site (`build/site`) plus one same-origin API function (`api/index.mjs` �
 
 ## Facts
 - Package is an allowlist assembled by `scripts/deploy/build_cloud.py`; no `.local`, backups, credentials or test files are packaged.
+- [FEAT-013](../../features/FEAT-013-emar-local-access/feature.md) is local-only: this service's generated UI contains no Emar launcher or origin-gate script, including in encoded Data App JavaScript. Emar is not deployed here.
 - Runtime environment: `ZURI_GO_DATABASE_URL`, `ZURI_GO_BUSINESS_ID`, `ZURI_GO_SESSION_SECRET`, `ZURI_GO_PUBLIC_ORIGIN` (values are private and never recorded in documents).
 - Release sequence and rollback: [RB-001](../../operations/RB-001-runbook.md); hosted architecture: [ARCH-003](../../architecture/ARCH-003-hosted-deployment.md).
 

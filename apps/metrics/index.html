@@ -119,9 +119,15 @@ body.viewer-ready .page[hidden]{display:none}
 .site-nav>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
 .site-nav>a:hover,.site-nav>a[aria-current="page"]{border-color:var(--amber);background:var(--tint)}
 .site-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.services-nav{display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:8px max(18px,calc((100% - 1390px)/2));background:var(--paper);border-bottom:1px solid var(--line)}
+.services-nav[hidden]{display:none}
+.services-nav>span{font:600 11px Manrope,sans-serif;letter-spacing:.12em;color:var(--muted);margin-right:4px}
+.services-nav>a{display:inline-flex;align-items:center;min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-weight:600;color:var(--ink);text-decoration:none}
+.services-nav>a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
 @media(max-width:650px){.site-nav>span{width:100%}}
-@media print{.site-nav{display:none!important}}
-</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="site-nav" aria-label="เมนูเว็บไซต์"><span class="zgo-logo zgo-logo--compact" role="img" aria-label="Zuri-Go"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span><a href="/?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="/?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>
+@media(max-width:650px){.services-nav{justify-content:flex-start}}
+@media print{.site-nav,.services-nav{display:none!important}}
+</style><link rel="stylesheet" href="assets/styles/zuri-go-logo.css"></head><body><a class="skip" href="#overview">ข้ามไปเนื้อหา</a><nav class="site-nav" aria-label="เมนูเว็บไซต์"><span class="zgo-logo zgo-logo--compact" role="img" aria-label="Zuri-Go"><img src="assets/logos/zuri-go-brand-sheet.png" width="1448" height="1086" alt="" aria-hidden="true"></span><a href="/?view=1&amp;tab=overview">ภาพรวมธุรกิจ</a><a href="/?view=1&amp;tab=meeting-task-manager">Meeting &amp; Task Manager</a><a href="#overview" data-site-section="guide">ความรู้ Metrics</a><a href="#metrics-graph" data-site-section="graph">Graph View</a></nav><nav class="services-nav" id="services-nav" aria-label="บริการ" hidden><span>บริการ</span><a id="emar-local-launcher" href="http://localhost:8788/" target="_blank" rel="noopener noreferrer" aria-label="Emar (local), opens in a new tab">Emar (local)</a></nav><nav class="nav" aria-label="หมวดคู่มือ"><span class="caps nav-title">Metrics Map / REV 04</span><div class="nav-links"><a href="#metrics-graph">Graph view</a><a href="#overview">สารบัญ</a><a href="#awareness">Metrics</a><a href="#aarrr">AARRR</a><a href="#team">ทีมและงาน</a><a href="#budget">แผนการตลาด</a><a href="#lead-performance">Commerce &amp; Operations</a><a href="#reading">อ่านผล</a></div></nav><main>
 <section class="metrics-graph" id="metrics-graph" aria-labelledby="mg-title">
   <div class="mg-intro">
     <div><p class="eyebrow caps">Interactive / Marketing Measurement</p><h2 id="mg-title">Marketing <span class="accent">Metrics</span></h2><p class="mg-intro-copy">เลือก node เพื่ออ่านความหมาย สูตร หน่วย ตัวอย่างสมมติ และข้อควรระวัง ลากเพื่อหมุน ใช้ล้อเมาส์เพื่อซูม หรือค้นหาคำศัพท์โดยตรง</p></div>
@@ -588,4 +594,4 @@ body.viewer-ready .page[hidden]{display:none}
   if (!location.hash) history.replaceState(null, '', '#overview');
   showHash(Boolean(location.hash));
 })();
-</script></body></html>
+</script><script id="services-origin-gate">(()=>{const services=document.getElementById('services-nav');if(services&&location.origin==='http://127.0.0.1:4319')services.hidden=false;})();</script></body></html>

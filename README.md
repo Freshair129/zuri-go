@@ -46,7 +46,7 @@ npm start
 - `tests/campaign/`: campaign model regression suite; meeting suite อยู่กับ authored model
 - `docs/`: เอกสารตามมาตรฐาน docs/governance/standards — features/, domains/, architecture/, services/, operations/ พร้อมหลักฐานใน history/, migrations/, releases/; เริ่มที่ docs/README.md
 - `registry/`: ทะเบียน domain/service และ crosswalk จากรหัสเอกสารเดิม (STD-003)
-- `build/site/`: static files สำหรับ local; `build/vercel/`: deploy package ที่สร้างจาก allowlist
+- `build/site/`: static files สำหรับ local พร้อม Emar launcher (FEAT-013); `build/hosted-site/`: verified hosted files ที่ไม่มี launcher/origin gate; `build/vercel/`: deploy package ที่สร้างจาก allowlist ของ hosted site
 - `.local/`: config, private member handovers, backups, import staging และ logs — ไม่เข้า Git หรือ deploy
 
 ## ฐานข้อมูลและรหัสสมาชิก
