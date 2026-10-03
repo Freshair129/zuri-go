@@ -10,6 +10,7 @@ import {listTasks,readTask,createTask,updateTask} from './tasks.mjs';
 import {listProjects,readProject,createProject,updateProject} from './projects.mjs';
 import {saveCampaignTask} from './campaign-tasks.mjs';
 import {commitMeeting} from './meeting-commit.mjs';
+import {visualApi} from './visual-marketing/api.mjs';
 export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
 // principal: OPERATOR on the local server, session(claims) on the hosted API; nothing else selects the viewer (FR-011-003).
@@ -20,6 +21,8 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
    if(method!=='GET'&&(req.headers['x-zuri-go']!=='1'||!req.headers['content-type']?.startsWith('application/json')))fail('Use the same-origin application',403);
    if(route==='/session'&&method==='GET'){send(res,200,{authenticated:true,storage,businessId});return;}
    if(route==='/bootstrap'&&method==='GET'){const data=await transaction(businessId,principal,c=>snapshot(c,businessId));send(res,200,{business:data.business,storage,apiVersion:1});return;}
+   const visual=route.match(/^\/businesses\/([a-f0-9-]{36})\/visual-marketing(\/.*)?$/);
+   if(visual){const [,b,path='']=visual;if(b!==businessId)fail('Business access denied',403);const input=method==='GET'?null:await body(req);let result;for(let attempt=0;;attempt++){try{result=await scopedTransaction(b,c=>visualApi(c,b,path,method,input,url.searchParams));break;}catch(e){const retry=e.code==='40001'||e.code==='23505'&&['visual_one_active','visual_receipts_pkey'].includes(e.constraint);if(!retry||attempt>=2)throw e;}}send(res,method==='POST'&&(path.endsWith('/run')||path.endsWith('/retry'))?202:200,result);return;}
    const fileRoute=route.match(/^\/businesses\/([a-f0-9-]{36})\/tasks\/([A-Za-z0-9_-]{1,160})\/attachments(?:\/([a-f0-9-]{36}))?$/);
    if(fileRoute){
     const [,b,task,id]=fileRoute;if(b!==businessId)fail('Business access denied',403);

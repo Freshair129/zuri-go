@@ -27,6 +27,9 @@ for path in ['api.mjs','cloud.mjs','config.mjs','db.mjs','http.mjs','service.mjs
 for path in ['shared/model.mjs','shared/visibility.mjs','shared/task-rules.mjs','meeting/model.mjs','business/model.mjs']:
     relative = 'apps/web/src/content/' + path
     copy(relative, relative)
+for path in ['api.mjs','contracts.mjs','registry.mjs','providers.mjs','service.mjs','jobs.mjs']:
+    relative = 'apps/api/visual-marketing/' + path
+    copy(relative, relative)
 (OUT / 'api').mkdir(exist_ok=True)
 (OUT / 'api/index.mjs').write_text("export {default} from '../apps/api/cloud.mjs';\n")
 package = json.loads((ROOT / 'apps/api/package.json').read_text())

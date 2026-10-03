@@ -8,6 +8,7 @@ import {config} from './config.mjs';
 import {pool,transaction} from './db.mjs';
 import {OPERATOR} from './viewer.mjs';
 import {fail} from './service.mjs';
+import {startWorker} from './visual-marketing/jobs.mjs';
 const cfg=config(),publicRoot=resolve(fileURLToPath(new URL('../../build/site/',import.meta.url))),businessId=cfg.businessId;
 if(!businessId||!cfg.databaseUrl)throw Error('Configure a local Business and PostgreSQL before starting.');
 await transaction(businessId,OPERATOR,async c=>{await c.query("INSERT INTO businesses(id,name,slug) VALUES($1,'ธุรกิจของฉัน',$2) ON CONFLICT(id) DO NOTHING",[businessId,'local-'+businessId]);});
@@ -27,4 +28,5 @@ const server=createServer(async(req,res)=>{
  }catch(e){sendError(res,e);}
 });
 server.listen(cfg.port,'127.0.0.1',()=>console.log(`Zuri-Go local PostgreSQL workspace http://127.0.0.1:${cfg.port}`));
-for(const event of ['SIGINT','SIGTERM'])process.on(event,()=>server.close(async()=>{await pool.end();process.exit(0);}));
+const stopWorker=startWorker(businessId);
+for(const event of ['SIGINT','SIGTERM'])process.on(event,()=>server.close(async()=>{await stopWorker();await pool.end();process.exit(0);}));
