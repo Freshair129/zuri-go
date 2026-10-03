@@ -41,6 +41,8 @@ This companion records the bounded C/D verification closure authorized for PR #1
 
 ## Execution graph and rework status
 
+Current R3 rework (2026-10-04): `3425a6b` → bounded VerifyGate PASS → Sol L2 RG-R3-001 → independent QA confirmation → current-audience predicate and regression → new seal → fresh verification/review. This is the first bounded R3 repair and remains inside the approved P1 authority contract. Root owns status/Git orchestration; Luna Max owns code and independent verification; Sol Max owns L2 review. No merge/deployment action is added.
+
 ```mermaid
 flowchart TD
   N0["N0 Freeze scope and base"] --> N1["N1 RCA and verifier contract"]

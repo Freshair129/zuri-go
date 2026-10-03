@@ -125,6 +125,16 @@ test('R3 runtime DML cannot forge review, decision, or Guest-visible publication
   await admin.query('DELETE FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2',[b,p.id]);
  }
 });
+test('RG-R3-001 review function enforces current Project audience after visibility narrows',async()=>{
+ const {p,brief}=await setup('public');const d=await complete(p,brief),item=d.artifacts.find(a=>a.kind==='BUNDLE'),assessment=Object.fromEntries(CHECKS.map(c=>[c,true]));
+ await admin.query("UPDATE zuri_go.projects SET visibility='restricted' WHERE business_id=$1 AND id=$2",[b,p.id]);
+ const before=Number((await admin.query('SELECT count(*) FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])).rows[0].count);
+ await assert.rejects(as(m1,c=>c.query('SELECT * FROM zuri_go.visual_record_review($1::uuid,$2::uuid,$3::uuid,$4::jsonb)',[b,p.id,item.id,assessment])),error=>error.code==='42501');
+ const after=Number((await admin.query('SELECT count(*) FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])).rows[0].count);
+ assert.equal(after,before,'excluded Member must not append a validated review');
+ const allowed=(await as(m0,c=>c.query('SELECT * FROM zuri_go.visual_record_review($1::uuid,$2::uuid,$3::uuid,$4::jsonb)',[b,p.id,item.id,assessment]))).rows[0];
+ assert.equal(allowed.validated,true,'current Project owner must retain the review path');assert.equal(allowed.validated_pass,true);
+});
 test('AC-014-006-01 / AC-014-006-02 job lease, restart, cancellation fence and bounded execution',async()=>{
  process.env.ZURI_GO_VISUAL_ENDPOINT='http://127.0.0.1:11434';process.env.ZURI_GO_VISUAL_MODEL='qa-fake';
  try{

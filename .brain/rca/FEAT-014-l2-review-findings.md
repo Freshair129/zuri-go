@@ -1,6 +1,6 @@
 # FEAT-014 L2 findings RCA and approved R3 packet
 
-**Status:** owner-approved R3 implementation and focused worker checks complete; independent gates pending.
+**Status:** R3 candidate 3425a6b passed bounded VerifyGate; subsequent L2 found confirmed RG-R3-001. A narrow current-audience repair is in progress within the approved R3 approval-boundary scope.
 **Reviewed source:** merge-base 9e224c851b6c5c2b25232d41e183bf8623b5bb7a through HEAD 3fc3fb01ba424aa75b9006936bb0bb68d03dfc76. At that review, application source matched sealed candidate 771bbf70e437bf26cbfaa3a4ab643540155d8c59.
 **R3 source baseline:** HEAD b50841b350f1089e22b055d06dae4eec077cf90a, tree 343c0ddaf65056f7e8bd1aa20bb49c4bca625af4; working tree was clean before this packet.
 **Independent review:** .local/visual-dag/reviewgate/l2-review-3fc3fb0.md (Sol Max, whole-PR L2 REWORK).
@@ -9,6 +9,20 @@
 The earlier C/minimum-D operational exit, closure-document ReviewGate and bounded R2 delta ReviewGate remain PASS for their stated scopes. This later whole-PR L2 review returned REWORK with five findings and reopens merge readiness. L1 strict-schema review is NOT DEMONSTRATED. Findings 1-4 received targeted isolated-QA/API confirmation; finding 5 is a static documentation mismatch. At the R3 baseline no application fix had been applied.
 
 ## Owner approval and R3 design lock — 2026-10-03
+
+### R3 rework 1 — RG-R3-001 current Project audience (2026-10-04)
+
+**Symptom.** An active Member who lost current Project access could invoke `visual_record_review` directly and append a trusted passing review for a known BUNDLE.
+
+**Evidence.** Sol identified the missing check in migration 010's SECURITY DEFINER review function. VerifyGate reproduced it on sealed `3425a6b` in a new isolated QA Business: an originally public Project was made restricted, the nonowner was excluded from Project/team audiences, and the runtime role's correctly resolved Member session still inserted a validated passing review (no SQLSTATE). The function owner was `postgres` with superuser/BYPASSRLS; `zuri_go_app` had neither. Exact fixture cleanup left zero rows. Evidence: ignored `.local/visual-dag/verifygate/rg-r3-001-runtime-validation.json`.
+
+**Root cause.** The privileged review function checked active credentials and the frozen Visual audience but omitted the current Project audience check. Its owner bypassed RLS, so loading the Project inside the function did not enforce the caller's current read scope. The normal API precheck did not protect direct calls to the granted SQL function.
+
+**Detection gap.** The R3 regressions covered fabricated INSERTs and valid approval, but did not narrow current visibility after recording an originally public audience and invoke the review function under an excluded Member session.
+
+**Prevention and bounded repair.** Before further source changes, this record locks the correction: call the existing current-Project audience predicate inside `visual_record_review` using the locked Project row, in addition to the frozen-audience and active-Member checks. Add a direct-function regression for visibility narrowing, preserve valid caller/operator behavior, and verify denied calls append no trusted review. Amend unreleased migration 010; refresh only its exact function definition in isolated schema-10 QA without resetting data or applying the whole migration again. Reseal and independently verify the corrected candidate. Application/UI versions and all external authority boundaries remain unchanged; the earlier bounded PASS does not clear this later finding.
+
+**Repair checkpoint.** The worker added the fail-closed current `project_audience` predicate and one regression. Only the updated function was refreshed with CREATE OR REPLACE in isolated schema-10 QA; its SECURITY DEFINER owner remains `postgres`. The focused new test passed 1/1: the excluded Member receives SQLSTATE 42501 and adds no review, while the current owner records a validated passing review. Syntax and diff checks passed. A new seal and independent correction gates remain pending; no full-suite result is claimed for this repair yet.
 
 **Worker verification checkpoint.** The implementation is now written and isolated QA is schema 10. Pure tests and DB tests passed 11/11 each; the repeated migrator preserved the restricted INSERT and function EXECUTE grants. A fresh schema-9 fixture retained its legacy data and hashes after migration, while Guest visibility changed from one old output to zero. The generated-hash expression initially failed PostgreSQL's immutability check and rolled back; replacing the STABLE `convert_to` call with the IMMUTABLE `digest(text,text)` overload allowed migration 010 to apply. The exact transition fixture is retained in ignored `.local/fe014-r3-legacy-fixture.json` for independent checking and cleanup. Full regression/build/browser and fresh independent gates remain pending; these focused worker results do not close whole-PR review.
 

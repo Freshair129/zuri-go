@@ -133,7 +133,9 @@ BEGIN
  IF v_kind NOT IN('member','operator') THEN RAISE EXCEPTION 'APPROVAL_DENIED' USING ERRCODE='42501'; END IF;
  SELECT * INTO vp FROM zuri_go.visual_projects WHERE business_id=p_business_id AND project_id=p_project_id FOR UPDATE;
  SELECT * INTO pr FROM zuri_go.projects WHERE business_id=p_business_id AND id=p_project_id FOR UPDATE;
- IF vp.project_id IS NULL OR pr.id IS NULL OR (v_kind='member' AND (
+ IF vp.project_id IS NULL OR pr.id IS NULL
+  OR zuri_go.project_audience(p_business_id,p_project_id,pr.visibility,pr.team_id,pr.owner_member_id) IS NOT TRUE
+  OR (v_kind='member' AND (
   v_member IS NULL
   OR NOT EXISTS(SELECT 1 FROM zuri_go.members m JOIN zuri_go.member_credentials c ON c.business_id=m.business_id AND c.member_id=m.id WHERE m.business_id=p_business_id AND m.id=v_member AND m.status='active' AND c.enabled)
   OR (vp.frozen_visibility NOT IN('public','business') AND NOT(v_member=ANY(vp.frozen_member_ids))))) THEN RAISE EXCEPTION 'APPROVAL_DENIED' USING ERRCODE='42501'; END IF;
