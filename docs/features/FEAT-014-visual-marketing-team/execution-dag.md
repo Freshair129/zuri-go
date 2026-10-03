@@ -7,10 +7,11 @@ This companion records the bounded C/D verification closure authorized for PR #1
 - Worktree: `C:\Users\pc\.codex\worktrees\visual-marketing\zuri-go`
 - Branch: `feat/visual-marketing-team`
 - Starting revision: `b569cf0d3296dbec4285f71e751ea0cca2506310`
-- Candidate revision: **unsealed** until implementation and documentation gates pass; record the final commit SHA and verifier SHA-256 before independent gates run. Gates consume that immutable candidate only.
+- Tested source candidate: `771bbf70e437bf26cbfaa3a4ab643540155d8c59` (tree `cf402db6884ec54a09400a1784d58fd1992d210a`), sealed clean. This documentation-only follow-up is a later commit and does not change the tested candidate.
 - Complexity: **C-3/HIGH** for the approved FEAT-014 implementation and verification closure. The narrower extraction-verifier portability packet is **C-2/HIGH** because it changes a security-relevant verification tool without changing application behavior or architecture.
 - Risk: **HIGH**, because the extraction verifier checks source integrity and credential leakage.
-- Acceptance: focused synthetic verifier regressions pass; exact public immutable hashes, package boundaries, stable app/project IDs and all available known-secret scans remain enforced; missing private-preserved custody inputs are explicitly `NOT_RUN`; test fixtures do not write the tracked extraction report; documentation checks pass; candidate SHA and verifier hash are recorded.
+- Current outcome: **PARTIAL / BLOCKED**. R2 focused database, privilege and no-write checks passed, but N6's full `npm test` was blocked before execution by command policy. N7 did not review R2 because its N6 PASS prerequisite was unmet. This record does not claim full verification, review acceptance, merge readiness or release readiness.
+- Acceptance for a PASS closure: full regression and independent review must pass on the same sealed candidate; available source/package/secret checks and immutable output rules remain enforced; missing private-preserved custody inputs remain `NOT_RUN`; docs checks pass; candidate SHA and verifier hash are recorded.
 
 ## Nodes and dependencies
 
@@ -24,11 +25,27 @@ This companion records the bounded C/D verification closure authorized for PR #1
 | N5 — Seal candidate | N4 | Worker; no further content edits after seal | Commit the candidate locally; write full Git SHA and SHA-256 of `scripts/site/verify_extraction.py` to the ignored append-only seal record. Confirm clean status and inspect the exact diff for credentials and unrelated changes. |
 | N6 — VerifyGate | N5 | Independent VerifyGate agent; read-only | Confirm the recorded SHA/hash, rerun the specified deterministic commands against that revision, and report PASS/FAIL/BLOCKED/NOT_RUN with outputs. No edits. |
 | N7 — ReviewGate | N6 PASS | Independent ReviewGate agent; read-only | Review the exact same candidate for the narrow contract and integrity regressions. No self-review and no edits. Findings return to a new bounded worker packet. |
-| N8 — Close this scope | N6, N7 | Root orchestrator; no merge/deploy | Report C/D verification closure and unresolved formal review/custody boundaries. Hold any push until root dispatch; merge and deployment remain outside this scope. |
+| N8 — Record gate state | N6, N7 | Root orchestrator; documentation closure only, no code edits | Record the partial/blocked result and unresolved formal review/custody boundaries. This does not close feature acceptance. Push, merge and deployment remain outside this scope. |
+
+## Execution graph and rework status
+
+```mermaid
+flowchart TD
+  N0["N0 Freeze scope and base"] --> N1["N1 RCA and verifier contract"]
+  N1 --> N2["N2 Synthetic regressions"] --> N3["N3 Callable verifier and test wiring"] --> N4["N4 Focused checks"] --> S0["N5 seal 27ca9e6"]
+  S0 --> G0["N6 R0 FAIL: 6 of 46 docs tests"]
+  G0 --> R1["Rework R1: normalize fixture CRLF"] --> S1["N5 seal fef7419"]
+  S1 --> G1["N6 R1 PASS: full npm test"] --> H1["N7 R1 PARTIAL: RG-N7-001"]
+  H1 --> V1["Synthetic QA confirms payload/hash mutation; original row restored"]
+  V1 --> R2["Rework R2: limit runtime UPDATE to one-way active retraction"] --> S2["N5 seal 771bbf7"]
+  S2 --> G2["N6 R2 BLOCKED: full npm test rejected before execution; focused checks PASS"]
+  G2 --> H2["N7 R2 NOT_RUN: N6 PASS prerequisite unmet; no R2 source review"]
+  H2 --> N8["N8 documentation records partial status; feature acceptance remains open"]
+```
 
 ## Roles, model constraint and rework
 
-Worker, VerifyGate and ReviewGate run as independent `gpt-6-luna` agents at maximum reasoning. The authoring worker owns the listed files sequentially; the two gates own no files and must not edit. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. ReviewGate is independent in agent instance and task, but uses the same model family and tier by user authorization. Record this as a task-specific same-model exception; it does **not** satisfy or claim STD-005 R10's higher-tier L1/L2 review. Formal merge review remains unresolved and merge is outside this DAG.
+Worker, VerifyGate and ReviewGate run as independent `gpt-6-luna` agents at maximum reasoning (all-Luna Max, as authorized). The authoring worker owns the listed implementation files sequentially; the two gates own no files and must not edit. The root orchestrator owns scope, dispatch and status recording, and did not author implementation code. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. ReviewGate is independent in agent instance and task, but uses the same model family and tier. This task-specific same-model exception does **not** satisfy or claim STD-005 R10's higher-tier L1/L2 review. Formal merge review remains unresolved and merge is outside this DAG.
 
 A failed node stops its dependents. Allow at most two evidence-driven rework iterations, each with a changed packet tied to a specific finding; never repeat a blind retry. Each content-changing iteration invalidates the previous candidate SHA and requires resealing. An unresolved design, authority or environment gap is escalated to root as BLOCKED; it is never recorded as PASS.
 
@@ -36,13 +53,14 @@ Use statuses precisely: **PASS** means the named check ran and met its acceptanc
 
 ## Candidate seal
 
-After N4 passes and the candidate commit is created, write the SHA seal to an ignored append-only record under `.local/verification/`. Do not amend this document to insert a SHA before N6/N7, because that would change the candidate being gated. The final verification ledger may cite the sealed candidate in a later documentation-only follow-up.
+The R2 seal is recorded in the ignored append-only record under `.local/verification/`. This later documentation-only follow-up cites the already gated source candidate; it does not alter or replace that candidate.
 
-- Candidate Git SHA: pending seal record
-- `scripts/site/verify_extraction.py` SHA-256: pending seal record
-- Worktree clean at seal: pending seal record
-- VerifyGate result: pending
-- ReviewGate result: pending
+- Candidate Git SHA: `771bbf70e437bf26cbfaa3a4ab643540155d8c59`
+- Candidate tree: `cf402db6884ec54a09400a1784d58fd1992d210a`
+- `scripts/site/verify_extraction.py` SHA-256: `43058E324FD368CAD9AA1324066C857D2CFC2882231F7FFFE8D3B8A04382E0C4`
+- Worktree clean at seal: **PASS**
+- VerifyGate R2: **BLOCKED** overall; focused checks PASS, full suite NOT_RUN after process-creation policy rejection
+- ReviewGate R2: **NOT_RUN / BLOCKED_BY_N6**; no R2 source review
 
 ## Evidence-driven rework R1
 
@@ -64,6 +82,6 @@ This is the second and final evidence-driven rework iteration. The parent activi
 | R2.2 — Apply additive ACL/policy | R2.1 | Worker; `apps/api/migrations/009_visual_public_output_immutability.sql`, `apps/api/migrate.mjs` | **PASS** — schema 9 applied only to isolated QA; repeat `npm run db:migrate` preserved the grant reconciliation. Runtime UPDATE is column-limited to `active`; RLS accepts only active-to-inactive retraction with Business/project scope. No other table grant or policy changed. |
 | R2.3 — Prove restricted-role contract | R2.2 | Worker; `apps/api/test/visual-marketing-db.test.mjs` | **PASS** — a visible non-owner cannot change payload/hash or approval/artifact references and cannot reactivate; owner-approved output creation and new-brief retraction still pass. Synthetic rows only. |
 | R2.4 — Focused verification and seal | R2.3 | Worker; focused database/docs checks and ignored seal | **PASS** — DB tests 8/8, docs tests 47/47, docs validation 0 errors / 166 baseline warnings, views 11/0 drift, migration syntax and grant booleans verified. Record candidate SHA/tree in ignored evidence after commit; freeze source edits at seal. |
-| R2.5 — Independent gates | R2.4 | VerifyGate then ReviewGate; read-only | Pending. Consume the exact sealed SHA, verify ACL and RLS behavior plus acceptance tests, and report PASS/FAIL/BLOCKED/NOT_RUN. A failure stops closure; no third implementation iteration is authorized by this packet. |
+| R2.5 — Independent gates | R2.4 | VerifyGate then ReviewGate; read-only | **BLOCKED / NOT_RUN** — VerifyGate confirmed focused DB 8/8, runtime privilege and no-write checks, but the required full `npm test` was rejected by outer shell process-creation policy before execution (one attempt; no retry wrapper). ReviewGate is **NOT_RUN / BLOCKED_BY_N6** and did not inspect R2 source. No third implementation iteration is authorized by this packet. |
 
-Current state: N7 PARTIAL/RG-N7-001 confirmed; R2.1–R2.4 worker acceptance is PASS; the candidate seal is recorded in ignored evidence after commit, and independent gates remain pending. Candidate `fef7419` is superseded for closure. The strict STD-005 higher-tier review remains unresolved because the user-authorized agents use the same model family/tier; operational L0 results do not satisfy L1/L2.
+Current state: R2 worker checks passed. N6 is **BLOCKED** overall: focused DB/ACL/no-write checks passed, but `npm test` was rejected once at process creation with only the reason “blocked by policy” and was not retried. N7 is **NOT_RUN / BLOCKED_BY_N6**; R2 source was not inspected. The existing QA container was found exited (255) after host reset, restarted after root authorization and left running. Temporary QA server session 96500 was stopped; port 4319 was free, and no process PID was captured. No user or cloud database was migrated. All agents used Luna Max, so STD-005 higher-tier review remains unresolved. N8 records status only; feature acceptance remains open.

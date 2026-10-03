@@ -1,8 +1,8 @@
 # FEAT-014 — implementation verification
 
-Owner approved Phase A/B on 2026-10-02. This draft implements the C manual/local-provider vertical slice and minimum D registry/dispatcher. E/F execution, hosted worker and image storage remain unavailable by design. This is not production or merge acceptance.
+Owner approved Phase A/B on 2026-10-02. This record covers the C manual/local-provider vertical slice and minimum D registry/dispatcher. E/F execution, hosted worker and image storage remain unavailable by design. The sealed source candidate is **`771bbf70e437bf26cbfaa3a4ab643540155d8c59`** (tree `cf402db6884ec54a09400a1784d58fd1992d210a`); this documentation-only follow-up is a later commit and does not change the tested source candidate. R2 status is **PARTIAL / BLOCKED**, not production, merge or release acceptance.
 
-Version diff: application **0.5.1 → 0.5.1** (no release); feature **proposed 0.1.0 → implemented first slice 0.1.0**; migration source **007 → 008**; isolated QA database **7 → 8**. Existing local user and cloud databases were not migrated. Protected runtime hash and stable app ID remain unchanged.
+Version diff: application **0.5.1 → 0.5.1** (no release); feature **0.1.0 → 0.1.0**; migration source **008 → 009**; isolated synthetic QA database **8 → 9**. Migration 009 was applied only to isolated QA. Existing local user and cloud databases were not migrated. Protected runtime hash and stable app ID remain unchanged.
 
 ## Executable test bindings
 
@@ -44,20 +44,22 @@ Test: `tests/visual-marketing/browser-checklist.md`
 
 | Check | Status | Evidence / boundary |
 |---|---|---|
-| Fresh migrations 001–008 | PASS | Separate PostgreSQL 17 QA database; runtime role has no superuser/BYPASSRLS |
-| Focused Visual Marketing tests | PASS | 16 tests: contracts, real PostgreSQL, concurrency, lease fencing, cancel/retry, public retraction, strategy gate, QA and checksums |
-| Hosted handler local tests | PASS | 13 tests including Guest mutation denial and EXECUTOR_UNAVAILABLE; no hosted invocation |
-| Full regression | PARTIAL / command exit 1 | 199/199 Node tests and 9/9 Python packaging tests passed; extraction check requires unavailable private production handover files |
-| Build/protected runtime | PASS | Both local and hosted packages; six explicitly allowlisted domain modules; no protected manifest change |
-| Browser | PASS with download limitation | QA manual brief → Research → Strategy → Concept → Copy → Visual prompt → QA → operator approval and reload; desktop/narrow screenshots; download file saving UNVERIFIED because browser event tool timed out; no provider used |
-| Real provider/image quality | NOT RUN | No feature-specific model configuration; image provider unavailable |
-| Hosted deployment / production | NOT RUN | No deployment, promotion, cloud migration, credential provisioning or user-data mutation |
-| Independent L1/L2 review | NOT RUN | Required before merge under STD-005 R10; PR remains draft and this turn has no merge authority |
+| R1 full regression on `fef741976664e64cd38f29a6acf92fcd633d6f4f` | PASS — historical | 199/199 Node tests, 15/15 site tests, 47/47 docs tests, metrics and extraction checks; docs validation 0 errors / 166 baseline warnings; views 11 / 0 drift. This candidate is superseded and is not R2 evidence. |
+| R2 worker focused checks on `771bbf70e437bf26cbfaa3a4ab643540155d8c59` | PASS | Restricted-role DB tests 8/8; docs tests 47/47; docs validation 0 errors / 166 baseline warnings; views 11 / 0 drift; migration syntax and schema-9 grant reconciliation passed. Synthetic QA only. |
+| R2 VerifyGate focused database and privilege checks | PASS | DB regression 8/8; `zuri_go_app` has no table UPDATE, has `active` column UPDATE, and lacks `payload` and `decision_id` column UPDATE. Seal SHA and tree match. |
+| R2 extraction check | PASS with custody gap | `--no-write` checked 236 unchanged source files and 61 deployment files; available known-secret scan checked 2 values and passed; protected extraction report stayed unchanged. Private custody is **NOT_RUN**: 0 of 5 inputs available. |
+| R2 full `npm test` / N6 | **BLOCKED / NOT_RUN** | One attempt was rejected at outer-shell process creation with the generic policy reason “blocked by policy”; the command did not execute and no retry wrapper was used. The historical R1 PASS does not satisfy R2. |
+| R2 ReviewGate / N7 | **NOT_RUN / BLOCKED_BY_N6** | N6 PASS was required. ReviewGate did not inspect R2 source; no review PASS is claimed. |
+| QA runtime recovery | Recorded | The existing isolated QA container was found exited (255), then restarted after root authorization and left running. Temporary QA server session 96500 on port 4319 was stopped; listener was free. Its OS process PID was not captured. No user or cloud database was used or migrated. |
+| Browser download | PASS — prior app source only | Saved 407-byte `visual-prompt.txt`, SHA-256 `394A76B79BDC41AFC7C55A970300C18CAFEF0963CF3818B7E962EEAE2F7CFB65`, while app source was `b569cf0d3296dbec4285f71e751ea0cca2506310`. Not repeated on R2. |
+| Real provider / image quality | NOT RUN | No feature-specific model endpoint/model configuration; provider behavior and image quality are unverified. |
+| Hosted deployment / production | NOT RUN | No deployment, promotion, cloud migration, credential provisioning or user-data mutation. |
+| Formal STD-005 higher-tier review | BLOCKED | Worker, VerifyGate and ReviewGate used independent all-Luna Max agents. This operational separation does not meet the higher-tier L1/L2 model-diversity requirement in STD-005 R10. |
 
-The full extraction command is not reported green: canonical Git bytes resolved the initial Windows CRLF mismatch, then it stopped on `.local/member-access/production/index.md`. Private production handovers are deliberately absent from this worktree. The separate packaging checks inspect all 61 deployment files and do not include private data. See [RCA](../../../.brain/rca/FEAT-014-verification-findings.md).
+The R2 full regression is not green or failed by test assertion: it was **not run** because process creation was blocked. R2 no-write extraction checks passed for available files, but absent private handover inputs remain **NOT_RUN** and do not prove that every production credential is excluded. See the [RCA](../../../.brain/rca/FEAT-014-verification-findings.md) and the [public-output integrity RCA](../../../.brain/rca/FEAT-014-public-output-integrity.md).
 
 ## Remaining gates
 
-Independent review before merge; real local-model quality and timeout/restart behavior with the chosen installed model; hosted execution design/authorization; binary image providers/storage; E variants and F performance learning. No production readiness claim follows from local tests. Live credentials and user records were never used in tests.
+R2 full regression and an independent source review remain open before merge. Formal higher-tier review under STD-005 R10, real local-model quality and timeout/restart behavior, hosted execution design/authorization, binary image providers/storage, E variants and F performance learning also remain open. No production readiness claim follows from local evidence. Live credentials and user records were not used in the recorded QA checks.
 
-Documentation checks: `npm run docs:validate` PASS, 0 errors / unchanged 166 baseline warnings; `npm run docs:views` PASS, 11 views / 0 drift. Full regression exit 1 is retained as FAIL (environment prerequisite), not rewritten as PASS.
+Documentation checks on the sealed R2 source: `npm run docs:validate` PASS, 0 errors / 166 baseline warnings; `npm run docs:views` PASS, 11 views / 0 drift. This later documentation-only commit will be validated separately; it does not replace the sealed tested source SHA above.
