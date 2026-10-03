@@ -1,8 +1,12 @@
 # FEAT-014 verification-closure execution DAG
 
-This companion records the bounded C/D verification closure authorized for PR #1. The approved FEAT-014 feature, SDD-014 and requirements remain canonical. This file adds no requirement or stable artifact ID. Scope is existing C behavior and minimum D registry/dispatcher; E/F, user-local/cloud migration, production, deployment and merge are out of scope. One additive schema migration was allowed only on the isolated synthetic QA database for R2 validation.
+This companion records the bounded C/D verification closure authorized for PR #1; R3 separately authorized migration 010 on isolated synthetic QA only. The approved FEAT-014 feature, SDD-014 and requirements remain canonical. This file adds no requirement or stable artifact ID. User-local/cloud migration, production, deployment and merge remain out of scope.
 
-## Execution record
+## Current R3 correction — 2026-10-04
+
+The active application candidate is `8592f21b337c1e6c3217623cc825cc0c78808b6f` (tree `544bcdcc52d08ea870ba3e5fc355431280fbe3c7`), sealed clean after the narrow RG-R3-001 repair. Independent focused DB, full regression and build passed on a separate exact-byte snapshot; cleanup left zero QA rows, the owned server stopped and port 4319 free. Sol L2 returned PASS_BOUNDED_R3 for the approved slice. Root owns status/Git orchestration and authored no application code. The canonical result is [verification.md](verification.md).
+
+## Historical R2 execution record
 
 - Worktree: `C:\Users\pc\.codex\worktrees\visual-marketing\zuri-go`
 - Branch: `feat/visual-marketing-team`
@@ -38,10 +42,11 @@ This companion records the bounded C/D verification closure authorized for PR #1
 | R3.3 — Minimal implementation and parent-doc reconciliation | R3.2 | Two Luna Max workers; disjoint ownership | **Implemented.** Migration 010, approval-chain functions, job/run consistency, source references, scoped status URL and parent documentation are integrated. |
 | R3.4 — Focused checks, docs and seal | R3.3 | Integration worker; designated isolated QA only | **Focused checks PASS; seal pending.** Pure and DB suites passed 11/11 each. Schema 9→10, legacy preservation/Guest quarantine and migrator-rerun ACL checks passed. Retained transition fixture awaits independent checking and cleanup. Full suite/build/browser belong to R3.5. |
 | R3.5 — Independent VerifyGate and Sol L2 ReviewGate | R3.4 | Independent Luna Max VerifyGate, then Sol Max ReviewGate | Pending immutable seal. Full regression/build, focused browser and legacy transition checks precede L2. Confirmed regressions return to a bounded repair packet. No merge or deployment. |
+| R3.6 — RG-R3-001 repair and fresh gates | Sol L2 finding on seal 3425a6b | Luna Max worker; VerifyGate; Sol Max ReviewGate | **PASS — 2026-10-04.** Current Project audience check and direct SQL regression; seal `8592f21`; VerifyGate 12/12 DB, 206/206 Node + 15 site + 47 docs, build exit 0, zero fixture residue; Sol L2 PASS_BOUNDED_R3. |
 
 ## Execution graph and rework status
 
-Current R3 rework (2026-10-04): `3425a6b` → bounded VerifyGate PASS → Sol L2 RG-R3-001 → independent QA confirmation → current-audience predicate and regression → new seal → fresh verification/review. This is the first bounded R3 repair and remains inside the approved P1 authority contract. Root owns status/Git orchestration; Luna Max owns code and independent verification; Sol Max owns L2 review. No merge/deployment action is added.
+Current R3 rework (2026-10-04): `3425a6b` → bounded VerifyGate PASS → Sol L2 RG-R3-001 → independent QA confirmation → current-audience predicate and regression → seal `8592f21` → VerifyGate PASS_BOUNDED_R3_REPAIR → Sol L2 PASS_BOUNDED_R3. This is the first bounded R3 repair and remains inside the approved P1 authority contract. Root owns status/Git orchestration; Luna Max owns code and independent verification; Sol Max owns L2 review. No merge/deployment action is added.
 
 ```mermaid
 flowchart TD
@@ -65,11 +70,15 @@ flowchart TD
   R32 --> R33["R3.3 migration 010 + four focused behavior fixes + parent docs"]
   R33 --> R34["R3.4 isolated QA, build/docs, clean seal"]
   R34 --> R35["R3.5 VerifyGate then Sol L2 ReviewGate"]
+  R35 --> R36["RG-R3-001 current Project audience guard + regression"]
+  R36 --> S36["Seal 8592f21"]
+  S36 --> G36["VerifyGate PASS: DB 12/12; full tests; build; cleanup"]
+  G36 --> L36["Sol L2 PASS_BOUNDED_R3"]
 ```
 
 ## Roles, model constraint and rework
 
-The operational authoring worker, VerifyGate and bounded R2 ReviewGate used independent `gpt-6-luna` agents at maximum reasoning, as authorized. A separate independent Sol Max reviewer later conducted the whole-PR L2 review at HEAD 3fc3fb0 and returned REWORK. The root orchestrator owns scope, dispatch and status recording, and did not author application code. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. L1 strict-schema review remains NOT DEMONSTRATED; the L2 result is REWORK, and merge readiness is reopened.
+The operational authoring worker and VerifyGate used independent `gpt-6-luna` agents at maximum reasoning, as authorized. Sol Max first returned REWORK on the whole-PR candidate, then PASS_BOUNDED_R3 after the approved repairs on seal `8592f21`. Root owns scope, dispatch and status recording and authored no application code. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. L1 strict-schema review remains NOT DEMONSTRATED.
 
 A failed node stops its dependents. The original R1/R2 implementation limit was two evidence-driven iterations; the owner later authorized the separate R3 packet recorded above. Every content-changing iteration invalidates the previous candidate SHA and requires resealing. An unresolved design, authority or environment gap is escalated to root as BLOCKED; it is never recorded as PASS.
 
@@ -120,4 +129,4 @@ Historical operational state: C/minimum-D exit and closure-record ReviewGate pas
 
 Independent Sol Max L2 reviewed merge-base `9e224c851b6c5c2b25232d41e183bf8623b5bb7a` through HEAD `3fc3fb01ba424aa75b9006936bb0bb68d03dfc76` and returned **REWORK** with five findings. Application source remains the sealed `771bbf7` candidate; the reviewed HEAD adds documentation only. VerifyGate confirmed four runtime/API paths in isolated QA: an invalid public-output INSERT was Guest-readable after restricted-role SQL (no HTTP exploit; guessed POST paths returned 404); empty-reference approved claims passed the API and QA; exhausted/stale and new-Brief job transitions left linked runs running; and returned `status_url` did not resolve (handler 403, canonical scoped GET 200). Parent-doc status/schema drift is statically confirmed. Evidence: `.local/visual-dag/reviewgate/l2-review-3fc3fb0.md` and `.local/visual-dag/verifygate/l2-public-insert-validation.json`.
 
-The owner-approved C-3/HIGH R3 implementation and focused worker checks are complete; independent gates remain pending. Two Luna Max workers divided SQL/design and P2/service work, then transferred sole integration ownership before QA. Root coordinated and updated status documents without authoring application code. The source schema and isolated QA advanced 9→10; application remains 0.5.1, feature remains 0.1.0, and SDD-014 advanced 0.1.0→0.2.0. L1 strict-schema review is NOT DEMONSTRATED; whole-PR merge readiness remains REWORK until fresh gates are recorded. User/cloud schema 7 is a last-recorded baseline, not live-inspected or migrated here. Real-provider, hosted and production checks remain NOT RUN.
+The owner-approved C-3/HIGH R3 implementation and independent gates are complete for the bounded C/manual + minimum-D slice. Two Luna Max workers divided the implementation and integration ownership before QA; root orchestrated and updated status documentation without authoring application code. Isolated QA advanced schema 9→10; application remains 0.5.1, feature remains 0.1.0, and SDD-014 is 0.2.0. L1 strict-schema review is NOT DEMONSTRATED. User/cloud schema 7 is a last-recorded baseline, not live-inspected or migrated here. Real-provider, hosted and production checks remain NOT RUN.
