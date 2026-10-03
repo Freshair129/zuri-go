@@ -1,6 +1,6 @@
 # FEAT-014 verification-closure execution DAG
 
-This companion records the bounded C/D verification closure authorized for PR #1. The approved FEAT-014 feature, SDD-014 and requirements remain canonical. This file adds no requirement or stable artifact ID. Scope is existing C behavior and minimum D registry/dispatcher; E/F, user-local/cloud migration, production, deployment and merge are out of scope. One additive schema migration is allowed only on the isolated synthetic QA database for R2 validation.
+This companion records the bounded C/D verification closure authorized for PR #1. The approved FEAT-014 feature, SDD-014 and requirements remain canonical. This file adds no requirement or stable artifact ID. Scope is existing C behavior and minimum D registry/dispatcher; E/F, user-local/cloud migration, production, deployment and merge are out of scope. One additive schema migration was allowed only on the isolated synthetic QA database for R2 validation.
 
 ## Execution record
 
@@ -8,10 +8,15 @@ This companion records the bounded C/D verification closure authorized for PR #1
 - Branch: `feat/visual-marketing-team`
 - Starting revision: `b569cf0d3296dbec4285f71e751ea0cca2506310`
 - Tested source candidate: `771bbf70e437bf26cbfaa3a4ab643540155d8c59` (tree `cf402db6884ec54a09400a1784d58fd1992d210a`), sealed clean. This documentation-only follow-up is a later commit and does not change the tested candidate.
+- Pushed branch HEAD when closeout began: `feat/visual-marketing-team` / `cc03af66e533ad9bc4a788912df91a8bd389f25e`. User-authorized push to Draft PR #1 was completed through `cc03af6`; this documentation-only closeout follows it and does not change the tested source. No merge or deployment occurred.
 - Complexity: **C-3/HIGH** for the approved FEAT-014 implementation and verification closure. The narrower extraction-verifier portability packet is **C-2/HIGH** because it changes a security-relevant verification tool without changing application behavior or architecture.
 - Risk: **HIGH**, because the extraction verifier checks source integrity and credential leakage.
-- Current outcome: **R2 operational gates PASS** on the sealed source candidate. The first N6 attempt was blocked before execution and remains in the historical record; the resumed full suite passed, followed by a bounded R2 delta review. Formal STD-005 higher-tier review remains blocked, and provider, hosted and production checks remain open.
-- Acceptance for a PASS closure: full regression and independent review must pass on the same sealed candidate; available source/package/secret checks and immutable output rules remain enforced; missing private-preserved custody inputs remain `NOT_RUN`; docs checks pass; candidate SHA and verifier hash are recorded.
+- Current outcome: **C/minimum-D operational exit and closure-document ReviewGate PASS**, including the delayed-fake-provider NFR probe. The first R2 N6 attempt was blocked before execution and remains historical; resumed N6, isolated build, R2 delta ReviewGate and NFR evidence passed. Formal STD-005 higher-tier review remains BLOCKED before merge; provider, private-custody, hosted and production checks retain their separate NOT RUN boundaries.
+- Acceptance for the operational phase record: full regression, isolated build, NFR measurement and scoped independent review are recorded on the sealed source. Manual browser evidence is carried from app source `b569cf0`; UI paths are unchanged through `771bbf7`, but browser acceptance was not rerun on R2. Available source/package/secret checks and immutable output rules remain enforced; absent private-preserved custody inputs remain `NOT_RUN`; docs checks pass; source SHA and verifier hash are recorded. This does not satisfy the separate formal pre-merge review gate.
+- Runtime interruption and recovery: after a host reset the existing isolated QA container was restarted. Resumed N6 used the sealed source with docs HEAD `a111d1c`; its temporary server PID 19800 / session 47820 was stopped and port 4319 was free. The container remains the isolated QA database. No user or cloud database was used. The R2 ReviewGate inspected only the `fef7419..771bbf7` delta; earlier C/D review coverage was carried forward.
+- NFR-014-001: validated command `node .local/visual-dag/verifygate/nfr014-001-probe-20261003.mjs` PASS on application source `771bbf7` in isolated QA. The harness reads ignored `.local/config.json`, validates the designated QA target and supplies local `ZURI_GO_*` settings without recording their values. With an 8-second delayed fake HTTP provider, 20/20 enqueue requests returned HTTP 202 (p95 91.66 ms, max 91.72 ms); 20/20 status reads returned HTTP 200 with the requested id and queued state (p95 19.94 ms, max 20.07 ms). The application pool held zero open transactions during provider wait. Evidence: `.local/visual-dag/verifygate/nfr014-001-probe-20261003-validated.json`. This is not real-model quality or process-restart evidence.
+- Final cleanup PASS: exactly 3 synthetic Businesses, 63 Projects and child rows removed in FK-safe order; 0 remained. No owned ephemeral server process remained, and cleanup did not start a server on 4319 or 4329; existing preview state is unchanged. The isolated QA container remains up. Evidence: `.local/visual-dag/verifygate/nfr014-001-probe-cleanup-20261003.json`.
+- Isolated `npm run build` exited 0 on the sealed application source with docs HEAD `cc03af6`; evidence: `.local/visual-dag/verifygate/build-feat014-cc03af6.raw.log`.
 
 ## Nodes and dependencies
 
@@ -25,7 +30,8 @@ This companion records the bounded C/D verification closure authorized for PR #1
 | N5 — Seal candidate | N4 | Worker; no further content edits after seal | Commit the candidate locally; write full Git SHA and SHA-256 of `scripts/site/verify_extraction.py` to the ignored append-only seal record. Confirm clean status and inspect the exact diff for credentials and unrelated changes. |
 | N6 — VerifyGate | N5 | Independent VerifyGate agent; read-only | Confirm the recorded SHA/hash, rerun the specified deterministic commands against that revision, and report PASS/FAIL/BLOCKED/NOT_RUN with outputs. No edits. |
 | N7 — ReviewGate | N6 PASS | Independent ReviewGate agent; read-only | Review the exact same candidate for the narrow contract and integrity regressions. No self-review and no edits. Findings return to a new bounded worker packet. |
-| N8 — Record gate state | N6, N7 | Root orchestrator; documentation closure only, no code edits | Record the partial/blocked result and unresolved formal review/custody boundaries. This does not close feature acceptance. Push, merge and deployment remain outside this scope. |
+| N8 — Record operational state and authorized push | N6, N7, NFR probe, isolated build | Root orchestrator; documentation closure only, no code edits | Record C/minimum-D operational PASS and unresolved merge/custody/provider boundaries. User-authorized push to Draft PR #1 was completed through `cc03af6`; no merge or deployment. |
+| N9 — Review closure record | N8 | Independent ReviewGate; read-only | **PASS — 2026-10-03.** The six-document closure update has no remaining C/minimum-D requirement. This closes the bounded phase evidence record only; STD-005 L1/L2 review remains a separate before-merge gate. |
 
 ## Execution graph and rework status
 
@@ -40,8 +46,11 @@ flowchart TD
   V1 --> R2["Rework R2: limit runtime UPDATE to one-way active retraction"] --> S2["N5 seal 771bbf7"]
   S2 --> G2a["N6 first attempt BLOCKED: process policy; command not executed"]
   G2a --> G2b["N6 resumed PASS: npm test 200/200 Node, 15/15 site, 47/47 docs"]
-  G2b --> H2["N7 R2 delta PASS: no confirmed new issue; RG-N7-001 closed"]
-  H2 --> N8["N8 records operational gates PASS; formal higher-tier review remains BLOCKED"]
+  G2b --> B2["Isolated npm run build PASS: exit 0"]
+  B2 --> H2["N7 R2 delta PASS: no confirmed new issue; RG-N7-001 closed"]
+  H2 --> Q1["NFR-014-001 PASS: enqueue p95 91.66 ms; status p95 19.94 ms; 20 clients"]
+  Q1 --> N8["N8 records C/min-D operational PASS; authorized Draft PR push through cc03af6"]
+  N8 --> N9["N9 closure-record ReviewGate PASS; formal STD-005 L1/L2 remains BLOCKED"]
 ```
 
 ## Roles, model constraint and rework
@@ -62,6 +71,10 @@ The R2 seal is recorded in the ignored append-only record under `.local/verifica
 - Worktree clean at seal: **PASS**
 - VerifyGate R2 resumed: **PASS** — `npm test` exit 0; 200/200 Node, 15/15 site, 47/47 docs; docs validation 0 errors / 166 baseline warnings; views 11 / 0 drift
 - ReviewGate R2 delta: **PASS** — no confirmed issue in the R2 delta; RG-N7-001 closed within the reviewed scope
+- Isolated build: **PASS** — `npm run build` exit 0 on application source `771bbf7`; docs HEAD `cc03af6`
+- NFR-014-001: **PASS** — 20 enqueues HTTP 202, p95 91.66 ms / max 91.72 ms; 20 status reads HTTP 200 with matching id/state, p95 19.94 ms / max 20.07 ms; 0 application-pool transactions during 8-second fake-provider wait
+- C/minimum-D operational phase exit: **PASS**; closure-record ReviewGate: **PASS**, 2026-10-03
+- Draft PR #1 push: user-authorized and completed through `cc03af6`; merge and deployment were not performed
 - Initial VerifyGate R2 policy block: retained as historical evidence in `.local/visual-dag/verifygate/verifygate-r2.json`; resumed evidence supersedes only its full-suite status
 - Docs HEAD verified by resumed N6: `a111d1c7a375cfc2d5db7d854c27e8ceb14ceb7d` (tree `4d7a5a6c598fa757c91dcb50ad64a3058356fab9`); this later docs-only follow-up has a separate commit SHA
 
@@ -87,4 +100,4 @@ This is the second and final evidence-driven rework iteration. The parent activi
 | R2.4 — Focused verification and seal | R2.3 | Worker; focused database/docs checks and ignored seal | **PASS** — DB tests 8/8, docs tests 47/47, docs validation 0 errors / 166 baseline warnings, views 11/0 drift, migration syntax and grant booleans verified. Candidate SHA/tree are sealed in ignored evidence; source edits stopped at the seal. |
 | R2.5 — Independent gates | R2.4 | VerifyGate then ReviewGate; read-only | **PASS within operational scope** — resumed VerifyGate ran the full suite on sealed candidate `771bbf7`; ReviewGate then reviewed only the R2 delta and confirmed the immutable-output ACL, one-way retraction and regression evidence. No new issue was confirmed and RG-N7-001 is closed. The prior process-policy block remains historical; no third implementation iteration is authorized. |
 
-Current state: R2 worker and operational gate checks passed. Resumed N6 ran `npm test` successfully; N7 passed a bounded review of the R2 delta, carrying forward prior C/D coverage rather than re-auditing the whole PR. The existing QA container was restarted after host reset and remains running; temporary QA server PID 19800, session 47820, was stopped and port 4319 was free. No user or cloud database was migrated. All agents used Luna Max, so STD-005 higher-tier review remains blocked. Provider execution and production acceptance remain open.
+Current state: C/minimum-D operational exit criteria and closure-record ReviewGate passed. Resumed N6 ran `npm test`; the isolated build, validated NFR probe and bounded N7 R2 delta review also passed. N7 carried forward prior C/D review coverage rather than re-auditing the whole PR. The existing QA container was restarted after host reset and remains running; temporary QA server PID 19800, session 47820, was stopped and its N6 gate recorded port 4319 free. Final cleanup removed the synthetic QA records and left no owned ephemeral server process. No user or cloud database was migrated. All agents used Luna Max, so formal STD-005 higher-tier review remains blocked before merge. Real provider, private custody, hosted and production acceptance remain open.

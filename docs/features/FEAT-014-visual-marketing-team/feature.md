@@ -30,6 +30,10 @@ A marketing owner creates a structured brief inside Zuri-Go, follows research, c
 
 The first implementation PR covers C and minimum D registry/dispatcher. E/F contracts are designed here, but their execution is a later increment; unavailable actions are disabled. No publishing, paid activation, new object store, vector database, imported dashboard, Python agent runtime or required external MCP server.
 
+## First-slice status — 2026-10-03
+
+Phase A/B is approved. The C manual workflow and browser flow are implemented; the bounded D registry/dispatcher and R2 integrity correction passed their tests and scoped delta review. The isolated build and NFR-014-001 20-client p95 measurement passed. C/minimum-D operational exit criteria and independent closure-document review are **PASS**. The phase status and original first-PR acceptance matrix are maintained in the [canonical verification record](verification.md). E/F execution remains deferred, and this status does not authorize merge, hosted execution, migration or production deployment.
+
 ## Ownership and peer impact
 
 DOM-VIS owns creative production records. Campaign, Project, Task and Member remain existing entities referenced by UUID. CreativeProject is a one-to-one production extension of projects.id, not a second project master. Users select/create the ordinary Project using the existing UI first. CreativeTask is a stage assignment with an optional existing task_id, not a new Task table. First-slice code reads peer contracts and never writes peer aggregates, so no cross-domain feature parts are needed.

@@ -94,6 +94,6 @@ Evidence is cited but never traced to. Paths inside it describe where files live
 - The 0.4.1 extraction changed source layout and operational paths only; it did not reinterpret KPI formulas, targets, RACI, MoSCoW, Guest policy or Member identity.
 - Approved text was not edited to follow the rename: a moved document may still name a sibling by its former file name (for example `campaign-mission-control-verification.md`). The Documents table of each `feature.md` and the crosswalk map old names to current files.
 
-## Proposed Visual Marketing
+## Visual Marketing
 
-[FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) is the Phase A/B approval package, not implemented behavior. Start with [ARCH-004](architecture/ARCH-004-visual-marketing.md) and the pinned [upstream analysis](architecture/visual-marketing/upstream-analysis.md).
+[FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) and its Phase A/B architecture package are approved. The first PR implements the manual C workflow and minimum D registry/dispatcher; operational phase exit evidence and closure review are in the [verification record](features/FEAT-014-visual-marketing-team/verification.md). Formal higher-tier review remains a separate before-merge gate; this does not claim production deployment or cloud migration. Start with [ARCH-004](architecture/ARCH-004-visual-marketing.md) and the pinned [upstream analysis](architecture/visual-marketing/upstream-analysis.md).

@@ -27,6 +27,6 @@ Current source version: 0.4.2 (layout introduced in 0.4.1). Deployment evidence:
 
 The Business Overview, Guest access, Member identity, single-code login and logo specifications that used to live here are feature documents now — see the [documentation map](../README.md) and [features/](../features/). The links above already point to their new locations.
 
-## Proposed Visual Marketing architecture
+## Visual Marketing architecture
 
-[ARCH-004](ARCH-004-visual-marketing.md), [ADR-006](decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries) and the [data amendment](visual-marketing/data-model.md) are proposed for FEAT-014. They do not change approved behavior or claim deployment.
+[ARCH-004](ARCH-004-visual-marketing.md), [ADR-006](decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries), SDD-014 and the [data amendment](visual-marketing/data-model.md) are approved for FEAT-014. The first PR implements the manual C workflow and minimum D registry/dispatcher on local SRV-002. See the [verification record](../features/FEAT-014-visual-marketing-team/verification.md) for operational phase evidence and closure review; formal higher-tier review remains a separate before-merge gate. This does not claim hosted execution or production deployment.
