@@ -1,6 +1,6 @@
 # FEAT-014 L2 findings RCA and approved R3 packet
 
-**Status:** Sealed repair `8592f21` passed independent VerifyGate and bounded Sol L2; all five original R3 findings and RG-R3-001 are closed for the approved C/manual + minimum-D scope. L1 strict-schema review remains NOT DEMONSTRATED; see the current [verification record](../../docs/features/FEAT-014-visual-marketing-team/verification.md).
+**Status:** Sealed repair `8592f21` passed independent VerifyGate and bounded Sol L2; all five original R3 findings and RG-R3-001 are closed for the approved C/manual + minimum-D scope. Under STD-005 R8 E6, the authorization-sensitive packet was ineligible for local-model L1 and escalated to the Architect's L2 tier, which passed under R10. See the current [verification record](../../docs/features/FEAT-014-visual-marketing-team/verification.md).
 **Reviewed source:** merge-base 9e224c851b6c5c2b25232d41e183bf8623b5bb7a through HEAD 3fc3fb01ba424aa75b9006936bb0bb68d03dfc76. At that review, application source matched sealed candidate 771bbf70e437bf26cbfaa3a4ab643540155d8c59.
 **R3 source baseline:** HEAD b50841b350f1089e22b055d06dae4eec077cf90a, tree 343c0ddaf65056f7e8bd1aa20bb49c4bca625af4; working tree was clean before this packet.
 **Independent review:** .local/visual-dag/reviewgate/l2-review-3fc3fb0.md (Sol Max, whole-PR L2 REWORK).

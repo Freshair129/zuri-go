@@ -78,7 +78,7 @@ flowchart TD
 
 ## Roles, model constraint and rework
 
-The operational authoring worker and VerifyGate used independent `gpt-6-luna` agents at maximum reasoning, as authorized. Sol Max first returned REWORK on the whole-PR candidate, then PASS_BOUNDED_R3 after the approved repairs on seal `8592f21`. Root owns scope, dispatch and status recording and authored no application code. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. L1 strict-schema review remains NOT DEMONSTRATED.
+The operational authoring worker and VerifyGate used independent `gpt-6-luna` agents at maximum reasoning, as authorized. Sol Max first returned REWORK on the whole-PR candidate, then PASS_BOUNDED_R3 after the approved repairs on seal `8592f21`. Root owns scope, dispatch and status recording and authored no application code. VerifyGate is an operational evidence role, not the deterministic L0 tool itself. Under STD-005 R8 E6, the authorization-sensitive packet was ineligible for local-model L1 and escalated to the Architect's L2 tier; L2 passed.
 
 A failed node stops its dependents. The original R1/R2 implementation limit was two evidence-driven iterations; the owner later authorized the separate R3 packet recorded above. Every content-changing iteration invalidates the previous candidate SHA and requires resealing. An unresolved design, authority or environment gap is escalated to root as BLOCKED; it is never recorded as PASS.
 
