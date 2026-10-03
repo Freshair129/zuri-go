@@ -10,7 +10,7 @@ This companion records the bounded C/D verification closure authorized for PR #1
 - Tested source candidate: `771bbf70e437bf26cbfaa3a4ab643540155d8c59` (tree `cf402db6884ec54a09400a1784d58fd1992d210a`), sealed clean. This documentation-only follow-up is a later commit and does not change the tested candidate.
 - Complexity: **C-3/HIGH** for the approved FEAT-014 implementation and verification closure. The narrower extraction-verifier portability packet is **C-2/HIGH** because it changes a security-relevant verification tool without changing application behavior or architecture.
 - Risk: **HIGH**, because the extraction verifier checks source integrity and credential leakage.
-- Current outcome: **PARTIAL / BLOCKED**. R2 focused database, privilege and no-write checks passed, but N6's full `npm test` was blocked before execution by command policy. N7 did not review R2 because its N6 PASS prerequisite was unmet. This record does not claim full verification, review acceptance, merge readiness or release readiness.
+- Current outcome: **R2 operational gates PASS** on the sealed source candidate. The first N6 attempt was blocked before execution and remains in the historical record; the resumed full suite passed, followed by a bounded R2 delta review. Formal STD-005 higher-tier review remains blocked, and provider, hosted and production checks remain open.
 - Acceptance for a PASS closure: full regression and independent review must pass on the same sealed candidate; available source/package/secret checks and immutable output rules remain enforced; missing private-preserved custody inputs remain `NOT_RUN`; docs checks pass; candidate SHA and verifier hash are recorded.
 
 ## Nodes and dependencies
@@ -38,9 +38,10 @@ flowchart TD
   S1 --> G1["N6 R1 PASS: full npm test"] --> H1["N7 R1 PARTIAL: RG-N7-001"]
   H1 --> V1["Synthetic QA confirms payload/hash mutation; original row restored"]
   V1 --> R2["Rework R2: limit runtime UPDATE to one-way active retraction"] --> S2["N5 seal 771bbf7"]
-  S2 --> G2["N6 R2 BLOCKED: full npm test rejected before execution; focused checks PASS"]
-  G2 --> H2["N7 R2 NOT_RUN: N6 PASS prerequisite unmet; no R2 source review"]
-  H2 --> N8["N8 documentation records partial status; feature acceptance remains open"]
+  S2 --> G2a["N6 first attempt BLOCKED: process policy; command not executed"]
+  G2a --> G2b["N6 resumed PASS: npm test 200/200 Node, 15/15 site, 47/47 docs"]
+  G2b --> H2["N7 R2 delta PASS: no confirmed new issue; RG-N7-001 closed"]
+  H2 --> N8["N8 records operational gates PASS; formal higher-tier review remains BLOCKED"]
 ```
 
 ## Roles, model constraint and rework
@@ -59,8 +60,10 @@ The R2 seal is recorded in the ignored append-only record under `.local/verifica
 - Candidate tree: `cf402db6884ec54a09400a1784d58fd1992d210a`
 - `scripts/site/verify_extraction.py` SHA-256: `43058E324FD368CAD9AA1324066C857D2CFC2882231F7FFFE8D3B8A04382E0C4`
 - Worktree clean at seal: **PASS**
-- VerifyGate R2: **BLOCKED** overall; focused checks PASS, full suite NOT_RUN after process-creation policy rejection
-- ReviewGate R2: **NOT_RUN / BLOCKED_BY_N6**; no R2 source review
+- VerifyGate R2 resumed: **PASS** — `npm test` exit 0; 200/200 Node, 15/15 site, 47/47 docs; docs validation 0 errors / 166 baseline warnings; views 11 / 0 drift
+- ReviewGate R2 delta: **PASS** — no confirmed issue in the R2 delta; RG-N7-001 closed within the reviewed scope
+- Initial VerifyGate R2 policy block: retained as historical evidence in `.local/visual-dag/verifygate/verifygate-r2.json`; resumed evidence supersedes only its full-suite status
+- Docs HEAD verified by resumed N6: `a111d1c7a375cfc2d5db7d854c27e8ceb14ceb7d` (tree `4d7a5a6c598fa757c91dcb50ad64a3058356fab9`); this later docs-only follow-up has a separate commit SHA
 
 ## Evidence-driven rework R1
 
@@ -68,7 +71,7 @@ The first sealed candidate, `27ca9e6826ac7e72a2a1e19da37036427bbb4c38`, received
 
 This is the first of at most two evidence-driven iterations. It is **C-1/LOW** within the parent C-3/HIGH activity: one test-only reader in `scripts/docs/tests/test_docs.py` plus one helper-contract regression. The reader uses UTF-8 text mode, which normalizes fixture line endings while retaining strict decode and BOM behavior. No validator, application, security logic, standards or production files are in scope. Acceptance is all 46 original docs tests plus the new helper regression (47/47 total), 15/15 site tests, docs validation with zero errors and 166 baseline warnings, and views with 11/0 drift. Any failure stops the next gate; a second change requires a new evidence-based packet. Candidate `27ca9e6` is superseded for gate purposes; the next candidate must be resealed before verification.
 
-Worker-side R1 result: **PASS** — docs tests 47/47, site tests 15/15, docs validation 0 errors / 166 baseline warnings, and docs views 11 / 0 drift. VerifyGate and ReviewGate remain pending for the newly sealed candidate.
+Worker-side R1 result: **PASS** — docs tests 47/47, site tests 15/15, docs validation 0 errors / 166 baseline warnings, and docs views 11 / 0 drift. N6 later passed on `fef7419`; N7 was PARTIAL with RG-N7-001, which prompted the final R2 iteration.
 
 ## Evidence-driven rework R2 — public projection immutability
 
@@ -81,7 +84,7 @@ This is the second and final evidence-driven rework iteration. The parent activi
 | R2.1 — Lock RCA and data contract | N7 PARTIAL + confirmed validation | Worker; `.brain/rca/FEAT-014-public-output-integrity.md`, `docs/architecture/visual-marketing/data-model.md`, this DAG | RCA fields complete; existing immutable-output contract states payload/hash/provenance immutability and the sole one-way retraction exception. **Done before source changes.** |
 | R2.2 — Apply additive ACL/policy | R2.1 | Worker; `apps/api/migrations/009_visual_public_output_immutability.sql`, `apps/api/migrate.mjs` | **PASS** — schema 9 applied only to isolated QA; repeat `npm run db:migrate` preserved the grant reconciliation. Runtime UPDATE is column-limited to `active`; RLS accepts only active-to-inactive retraction with Business/project scope. No other table grant or policy changed. |
 | R2.3 — Prove restricted-role contract | R2.2 | Worker; `apps/api/test/visual-marketing-db.test.mjs` | **PASS** — a visible non-owner cannot change payload/hash or approval/artifact references and cannot reactivate; owner-approved output creation and new-brief retraction still pass. Synthetic rows only. |
-| R2.4 — Focused verification and seal | R2.3 | Worker; focused database/docs checks and ignored seal | **PASS** — DB tests 8/8, docs tests 47/47, docs validation 0 errors / 166 baseline warnings, views 11/0 drift, migration syntax and grant booleans verified. Record candidate SHA/tree in ignored evidence after commit; freeze source edits at seal. |
-| R2.5 — Independent gates | R2.4 | VerifyGate then ReviewGate; read-only | **BLOCKED / NOT_RUN** — VerifyGate confirmed focused DB 8/8, runtime privilege and no-write checks, but the required full `npm test` was rejected by outer shell process-creation policy before execution (one attempt; no retry wrapper). ReviewGate is **NOT_RUN / BLOCKED_BY_N6** and did not inspect R2 source. No third implementation iteration is authorized by this packet. |
+| R2.4 — Focused verification and seal | R2.3 | Worker; focused database/docs checks and ignored seal | **PASS** — DB tests 8/8, docs tests 47/47, docs validation 0 errors / 166 baseline warnings, views 11/0 drift, migration syntax and grant booleans verified. Candidate SHA/tree are sealed in ignored evidence; source edits stopped at the seal. |
+| R2.5 — Independent gates | R2.4 | VerifyGate then ReviewGate; read-only | **PASS within operational scope** — resumed VerifyGate ran the full suite on sealed candidate `771bbf7`; ReviewGate then reviewed only the R2 delta and confirmed the immutable-output ACL, one-way retraction and regression evidence. No new issue was confirmed and RG-N7-001 is closed. The prior process-policy block remains historical; no third implementation iteration is authorized. |
 
-Current state: R2 worker checks passed. N6 is **BLOCKED** overall: focused DB/ACL/no-write checks passed, but `npm test` was rejected once at process creation with only the reason “blocked by policy” and was not retried. N7 is **NOT_RUN / BLOCKED_BY_N6**; R2 source was not inspected. The existing QA container was found exited (255) after host reset, restarted after root authorization and left running. Temporary QA server session 96500 was stopped; port 4319 was free, and no process PID was captured. No user or cloud database was migrated. All agents used Luna Max, so STD-005 higher-tier review remains unresolved. N8 records status only; feature acceptance remains open.
+Current state: R2 worker and operational gate checks passed. Resumed N6 ran `npm test` successfully; N7 passed a bounded review of the R2 delta, carrying forward prior C/D coverage rather than re-auditing the whole PR. The existing QA container was restarted after host reset and remains running; temporary QA server PID 19800, session 47820, was stopped and port 4319 was free. No user or cloud database was migrated. All agents used Luna Max, so STD-005 higher-tier review remains blocked. Provider execution and production acceptance remain open.
