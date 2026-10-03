@@ -17,7 +17,7 @@ export async function enqueue(c,b,p,input){
   if((await c.query("SELECT id FROM visual_jobs WHERE business_id=$1 AND project_id=$2 AND state IN('queued','running','submission_unknown')",[b,p])).rowCount)fail('JOB_ACTIVE',409);
   const root=await run(c,b,p,row.stage,input.input_hash),grant={providers:['local_ollama'],actor_kind:'operator',input_hash:input.input_hash,expires_at:new Date(Date.now()+600000).toISOString()};
   const job=(await c.query('INSERT INTO visual_jobs(business_id,project_id,run_id,revision,input_hash,stage,grant_data) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING id',[b,p,root.id,row.revision,input.input_hash,row.stage,grant])).rows[0];
-  return {job_id:job.id,run_id:root.id,status:'queued',status_url:`/jobs/${job.id}`};
+  return {job_id:job.id,run_id:root.id,status:'queued',status_url:`/api/zuri-go/v1/businesses/${b}/visual-marketing/jobs/${job.id}`};
  });
 }
 export async function jobAction(c,b,id,action,input){
@@ -41,7 +41,8 @@ export async function claim(c,b){
  const job=(await c.query("SELECT * FROM visual_jobs WHERE business_id=$1 AND project_id=$2 AND (state='queued' OR state='running' AND lease_expires_at<now()) FOR UPDATE SKIP LOCKED",[b,next.project_id])).rows[0];if(!job)return null;
  const ctx=await context(c,b,job.project_id);
  if(job.attempt>=2||job.revision!==ctx.row.revision||job.input_hash!==ctx.brief.input_hash||Date.parse(job.grant_data.expires_at)<=Date.now()||job.grant_data.actor_kind!=='operator'){
-  await c.query("UPDATE visual_jobs SET state='failed',error_class='STALE_OR_LIMIT',lease_token=NULL,lease_expires_at=NULL WHERE id=$1",[job.id]);return null;
+  await c.query("UPDATE visual_jobs SET state='failed',error_class='STALE_OR_LIMIT',lease_token=NULL,lease_expires_at=NULL WHERE id=$1",[job.id]);
+  await c.query("UPDATE visual_runs SET status='failed',completed_at=now() WHERE id=$1",[job.run_id]);return null;
  }
  const token=randomUUID();await c.query("UPDATE visual_jobs SET state='running',attempt=attempt+1,lease_token=$2,lease_expires_at=now()+interval '60 seconds' WHERE id=$1",[job.id,token]);
  return {...job,attempt:job.attempt+1,lease_token:token,request:{stage:job.stage,brief:ctx.brief.payload,brand:ctx.brand.profile,previous:ctx.outputs}};

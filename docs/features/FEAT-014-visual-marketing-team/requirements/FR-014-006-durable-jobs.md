@@ -20,3 +20,7 @@ The system SHALL enqueue work and fence output commits by durable lease, current
 - AC-014-006-02 — Given restart or expired lease, when recovered, then stale workers cannot commit and ambiguous provider submissions are reconciled before retry.
 
 - AC-014-006-03 — Given hosted mode without an approved executor, when run is requested, then 503 EXECUTOR_UNAVAILABLE is returned without a runnable job.
+
+- AC-014-006-04 — Given a job reaches exhausted/stale failure or is cancelled by a new Brief revision, when the transaction commits, then its linked root run is failed/cancelled with `completed_at` in the same transaction and a stale worker cannot commit.
+
+- AC-014-006-05 — Given an enqueue response, when the client follows `status_url`, then the scoped job GET returns 200 with the same job ID and current state.

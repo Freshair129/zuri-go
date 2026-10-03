@@ -18,3 +18,5 @@ The system SHALL validate and persist an immutable brief and confirmed brand-con
 - AC-014-001-01 — Given a readable Project and confirmed brand context, when the same brief and idempotency key are submitted twice, then exactly one revision exists.
 
 - AC-014-001-02 — Given invalid UUID/date, unknown fields, oversized text or cross-Business reference, when submitted, then 422 is returned and nothing is created.
+
+- AC-014-001-03 — Given a Brand profile with nonempty `approved_claims`, when saved, then one or more bounded nonempty `source_refs` are required, persisted and returned; otherwise 422 is returned and nothing is created.

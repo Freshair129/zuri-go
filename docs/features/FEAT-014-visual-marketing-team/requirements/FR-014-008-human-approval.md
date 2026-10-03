@@ -22,3 +22,7 @@ The system SHALL require an authorized human decision over each final artifact h
 - AC-014-008-03 — Given a local operator decision, when displayed, then it explicitly says operator rather than authenticated Member.
 
 - AC-014-008-04 — Given changed brief or artifact, when revisited, then old approval remains historical and new revision requires review.
+
+- AC-014-008-05 — Given restricted runtime-role SQL, when direct INSERT is attempted for review, decision or public projection, then it is denied. Only the fixed-path database functions can create these rows; finalization binds the current owner/operator, Project state, latest validated review, generated canonical hash and exact persisted BUNDLE payload atomically.
+
+- AC-014-008-06 — Given a pre-migration review/output or a legacy caller hash, when finalization or Guest read is attempted, then the old review cannot authorize a decision and the untrusted output is not Guest-visible; history remains available to Members/operators and a fresh validated review is required.

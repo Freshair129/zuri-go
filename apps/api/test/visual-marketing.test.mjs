@@ -5,7 +5,12 @@ import {randomUUID} from 'node:crypto';
 import {validateBrief,validateBrand,validateStage,reviewBundle,validateAsset} from '../visual-marketing/contracts.mjs';
 import {getAgentRegistry,checkDelegation,TOOLS} from '../visual-marketing/registry.mjs';
 import {executeProvider,localProvider,visualProvider} from '../visual-marketing/providers.mjs';
+import {visualApi} from '../visual-marketing/api.mjs';
 const brief={project_id:randomUUID(),brand_profile_id:randomUUID(),objective:'awareness',product:'ชา',audience:'คนทำงาน',message:'พักกับชา',channel:'facebook',format:'image',aspect_ratio:'1:1',cta:'ดูรายละเอียด'};
+test('Visual Studio fails closed before schema 10 is ready',async()=>{
+ const c={query:async sql=>{assert.match(sql,/visual_record_review/);assert.match(sql,/canonical_hash/);return {rows:[{ready:false}]};}};
+ await assert.rejects(visualApi(c,randomUUID(),'/projects','GET',null),error=>error.code==='FEATURE_UNAVAILABLE'&&error.status===503);
+});
 test('AC-014-001-02 brief rejects unknown fields, impossible dates and invalid IDs',()=>{
  assert.equal(validateBrief(brief).product,'ชา');
  for(const patch of [{actor:'admin'},{due_date:'2026-02-30'},{project_id:'x'},{product:'x'.repeat(4001)},{aspect_ratio:'0:1'}])assert.throws(()=>validateBrief({...brief,...patch}));
@@ -31,6 +36,17 @@ test('AC-014-007-01 / AC-014-007-02 QA blocks unsupported claims and does not ve
  const b={...brief,proof_points:[],forbidden_elements:[]},brand={approved_claims:[],forbidden_claims:[]};
  const result=reviewBundle(b,brand,{COPY:{text:'cure disease',claims:['cure disease']},ART_DIRECTION:{text:'tea',claims:[]}},{});
  assert.equal(result.status,'needs_revision');assert.ok(result.blockingIssues.length);assert.ok(result.findings.some(f=>f.category==='readability'&&f.status==='not_assessed'));
+});
+test('AC-014-007-03 QA requires bounded source references for approved brand claims',()=>{
+ const b={...brief,proof_points:[],forbidden_elements:[]},outputs={COPY:{text:'ชาอร่อย',claims:[]},ART_DIRECTION:{text:'ภาพชา',claims:[]}},assessment=Object.fromEntries(['brand_consistency','message_accuracy','offer_accuracy','cta_clarity','channel_suitability','policy_safety','hallucinated_claims','duplicate_concepts'].map(check=>[check,true]));
+ const missing=reviewBundle(b,{approved_claims:['ชาออร์แกนิก'],forbidden_claims:[]},outputs,assessment);
+ assert.equal(missing.status,'needs_revision');assert.ok(missing.blockingIssues.some(f=>f.category==='claim_source_refs'));
+ const valid=reviewBundle(b,{approved_claims:['ชาออร์แกนิก'],source_refs:['https://example.test/brand-proof'],forbidden_claims:[]},outputs,assessment);
+ assert.equal(valid.status,'pass');assert.deepEqual(valid.findings.find(f=>f.category==='claim_source_refs').evidenceRefs,['https://example.test/brand-proof']);
+ const manual=reviewBundle(b,{approved_claims:[],forbidden_claims:[]},outputs,assessment);
+ assert.equal(manual.status,'pass');assert.equal(manual.findings.some(f=>f.category==='claim_source_refs'),false);
+ const invalid=reviewBundle(b,{approved_claims:['ชาออร์แกนิก'],source_refs:['  '],forbidden_claims:[]},outputs,assessment);
+ assert.equal(invalid.status,'needs_revision');
 });
 test('AC-014-005-01 / AC-014-005-02 authorized fallback only for definite safe failures',async()=>{
  const calls=[];const adapters={one:{completeStructured:async()=>{calls.push('one');throw Object.assign(Error('down'),{code:'UNAVAILABLE'});}},two:{completeStructured:async()=>{calls.push('two');return {output:{text:'ok',claims:[]},provider:'two'};}}};

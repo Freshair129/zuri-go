@@ -3,7 +3,7 @@ id: SRV-002
 title: Local operator runtime (Node server + Docker PostgreSQL)
 status: proposed
 hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN, DOM-VIS]
-implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013]
+implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013, FEAT-014]
 relations:
   exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, EVT-001]
   consumes: [API-021, API-022]
@@ -44,6 +44,6 @@ Contracts consumed, not served: API-021 and API-022 (FUNG Desktop), as for SRV-0
 ## Hosts and implements
 Hosts every domain listed in the frontmatter and realises every feature in its `implements` list ([STD-003 R4](../../governance/standards/STD-003-REPOSITORY-DOCUMENT-STRUCTURE.md)). The `hosts` / `implements` lists are service-level declarations; they are not graph edges (ADR-001 D7).
 
-## Proposed Visual Marketing extension
+## Visual Marketing — FEAT-014
 
-[FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md) / [CMP-001](CMP-001-visual-marketing.md) proposes DOM-VIS in this service. The hosts declaration reserves this planned placement; it is not implemented, running or approved. Existing implements/exposes lists remain current behavior. No separate deployable or hosted background execution is created.
+[FEAT-014](../../features/FEAT-014-visual-marketing-team/feature.md) / [CMP-001](CMP-001-visual-marketing.md) places DOM-VIS in this service. The approved local first slice is implemented in source and uses the existing server and PostgreSQL runtime; hosted execution remains disabled. R3 migration 010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for this packet. No separate deployable is created.

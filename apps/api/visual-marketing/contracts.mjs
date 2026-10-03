@@ -36,6 +36,10 @@ export function reviewBundle(brief,brand,outputs,assessment={}){
  object(assessment,CHECKS);for(const value of Object.values(assessment))if(typeof value!=='boolean')fail('ASSESSMENT_INVALID');
  const allowed=new Set([...(brief.proof_points||[]),...(brand.approved_claims||[])]),forbidden=[...(brief.forbidden_elements||[]),...(brand.forbidden_claims||[])];
  const findings=CHECKS.map(category=>({category,status:assessment[category]===true?'pass':assessment[category]===false?'fail':'not_assessed',severity:assessment[category]===true?'info':'blocking',evidenceRefs:['brief','brand','COPY','ART_DIRECTION'],message:assessment[category]===true?'ผู้ตรวจยืนยันแล้ว':'ต้องตรวจยืนยันหัวข้อนี้'}));
+ if((brand.approved_claims||[]).length){
+  const refs=brand.source_refs,validRefs=Array.isArray(refs)&&refs.length>0&&refs.length<=20&&refs.every(ref=>typeof ref==='string'&&ref.trim().length>0&&ref.trim().length<=2000);
+  findings.push({category:'claim_source_refs',status:validRefs?'pass':'fail',severity:validRefs?'info':'blocking',evidenceRefs:validRefs?refs.map(ref=>ref.trim()):['brand'],message:validRefs?'ตรวจสอบแหล่งอ้างอิงคำกล่าวอ้างแล้ว':'คำกล่าวอ้างที่ยืนยันแล้วต้องมีแหล่งอ้างอิง'});
+ }
  for(const [stage,output] of Object.entries(outputs)){
   for(const claim of output.claims||[])if(!allowed.has(claim))findings.push({category:'hallucinated_claims',status:'fail',severity:'blocking',evidenceRefs:[stage],message:'ข้อความอ้างอิงไม่มีหลักฐานที่ยืนยัน: '+claim});
   for(const word of forbidden)if(output.text?.toLowerCase().includes(word.toLowerCase()))findings.push({category:'brand_consistency',status:'fail',severity:'blocking',evidenceRefs:[stage],message:'พบข้อความที่ห้ามใช้: '+word});

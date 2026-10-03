@@ -18,3 +18,5 @@ The system SHALL produce category findings, blockers and suggestions for exact a
 - AC-014-007-01 — Given unsupported claims or wrong offer evidence, when QA executes, then blocking findings include evidence references.
 
 - AC-014-007-02 — Given prompt-only output, when reviewed, then image-only checks are not_assessed and never presented as verified pixel quality.
+
+- AC-014-007-03 — Given an approved claim with no Brand source reference, unsupported claim, forbidden term, missing COPY/ART_DIRECTION output or any missing/false required assessment, when QA is recorded, then the database-derived result is not passing; caller-supplied status/findings cannot create `validated_pass`.

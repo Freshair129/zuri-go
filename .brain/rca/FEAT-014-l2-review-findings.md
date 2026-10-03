@@ -1,11 +1,24 @@
-# FEAT-014 L2 findings RCA and proposed R3 packet
+# FEAT-014 L2 findings RCA and approved R3 packet
 
-**Status:** findings recorded; R3 implementation is not approved.
-**Reviewed source:** merge-base 9e224c851b6c5c2b25232d41e183bf8623b5bb7a through HEAD 3fc3fb01ba424aa75b9006936bb0bb68d03dfc76. Application source is unchanged from sealed candidate 771bbf70e437bf26cbfaa3a4ab643540155d8c59.
+**Status:** owner-approved R3 implementation and focused worker checks complete; independent gates pending.
+**Reviewed source:** merge-base 9e224c851b6c5c2b25232d41e183bf8623b5bb7a through HEAD 3fc3fb01ba424aa75b9006936bb0bb68d03dfc76. At that review, application source matched sealed candidate 771bbf70e437bf26cbfaa3a4ab643540155d8c59.
+**R3 source baseline:** HEAD b50841b350f1089e22b055d06dae4eec077cf90a, tree 343c0ddaf65056f7e8bd1aa20bb49c4bca625af4; working tree was clean before this packet.
 **Independent review:** .local/visual-dag/reviewgate/l2-review-3fc3fb0.md (Sol Max, whole-PR L2 REWORK).
 **Dynamic evidence:** .local/visual-dag/verifygate/l2-public-insert-validation.json (isolated synthetic QA, cleanup complete). No HTTP exploit was demonstrated. No user/cloud database was inspected or migrated during this review.
 
-The earlier C/minimum-D operational exit, closure-document ReviewGate and bounded R2 delta ReviewGate remain PASS for their stated scopes. This later whole-PR L2 review returned REWORK with five findings and reopens merge readiness. L1 strict-schema review is NOT DEMONSTRATED. Findings 1-4 received targeted isolated-QA/API confirmation; finding 5 is a static documentation mismatch. No application fix has been applied.
+The earlier C/minimum-D operational exit, closure-document ReviewGate and bounded R2 delta ReviewGate remain PASS for their stated scopes. This later whole-PR L2 review returned REWORK with five findings and reopens merge readiness. L1 strict-schema review is NOT DEMONSTRATED. Findings 1-4 received targeted isolated-QA/API confirmation; finding 5 is a static documentation mismatch. At the R3 baseline no application fix had been applied.
+
+## Owner approval and R3 design lock — 2026-10-03
+
+**Worker verification checkpoint.** The implementation is now written and isolated QA is schema 10. Pure tests and DB tests passed 11/11 each; the repeated migrator preserved the restricted INSERT and function EXECUTE grants. A fresh schema-9 fixture retained its legacy data and hashes after migration, while Guest visibility changed from one old output to zero. The generated-hash expression initially failed PostgreSQL's immutability check and rolled back; replacing the STABLE `convert_to` call with the IMMUTABLE `digest(text,text)` overload allowed migration 010 to apply. The exact transition fixture is retained in ignored `.local/fe014-r3-legacy-fixture.json` for independent checking and cleanup. Full regression/build/browser and fresh independent gates remain pending; these focused worker results do not close whole-PR review.
+
+The owner approved remediation of all five findings in this R3 packet. Complexity is C-3; risk is HIGH because the first item changes database write authority and migration behavior. R3 is a new implementation packet beyond R2's historical two-iteration limit. Source work is confined to the five findings and necessary trust-transition invariants.
+
+Before source edits, SDD-014 was advanced from 0.1.0 to 0.2.0 and records the approved write boundary and flow diagram. Migration 010 will add a PostgreSQL-derived `canonical_hash` for every artifact payload while preserving legacy `content_hash`, add `validated_pass=false` to old reviews and `trusted_publication=false` to old outputs, and restrict runtime INSERT on review/decision/projection rows to two fixed-path SECURITY DEFINER functions. The review function accepts only assessments and derives its result against current persisted data; the finalizer locks the Project, derives actor from the existing resolved viewer settings, checks current owner/operator, audience, stage/revision, canonical BUNDLE and latest validated passing review, then atomically writes decision/stage/projection. Guest reads exclude legacy untrusted outputs; Member/operator history remains.
+
+This reuses the existing app-resolved `zuri_go.business_id`, `viewer_kind`, and `viewer_member` settings as the identity boundary. It does not claim to defend against a stolen runtime credential that can rewrite those settings. The API field named `content_hash` will expose the new canonical hash; decision/review/public-projection hashes use that same value. Old hashes and approvals are not silently rewritten; the current artifact requires a fresh validated review before it can be approved.
+
+Version plan: application 0.5.1 and FEAT-014 0.1.0 remain unchanged; SDD-014 0.1.0 → 0.2.0; migration source schema 9 → 10; the designated isolated QA database schema 9 → 10 only. The last-recorded user/cloud schema baseline remains 7 and will not be live-inspected or migrated in this packet.
 
 ## 1. P1 - Public-output INSERT is not bound to a genuine approval chain
 
@@ -67,9 +80,9 @@ The earlier C/minimum-D operational exit, closure-document ReviewGate and bounde
 
 **Prevention.** In a separately authorized documentation pass, reconcile only the referenced FEAT-014 claims, add the service ownership metadata, and distinguish source/isolated schema 9 from the last-recorded user/cloud schema-7 baseline. Do not imply user/cloud migration.
 
-## Proposed R3 packet and acceptance
+## Approved R3 packet and acceptance
 
-This is a new C-3/HIGH packet beyond the prior two evidence-driven implementation iterations. Owner approval is required before source changes.
+This is the owner-approved new C-3/HIGH packet beyond the prior two evidence-driven implementation iterations. Source changes are authorized within the scope and design above.
 
 1. Close the approval-chain INSERT boundary. Regression: as restricted runtime roles, attempt to INSERT a forged passing review and decision for an unreviewed artifact using matching caller-supplied text hashes, then insert an altered public projection; also reuse a genuine decision with another artifact/payload. Deny each invalid path and prove Guest sees no row. Validate the hash from the immutable canonical BUNDLE payload or make artifact creation trusted; do not treat matching review/decision hashes as proof. Restrict direct review/decision INSERT or enforce every approval invariant at that boundary. A valid owner-approved canonical bundle must still publish. Reconcile runtime grants after migration.
 2. Close failed/stale/cancelled jobs and their root runs atomically. Test two expired attempts followed by exhaustion, new-Brief cancellation, and stale commit fencing.
@@ -77,4 +90,4 @@ This is a new C-3/HIGH packet beyond the prior two evidence-driven implementatio
 4. Return a resolvable status_url. Test enqueue and GET through the returned URL.
 5. After approval, update the listed parent documentation and verify links, docs:validate, docs:views, and git diff --check.
 
-Run targeted tests and relevant build/full regression on the new candidate, then obtain a fresh independent L2 review. Migration 010 is conditional and may be applied only to owned synthetic QA. Application release remains 0.5.1; FEAT-014 remains 0.1.0. No code or migration has been applied, and no user/cloud migration, provider setup, merge, deployment, or release action is authorized by this proposal.
+Run baseline-failing targeted regressions and relevant build/full regression on the new candidate, then obtain fresh independent VerifyGate and L2 ReviewGate results. Migration 010 is additive and may be applied only to the designated synthetic QA database. Application release remains 0.5.1; FEAT-014 remains 0.1.0. No user/cloud migration, provider setup, merge, deployment, or release action is authorized by this packet.

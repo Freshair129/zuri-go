@@ -2,7 +2,7 @@
 id: SDD-014
 title: Visual Marketing Team — orchestration design
 status: approved
-version: 0.1.0
+version: 0.2.0
 relations:
   decided_by: [ADR-006]
   relates_to: [ARCH-004, API-023, EVT-002, CMP-001]
@@ -85,6 +85,36 @@ Ambiguous chargeable submission becomes submission_unknown: query the known prov
 QAResult = {status: pass|needs_revision|blocked, findings:[{category,severity,evidenceRefs,message}], blockingIssues:[], suggestions:[]}. Categories: brand consistency, message accuracy, offer accuracy, CTA clarity, visual hierarchy, readability, channel suitability, policy/safety, hallucinated claims and duplicate concepts. Unsupported checks are not_assessed; essential unassessed checks block approval. No opaque score substitutes for findings.
 
 Approve/request_changes/reject binds artifact hash, QA revision and row_version. Only the current Project owner as authenticated Member, or explicitly trusted local operator, may decide after access recheck. Business-admin does not bypass restricted visibility. Agents cannot approve. Blocking findings require revision; C has no override. Decision, audit and stage change commit atomically. Caller actor/approved_by/status never grants authority. Idempotent replay is stable; competing decisions conflict. Changes to brief, brand, copy or bytes invalidate approval. Publish/paid approvals are separate future actions, unavailable here.
+
+## R3 approved database approval-chain boundary — 2026-10-03
+
+The owner approved the R3 C-3/HIGH rework after the whole-PR L2 REWORK finding. Migration 010 makes review, decision and public projection writes pass through narrow database-owned boundaries; it preserves the existing `zuri_go` Business/viewer settings as the caller identity trust boundary and does not claim to defend against a stolen runtime credential that can rewrite those settings.
+
+```mermaid
+flowchart LR
+  V[Resolved Member or local operator] --> A[Existing Visual Studio API]
+  A --> R[SECURITY DEFINER record-review function]
+  R --> RQ[Lock Project; re-read current BUNDLE, Brief, Brand and output artifacts]
+  RQ --> RV[Derive QA result and validated_pass from assessment and persisted evidence]
+  RV --> T[Append trusted review with DB canonical_hash]
+  A --> F[SECURITY DEFINER finalize-decision function]
+  F --> FP[Lock Project; derive viewer; verify current owner, audience, stage and revision]
+  FP --> Q[Require latest validated review for exact BUNDLE canonical_hash; approve also requires validated_pass]
+  Q --> D[Atomically append decision and advance stage]
+  D --> P{Originally and currently public?}
+  P -->|yes| O[Insert minimal canonical projection with trusted_publication=true]
+  P -->|no| H[Keep decision; no Guest projection]
+  G[Guest read] --> GR[Only active trusted_publication rows]
+  O --> GR
+```
+
+`visual_artifacts.canonical_hash` is a PostgreSQL-generated SHA-256 of the stored `jsonb` payload using the pinned `pgcrypto` function. The legacy application `content_hash` remains unchanged in storage for history; the API returns `canonical_hash` under its existing `content_hash` field, and new review, decision and public-projection references use only that canonical value. `visual_record_review(business_id, project_id, artifact_id, assessment)` derives the QA result. `visual_finalize_approval(business_id, project_id, artifact_id, expected_row_version, artifact_hash, qa_revision, decision, reason)` compares the submitted hash with the database value, verifies the BUNDLE payload against the current revision's persisted stage outputs, and constructs the Guest payload itself.
+
+The review entry point accepts only the per-category assessment, not caller-supplied result status, findings, blocking issues or pass flags. It uses the same Project-locked current BUNDLE, Brief and Brand data to derive the stored review result and `validated_pass`: all eight required assessments must be true; COPY and ART_DIRECTION must exist; every claim must match a Brief proof point or approved Brand claim; forbidden terms fail; and nonempty approved claims require bounded Brand source references. The finalizer trusts `validated_pass`, never `visual_reviews.result.status`.
+
+The runtime role cannot directly INSERT into `visual_reviews`, `visual_decisions` or `visual_public_outputs`; it receives EXECUTE only on the two fixed-search-path SECURITY DEFINER functions. PUBLIC EXECUTE is revoked. Function bodies schema-qualify objects, derive Business/viewer/actor from the existing resolved transaction settings, lock the Project for review/finalization ordering, and independently check membership, owner/operator authority, current audience, revision and stage. The migrator repeats these least-privilege grants after its general table grants on every run. Migration 009's one-way `active=true` to `false` retraction remains available.
+
+The migration does not rewrite legacy hashes or approval history. Existing reviews gain `validated=false` and `validated_pass=false` and cannot authorize a new decision; the artifact must be reviewed again. Existing public-output rows gain `trusted_publication=false`, remain readable to Members/operators for history, and are excluded from Guest reads until a new trusted publication is created. A new approval receives its own projection row keyed by its decision, preserving the legacy row. This is an explicit quarantine, not deletion or silent re-approval.
 
 ## Jobs and observability
 

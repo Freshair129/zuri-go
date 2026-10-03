@@ -4,7 +4,7 @@ title: Zuri-Go — product requirements (product level)
 status: proposed
 relations:
   decided_by: [ADR-002, ADR-003, ADR-004]
-  relates_to: [BRD-001, FEAT-010, FEAT-011]
+  relates_to: [BRD-001, FEAT-010, FEAT-011, FEAT-014]
 ---
 
 # PRD-001 — Zuri-Go: product requirements (product level)
@@ -26,6 +26,7 @@ This is the product-level index: it says which surfaces exist and which feature 
 | Graph View | `/metrics/#metrics-graph` | FEAT-003 | DOM-MET |
 | Guest mode, sign-in modal, Member badge | upper-right toolbar; write-intent modal | [FEAT-005](../features/FEAT-005-guest-access/feature.md), [FEAT-006](../features/FEAT-006-member-identity/feature.md), [FEAT-007](../features/FEAT-007-single-code-login/feature.md) | DOM-IAM |
 | Site menu: Marketing · Meeting & Task Manager · ความรู้ Metrics · Graph View | every part of the site | [FEAT-008](../features/FEAT-008-unified-site/feature.md) | DOM-PLT |
+| Visual Studio | `/?view=1&tab=visual-studio` | [FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) | DOM-VIS |
 | Emar service launcher (local only) | Separate **บริการ / Services** entry on the local Zuri-Go site; opens `http://localhost:8788/` | [FEAT-013](../features/FEAT-013-emar-local-access/feature.md) | DOM-PLT |
 | Logo and brand marks | headers, navigation, guide mastheads, graph header | [FEAT-009](../features/FEAT-009-logo-placement/feature.md) | DOM-BRN |
 
@@ -63,6 +64,6 @@ The interim rule of ADR-004 D9 (no confidential content in production because Gu
 
 File paths and baseline infrastructure statements inside older documents describe their original version; current build, start and deploy commands are in the [project README](../../README.md).
 
-## Proposed Marketing surface — Visual Studio
+## Approved Visual Marketing slice — Visual Studio
 
-[FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) proposes a Visual Marketing domain and Visual Studio within the existing Marketing authored UI. It reads Campaign/Project/Member context, persists creative production and requires human review. This proposal is not approved or implemented; current surfaces remain unchanged. Scope and phase acceptance are canonical in the feature.
+[FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) is approved and its local first slice is implemented in the existing Marketing authored UI. It reads Campaign/Project/Member context, persists creative production and requires human review. R3 migration 010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for R3. Hosted execution remains disabled. Scope and phase acceptance are canonical in the feature.

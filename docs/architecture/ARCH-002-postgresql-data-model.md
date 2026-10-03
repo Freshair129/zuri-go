@@ -7,7 +7,7 @@ date: 2026-09-30
 legacy: [ZGO-DATA-001]
 relations:
   decided_by: [ADR-002, ADR-003, ADR-004]
-  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-010, FEAT-011]
+  relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-010, FEAT-011, FEAT-014]
 legacy_status: implemented-local-verified
 complexity: C-3
 risk: HIGH
@@ -402,6 +402,6 @@ The schema 6 sentence that the migration defines no policy for projects describe
 
 **Operating facts.** Restart the local server after migrating, as for schema 6. Code from before FEAT-010 ignores the new columns and tables; plan a rollback together with the schema and FEAT-011's note above. See [FEAT-010](../features/FEAT-010-task-manager/feature.md), [ADR-002 and ADR-003](decisions.md).
 
-## Proposed Visual Marketing amendment
+## Approved Visual Marketing amendment
 
-[Visual Marketing data model](visual-marketing/data-model.md) is the canonical proposed amendment for FEAT-014 / ADR-006. No schema change is applied by this document; approval and additive migration verification are pending.
+[Visual Marketing data model](visual-marketing/data-model.md) is the canonical amendment for approved FEAT-014 / ADR-006. R3 additive migrations 008–010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for R3.
