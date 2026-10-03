@@ -26,7 +26,7 @@ class Tree:
         shutil.copytree(FIXTURE, self.root)
 
     def read(self, rel):
-        return (self.root / rel).read_bytes().decode('utf-8')
+        return (self.root / rel).read_text(encoding='utf-8')
 
     def write(self, rel, text):
         p = self.root / rel
@@ -56,6 +56,19 @@ def run(main, argv):
     with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
         code = main(argv)
     return code, out.getvalue(), err.getvalue()
+
+
+class TreeTests(unittest.TestCase):
+    def setUp(self):
+        self.t = Tree(self)
+
+    def test_read_normalizes_crlf_and_preserves_bom_and_strict_utf8(self):
+        self.t.write('docs/crlf.txt', '\ufefffirst line\r\nsecond line\r\n')
+        self.assertEqual(self.t.read('docs/crlf.txt'), '\ufefffirst line\nsecond line\n')
+
+        (self.t.root / 'docs/invalid-utf8.txt').write_bytes(b'\xff')
+        with self.assertRaises(UnicodeDecodeError):
+            self.t.read('docs/invalid-utf8.txt')
 
 
 class ParserTests(unittest.TestCase):

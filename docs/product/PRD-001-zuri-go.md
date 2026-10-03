@@ -62,3 +62,7 @@ The interim rule of ADR-004 D9 (no confidential content in production because Gu
 ## Document notes
 
 File paths and baseline infrastructure statements inside older documents describe their original version; current build, start and deploy commands are in the [project README](../../README.md).
+
+## Proposed Marketing surface — Visual Studio
+
+[FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) proposes a Visual Marketing domain and Visual Studio within the existing Marketing authored UI. It reads Campaign/Project/Member context, persists creative production and requires human review. This proposal is not approved or implemented; current surfaces remain unchanged. Scope and phase acceptance are canonical in the feature.

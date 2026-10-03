@@ -230,3 +230,24 @@ Relations: decided_by: ADR-004; relates_to: ADR-003, FEAT-002, FEAT-005, FEAT-00
 - **Aggregates differ by audience.** A Business-level goal of published posts is computed from the publications the viewer reads, so two viewers can see different figures (ADR-004 D4); the screens label such figures.
 - **Personal data.** The ledger and the contact fields can hold personal data of customers and colleagues; the owner decides retention and access in line with PDPA duties. This is a design note, not legal advice.
 - **Tests** cover every read path for each viewer kind (ADR-004 Consequences), plus direct queries of every campaign table as a Guest and as a Member outside the audience.
+### ADR-006 — Visual Marketing is a Node domain with explicit provider and executor boundaries
+Relations: relates_to: ARCH-004, FEAT-014, ARCH-002, API-001, API-017; decided_by: ADR-004
+Owner: DOM-VIS
+
+**Status:** approved. **Date:** 2026-10-02. **Complexity:** C-3. **Risk:** HIGH. Owner approved the Phase A/B package in this chat on 2026-10-02.
+
+**Context.** Upstreams offer coordination and creative patterns but introduce Python/AgentScope, Claude SDK, shell/file tools, Telegram and provider-specific assumptions. Zuri-Go already has a Node API, PostgreSQL viewer transactions, Project identity and a protected authored UI. Its hosted function has no durable worker contract.
+
+**Decision proposed.**
+
+1. Introduce DOM-VIS as a Node modular-monolith domain, one proposed CMP-001 inside existing local SRV-002. Reimplement useful contracts; no runtime sidecar or upstream dependency tree.
+2. Reuse Project identity with a one-to-one creative extension. Reference Campaign/Member/Task; no first-slice peer writes. BrandProfile is creative context, not a replacement for DOM-BRN authority.
+3. Roles and tool capabilities are independent of providers. Server-owned finite workflow, output validation, default max delegation depth 2, bounded attempts/budget and mandatory human final approval. Models have no shell/SQL authority.
+4. PostgreSQL jobs with lease fencing run inside the local server outside HTTP transactions. Hosted execution stays unavailable until an approved durable executor exists. No fire-and-forget work after serverless response.
+5. Separate LLM and visual provider ports. Initial optional LLM adapter uses explicitly configured loopback Ollama, preserving the existing summary's separate no-cloud-fallback rule. New fallback is opt-in and policy-filtered. No provider is mandatory; manual work is labelled manual, never fake AI.
+6. External calls need input/provider/budget/expiry-bound authorization. Creative approval is separate from provider egress, publish and spend permissions. Store structured events/outputs only, no chain-of-thought.
+7. Business/viewer RLS applies to all records, status, logs and assets. Source audience constrains derived work. Public Campaign references never declassify creative inputs.
+
+**Alternatives.** Wholesale fork/Python sidecar: excessive coupling and operational cost. Redis/Kafka/vector database: no demonstrated need. Browser-held requests or detached serverless tasks: no durable recovery. Reuse ai_briefs: incompatible summary semantics. Direct Campaign/metric writes: violate domain ownership.
+
+**Consequences.** Additive schema and negative authorization tests are needed after approval. Hosted execution needs a later deployment/runtime decision. Provider quality, cost and asset storage require separate verification. Existing brand, auth, visibility and protected-runtime contracts remain authoritative. No production action authorized here.

@@ -27,6 +27,14 @@ async function call(route,{method='GET',body,cookie,headers={}}={}){
  const result={headers:{}};const res={setHeader:(k,v)=>result.headers[k]=v,writeHead:(status,h)=>{result.status=status;Object.assign(result.headers,h);},end:value=>{result.body=Buffer.isBuffer(value)?value:JSON.parse(value);}};
  await handler({url:'/api/index?route='+route,method,body,headers:{host:'zuri-qa.test',origin,'content-type':'application/json','x-zuri-go':'1',cookie:Array.isArray(cookie)?cookie.join('; '):cookie,'x-real-ip':'198.51.100.'+(++requestNumber),...headers}},res);return result;
 }
+test('AC-014-006-03 hosted Visual Studio denies Guest mutations and never starts a background executor',async()=>{
+ const prefix='businesses/'+business+'/visual-marketing';
+ assert.equal((await call(prefix+'/projects')).status,200);
+ assert.equal((await call(prefix+'/projects',{method:'POST',body:{}})).status,401);
+ const cookie=(await call('login',{method:'POST',body:{password:'isolated-qa-team-password0'}})).headers['Set-Cookie'];
+ const response=await call(prefix+'/projects/'+randomUUID()+'/run',{method:'POST',cookie,body:{row_version:1,idempotency_key:randomUUID(),input_hash:'x',authorize_local_model:true}});
+ assert.equal(response.status,503);assert.equal(response.body.code,'EXECUTOR_UNAVAILABLE');
+});
 test('hosted API allows guest reads, denies writes, and supports individual member login',async()=>{
  assert.equal((await call('bootstrap')).status,200);assert.equal((await call('session')).body.authenticated,false);assert.equal((await call('businesses/'+business+'/channels',{method:'POST',body:{}})).status,401);
  assert.equal((await call('login',{method:'POST',body:{password:'wrong'}})).status,401);
