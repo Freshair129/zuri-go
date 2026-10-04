@@ -1,6 +1,6 @@
 ---
 id: SRV-002
-title: Local operator runtime (Node server + Docker PostgreSQL)
+title: Local operator runtime (Node server + PostgreSQL)
 status: proposed
 hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN, DOM-VIS]
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013, FEAT-014, FEAT-015]
@@ -10,13 +10,13 @@ relations:
   consumes: [API-021, API-022]
 ---
 
-# SRV-002 — Local operator runtime (Node server + Docker PostgreSQL)
+# SRV-002 — Local operator runtime (Node server + PostgreSQL)
 
 Trusted-operator workspace bound to loopback. It serves `build/site` and the same API against the local PostgreSQL database (`zuri_go`). It is not an authenticated Member session, and local and production databases are separate and never synchronised automatically.
 
 | | |
 |---|---|
-| Deploy unit | `apps/api/server.mjs` on `127.0.0.1:4319` and Docker container `zuri-go-postgres`, started by `scripts/local/start.ps1` (`npm start`) |
+| Deploy unit | `apps/api/server.mjs` on `127.0.0.1:4319` and persistent native PostgreSQL on `127.0.0.1:55412` on this machine, started manually per RB-001; the historical Docker wrapper remains `npm start` |
 | Code roots | `apps/api`, `scripts/local` |
 | Runbook | [RB-001](../../operations/RB-001-runbook.md) |
 
@@ -25,7 +25,7 @@ Trusted-operator workspace bound to loopback. It serves `build/site` and the sam
 This existing deployable hosts Zuri-Go as the light Marketing/Commercial edition of Zuri-AI. The cross-system context map is authored once in [registry/relations.yaml](../../../registry/relations.yaml), with process/design context in [ARCH-005](../../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md). This declaration does not claim parent-model parity, a completed parent Marketing extraction or an active sending integration. Wire contracts and per-entity write authority remain draft.
 
 ## Facts
-- Local Docker volume `zuri-go-postgres-data` is a persistent database; source control holds migrations, not database contents.
+- Current native Local data is persistent under `.local/postgres-local/data`, restored from the verified Production backup under separate owner approval. The historical Docker volume is unavailable on this machine; source control holds migrations, not database contents.
 - An existing listener on the port is accepted only after its Business identity matches; unrelated processes are never stopped.
 - No Guest mode and no Member sign-in: the local server calls the API without a Member-session requirement (`apps/api/server.mjs`), so FEAT-005, FEAT-006 and FEAT-007 are realised by SRV-001 only. The loopback workspace “remains a trusted operator workspace, with explicit local-operator attribution” ([FEAT-006 spec](../../features/FEAT-006-member-identity/spec.md) §1, item 5); evidence attachments and Member PIDs still work against the local database.
 - Operating instructions and rollback: [RB-001](../../operations/RB-001-runbook.md).
@@ -51,7 +51,7 @@ Hosts every domain listed in the frontmatter and realises every feature in its `
 
 ## Marketing report preview — FEAT-015
 
-FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; Production migration 011 and metadata/source-preservation postchecks passed after a verified full backup. Local migration and API-024/025 HTTP remain NOT_RUN because the Local database/config is unavailable. Existing hosted Guest reads/write denial passed; no marketing API deployment is claimed. Ready metrics, sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
+FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; Production migration 011 and metadata/source-preservation postchecks passed after a verified full backup. Local migration 011 passed after the separately owner-authorized restore of the verified Production backup into a new persistent loopback database; schema 11 and all 47 source table counts/content hashes match. Local API-024 HTTP preview passed (200, HELD, 12 UNKNOWN/null measurements and valid canonical hash); real API-025 preparation/freeze HTTP remains NOT_RUN because no reviewed parent association is provisioned. Existing hosted Guest reads/write denial passed; no marketing API deployment is claimed. Ready metrics, sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
 
 ## Visual Marketing — FEAT-014
 

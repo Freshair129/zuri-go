@@ -3,7 +3,7 @@ id: SDD-015
 title: Marketing report exchange — design
 status: approved
 superseded_by: null
-version: 0.6.0
+version: 0.7.0
 date: 2026-10-05
 relations:
   relates_to: [FEAT-015, ARCH-005, ADR-007, DOM-CAM, DOM-MET, SRV-002]
@@ -11,7 +11,7 @@ relations:
 
 # SDD-015 — bounded reported-evidence exchange
 
-[Gap evidence](gap-analysis.md) and [wire contract](contract.md) are the peer contracts. P1 source snapshot/preview and P2 preparation/freeze were approved on 2026-10-05 and are implemented in source. Migration 011 applied to Production on 2026-10-05 after a verified full backup; Local migration remains NOT_RUN. Identity, delivery and parent receiver remain proposed. See [production migration evidence](verification.md#production-migration-011--2026-10-05).
+[Gap evidence](gap-analysis.md) and [wire contract](contract.md) are the peer contracts. P1 source snapshot/preview and P2 preparation/freeze were approved on 2026-10-05 and are implemented in source. Migration 011 applied to Production and the separately authorized restored native Local on 2026-10-05; Local restore/data/runtime evidence is in [verification](verification.md#local-production-backup-restore--2026-10-05). Identity, delivery and parent receiver remain proposed. See [production migration evidence](verification.md#production-migration-011--2026-10-05).
 
 ## Architecture and sequence
 
@@ -49,7 +49,7 @@ Identity evaluation actually runs at the receiver on every request; the diagram 
 | Parent receiver | Identity-managed service principal/binding, current tenant/Business/Marketing permissions and existing initiative | external reported-evidence record plus receipt, atomic | parent Marketing evidence owner; Identity owns credential/grant; no Person spoofing |
 | Parent read projection | receipt-backed reports readable to viewer | none | parent growth/Business access; external reports remain distinct from paid-provider/Commerce values |
 
-Go's four approved physical records and grants are authored once in [P2](p2-freeze-outbox.md); migration 011 is applied to Production, while Local migration remains NOT_RUN. The Go report key includes deployment identity so local and hosted databases never silently become the same writer. Parent receipt/report records, delivery states and retention/purge still require separate reviewed contracts.
+Go's four approved physical records and grants are authored once in [P2](p2-freeze-outbox.md); migration 011 is applied to both Production and native Local. The Go report key includes deployment identity so local and hosted databases never silently become the same writer. Parent receipt/report records, delivery states and retention/purge still require separate reviewed contracts.
 
 ## Interfaces — approved P1
 
@@ -64,7 +64,7 @@ Component [CMP-002](../../services/SRV-002-local/CMP-002-marketing-report-previe
 | FR-015-002 | `previewMarketingReport(snapshot, requestedWindow) → Preview` (pure) | Strict sanitized context, 12 null/UNKNOWN measurements, optional unverified weekly assertion; no raw state or durable envelope |
 | FR-015-002 / preview identity | `canonicalHash(value) → SHA256` (pure) | Compact UTF-8 recursive key sorting, preserved array order; rejects non-finite/undefined values; parity checked with existing persistence hash |
 
-P1 deliberately has no path that enables ready values from client/state timezone claims. Source schema has no audited attestation record; the mapper always returns HELD. Internal observed zero and n/N are calculation-test evidence only and do not appear in the preview. Missing state produces null settingsVersion, targets and revision/hash fields plus `CAMPAIGN_STATE_MISSING`; this is an incomplete preview, never the strict wire envelope. Privacy and authority tests bind TC-015-001/002; native source acceptance binds TC-015-003 and passed in isolated PostgreSQL 18.6; real application HTTP acceptance remains NOT_RUN.
+P1 deliberately has no path that enables ready values from client/state timezone claims. Source schema has no audited attestation record; the mapper always returns HELD. Internal observed zero and n/N are calculation-test evidence only and do not appear in the preview. Missing state produces null settingsVersion, targets and revision/hash fields plus `CAMPAIGN_STATE_MISSING`; this is an incomplete preview, never the strict wire envelope. Privacy and authority tests bind TC-015-001/002; native source acceptance binds TC-015-003 and passed in isolated PostgreSQL 18.6; actual Local API-024 HTTP preview acceptance passed; browser interaction remains NOT_RUN.
 
 Acceptance examples: empty source → UNKNOWN/null; reported cap 0 → planning context `"0"`; same snapshot/window/capture time → same preview hash. Adversarial cases are in the bound test files; no local-model micro-task is dispatched.
 
@@ -84,7 +84,7 @@ The owner approved [P2 preparation, freeze and queued outbox](p2-freeze-outbox.m
 | FR-015-003 | `canonicalText(value) → UTF8Text` | Compact canonical text, same hash domain as P1 |
 | FR-015-003 | `ledgerRetry(error) → Boolean` | Router retries only 40001/exact ledger unique conflicts, at most two retries |
 
-`PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006/007 pass, including native PostgreSQL 18.6 concurrency/locks and migrator ACL interruption. Independent L2 found the original grant window; atomic grant/revoke correction passed independent L2 review at `99ed23a`, including an independent six-case native rerun and actual migration/rerun. Production migration and postchecks pass; Local migration remains unperformed.
+`PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006/007 pass, including native PostgreSQL 18.6 concurrency/locks and migrator ACL interruption. Independent L2 found the original grant window; atomic grant/revoke correction passed independent L2 review at `99ed23a`, including an independent six-case native rerun and actual migration/rerun. Production and Local migration/postchecks pass; real API-025 HTTP freeze remains NOT_RUN without a reviewed parent association.
 
 ## Future interfaces — not implemented
 
@@ -111,8 +111,8 @@ No sender/receiver API or cross-system event is allocated; candidate delivery/pa
 
 1. P1 was approved on 2026-10-05: source snapshot/projector/preview. Resolve the six parent/delivery decisions in the gap analysis before cross-system implementation.
 2. Parent owner reviews the receiver and Identity extension in its own governed repository, including record IDs, permission and persistence. The existing Enterprise API auth is a lead for reuse, not an approved growth-write grant.
-3. P1 source, synthetic tests and TC-015-003 passed in isolated native PostgreSQL 18.6; its synthetic writes roll back. Live local HTTP acceptance remains NOT_RUN because this checkout has no application configuration. No migration is needed for P1.
-4. P2 native isolated QA concurrency/locks/ACL tests pass. The owner authorized merge after independent review and migration 011 to both Local and Production. Independent L2 correction review passed at `99ed23a`; final PR head/check verification and real target/schema/backup preflight precede those actions. Production admin config was recovered privately; Local database/config remain unavailable in this checkout. Parent inbox/receipt and sending await their own approved implementation.
+3. P1 source, synthetic tests and TC-015-003 passed in isolated native PostgreSQL 18.6; its synthetic writes roll back. Live Local API-024 HTTP preview passed after the authorized restore and configuration of native Local. No migration is needed for P1.
+4. P2 native isolated QA concurrency/locks/ACL tests pass. The owner authorized merge after independent review and migration 011 to both Local and Production. Independent L2 correction review passed at `99ed23a`; PR #6 merged and target/schema/backup preflight, Production migration and the separately authorized new Local restore/migration passed. No existing Local database was overwritten. Parent inbox/receipt and sending await their own approved implementation.
 5. Run one isolated synthetic end-to-end report; only then consider credentials, hosted execution or production rollout under separate explicit operations authorization.
 
 ## Exit criteria
