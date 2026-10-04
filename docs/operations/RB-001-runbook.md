@@ -39,9 +39,17 @@ import { spawnSync } from 'node:child_process';
 const config = JSON.parse(readFileSync('.local/config.json', 'utf8'));
 const target = new URL(config.adminUrl);
 if (target.hostname !== '127.0.0.1' || target.port !== '55412' || target.pathname !== '/zuri_go') throw new Error('Unexpected Local backup target');
+const env = { ...process.env };
+for (const key of Object.keys(env)) if (/^PG/i.test(key)) delete env[key];
+Object.assign(env, {
+  PGHOST: target.hostname, PGPORT: target.port,
+  PGDATABASE: decodeURIComponent(target.pathname.slice(1)),
+  PGUSER: decodeURIComponent(target.username), PGPASSWORD: decodeURIComponent(target.password),
+  PGCONNECT_TIMEOUT: '5', PGSSLMODE: 'disable'
+});
 const file = `.local/backups/zuri-go-local-${Date.now()}.sql`;
-const result = spawnSync('.local/marketing-native/runtime/pgsql/bin/pg_dump.exe', ['--no-owner', '--no-privileges', '--file', file], {
-  env: { ...process.env, PGDATABASE: config.adminUrl }, stdio: 'ignore'
+const result = spawnSync('.local/marketing-native/runtime/pgsql/bin/pg_dump.exe', ['--no-owner', '--file', file], {
+  env, stdio: 'ignore'
 });
 if (result.error || result.status !== 0) throw new Error('Local backup failed; incomplete file is not a verified backup');
 console.log(`Dump written privately: ${file}; verify completeness and checksum before relying on it.`);
@@ -49,6 +57,8 @@ console.log(`Dump written privately: ${file}; verify completeness and checksum b
 ```
 
 Check the completion trailer, expected COPY sections/counts and SHA-256; a dump alone is not restore proof. Keep dump/config/credentials outside Git and deployment. The commands above document future operations; a second new native backup was not run in this closeout. Do not restore over occupied data or roll back schema without separate authorization.
+
+The native dump example retains ACLs; restore requires the referenced restricted role to exist. The historical Production source dump used `--no-privileges`, so its restoration separately reconciled the exact existing migration-010 Visual function ACLs in one transaction: PUBLIC cannot execute any of the four functions, the runtime cannot execute the two internal helpers, and only record-review/finalize remain runtime-callable. Migration 011 configured its own function ACLs. A restored migration ledger does not replay earlier grants automatically. Verify existing table, column and function permissions against approved migrations before accepting any ACL-free restore ([RCA](../../.brain/rca/production-backup-restore-function-acls.md)). The corrected child environment was checked with read-only libpq against `zuri_go`/55412, including conflicting inherited PG settings; no additional full dump was executed ([backup example RCA](../../.brain/rca/native-local-backup-environment.md)).
 
 ## Database custody
 Historical extraction retained its Docker container and volume; this machine now uses the native Local procedure above. `.local/config.json` selects the existing local Business; `.local/cloud-config.json` is for trusted operator cloud access. These files and `.local/postgres.env` are private. Never put them in apps/metrics, apps/web/src/data.json, build/site or build/vercel.
