@@ -87,7 +87,7 @@ This owner-authorized production rollout deployed the already-merged FEAT-014 co
 
 - The deployment was built from worktree `c833915`. The packaged application sources under `apps/web/`, `apps/api/` and `scripts/` matched `origin/main` at `3a45813`; the branch differed only in three FEAT-013 documentation files, which were not packaged. `npm run build` passed and produced 61 deploy files; `.local/` was excluded.
 - `npm test` passed against the isolated local QA database at schema 10. Documentation validation reported 0 errors and 166 existing warnings; the generated-view check found 11 views and 0 drift.
-- Before migration, production was schema 7 on PostgreSQL 18; there was one Business, 0 meetings and 0 Workboard tasks to backfill. The full SQL backup used `pg_dump` 18 with TLS 1.3, `verify-full`, and `--no-owner --no-privileges`. It is kept privately under `.local/backups/`: 696,141 bytes, SHA-256 `86b3bde5d0c967f883428779295093dc558f7d36b31479fdf831bb948b2d300d`, with the completion trailer and all 36 expected COPY sections. A restore drill of this backup was not run.
+- Before migration, production was schema 7 on PostgreSQL 18; there was one Business, 0 meetings and 0 Workboard tasks to backfill. The full SQL backup used `pg_dump` 18 with TLS 1.3, `verify-full`, and `--no-owner --no-privileges`. It is kept privately under `.local/backups/`: 696,141 bytes, SHA-256 `86b3bde5d0c967f883428779295093dc558f7d36b31479fdf831bb948b2d300d`, with the completion trailer and all 36 expected COPY sections. A restore drill followed on 2026-10-04; the schema-7 backup restored in an isolated PostgreSQL 18 container and all 36 COPY targets matched their backup row counts. See [restore-drill.md](restore-drill.md); this did not validate recovery of the post-migration schema 10 database.
 
 ### Migration and deployment
 
@@ -100,7 +100,7 @@ This owner-authorized production rollout deployed the already-merged FEAT-014 co
 - On both the staged URL and the public URL, Guest `/session` reported unauthenticated; `/workspace`, `/state` and `/overview` returned 200; Guest `/tasks` returned 0 tasks. Visual team/projects reads returned 200 with 8 registry agents, 0 projects and 0 public outputs. A cross-origin Visual project POST was rejected with 403 by the origin guard and made no write.
 - The public Visual Studio page loaded in Guest mode and showed no approved public output; Variants remained disabled. This was a read-only browser check.
 - The release checks did not sign in with a real Member or Business-admin code, create a production project, or test interactive saves/mobile layout. At rollout time, the Vercel CLI write probe was blocked by the cross-origin guard, so the same-origin Guest 401 was initially not observed. The production recheck below later observed HTTP 401; the full local test suite also passed the Guest mutation gates.
-- No restore drill was run for this new backup. There is no down-migration; use the rollback guidance in [RB-001](../../operations/RB-001-runbook.md) and assess schema compatibility before any code rollback or backup restore.
+- The schema-7 backup restore drill passed in an isolated PostgreSQL 18 container; see [restore-drill.md](restore-drill.md). There is no down-migration; use the rollback guidance in [RB-001](../../operations/RB-001-runbook.md) and assess schema compatibility before any code rollback or backup restore.
 
 ## Production acceptance recheck — 2026-10-04
 
@@ -111,4 +111,4 @@ Read-only checks were repeated against the public production origin `https://zur
 - A same-origin Guest `POST` to the Visual project endpoint returned HTTP 401. The request had no Member cookie and created no production record.
 - The Visual Studio page loaded in Guest mode, showed no approved public output, and kept Variants disabled.
 
-Still not accepted on production: Member/Admin browser sessions, a real project save, and the narrow-screen layout. No test project was created in the sole production Business. The backup restore drill remains not run. The release record therefore distinguishes live Guest checks from Member/Admin and write-flow acceptance.
+Still not accepted on production: Member/Admin browser sessions, a real project save, and the narrow-screen layout. No test project was created in the sole production Business. The backup restore drill passed in an isolated PostgreSQL 18 container; see [restore-drill.md](restore-drill.md). The release record therefore distinguishes live Guest checks from Member/Admin and write-flow acceptance.
