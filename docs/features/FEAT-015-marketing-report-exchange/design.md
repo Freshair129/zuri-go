@@ -3,7 +3,7 @@ id: SDD-015
 title: Marketing report exchange — design
 status: approved
 superseded_by: null
-version: 0.2.0
+version: 0.3.0
 date: 2026-10-05
 relations:
   relates_to: [FEAT-015, ARCH-005, ADR-007, DOM-CAM, DOM-MET, SRV-002]
@@ -11,7 +11,7 @@ relations:
 
 # SDD-015 — bounded reported-evidence exchange
 
-[Gap evidence](gap-analysis.md) and [wire proposal](contract.md) are the peer contracts. P1 source snapshot and sanitized preview were approved on 2026-10-05 and are implemented in source. The later persistence, Identity and receiver design remains proposed; no schema migration or production operation was performed.
+[Gap evidence](gap-analysis.md) and [wire contract](contract.md) are the peer contracts. P1 source snapshot/preview and P2 preparation/freeze were approved on 2026-10-05 and are implemented in source. Migration file 011 exists but is not applied to an application database; Identity, delivery and parent receiver remain proposed. No production operation was performed.
 
 ## Architecture and sequence
 
@@ -49,7 +49,7 @@ Identity evaluation actually runs at the receiver on every request; the diagram 
 | Parent receiver | Identity-managed service principal/binding, current tenant/Business/Marketing permissions and existing initiative | external reported-evidence record plus receipt, atomic | parent Marketing evidence owner; Identity owns credential/grant; no Person spoofing |
 | Parent read projection | receipt-backed reports readable to viewer | none | parent growth/Business access; external reports remain distinct from paid-provider/Commerce values |
 
-Proposed logical records are not executed SQL migrations. The Go report key includes deployment identity so local and hosted databases never silently become the same writer. The parent receipt/report unique keys include authenticated binding and report UUID. Storage types, retention and parent record IDs require reviewed migration documents before implementation; migration numbers are not reserved here.
+Go's four approved physical records and grants are authored once in [P2](p2-freeze-outbox.md); migration 011 is an unapplied file. The Go report key includes deployment identity so local and hosted databases never silently become the same writer. Parent receipt/report records, delivery states and retention/purge still require separate reviewed contracts.
 
 ## Interfaces — approved P1
 
@@ -68,15 +68,30 @@ P1 deliberately has no path that enables ready values from client/state timezone
 
 Acceptance examples: empty source → UNKNOWN/null; reported cap 0 → planning context `"0"`; same snapshot/window/capture time → same preview hash. Adversarial cases are in the bound test files; no local-model micro-task is dispatched.
 
+## Interfaces — approved P2
+
+The owner approved [P2 preparation, freeze and queued outbox](p2-freeze-outbox.md) on 2026-10-05. [CMP-003](../../services/SRV-002-local/CMP-003-marketing-report-ledger.md), `apps/api/marketing-report-ledger.mjs`, owns the local adapter and exposes [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze). It reads scoped campaign/state/Business revisions and the reviewed association; owns only the four P2 ledger tables. No parent API is consumed.
+
+| FR / layer | Exported signature | Responsibility |
+|---|---|---|
+| FR-015-001 | `prepareMarketingReport(tx, businessId, campaignId, request) → PreparationResult` | SQL-created safe preview/time/hash, exact original replay; independently compare new JS/SQL projection |
+| FR-015-001/003 | `readLedgerRequest(req, operation) → Request` | ≤4096 UTF-8 bytes, strict nested keys, duplicate/Unicode rejection before DB |
+| FR-015-001 | `validatePreparationRequest(input, now) → PreparationRequest` | Three exact fields; selected association UUID and approved weekly window |
+| FR-015-003 | `validateFreezeRequest(input) → FreezeRequest` | Exact four fields, IDs/hash and five-field string revision tuple |
+| FR-015-003 | `buildMarketingEnvelope(preparation, association, serverIdentity) → CanonicalEnvelope` | Strict held projection/wire whitelist; original payload/window; server report ID/time and registered routing |
+| FR-015-001/003 | `freezeMarketingReport(tx, businessId, campaignId, request) → FrozenReportResult` | SQL finalizer locks/rechecks, then atomic report + QUEUED + audit; no network |
+| FR-015-003 | `readMarketingReport(tx, businessId, reportId) → PrivateReport` | Private immutable bytes/hash/state; active unchanged association before disclosure |
+| FR-015-003 | `canonicalText(value) → UTF8Text` | Compact canonical text, same hash domain as P1 |
+| FR-015-003 | `ledgerRetry(error) → Boolean` | Router retries only 40001/exact ledger unique conflicts, at most two retries |
+
+`PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006 pass; TC-015-007 native concurrency/locks is NOT_RUN, so P2 exit remains open.
+
 ## Future interfaces — not implemented
 
-The canonical next-step proposal is [P2 preparation, freeze and queued outbox](p2-freeze-outbox.md), drafted after P1 was committed/pushed on 2026-10-05. It resolves server-issued preview confirmation and details storage/grants/idempotency/QA. **P2 is draft and requires approval; the approved status of this SDD applies to P1, not to that new schema.**
-
-- FR-015-003 · `freezeMarketingReport(scope, expectedSource, expectedPreviewHash) → Report` — future timestamp/revision recheck and immutable report; changed source must refuse with 409. The P1 preview does not implement that check or a ledger.
 - FR-015-004 · `dispatchMarketingReport(scope, reportId, now) → DeliveryResult` — manual invocation, leased attempt and bounded retries; no worker starts at application boot.
 - FR-015-005 · parent `acceptReportedMarketingEvidence(authenticatedBinding, envelope) → DurableReceipt` — candidate signature in this design only; parent record/schema/authorization approval is mandatory.
 
-API-024 and CMP-002 are allocated only to the local preview. No receiver, freeze/send API, outbox component or cross-system event is allocated by P1. Candidate later paths are not callable capabilities.
+No sender/receiver API or cross-system event is allocated; candidate delivery/parent paths are not callable capabilities.
 
 ## Failure modes
 
@@ -97,7 +112,7 @@ API-024 and CMP-002 are allocated only to the local preview. No receiver, freeze
 1. P1 was approved on 2026-10-05: source snapshot/projector/preview. Resolve the six parent/delivery decisions in the gap analysis before cross-system implementation.
 2. Parent owner reviews the receiver and Identity extension in its own governed repository, including record IDs, permission and persistence. The existing Enterprise API auth is a lead for reuse, not an approved growth-write grant.
 3. P1 source and synthetic tests are implemented; real PostgreSQL and live local HTTP acceptance remain NOT_RUN because this checkout has no local configuration. Run TC-015-003 against the existing approved local database; it rolls back all synthetic QA writes. No migration is needed for P1.
-4. After approved schema and isolated QA plan, implement Go ledger/outbox and parent inbox/receipt atomically. Test concurrency, receipts, credential revocation and crossed scopes.
+4. P2 ledger/outbox source and migration file are approved and implemented; run native isolated QA concurrency/lock acceptance before merge. Applying migration 011 to an application database is a separate operator action. Parent inbox/receipt and actual sending await their own approved implementation.
 5. Run one isolated synthetic end-to-end report; only then consider credentials, hosted execution or production rollout under separate explicit operations authorization.
 
 ## Exit criteria

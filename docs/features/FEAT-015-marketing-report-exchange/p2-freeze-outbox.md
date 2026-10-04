@@ -1,8 +1,8 @@
 ---
-title: P2 local preparation, immutable report and queued outbox — review proposal
-status: draft
+title: P2 local preparation, immutable report and queued outbox
+status: approved
 superseded_by: null
-version: 0.1.0
+version: 0.2.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,7 +11,7 @@ risk: HIGH
 
 # P2 — เก็บรายงานเดิมให้ตรวจย้อนกลับได้ ก่อนเปิดการส่งจริง
 
-**PROPOSED / NOT_IMPLEMENTED.** This is the canonical P2 design chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. The request to commit/push and continue authorizes preparing this review packet; it does not mark this new schema approved. P1 remains the approved read-only implementation.
+**APPROVED / BUILDING.** The owner approved this P2 design on 2026-10-05 after reviewing draft commit `f9ca5aa`. This is the canonical P2 chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. Code, tests and additive migration **file** 011 are implemented; native multi-connection acceptance and ordinary local/production schema application remain NOT_RUN. API-024 stays read-only. Approval does not authorize real associations, credentials, transport, parent writes or deployment.
 
 ผลที่เสนอ: operator เลือก campaign/week และ association ที่ผ่านการ review แล้ว → server เก็บ sanitized preview พร้อมเวลาจับข้อมูล → operator ยืนยัน preview นั้น → ตรวจ source revision ซ้ำและบันทึก immutable report + QUEUED outbox + audit ใน transaction เดียว. ยังไม่มีการส่งเครือข่ายหรือ receipt จาก Zuri-AI.
 
@@ -55,7 +55,7 @@ flowchart LR
   T --> Q[Private immutable bytes; no network send]
 ```
 
-Candidate paths below have no allocated API IDs or code yet. The existing [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) request/response and no-write guarantee stay intact.
+The paths below are allocated to [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze), implemented by [CMP-003](../../services/SRV-002-local/CMP-003-marketing-report-ledger.md). The existing [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) request/response and no-write guarantee stay intact.
 
 | Candidate operation | Strict request | Proposed success |
 |---|---|---|
@@ -69,7 +69,7 @@ Preparation requires a readable non-archived campaign, supported state schema/ha
 
 ## Proposed physical records and ownership
 
-All four tables are DOM-CAM-owned in SRV-002. Actual SQL, migration number, grants and component/API IDs are created only after this proposal is approved. No cascade deletes, drop/backfill, source-table rewrite or counter reset is proposed.
+All four tables are DOM-CAM-owned in SRV-002. Approved migration file `011_marketing_report_ledger.sql` adds these records, RLS, guards and finalizers. No cascade deletes, drop/backfill, source-table rewrite or counter reset. Main was fetched/rechecked at `1188ec0` before number allocation; its only new commit is Visual Studio acceptance documentation.
 
 | Proposed table | Typed columns / key | Stored document and rule |
 |---|---|---|
@@ -102,7 +102,7 @@ Locking and idempotency must be proved under REPEATABLE READ, including waiting 
 
 ## Interface lock proposed for P2
 
-All signatures below are proposed extensions to SDD-015, not existing exports. They must be fixed in the approved SDD before implementation packets. The ledger adapter stays in existing SRV-002; no new deployment.
+These signatures are approved P2 extensions locked in [SDD-015](design.md#interfaces--approved-p2) and exported by CMP-003. The ledger adapter stays in existing SRV-002; no new deployment.
 
 | FR / layer | Proposed signature | Responsibility |
 |---|---|---|
@@ -130,12 +130,14 @@ Proposed scope is new **test-owned** PostgreSQL QA only, with synthetic Business
 | Migration rerun and audience | Actual restricted-role permissions stay revoked after a second run; Guest/Member raw SELECT sees nothing; private ledger never joins existing Guest workspace/state |
 | No transport or authority promotion | Queue is only QUEUED; zero network calls, send attempts or parent writes; unknown metrics/legacy approval trust remain unchanged — AC-015-002-03 |
 
-Allocate additional TC IDs only when their actual test files exist. All cases above are NOT_RUN. Existing P1 Node tests and Python packaging/docs checks remain required regressions. Independent architecture/security review is required before merge; passing a synthetic test cannot prove real binding, provider completeness or production acceptance.
+Actual test bindings are TC-015-005 (pure/parser/router), TC-015-006 (disposable WASM SQL) and TC-015-007 (native PostgreSQL concurrency/locks). The first two passed; native concurrency/waiting expiry is NOT_RUN. See [verification](verification.md) for exact commands and limits. Independent architecture/security review is required before merge; passing synthetic SQL cannot prove real binding, provider completeness or production acceptance.
+
+Implementation choices within the approved scope: SQL finalizers accept only the typed operation request, not source/preview/envelope JSON; construct the safe P1 projection themselves; the adapter additionally compares newly prepared SQL and P1 JS projections and rolls back on mismatch. Compact SQL serialization supports ASCII object field names (as in the campaign model), Unicode string values, ordered arrays and JavaScript numeric notation. Unsupported source keys fail closed; no implicit normalization. Preparations use millisecond server timestamps. Business `FOR NO KEY UPDATE` precedes campaign/state/association/preparation locks; this remains compatible with a campaign writer's audit FK `KEY SHARE`. Private marketing audit SELECT also requires the operator. Source changes that make reprojection invalid become SOURCE_STALE at freeze. Read/replay requires the original association version as well as active status. No outbound bytes are generated from current source at read/replay.
 
 ## Approval and exit boundary
 
-Approval requested: this P2 design, its strict operation/storage/grant contracts and writing the corresponding code/tests/additive migration **file**. No approval is inferred for applying schema to a real database, registering real parent mappings/credentials, real sending, parent source changes, merge or deployment. Parent registry/Identity contract remains a prerequisite for any real association; synthetic tests do not remove it.
+Approval recorded: owner approved this P2 design, its strict operation/storage/grant contracts and writing corresponding code/tests/additive migration **file**. No approval is inferred for applying schema to a real database, registering real parent mappings/credentials, real sending, parent source changes, merge or deployment. Parent registry/Identity contract remains a prerequisite for any real association; synthetic tests do not remove it.
 
 P2 exit: actual source-stale/expiry/concurrency/rollback/RLS/grant/hash tests pass in explicitly identified isolated QA; no source/private-data regression; docs and source traceability agree. Until then the feature stays building. Afterwards P3 can propose a separately approved sender and parent durable receipt contract.
 
-Version diff: P1 SDD-015 v0.2.0 has stateless read-only preview. This draft chapter adds a server-issued preparation protocol, minimal reviewed association registry, immutable report/QUEUED storage, common-lock/replay rules and a concrete isolated-QA gate. It adds no runtime source or applied schema.
+Version diff 0.1.0 → 0.2.0: draft → owner-approved; CMP-003/API-025 and migration file 011 now implement preparation, immutable freeze and QUEUED outbox. SQL role/hash/privacy/rollback checks execute in disposable in-memory QA; native concurrency/waiting expiry remains NOT_RUN. No application version, applied local/production schema or integration/deployment change.

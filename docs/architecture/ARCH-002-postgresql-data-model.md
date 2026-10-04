@@ -405,3 +405,7 @@ The schema 6 sentence that the migration defines no policy for projects describe
 ## Approved Visual Marketing amendment
 
 [Visual Marketing data model](visual-marketing/data-model.md) is the canonical amendment for approved FEAT-014 / ADR-006. R3 additive migrations 008–010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for R3.
+
+## Approved marketing report ledger amendment — file only
+
+[FEAT-015 P2](../features/FEAT-015-marketing-report-exchange/p2-freeze-outbox.md) is the canonical physical schema/lock/grant chapter approved on 2026-10-05. Migration file `011_marketing_report_ledger.sql` adds four DOM-CAM/SRV-002 private tables, reviewed association registry, append-only preparation/report/QUEUED records and atomic finalizers. Runtime direct writes are revoked after the migrator's broad grants on every run. Marketing audit SELECT is operator-only. Source tables and Business revision are unchanged by freeze. Disposable in-memory SQL checks passed; native multi-connection acceptance and application/production migration are NOT_RUN. This amendment does not assert that any live database is schema 11.

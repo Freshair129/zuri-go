@@ -7,7 +7,7 @@ runtime: SRV-002
 delivery: building
 status: approved
 superseded_by: null
-version: 0.2.0
+version: 0.3.0
 date: 2026-10-05
 complexity: C-3
 risk: HIGH
@@ -18,7 +18,7 @@ relations:
 
 # FEAT-015 — Marketing report exchange with Zuri-AI
 
-ส่งผลแคมเปญและ weekly review จาก Zuri-Go ไปเป็น external reported evidence ใน Marketing ของ Zuri-AI โดยรักษาเจ้าของข้อมูล สถานะหลักฐาน และขอบเขต Business. Gap/contract preparation was approved on 2026-10-04; the owner approved this detailed package for the proposed next step, **P1 source snapshot and sanitized preview**, on 2026-10-05. Receiver, credentials, migrations, durable delivery and production operations remain outside that implementation approval.
+ส่งผลแคมเปญและ weekly review จาก Zuri-Go ไปเป็น external reported evidence ใน Marketing ของ Zuri-AI โดยรักษาเจ้าของข้อมูล สถานะหลักฐาน และขอบเขต Business. Gap/contract preparation was approved on 2026-10-04; the owner approved P1 source snapshot/preview and then [P2 preparation/freeze](p2-freeze-outbox.md) on 2026-10-05. P2 approval covers code/tests and an additive migration file only. Receiver, credentials, applying schema to an application database, actual sending and production operations remain outside that approval.
 
 ## Scope
 
@@ -30,11 +30,11 @@ relations:
 
 ## Current delivery and exit gates
 
-**BUILDING / P1 implemented in source, database acceptance NOT_RUN.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) reads one server-scoped campaign and builds a sanitized, hashed preview without persistence. Current source storage has no audited reporting-timezone/coverage attestation: all measurement scalars and n/N remain null/UNKNOWN and readiness is HELD. Targets and cap remain separate planning context. Internal observed arithmetic is tested but is not exported as a ready metric. See [verification](verification.md) for tests and unresolved gates.
+**BUILDING / P1 and P2 implemented in source; native database exit open.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists a server-issued preparation and atomically freezes immutable report + QUEUED + private audit. Migration 011 exists as a file, not an applied application schema. Disposable WASM SQL acceptance passed; native REPEATABLE READ concurrency/waiting expiry and live HTTP remain NOT_RUN. Current source storage has no audited reporting-timezone/coverage attestation: all measurement scalars and n/N stay null/UNKNOWN and readiness is HELD. Targets and cap remain planning context. See [verification](verification.md).
 
 P1 is C-3 / MEDIUM (API and private-data boundary). The full exchange remains HIGH risk because it adds persistence and cross-system authorization. No source timezone attestation is accepted from a caller or arbitrary state field.
 
-Implementation gates: review this package; settle parent receiver ownership/schema and Business-scoped machine authorization; allocate parent records; approve migration design and isolated QA setup separately before applying any schema. No credential provisioning or real-account execution is authorized by this draft.
+Remaining gates: native isolated PostgreSQL QA and independent merge review; settle parent receiver ownership/schema and Business-scoped machine authorization in its own approved records. An ordinary local/production migration, real associations/credentials, sender and rollout require separate operational scope.
 
 ## Requirement index
 
@@ -42,7 +42,7 @@ Implementation gates: review this package; settle parent receiver ownership/sche
 |---|---|---|
 | [FR-015-001](requirements/FR-015-001-scoped-source-snapshot.md) | Freeze one authorized campaign source snapshot | building |
 | [FR-015-002](requirements/FR-015-002-reported-metric-semantics.md) | Export truthful metrics and reported review semantics | building |
-| [FR-015-003](requirements/FR-015-003-immutable-report-envelope.md) | Build a strict immutable envelope and explicit binding | declared |
+| [FR-015-003](requirements/FR-015-003-immutable-report-envelope.md) | Build a strict immutable envelope and explicit binding | building |
 | [FR-015-004](requirements/FR-015-004-durable-delivery-receipt.md) | Send with bounded recovery and durable receiver receipt | declared |
 | [FR-015-005](requirements/FR-015-005-source-preserving-receiver.md) | Preserve parent authority and receipt evidence | declared |
 

@@ -6,7 +6,7 @@ hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN, 
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013, FEAT-014, FEAT-015]
 relations:
   relates_to: [ARCH-005, ADR-007]
-  exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, API-024, EVT-001]
+  exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, API-024, API-025, EVT-001]
   consumes: [API-021, API-022]
 ---
 
@@ -39,7 +39,7 @@ The same HTTP API under `/api/zuri-go/v1` as [SRV-001](../SRV-001-hosted/SERVICE
 | [DOM-PLT](../../domains/platform/contracts.md) | API-001 | Only `Host: 127.0.0.1:{port}` requests from the same origin are answered |
 | [DOM-IAM](../../domains/identity-access/contracts.md) | API-002 (`GET /session` only); API-003; API-004 | No `/login` and no `/logout`; `/session` answers no member |
 | [DOM-BIZ](../../domains/business/contracts.md) | API-005 to API-008; API-009 Backup import; EVT-001 | API-009 is served only here |
-| [DOM-CAM](../../domains/campaign/contracts.md) | API-010 to API-013; API-024 | API-024 is local-only, read-only marketing preview |
+| [DOM-CAM](../../domains/campaign/contracts.md) | API-010 to API-013; API-024, API-025 | Local-only read-only preview and private preparation/freeze ledger |
 | [DOM-MET](../../domains/metrics/contracts.md) | API-014; API-015 | |
 | [DOM-TSK](../../domains/tasks/contracts.md) | API-016 to API-018 | |
 | [DOM-MTG](../../domains/meetings/contracts.md) | API-019 Meeting commit; API-020 Transcript upload | API-020 is routed but refused: the operator is not a Member (403 for an existing meeting) |
@@ -51,7 +51,7 @@ Hosts every domain listed in the frontmatter and realises every feature in its `
 
 ## Marketing report preview — FEAT-015
 
-FEAT-015 is **building**: only approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 exists in source. Database/live HTTP acceptance is NOT_RUN; ready metrics, freeze/outbox and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance of that feature.
+FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Migration 011 is an unapplied file. Disposable SQL checks pass; native concurrency/lock and live HTTP acceptance remain NOT_RUN. Ready metrics, actual sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance of that feature.
 
 ## Visual Marketing — FEAT-014
 

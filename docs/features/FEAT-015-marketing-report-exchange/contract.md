@@ -2,14 +2,14 @@
 title: Zuri-Go to Zuri-AI reported marketing evidence — wire proposal
 status: draft
 superseded_by: null
-version: 0.2.0
+version: 0.3.0
 date: 2026-10-05
 source_document: SDD-015
 ---
 
 # Reported marketing evidence contract — proposed v0.1
 
-**NOT_WIRED.** This is a proposed version label, not a negotiated live capability. Existing receiver routes do not implement this contract. Sources and incompatibilities are in [gap-analysis.md](gap-analysis.md); behavior belongs to the [requirement index](feature.md#requirement-index).
+**NOT_WIRED.** The owner approved this wire whitelist for local P2 envelope generation on 2026-10-05; CMP-003 now creates immutable bytes with contractVersion `zuri-marketing-report/0.1`. Parent protocol negotiation, authentication and receiver remain draft. Existing receiver routes do not implement this contract. Sources and incompatibilities are in [gap-analysis.md](gap-analysis.md); behavior belongs to the [requirement index](feature.md#requirement-index). P2 operations/storage/locks are authored once in [the approved P2 chapter](p2-freeze-outbox.md), with no actual sending.
 
 ## Direction, entity and authority
 

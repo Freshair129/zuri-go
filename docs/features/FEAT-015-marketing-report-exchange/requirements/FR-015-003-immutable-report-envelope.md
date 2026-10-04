@@ -1,8 +1,8 @@
 ---
 id: FR-015-003
 title: Build an immutable envelope with explicit binding
-delivery: declared
-status: draft
+delivery: building
+status: approved
 superseded_by: null
 relations:
   specified_by: [SDD-015]
@@ -20,4 +20,6 @@ The system SHALL freeze the strict versioned report, source revision tuple, expl
 
 ## Implementation
 
-Durable envelope, binding and atomic freeze remain NOT_IMPLEMENTED. P1 supplies only a `zuri-marketing-preview/0.1` hash, bounded request parsing and sanitized preview. It has no reportId, deployment/target binding, frozenAt, outbox or receipt and cannot be sent as the proposed wire envelope. Logical storage and binding remain proposed in [SDD-015](../design.md) and [the contract](../contract.md#envelope--strict-whitelist).
+P2 was approved on 2026-10-05. CMP-003/API-025 implement server preparation and atomic immutable report/QUEUED/audit through narrow DB finalizers in migration file 011. Server clock and registered deployment/binding/initiative are constructed from scoped persisted records; no caller envelope is accepted. The [strict wire whitelist](../contract.md#envelope--strict-whitelist) is generated and checked, with scalar UNKNOWN/null and legacy approval UNVERIFIED. P1 API-024 remains read-only.
+
+TC-015-005/006 pass pure and disposable WASM SQL checks for hash/schema/privacy/identity, replay, source conflict, immutability, RLS/grants and rollback. TC-015-007 native concurrency/waiting expiry remains NOT_RUN. Migration 011 is not applied to an application database; no real association/credentials, parent receipt or actual sending exists. This requirement stays building until its native acceptance and reviewed cross-system binding gates close.

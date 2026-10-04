@@ -14,6 +14,22 @@ Owner: DOM-CAM
 
 Request/window, response fields and incomplete-source semantics are authored once in [FEAT-015 contract](../../features/FEAT-015-marketing-report-exchange/contract.md#p1-preview-contract--approved-2026-10-05). All actual metrics remain UNKNOWN/null without audited server source-timezone/coverage evidence; caller timezone is not attestation. No envelope, outbox, target binding, parent network call, credential or receipt is created. Shared same-origin/header/no-store/error-envelope rules remain API-001.
 
+### API-025 — Local marketing report preparation and freeze
+Relations: relates_to: FEAT-015, FR-015-001, FR-015-003, SDD-015, API-001, CMP-003
+Owner: DOM-CAM
+
+**Status:** approved P2, 2026-10-05; source implementation, native concurrency acceptance NOT_RUN. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-ledger.mjs`, `apps/api/api.mjs` and unapplied migration file 011. Denies hosted, Guest, Member and crossed configured Business before DB; SQL also checks resolved operator/Business and unchanged active association.
+
+| Operation | Strict request | Success |
+|---|---|---|
+| `POST /businesses/{b}/campaigns/{id}/marketing-report-preparations` | idempotencyKey UUID, associationId UUID, window (API-024 four fields) | 201 `{replayed:false, preparation:{id,expiresAt,preview}}`; exact stored replay 200, original clock/hash/expiry |
+| `POST /businesses/{b}/campaigns/{id}/marketing-reports` | idempotencyKey UUID, preparationId UUID, expectedPreviewHash SHA-256, expectedSourceRevision (P1 five strings) | 201 `{replayed:false, report:{envelope,canonicalEnvelope,state:"QUEUED"}}`; identical committed replay 200 |
+| `GET /businesses/{b}/marketing-reports/{reportId}` | no body; private local operator | 200 `{envelope,canonicalEnvelope,state:"QUEUED"}` from persisted bytes; no current-source rebuild |
+
+Both POSTs accept at most 4096 UTF-8 bytes; unknown/duplicate nested keys, bad scalar types and invalid Unicode refuse before DB. Standard same-origin/header/no-store/error envelope remains API-001. 400 invalid JSON/UTF-8/duplicates; 413 size; 422 request fields/window, SOURCE_INCOMPLETE or SOURCE_INVALID; 404 unreadable campaign/preparation/report; 403 wrong authority/scope or ASSOCIATION_DENIED; 405 wrong method. Conflicts (409): IDEMPOTENCY_CONFLICT, ASSOCIATION_STALE, SOURCE_STALE, PREVIEW_MISMATCH, PREPARATION_EXPIRED, PREPARATION_ALREADY_FROZEN, REPORT_SCOPE_EXISTS. Serialization/exact ledger unique collisions have at most two transaction retries; unrelated DB failures do not retry or disclose private error text.
+
+The canonical [P2 design](../../features/FEAT-015-marketing-report-exchange/p2-freeze-outbox.md) owns locks, expiry, grants and replay rules; [wire contract](../../features/FEAT-015-marketing-report-exchange/contract.md) owns envelope fields. One original weekly report per explicit deployment/binding/initiative/campaign/activity-week/timezone; different asOf does not bypass the scope key. Freeze writes report, QUEUED and one private audit atomically, with no source mutation. No actual measurements become READY; no sender, worker, target override, parent permission or live binding is created.
+
 ### API-010 — Campaigns
 Relations: relates_to: FEAT-002, FEAT-001, ARCH-002, API-001
 Owner: DOM-CAM
