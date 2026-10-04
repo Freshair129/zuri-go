@@ -5,6 +5,7 @@ status: proposed
 hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN, DOM-VIS]
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013, FEAT-014]
 relations:
+  relates_to: [ARCH-005, ADR-007]
   exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, EVT-001]
   consumes: [API-021, API-022]
 ---
@@ -18,6 +19,10 @@ Trusted-operator workspace bound to loopback. It serves `build/site` and the sam
 | Deploy unit | `apps/api/server.mjs` on `127.0.0.1:4319` and Docker container `zuri-go-postgres`, started by `scripts/local/start.ps1` (`npm start`) |
 | Code roots | `apps/api`, `scripts/local` |
 | Runbook | [RB-001](../../operations/RB-001-runbook.md) |
+
+## Platform edition context
+
+This existing deployable hosts Zuri-Go as the light Marketing/Commercial edition of Zuri-AI. The cross-system context map is authored once in [registry/relations.yaml](../../../registry/relations.yaml), with process/design context in [ARCH-005](../../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md). This declaration does not claim parent-model parity, a completed parent Marketing extraction or an active sending integration. Wire contracts and per-entity write authority remain draft.
 
 ## Facts
 - Local Docker volume `zuri-go-postgres-data` is a persistent database; source control holds migrations, not database contents.

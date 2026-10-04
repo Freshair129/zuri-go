@@ -1,0 +1,28 @@
+# STD-003 R5: canonical external-system references and context map.
+# Domain semantics and data-flow direction are different axes. This is a draft map,
+# not a live connection, registered external writer or implicit identity alias.
+external_systems:
+  - name: zuri-ai
+    namespace: ZAI
+    repository: https://github.com/Freshair129/zuri.ai
+    checked_revision: d4b6d613c221d0fc5e1645293144bb9b6c8332cf
+    checked_on: 2026-10-04
+    marketing_domain: ZAI:DOM-MARKETING
+    marketing_charter: https://github.com/Freshair129/zuri.ai/blob/d4b6d613c221d0fc5e1645293144bb9b6c8332cf/docs/domains/marketing/CHARTER.md
+    evidence_ids: [ARCH-005, ADR-007]
+context_map:
+  - key: zuri-go-marketing-edition
+    upstream_system: zuri-ai
+    upstream_domain: ZAI:DOM-MARKETING
+    downstream_system: zuri-go
+    downstream_services: [SRV-001, SRV-002]
+    downstream_domains: [DOM-CAM, DOM-MET]
+    pattern: published-language
+    intended_data_direction: zuri-go-to-zuri-ai
+    scope: marketing-commercial-subset-with-supporting-domains
+    identity_mapping: explicit-cross-system-no-implicit-alias
+    mapping_status: draft
+    contract_status: draft
+    wiring_status: not-verified
+    writer_policy: sole-operational-writer-per-entity-to-be-reviewed
+    evidence_ids: [ARCH-005, ADR-007]

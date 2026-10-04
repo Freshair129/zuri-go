@@ -16,6 +16,10 @@ Current application version: 0.5.1. Deployment and production schema evidence: [
 
 [แผนจัดโครงสร้างที่อนุมัติ](../migrations/001-project-extraction.md) · [ผลตรวจจริง](../migrations/verification.md) · [root README](../../README.md)
 
+## Commercial pipeline and platform relationship
+
+[ARCH-005](commercial-pipeline/ARCH-005-commercial-pipeline.md) is the canonical draft source for the Marketing/Commercial edition context, 21 detail flows and 2 overview diagrams. [ADR-007](decisions.md#adr-007--zuri-go-as-a-marketingcommercial-edition-and-a-canonical-commercial-pipeline) records the owner-stated direction and placement. The external context map is authored once in [registry/relations.yaml](../../registry/relations.yaml); exact integration contracts remain draft.
+
 ## Artifacts in this folder
 
 | ID | Document | Role |
@@ -23,6 +27,7 @@ Current application version: 0.5.1. Deployment and production schema evidence: [
 | ARCH-001 | [Baseline architecture](ARCH-001-baseline-architecture.md) | Original local-only design; its local-only statements are superseded by ARCH-003 and the amendments above |
 | ARCH-002 | [PostgreSQL data model](ARCH-002-postgresql-data-model.md) | Physical schema, with the 0.3.1 and 0.4.0 amendments |
 | ARCH-003 | [Hosted deployment](ARCH-003-hosted-deployment.md) | PostgreSQL on Vercel (0.3.0) and its amendments; its shared-team-password statements are superseded by [FEAT-006](../features/FEAT-006-member-identity/spec.md) and [FEAT-007](../features/FEAT-007-single-code-login/spec.md) |
+| ARCH-005 | [Commercial pipeline](commercial-pipeline/ARCH-005-commercial-pipeline.md) | Draft canonical cross-system source, chapters and linked visual views; service/domain boundaries and proposed sending contract |
 | ADR-002 – ADR-004 | [System decisions](decisions.md) | Task and meeting domains for every department and one task record with contexts (ADR-002, ADR-003: approved 2026-10-01); visibility with confidential meetings (ADR-004: approved 2026-10-01) |
 
 The Business Overview, Guest access, Member identity, single-code login and logo specifications that used to live here are feature documents now — see the [documentation map](../README.md) and [features/](../features/). The links above already point to their new locations.
