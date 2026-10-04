@@ -11,7 +11,7 @@ Zuri-Go เป็น Marketing/Commercial edition ของ Zuri-AI ที่ de
 ต้องมี Node 24, Python 3, Docker Desktop และ installed Codex Data plugin สำหรับ build Dashboard เครื่องนี้ติดตั้งไว้แล้ว
 
 ```powershell
-cd D:\workspace\zuri-go
+cd O:\zuri-go
 npm run setup
 npm run build
 npm start
