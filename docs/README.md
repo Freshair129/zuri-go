@@ -56,13 +56,14 @@ _Maintained by hand and checked by `npm run docs:views` (PLAN-001 WI-11): the ta
 | [FEAT-012](features/FEAT-012-meeting-intake/feature.md) | Meeting intake | DOM-MTG | building | `features/FEAT-012-meeting-intake/` |
 | [FEAT-013](features/FEAT-013-emar-local-access/feature.md) | Emar local service access from Zuri-Go | DOM-PLT | implemented | `features/FEAT-013-emar-local-access/` |
 | [FEAT-014](features/FEAT-014-visual-marketing-team/feature.md) | Visual Marketing Team | DOM-VIS | implemented | `features/FEAT-014-visual-marketing-team/` |
+| [FEAT-015](features/FEAT-015-marketing-report-exchange/feature.md) | Marketing report exchange with Zuri-AI | DOM-CAM | building | `features/FEAT-015-marketing-report-exchange/` |
 
 ## Domains
 
 | Code | Domain | Subdomain / role | Features |
 |---|---|---|---|
 | [DOM-BIZ](domains/business/README.md) | Business workspace | supporting / foundation | FEAT-001 |
-| [DOM-CAM](domains/campaign/README.md) | Campaign & content | core / business | FEAT-002 |
+| [DOM-CAM](domains/campaign/README.md) | Campaign & content | core / business | FEAT-002, FEAT-015 |
 | [DOM-MET](domains/metrics/README.md) | Metrics & goals | core / business | FEAT-003 |
 | [DOM-TSK](domains/tasks/README.md) | Tasks & projects | supporting / business | FEAT-004, FEAT-010 |
 | [DOM-MTG](domains/meetings/README.md) | Meetings | supporting / business | FEAT-012 |

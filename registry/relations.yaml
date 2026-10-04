@@ -5,11 +5,11 @@ external_systems:
   - name: zuri-ai
     namespace: ZAI
     repository: https://github.com/Freshair129/zuri.ai
-    checked_revision: d4b6d613c221d0fc5e1645293144bb9b6c8332cf
+    checked_revision: a6e295a5e30b61aa0e6a178454e371d59e053818
     checked_on: 2026-10-04
     marketing_domain: ZAI:DOM-MARKETING
-    marketing_charter: https://github.com/Freshair129/zuri.ai/blob/d4b6d613c221d0fc5e1645293144bb9b6c8332cf/docs/domains/marketing/CHARTER.md
-    evidence_ids: [ARCH-005, ADR-007]
+    marketing_charter: https://github.com/Freshair129/zuri.ai/blob/a6e295a5e30b61aa0e6a178454e371d59e053818/docs/domains/marketing/CHARTER.md
+    evidence_ids: [ARCH-005, ADR-007, FEAT-015]
 context_map:
   - key: zuri-go-marketing-edition
     upstream_system: zuri-ai
@@ -25,4 +25,5 @@ context_map:
     contract_status: draft
     wiring_status: not-verified
     writer_policy: sole-operational-writer-per-entity-to-be-reviewed
-    evidence_ids: [ARCH-005, ADR-007]
+    contract_source: ../docs/features/FEAT-015-marketing-report-exchange/contract.md
+    evidence_ids: [ARCH-005, ADR-007, FEAT-015, SDD-015]

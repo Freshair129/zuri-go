@@ -53,6 +53,7 @@ _Maintained by hand; `npm run docs:views` (scripts/docs/generate_views.py --chec
 | Feature | Title | Delivery |
 |---|---|---|
 | [FEAT-002](../../features/FEAT-002-campaign-mission-control/feature.md) | Campaign Mission Control | implemented |
+| [FEAT-015](../../features/FEAT-015-marketing-report-exchange/feature.md) | Marketing report exchange with Zuri-AI | building |
 
 **Participating cross-domain features**
 
