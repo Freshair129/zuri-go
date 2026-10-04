@@ -2,11 +2,19 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.7.0
+version: 0.8.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## P3 approval and parent contract preparation — 2026-10-05
+
+The owner approved [P3](p3-delivery-receiver.md) v0.1.0 and subsequently selected minimum **90-day** retention for evidence/receipt, with no automatic deletion; audit retains the existing parent policy. P3 v0.2.0 records that scope/policy approval. Parent detailed intake is prepared at `docs/change-requests/marketing/ZURI-GO-REPORT-RECEIVER.md` in Zuri-AI, on isolated branch `codex/marketing-report-p3` from `332b88c9`; the active parent checkout/runtime is unchanged.
+
+The intake specifies report-only credentials, source/target binding, atomic SQLite evidence/receipt/audit, private readers and strict replay/source-preservation tests. It proposes new canonical requirement/design subjects and preserves current IDs/pinned rows. The approved parent writer profile requires a separately reviewed normative record migration; this intake is not an issued record or receiver implementation. Parent migration/read-policy gate remains OPEN. No sender/receiver code, new applied schema, real association/credential, data send or deployment was performed. P3-B/C/D tests remain NOT_RUN; the previously verified Local/Production operations below are unchanged.
+
+Version diff 0.7.0 → 0.8.0: P3 scope and 90-day minimum-retention approval recorded; detailed parent proposal prepared through the Doc Writer intake boundary. Documentation evidence does not mark P3 delivery or parent acceptance passed.
 
 ## Local Production-backup restore — 2026-10-05
 

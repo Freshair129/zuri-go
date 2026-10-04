@@ -7,7 +7,7 @@ runtime: SRV-002
 delivery: building
 status: approved
 superseded_by: null
-version: 0.7.0
+version: 0.8.0
 date: 2026-10-05
 complexity: C-3
 risk: HIGH
@@ -52,10 +52,13 @@ Completed operational gates: independent corrective review, PR #6 merge and migr
 - [SDD-015](design.md) — sequence, persistent boundaries, authority and implementation gates.
 - [Approved P2 design](p2-freeze-outbox.md) — server-issued preparation, immutable freeze/QUEUED storage and isolated-QA/grant checks; code reviewed, migration 011 applied on both targets.
 - [Wire contract proposal](contract.md) — field types, allowed payload, states and proposed interfaces.
+- [Approved P3 scope](p3-delivery-receiver.md) — sequencing, report-only Identity binding, minimum 90-day evidence/receipt retention, delivery state and isolated end-to-end acceptance; parent record migration gate remains open before coding.
 - [Quality/security constraints](requirements/NFR-015-001-bounded-private-exchange.md).
 - [Verification plan and executed checks](verification.md).
 
 ## Version diff
+
+0.7.0 → 0.8.0: recorded P3 owner approval and minimum 90-day evidence/receipt retention; parent-owned detailed contract/record migration prepared as intake. Coding/QA delivery remains unperformed until that parent gate closes.
 
 0.6.0 → 0.7.0: separately approved persistent Local restore/migration and actual runtime/API-024/build acceptance passed; schema 11 on both targets. API-025 real binding, browser and parent/sender acceptance remain open. No application version or Production deployment change.
 
