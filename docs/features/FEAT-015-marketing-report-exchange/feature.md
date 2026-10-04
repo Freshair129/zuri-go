@@ -50,6 +50,7 @@ Implementation gates: review this package; settle parent receiver ownership/sche
 
 - [Gap analysis](gap-analysis.md) — MKT-F01–F07, observed code and semantic mapping.
 - [SDD-015](design.md) — sequence, persistent boundaries, authority and implementation gates.
+- [P2 review proposal](p2-freeze-outbox.md) — server-issued preparation, immutable freeze/QUEUED storage and isolated-QA/grant checks; draft, no P2 code or migration applied.
 - [Wire contract proposal](contract.md) — field types, allowed payload, states and proposed interfaces.
 - [Quality/security constraints](requirements/NFR-015-001-bounded-private-exchange.md).
 - [Verification plan and executed checks](verification.md).

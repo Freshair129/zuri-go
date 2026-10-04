@@ -70,6 +70,8 @@ Acceptance examples: empty source → UNKNOWN/null; reported cap 0 → planning 
 
 ## Future interfaces — not implemented
 
+The canonical next-step proposal is [P2 preparation, freeze and queued outbox](p2-freeze-outbox.md), drafted after P1 was committed/pushed on 2026-10-05. It resolves server-issued preview confirmation and details storage/grants/idempotency/QA. **P2 is draft and requires approval; the approved status of this SDD applies to P1, not to that new schema.**
+
 - FR-015-003 · `freezeMarketingReport(scope, expectedSource, expectedPreviewHash) → Report` — future timestamp/revision recheck and immutable report; changed source must refuse with 409. The P1 preview does not implement that check or a ledger.
 - FR-015-004 · `dispatchMarketingReport(scope, reportId, now) → DeliveryResult` — manual invocation, leased attempt and bounded retries; no worker starts at application boot.
 - FR-015-005 · parent `acceptReportedMarketingEvidence(authenticatedBinding, envelope) → DurableReceipt` — candidate signature in this design only; parent record/schema/authorization approval is mandatory.

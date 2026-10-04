@@ -8,6 +8,14 @@ date: 2026-10-05
 
 # Verification — FEAT-015
 
+## Git publication and next packet — 2026-10-05
+
+P1 was committed/pushed at `11283e34d98130f1ee1f7c73e788e577624394a4` to `origin/codex/marketing-exchange-contract` at the owner's request. Remote HEAD matched the local commit after push; no PR/merge/deployment was performed. The 26-file staged diff passed whitespace/private-path/credential-pattern review; ignored config, dependencies and builds were excluded. Earlier “no commit performed” below describes the prior P1 implementation turn, not the later publication.
+
+Continued work: [P2 design packet](p2-freeze-outbox.md), draft only. Parent checkout was rechecked read-only at clean `a6e295a5`; no receiver implementation was found in the inspected growth/Marketing paths. Local DB config was absent in this and the documented D:/workspace checkout, and Docker was not found in PATH; no environment was created or real DB touched. No P2 runtime/migration code is implemented by this packet.
+
+P2 document checks: 0 validator errors / 166 unchanged baseline warnings, 11 views / 0 drift, scoped diff/whitespace PASS. Its preparation, migration and database acceptance cases are proposals and remain NOT_RUN.
+
 The owner approved detailed FEAT-015 for the proposed next step, P1 source snapshot and sanitized preview, on 2026-10-05. Delivery is BUILDING. The local preview exists in source; real database/live HTTP acceptance, durable report/outbox, parent receiver and production remain unverified or unimplemented. [Gap evidence](gap-analysis.md) pins prior inspected sources; [contract](contract.md) distinguishes P1 from the wire proposal.
 
 ## P1 checks — 2026-10-05
