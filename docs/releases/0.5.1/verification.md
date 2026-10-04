@@ -112,3 +112,14 @@ Read-only checks were repeated against the public production origin `https://zur
 - The Visual Studio page loaded in Guest mode, showed no approved public output, and kept Variants disabled.
 
 Still not accepted on production: Member/Admin browser sessions, a real project save, and the narrow-screen layout. No test project was created in the sole production Business. The backup restore drill passed in an isolated PostgreSQL 18 container; see [restore-drill.md](restore-drill.md). The release record therefore distinguishes live Guest checks from Member/Admin and write-flow acceptance.
+
+## Production acceptance follow-up — 2026-10-05
+
+With the owner's explicit approval for this specific test record, a signed-in Business-admin browser session on `https://zuri-metrics-map.vercel.app/` completed a bounded Project-to-Studio check:
+
+- The session identified Boss (`ZGO-P0002`) as signed in and able to edit/save.
+- Created production Project `PRJ-0001`, **“Zuri-Go acceptance check — Visual Studio — 2026-10-05”**, owned by Boss, status `กำลังดำเนินการ`, with no dates or description, configured for signed-in Members. The Project remains in the production Business as an intentional test record; access from a second Member account was not checked.
+- The Project appeared in Task Manager → Projects after save and was available in the Visual Studio Project selector. Opening it reached the “เริ่ม Creative Brief” form.
+- No Creative Brief was saved, and no project or creative record was deleted.
+
+This is a scoped production UI smoke check through the Creative Brief form; no Visual Marketing record was saved, and no direct production API/database readback was performed. It does not verify the Creative Brief save or downstream creative workflow, a non-admin Member session, cross-member read access, production narrow-screen behavior, real-provider execution or private credential custody. Application version remains 0.5.1; this is documentation and acceptance evidence only, with no source, schema or deployment change.
