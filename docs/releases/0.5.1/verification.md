@@ -99,5 +99,16 @@ This owner-authorized production rollout deployed the already-merged FEAT-014 co
 
 - On both the staged URL and the public URL, Guest `/session` reported unauthenticated; `/workspace`, `/state` and `/overview` returned 200; Guest `/tasks` returned 0 tasks. Visual team/projects reads returned 200 with 8 registry agents, 0 projects and 0 public outputs. A cross-origin Visual project POST was rejected with 403 by the origin guard and made no write.
 - The public Visual Studio page loaded in Guest mode and showed no approved public output; Variants remained disabled. This was a read-only browser check.
-- The release checks did not sign in with a real Member or Business-admin code, create a production project, or test interactive saves/mobile layout. The Vercel CLI write probe was blocked by the cross-origin guard, so a hosted same-origin Guest 401 was not separately observed; the full local test suite passed the Guest mutation gates.
+- The release checks did not sign in with a real Member or Business-admin code, create a production project, or test interactive saves/mobile layout. At rollout time, the Vercel CLI write probe was blocked by the cross-origin guard, so the same-origin Guest 401 was initially not observed. The production recheck below later observed HTTP 401; the full local test suite also passed the Guest mutation gates.
 - No restore drill was run for this new backup. There is no down-migration; use the rollback guidance in [RB-001](../../operations/RB-001-runbook.md) and assess schema compatibility before any code rollback or backup restore.
+
+## Production acceptance recheck — 2026-10-04
+
+Read-only checks were repeated against the public production origin `https://zuri-metrics-map.vercel.app/`:
+
+- `GET /api/index?route=session` reported `authenticated: false`.
+- Visual team read returned 8 registered agents; Visual projects and public outputs both returned 0.
+- A same-origin Guest `POST` to the Visual project endpoint returned HTTP 401. The request had no Member cookie and created no production record.
+- The Visual Studio page loaded in Guest mode, showed no approved public output, and kept Variants disabled.
+
+Still not accepted on production: Member/Admin browser sessions, a real project save, and the narrow-screen layout. No test project was created in the sole production Business. The backup restore drill remains not run. The release record therefore distinguishes live Guest checks from Member/Admin and write-flow acceptance.
