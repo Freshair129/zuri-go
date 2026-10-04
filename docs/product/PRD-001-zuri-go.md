@@ -13,6 +13,10 @@ relations:
 
 This is the product-level index: it says which surfaces exist and which feature owns each, and it collects the rules that apply to every feature. Behavior is specified in the feature folders, not here. It was assembled from existing documents and adds no new product behavior.
 
+## Platform relationship — owner statement, 2026-10-04
+
+Zuri-Go is the light Marketing/Commercial edition of Zuri-AI, independently deployable with its supporting functions. It must be able to send relevant marketing data back to the parent Marketing domain. This is the owner-stated product direction; parent extraction, model parity and operational integration are not established by it. Canonical process/context: [ARCH-005](../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md); document decision: [ADR-007](../architecture/decisions.md#adr-007--zuri-go-as-a-marketingcommercial-edition-and-a-canonical-commercial-pipeline); single authored context map: [registry/relations.yaml](../../registry/relations.yaml). Existing approved feature behavior remains governed by its own contracts.
+
 ## Surfaces
 
 | Surface | Route | Feature | Domain |

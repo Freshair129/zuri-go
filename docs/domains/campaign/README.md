@@ -8,6 +8,10 @@ status: proposed
 
 Plan and run campaigns and their content: an objective and targets per campaign, content items and where/when they publish, and the gate-based decisions that say whether to keep an offer or add budget.
 
+## Parent platform and process context
+
+Zuri-Go provides the light Marketing/Commercial edition. The intended relationship between local DOM-CAM / DOM-MET and the parent `ZAI:DOM-MARKETING` is authored in [registry/relations.yaml](../../../registry/relations.yaml); it is a draft semantic mapping, not an identity or table alias. [ARCH-005](../../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md) is the canonical whole-platform process context; its [Marketing chapter](../../architecture/commercial-pipeline/marketing-campaign.md) defines the seven draft marketing flows and linked Full Pipeline view. Exact receiver contracts and operational writers need reconciliation. Existing FEAT-002 contracts continue to define implemented Campaign behavior.
+
 ## Language
 - Campaign
 - Objective

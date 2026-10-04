@@ -251,3 +251,23 @@ Owner: DOM-VIS
 **Alternatives.** Wholesale fork/Python sidecar: excessive coupling and operational cost. Redis/Kafka/vector database: no demonstrated need. Browser-held requests or detached serverless tasks: no durable recovery. Reuse ai_briefs: incompatible summary semantics. Direct Campaign/metric writes: violate domain ownership.
 
 **Consequences.** Additive schema and negative authorization tests are needed after approval. Hosted execution needs a later deployment/runtime decision. Provider quality, cost and asset storage require separate verification. Existing brand, auth, visibility and protected-runtime contracts remain authoritative. No production action authorized here.
+
+### ADR-007 — Zuri-Go as a Marketing/Commercial edition and a canonical commercial pipeline
+Relations: relates_to: PRD-001, BRD-001, ARCH-005, SRV-001, SRV-002, DOM-CAM, DOM-MET, FEAT-002
+
+**Status:** proposed. **Date:** 2026-10-04. **Complexity / risk:** C-3 / LOW for the documentation change; runtime integration needs a separate risk assessment. The owner stated the edition intent and authorized SoT restructuring after reviewing the service findings. This records that direction; new wire schemas and writer assignments remain draft.
+
+**Context.** Zuri-Go is the light Marketing/Commercial edition of Zuri-AI and must be able to send relevant data back to the parent Marketing domain. Existing service records already describe independent hosted/local deployables. Parent Marketing remains a core module; selected other components have explicit service-extraction decisions. The prior 21-flow proposal was maintained in a dated history/domain tree, although history is evidence under STD-003. Parent specifications and their inspected revision are cited in [ARCH-005](commercial-pipeline/ARCH-005-commercial-pipeline.md#parent-and-peer-specification-evidence).
+
+**Direction and document placement.**
+
+- Zuri-Go is described as a separately deployable edition in the same platform ecosystem. Service boundaries and logical domains remain separate concepts. Existing SRV/DOM/FEAT IDs do not change; no new domain or integration feature is allocated here.
+- [registry/relations.yaml](../../registry/relations.yaml) is the single authored context map. `ZAI:` references identify the external parent and never alias local IDs, models or authorization grants. Marketing semantic coverage and wire compatibility require explicit reconciliation.
+- ARCH-005 is the canonical cross-system process/context artifact. It has three source chapters and four linked HTML visual views in one flat folder. Existing approved feature contracts govern implemented behavior; workflow drafts remain draft.
+- History retains screenshots, historical verification and the move receipt. The former nested process sources move instead of being copied into another maintained source tree.
+- LINE/CRM/Agent and Commerce/Inventory retain parent ownership according to their charters. The wider journey is context for handoffs, not an assignment of those writers to Zuri-Go.
+- A sending integration must declare entity authority, scope/ID mapping, versioned semantics, receipts and retry/conflict behavior. Current separate databases and current access rules stay authoritative until an approved implementation changes them.
+
+**Alternatives.** Treating Zuri-Go as an unrelated product loses the owner's platform relationship. Treating the whole application as one new cross-domain feature conflates product/runtime and feature lifecycles. Automatically declaring it an extracted parent Marketing service overstates both parent extraction status and schema parity. Keeping mutable definitions in history leaves competing editing locations.
+
+**Consequences.** Product/service/domain indexes link to ARCH-005 and the context map. Parent and local process identifiers are preserved. A subsequent integration design must resolve receiver API, semantic field mappings, shared identity bindings, write authority and reconciliation before code or production operations.

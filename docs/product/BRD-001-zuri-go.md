@@ -15,6 +15,10 @@ relations:
 
 The recorded concept is “Marketing for everyone · Marketing made simple” ([FEAT-001 spec](../features/FEAT-001-business-overview/spec.md)). The outcome recorded for the business owner: open one page and know **what is running, how far to target, and what to do next**.
 
+## Platform relationship — owner statement, 2026-10-04
+
+Zuri-Go is the light Marketing/Commercial edition of Zuri-AI, independently deployable with its supporting functions. It must be able to send relevant marketing data back to the parent Marketing domain. This is the owner-stated product direction; parent extraction, model parity and operational integration are not established by it. Canonical process/context: [ARCH-005](../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md); document decision: [ADR-007](../architecture/decisions.md#adr-007--zuri-go-as-a-marketingcommercial-edition-and-a-canonical-commercial-pipeline); single authored context map: [registry/relations.yaml](../../registry/relations.yaml). Existing approved feature behavior remains governed by its own contracts.
+
 ## Outcomes recorded per audience
 
 | Audience | Recorded outcome | Source |

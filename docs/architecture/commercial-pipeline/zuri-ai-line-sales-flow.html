@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ร่างคู่มือภาพหน้าเดียว: Ads A/B Test → LINE OA → AI chatbot → แอดมินโทร → ชำระและส่งมอบ → ทบทวนทุกสัปดาห์">
+  <meta name="document-status" content="draft">
+  <meta name="document-version" content="0.1.0">
+  <title>Zuri-AI · LINE OA Sales Flow · v0.1</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&amp;family=IBM+Plex+Sans+Thai:wght@400;500;600&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --paper: #F7F8FA;
+      --card: #FFFFFF;
+      --ink: #1F2937;
+      --muted: #6B7280;
+      --accent: #E8820C;
+      --accent-tint: #FFF8F0;
+      --rule: rgba(31, 41, 55, .16);
+      --sans: 'IBM Plex Sans Thai', sans-serif;
+      --display: 'Manrope', 'IBM Plex Sans Thai', sans-serif;
+      --mono: 'IBM Plex Mono', monospace;
+    }
+    body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--sans); }
+    main { width: 100%; max-width: 1440px; min-width: 0; margin: 0 auto; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 1120px; height: auto; }
+    text { fill: var(--ink); font-family: var(--sans); font-size: 12px; font-weight: 400; }
+    .display { font-family: var(--display); font-size: 32px; font-weight: 800; letter-spacing: -.045em; }
+    .heading { font-size: 14px; font-weight: 600; }
+    .name { font-size: 12px; font-weight: 600; }
+    .mono { font-family: var(--mono); font-size: 9px; font-weight: 400; }
+    .eyebrow { font-family: var(--mono); font-size: 8px; letter-spacing: .14em; font-weight: 500; }
+    .muted { fill: var(--muted); }
+    .detail { font-size: 11px; }
+    .card { fill: var(--card); stroke: var(--rule); stroke-width: 1; }
+    .focus { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.4; }
+    .rule { stroke: var(--rule); stroke-width: 1; }
+    .connector { fill: none; stroke: var(--muted); stroke-width: 1.4; marker-end: url(#zuri-sales-arrow); }
+    .handoff { stroke: var(--accent); stroke-width: 2; marker-end: url(#zuri-sales-arrow-accent); }
+    .feedback { stroke-dasharray: 5 4; }
+    .tag { fill: var(--paper); stroke: var(--rule); stroke-width: 1; }
+    .screen-note { margin: 0; padding: 12px 40px 24px; font-size: 13px; color: var(--muted); }
+    @page { size: A4 landscape; margin: 0; }
+    @media print {
+      body { background: white; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+      main { width: 297mm; max-width: none; margin: 0; }
+      .diagram-container { overflow: visible; }
+      svg { min-width: 0; width: 297mm; height: 210mm; }
+      .screen-note { display: none; }
+    }
+  </style>
+<meta name="source-document" content="ARCH-005-commercial-pipeline.md"><meta name="source-document-version" content="0.2.0"></head>
+<body>
+  <main>
+    <div class="diagram-container" tabindex="0" aria-label="คู่มือภาพ เลื่อนแนวนอนเพื่อดูครบทุกขั้นบนจอเล็ก">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 792" role="img" aria-labelledby="zuri-ai-line-sales-flow-title zuri-ai-line-sales-flow-desc">
+        <title id="zuri-ai-line-sales-flow-title">Zuri-AI: เส้นทางขายผ่าน LINE OA</title>
+        <desc id="zuri-ai-line-sales-flow-desc">ทีมการตลาดยิง Ads A/B พร้อมเก็บสถิติและรหัสแหล่งที่มา ลูกค้าทัก LINE แล้ว AI ตอบและขอเบอร์พร้อมอนุญาตให้โทร แอดมินรับเคส โทร ยืนยันการซื้อ ตรวจรับเงินและส่งมอบ โดยทุกขั้นเก็บประวัติสถานะเพื่อทบทวนผลและปรับ Ads ทุกสัปดาห์</desc>
+        <defs>
+          <marker id="zuri-sales-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#6B7280"/></marker>
+          <marker id="zuri-sales-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#E8820C"/></marker>
+          <marker id="zuri-sales-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#1F2937"/></marker>
+        </defs>
+        <rect width="1120" height="792" fill="#F7F8FA"/>
+
+        <!-- Header is inside the SVG so the entire manual prints as one page. -->
+        <text x="40" y="47" class="eyebrow muted">ZURI-AI PLATFORM / OPERATING PLAYBOOK</text>
+        <text x="40" y="87" class="display">เส้นทางขายผ่าน LINE OA</text>
+        <text x="40" y="115">ยิง Ads → ทักแชต → AI คัดกรอง → แอดมินโทร → ชำระและส่งมอบ → วัดผลทุกสัปดาห์</text>
+        <text x="1080" y="47" class="eyebrow muted" text-anchor="end">DRAFT v0.1 / 03 OCT 2026</text>
+        <text x="1080" y="75" class="detail muted" text-anchor="end">แบบกระบวนการเสนอสำหรับทบทวน</text>
+        <text x="1080" y="95" class="detail muted" text-anchor="end">ยังไม่เชื่อม Ads / LINE / ระบบขายจริง</text>
+        <line x1="40" y1="140" x2="1080" y2="140" class="rule"/>
+
+        <!-- Ownership lanes. -->
+        <text x="40" y="185" class="heading">การตลาด</text>
+        <text x="40" y="205" class="eyebrow muted">MARKETING</text>
+        <text x="40" y="231" class="detail muted">หา Ads ที่พาลูกค้า</text>
+        <text x="40" y="248" class="detail muted">ไปต่อจนซื้อได้</text>
+        <line x1="40" y1="284" x2="1080" y2="284" class="rule"/>
+        <text x="40" y="329" class="heading">LINE + AI</text>
+        <text x="40" y="349" class="eyebrow muted">CONVERSATION</text>
+        <text x="40" y="375" class="detail muted">ตอบไว • รู้ความต้องการ</text>
+        <text x="40" y="392" class="detail muted">เก็บข้อมูลพร้อมส่งต่อ</text>
+        <line x1="40" y1="420" x2="1080" y2="420" class="rule"/>
+        <text x="40" y="465" class="heading">แอดมิน / ทีมขาย</text>
+        <text x="40" y="485" class="eyebrow muted">SALES + OPERATIONS</text>
+        <text x="40" y="511" class="detail muted">มีเจ้าของทุกเคส</text>
+        <text x="40" y="528" class="detail muted">ยืนยันผลจากหลักฐาน</text>
+        <text x="40" y="629" class="heading">ทบทวนร่วมกัน</text>
+        <text x="40" y="649" class="eyebrow muted">WEEKLY REVIEW</text>
+        <text x="40" y="675" class="detail muted">Marketing + Sales</text>
+        <text x="40" y="692" class="detail muted">เจ้าของธุรกิจตัดสินใจ</text>
+
+        <!-- Connectors precede all nodes; every route has its own attach point. -->
+        <path d="M 360 216 H 404" class="connector"/>
+        <path d="M 496 260 V 304" class="connector"/>
+        <path d="M 588 352 H 632" class="connector"/>
+        <path d="M 736 404 V 436" class="connector handoff"/>
+        <path d="M 840 488 H 896" class="connector"/>
+        <path d="M 988 548 V 608" class="connector feedback"/>
+        <path d="M 176 660 H 168 Q 156 660 156 648 V 228 Q 156 216 168 216 H 176" class="connector feedback"/>
+
+        <!-- Edge labels stay clear of their strokes and later-painted nodes. -->
+        <rect x="506" y="268" width="80" height="16" fill="#F7F8FA"/>
+        <text x="510" y="280" class="detail">ส่งข้อความ</text>
+        <rect x="746" y="412" width="72" height="16" fill="#F7F8FA"/>
+        <text x="750" y="424" class="detail">พร้อมโทร</text>
+
+        <!-- 01 / Marketing experiment. -->
+        <g data-node="ads">
+          <rect x="176" y="172" width="184" height="88" rx="6" class="card"/>
+          <rect x="188" y="184" width="24" height="16" rx="2" class="tag"/>
+          <text x="200" y="195" class="eyebrow" text-anchor="middle">01</text>
+          <text x="220" y="196" class="name">ยิง Ads แบบ A/B</text>
+          <text x="188" y="219" class="detail">ต่าง 1 ตัวแปร • กำหนดเกณฑ์ก่อนยิง</text>
+          <text x="188" y="239" class="mono">Spend / Impressions / Clicks</text>
+          <text x="188" y="253" class="mono muted">experiment_id + variant A/B</text>
+        </g>
+        <!-- 02 / Traffic is not a new lead until a message arrives. -->
+        <g data-node="source">
+          <rect x="404" y="172" width="184" height="88" rx="6" class="card"/>
+          <rect x="416" y="184" width="24" height="16" rx="2" class="tag"/>
+          <text x="428" y="195" class="eyebrow" text-anchor="middle">02</text>
+          <text x="448" y="196" class="name">คลิกเข้า LINE OA</text>
+          <text x="416" y="219" class="detail">บันทึกลิงก์ / รหัส Ads ที่นำเข้ามา</text>
+          <text x="416" y="239" class="mono">campaign_id / ad_id / variant</text>
+          <text x="416" y="253" class="detail muted">คลิก ≠ เพิ่มเพื่อน ≠ ทักจริง</text>
+        </g>
+        <g aria-label="ข้อควรรู้เรื่องการผูกแหล่งที่มา">
+          <line x1="632" y1="180" x2="632" y2="248" class="rule"/>
+          <text x="648" y="196" class="name">ต้องตามจาก Ads ไปถึงแชตและคำสั่งซื้อได้</text>
+          <text x="648" y="220" class="detail">ใช้รหัส A/B ในข้อความเริ่มต้น หรือเส้นทางที่ผูกตัวตนได้</text>
+          <text x="648" y="240" class="detail">ลูกค้าต้องกดส่งเอง • ผูกไม่ได้ = UNKNOWN • อย่าเดาแหล่งที่มา</text>
+        </g>
+        <!-- 03 / First inbound message. -->
+        <g data-node="new-chat">
+          <rect x="404" y="304" width="184" height="100" rx="6" class="card"/>
+          <rect x="416" y="316" width="24" height="16" rx="2" class="tag"/>
+          <text x="428" y="327" class="eyebrow" text-anchor="middle">03</text>
+          <text x="448" y="328" class="name">ลูกค้าทักครั้งแรก</text>
+          <text x="416" y="351" class="detail">สร้าง / จับคู่ lead_id ไม่ซ้ำคนเดิม</text>
+          <text x="416" y="371" class="mono">NEW_CHAT</text>
+          <text x="416" y="392" class="detail muted">วัดคนทักใหม่ + ต้นทุนต่อคนทัก</text>
+        </g>
+        <!-- 04 / Human handoff is the focal decision. -->
+        <g data-node="ai">
+          <rect x="632" y="304" width="208" height="100" rx="6" class="focus"/>
+          <rect x="644" y="316" width="24" height="16" rx="2" class="tag"/>
+          <text x="656" y="327" class="eyebrow" text-anchor="middle">04</text>
+          <text x="676" y="328" class="name">AI ตอบและขอเบอร์</text>
+          <text x="644" y="351" class="detail">สินค้า • ความต้องการ • เบอร์ที่ยืนยัน</text>
+          <text x="644" y="372" class="detail">ขออนุญาตโทร + เวลาที่สะดวก</text>
+          <text x="644" y="393" class="mono">ENGAGED → PHONE_CAPTURED</text>
+        </g>
+        <text x="880" y="329" class="name">วัดผลการตอบ</text>
+        <text x="880" y="351" class="detail">คนที่ AI ตอบ / คนที่ได้เบอร์</text>
+        <text x="880" y="372" class="detail">เวลาตอบครั้งแรก • เคสค้าง</text>
+        <text x="880" y="393" class="detail muted">บอทไม่มั่นใจ → คนรับช่วง</text>
+        <!-- Exception notes preserve the main path without a spaghetti graph. -->
+        <g aria-label="กรณีที่ต้องติดตามและกรณีจบการขาย">
+          <text x="176" y="455" class="name">ถ้ายังไปต่อไม่ได้ ให้เก็บสถานะและนัดครั้งถัดไป</text>
+          <text x="176" y="478" class="detail">ยังไม่ให้เบอร์ → NURTURE • ขอคุยคน → HUMAN_REVIEW</text>
+          <text x="176" y="500" class="detail">โทรไม่ติด → NO_ANSWER + นัดใหม่ • ไม่ซื้อ → LOST + เหตุผล</text>
+          <text x="176" y="522" class="detail">ยกเลิก → CANCELLED • คืนเงิน → REFUNDED • ขอหยุด → DO_NOT_CONTACT</text>
+        </g>
+        <!-- 05 / Admin owns the next action. -->
+        <g data-node="admin">
+          <rect x="632" y="436" width="208" height="112" rx="6" class="card"/>
+          <rect x="644" y="448" width="24" height="16" rx="2" class="tag"/>
+          <text x="656" y="459" class="eyebrow" text-anchor="middle">05</text>
+          <text x="676" y="460" class="name">แอดมินรับเคสแล้วโทร</text>
+          <text x="644" y="483" class="detail">เบอร์ + สรุปความสนใจ + เจ้าของเคส</text>
+          <text x="644" y="504" class="mono">ASSIGNED → CONTACTED</text>
+          <text x="644" y="525" class="detail">บันทึกผลโทร + next_action_at</text>
+          <text x="644" y="541" class="detail muted">คนรับช่วงแล้ว หยุดบอทขายซ้อน</text>
+        </g>
+        <!-- 06 / Order, payment and fulfilment retain separate statuses. -->
+        <g data-node="order">
+          <rect x="896" y="436" width="184" height="112" rx="6" class="card"/>
+          <rect x="908" y="448" width="24" height="16" rx="2" class="tag"/>
+          <text x="920" y="459" class="eyebrow" text-anchor="middle">06</text>
+          <text x="940" y="460" class="name">ซื้อ • ชำระ • ส่งมอบ</text>
+          <text x="908" y="483" class="detail">ผูก order_id กลับไปยัง lead_id</text>
+          <text x="908" y="504" class="mono">ORDER_PENDING → PAID</text>
+          <text x="908" y="525" class="mono">→ FULFILLED</text>
+          <text x="908" y="541" class="detail muted">รับเงินจริงจึงนับ PAID / WON</text>
+        </g>
+
+        <!-- Shared measurement contract; the outcome connector stays outside it. -->
+        <line x1="176" y1="568" x2="948" y2="568" class="rule"/>
+        <text x="176" y="587" class="detail">ทุกขั้นเก็บ: lead_id (เมื่อมี) • เวลา • สถานะเดิม → ใหม่ • เจ้าของ • source / variant • เหตุผล / นัดถัดไป</text>
+
+        <!-- 07 / One weekly decision node, with three unequal content columns. -->
+        <g data-node="weekly-review">
+          <rect x="176" y="608" width="904" height="108" rx="6" class="focus"/>
+          <text x="192" y="632" class="heading">07  ทบทวนทุกวันจันทร์</text>
+          <text x="416" y="632" class="detail">สัปดาห์ก่อนหน้า จ.–อา. • Asia/Bangkok • วันทบทวนเป็นข้อเสนอ</text>
+          <line x1="192" y1="644" x2="1064" y2="644" class="rule"/>
+          <text x="192" y="665" class="name">Ads A/B</text>
+          <text x="192" y="684" class="detail">Spend • CTR • CPC • ต้นทุนต่อ Lead พร้อมโทร</text>
+          <text x="192" y="703" class="detail muted">ข้อมูลยังไม่พอ → INCONCLUSIVE</text>
+          <line x1="500" y1="652" x2="500" y2="704" class="rule"/>
+          <text x="520" y="665" class="name">LINE + ทีมขาย</text>
+          <text x="520" y="684" class="detail">คนทัก → ได้เบอร์ → โทรติด → ผู้ซื้อ</text>
+          <text x="520" y="703" class="detail muted">อัตราไปต่อ • SLA • งานค้าง • เหตุผลที่ไม่ซื้อ</text>
+          <line x1="808" y1="652" x2="808" y2="704" class="rule"/>
+          <text x="828" y="665" class="name">ยอดขาย + สิ่งที่จะทำต่อ</text>
+          <text x="828" y="684" class="detail">ยอดสุทธิ • CPO • ROAS ที่ระบุที่มาได้</text>
+          <text x="828" y="703" class="detail muted">คง / ปรับ / หยุด / เพิ่มงบ → คนอนุมัติ</text>
+        </g>
+
+        <!-- Legend and measurement boundary. -->
+        <line x1="40" y1="732" x2="1080" y2="732" class="rule"/>
+        <line x1="40" y1="751" x2="64" y2="751" stroke="#6B7280" stroke-width="1.4"/>
+        <text x="72" y="755" class="detail muted">เส้นทางหลัก</text>
+        <line x1="176" y1="751" x2="200" y2="751" stroke="#6B7280" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="208" y="755" class="detail muted">ผลลัพธ์ย้อนกลับไปปรับแผน</text>
+        <text x="1080" y="755" class="detail muted" text-anchor="end">แยกรายงานกิจกรรมรายสัปดาห์จาก cohort ลูกค้า • ตัวหารเป็นศูนย์ = N/A</text>
+        <text x="40" y="775" class="mono muted">DOCUMENT v0.1.0 · diagram-design 2.6 · SOURCE: README.md beside this file</text>
+      </svg>
+    </div>
+    <p class="screen-note">Source of truth · <a href="ARCH-005-commercial-pipeline.md">ARCH-005 / ARCH-005-commercial-pipeline.md</a> · flow definitions: draft<br>ภาพหลักพิมพ์เป็น A4 แนวนอน 1 หน้าได้ด้วยคำสั่งพิมพ์ของเบราว์เซอร์ จอเล็กเลื่อนภาพแนวนอนได้ ฟอนต์แบรนด์โหลดจาก Google Fonts เมื่อออนไลน์ รายละเอียดสถานะ สูตร และแหล่งอ้างอิงอยู่ใน README.md ข้างไฟล์นี้</p>
+  </main>
+</body>
+</html>

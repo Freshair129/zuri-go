@@ -5,6 +5,7 @@ status: proposed
 hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN]
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-005, FEAT-006, FEAT-007, FEAT-008, FEAT-009]
 relations:
+  relates_to: [ARCH-005, ADR-007]
   exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, EVT-001]
   consumes: [API-021, API-022]
 ---
@@ -18,6 +19,10 @@ Static site (`build/hosted-site`, copied into `build/vercel/public`) plus one sa
 | Deploy unit | Vercel project `zuri-metrics-map` — package `build/vercel`, binding `scripts/deploy/project.json` |
 | Code roots | `apps/api`, `apps/web`, `apps/metrics`, `scripts/metrics`, `scripts/site`, `scripts/deploy` |
 | Runbook | [RB-001](../../operations/RB-001-runbook.md) |
+
+## Platform edition context
+
+This existing deployable hosts Zuri-Go as the light Marketing/Commercial edition of Zuri-AI. The cross-system context map is authored once in [registry/relations.yaml](../../../registry/relations.yaml), with process/design context in [ARCH-005](../../architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md). This declaration does not claim parent-model parity, a completed parent Marketing extraction or an active sending integration. Wire contracts and per-entity write authority remain draft.
 
 ## Facts
 - Package is an allowlist assembled by `scripts/deploy/build_cloud.py`; no `.local`, backups, credentials or test files are packaged.

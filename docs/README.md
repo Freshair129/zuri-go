@@ -16,6 +16,10 @@ The structure follows the standards in [governance/standards/](governance/standa
 4. [PRD-001](product/PRD-001-zuri-go.md) — surfaces and product-wide rules, then the feature folder you are changing (`features/FEAT-nnn-…/feature.md`)
 5. [RB-001](operations/RB-001-runbook.md) — operating, deploying and rolling back
 
+## Commercial pipeline source of truth
+
+[ARCH-005 — Zuri-Go × Zuri-AI Commercial pipeline](architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md) is the entry point for the three source chapters and four diagram views (21 detail flows + 2 overviews). It records the owner-stated Marketing/Commercial edition direction while keeping process/integration details draft. The external system/context map lives in [registry/relations.yaml](../registry/relations.yaml). The former [history folder](history/zuri-ai-line-sales-flow-2026-10-03/README.md) holds evidence and the move receipt.
+
 ## Layout
 
 | Path | Holds | Standard |
