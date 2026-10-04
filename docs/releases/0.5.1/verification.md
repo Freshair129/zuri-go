@@ -136,3 +136,16 @@ Following the approved synthetic Brief save, the signed-in Business-admin sessio
 Result: PASS for saving the synthetic Brief, manually persisting all five creative stages, producing the prompt-only text asset, recording the required QA result, and re-reading revision 3 and its QA result after reload. The Project owner then approved revision 3 as Boss (`ZGO-P0002`); the production UI recorded `approve · member` and moved the Project to **พร้อมส่งต่อ**. After a full page reload and reopening the Project, revision 3 and the approved state remained visible. No direct production API/database readback was performed.
 
 A production browser check at 390×844 showed the Project card and workflow text wrapping within the viewport, with no document-level horizontal overflow; the top-level dashboard tabs use a horizontally scrollable strip. The generated deliverable remains text-only, so actual-image readability and visual hierarchy were not assessed. Approval did not publish or link a Campaign; Variants/A-B remains unavailable in this phase. Non-admin Member and cross-member access, real-provider execution and private credential-custody verification remain unverified or `NOT RUN`. No provider was invoked. The Project and workflow artifacts remain in the production Business as an intentional synthetic acceptance record. Application version remains 0.5.1, PostgreSQL schema remains 10, and deployment is unchanged; this follow-up changes documentation and acceptance evidence only.
+
+## Production Campaign–Project link follow-up — 2026-10-05
+
+A signed-in Business-admin browser session as Boss (`ZGO-P0002`) completed a bounded production UI check with synthetic records:
+
+- Synthetic Campaign `CAM-0002` was created as Draft with no channels or dates.
+- Synthetic Project `PRJ-0002` was created with the default signed-in Members visibility.
+- Creative Brief revision 1 was saved under `PRJ-0002` with `CAM-0002` selected, and the production UI showed that link. This is a PASS for the UI check only; no direct production API/database readback was performed.
+- The Brief remains at Research. No image was generated; QA, approval and publication have not occurred. Campaign publication remains unavailable and out of scope.
+
+This is UI evidence only; no direct production API or database readback was performed. After the user reported opening the Member tab, current CUA inventory still showed the connected Chrome Zuri-Go tab in Guest mode and the In-app Browser session as Boss; no ordinary Member session was exposed. Non-admin Member and cross-member checks remain **NOT RUN** pending a reachable authenticated Member tab. Local test, real-provider and credential-custody results are recorded in the [FEAT-014 production verification and decision addendum](../../features/FEAT-014-visual-marketing-team/verification.md#production-verification-and-decision-addendum--2026-10-05).
+
+Application version remains 0.5.1, PostgreSQL schema remains 10, and deployment is unchanged. This follow-up records production UI acceptance evidence only; no code, schema, deployment or application-version change was made.
