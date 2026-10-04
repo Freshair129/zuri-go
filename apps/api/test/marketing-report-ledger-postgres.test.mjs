@@ -1,9 +1,10 @@
-// @trace verifies AC-015-001-03, AC-015-003-01 — native multi-connection REPEATABLE READ acceptance.
+// @trace verifies AC-015-001-02, AC-015-001-03, AC-015-003-01, AC-015-003-02 — native multi-connection REPEATABLE READ acceptance.
 // Opt-in ONLY: an already migrated, empty, test-owned local QA database. No migration/provisioning/cleanup of user storage.
 import test,{before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import pg from 'pg';
 import {randomUUID} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
 import {createCampaign} from '../../web/src/content/shared/model.mjs';
 import {canonicalHash} from '../marketing-report.mjs';
 import {prepareMarketingReport,freezeMarketingReport,ledgerRetry} from '../marketing-report-ledger.mjs';
@@ -92,4 +93,24 @@ test('expiry is checked after waiting, rather than against transaction-start tim
   pending=transaction(f,async tx=>{pid=tx.processID;return freezeMarketingReport(tx,f.b,f.c,request(p));});const handled=pending.then(()=>null,e=>e);
   for(let i=0;i<100&&!pid;i++)await delay(10);assert.ok(pid);await waitForBlocked(pid);await delay(3200);await lock.query('COMMIT');const error=await handled;assert.equal(error.code,'PREPARATION_EXPIRED');assert.deepEqual(await counts(f),{reports:0,queues:0,audits:0});
  }finally{await lock.query('ROLLBACK');lock.release();await pending?.catch(()=>{});}
+});
+
+test('migration grant reconciliation hides intermediate INSERT privileges and rolls them back on interruption',{skip},async()=>{
+ const f=await fixture(),source=await readFile(new URL('../migrate.mjs',import.meta.url),'utf8');
+ const batch=source.slice(source.indexOf('// Keep intermediate broad grants invisible;'),source.indexOf("console.log('Zuri-Go schema 11"));
+ const statements=[...batch.matchAll(/await client.query\('([^']+)'\)/g)].map(m=>m[1]);
+ assert.equal(statements[0],'BEGIN');assert.deepEqual(statements.slice(-2),['COMMIT','ROLLBACK']);
+ const owner=await admin.connect(),caller=await runtime.connect();
+ try{
+  await caller.query("SELECT set_config('zuri_go.business_id',$1,false),set_config('zuri_go.viewer_kind','operator',false)",[f.b]);
+  await owner.query(statements[0]);await owner.query(statements[1]);await owner.query(statements[2]);
+  assert.equal((await caller.query("SELECT has_table_privilege(current_user,'zuri_go.marketing_report_associations','INSERT') allowed")).rows[0].allowed,false);
+  await assert.rejects(caller.query("INSERT INTO marketing_report_associations(business_id,source_deployment_id,external_binding_id,parent_tenant_id,parent_business_id,parent_initiative_id,reviewed_at,review_ref) VALUES($1,'forged-source','forged-binding','qa-tenant','qa-business','qa-initiative',clock_timestamp(),'fake-review')",[f.b]),e=>e.code==='42501');
+  await owner.query('ROLLBACK');
+  assert.equal((await caller.query("SELECT has_table_privilege(current_user,'zuri_go.marketing_report_associations','INSERT') allowed")).rows[0].allowed,false);
+  // Execute the exact complete migrator batch (omit the catch-only ROLLBACK after its COMMIT).
+  for(const statement of statements.slice(0,-1))await owner.query(statement);
+  for(const table of ['marketing_report_associations','marketing_report_preparations','marketing_reports','marketing_report_outbox'])assert.deepEqual((await caller.query("SELECT has_table_privilege(current_user,$1,'INSERT') i,has_table_privilege(current_user,$1,'UPDATE') u,has_table_privilege(current_user,$1,'DELETE') d",['zuri_go.'+table])).rows[0],{i:false,u:false,d:false});
+  assert.equal((await owner.query('SELECT count(*)::int n FROM marketing_report_associations WHERE business_id=$1',[f.b])).rows[0].n,1);
+ }finally{await owner.query('ROLLBACK');owner.release();caller.release();}
 });

@@ -2,11 +2,34 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## Native acceptance and independent review correction — 2026-10-05
+
+The owner authorized native concurrency/lock testing, independent review before merge, and migration 011 to **both Local and Production**. Read-only preflight confirms that `O:/zuri-go/.local/config.json`, `cloud-config.json` and `postgres.env` are absent, the historical D:/workspace checkout is absent and no Docker/native PostgreSQL application listener was found. Vercel CLI whoami rejected its existing token as invalid. No real database target/identity/version or backup has therefore been verified; **Local and Production migration remain NOT_RUN**. No credential value was printed or provisioned for a real account.
+
+Independent higher-tier L2 review of sealed candidate `b64da2cc1515431d58e2015089aedbf9f1b05167` returned **REWORK**: `migrate.mjs` committed its broad table grant separately from the marketing revocation. The reviewer reproduced runtime insertion of a synthetic unreviewed association during that window, and independently passed 29 marketing tests. [RCA](../../../.brain/rca/marketing-report-migrator-grants.md) records the evidence, root cause, detection gap and prevention. The correction puts the existing complete grant/revoke batch in BEGIN/COMMIT with explicit rollback on failure; final permissions are unchanged. A two-connection test now checks the intermediate state, interruption and successful final batch. Fresh sealed-delta L2 review is pending; the earlier REWORK is not a PASS for the corrected source.
+
+| Check | Result / boundary |
+|---|---|
+| Native P2 TC-015-007 | **PASS 5/5, 0 FAIL, 0 SKIP**, PostgreSQL 18.6, real separate admin/runtime connections; REPEATABLE READ concurrency, writer/audit waiting, clock after lock and intermediate ACL/interruption |
+| Native P1 TC-015-003 | **PASS 1/1, 0 FAIL, 0 SKIP**, same synthetic QA engine; scoped read/revision/hash, source preservation, no audit; test rolls back its synthetic records |
+| Regression after correction | **PASS 87, FAIL 0, SKIP 6**, campaign/marketing/operator-guards/auth/visibility; explicit native overrides omitted for this command. Its 5 native P2 and 1 P1 skips were separately executed and passed above, not counted as PASS in that command |
+| Disposable WASM SQL | Included in regression: 8/8 PASS with the explicit ignored QA module; no application connection |
+| Local/Production migration | **NOT_RUN** — private target config absent; no application DB schema/data/credential modified |
+| Merge | Pending fresh sealed corrective review and PR checks |
+
+The native engine is the official EDB portable Windows archive downloaded via `https://sbp.enterprisedb.com/getfile.jsp?fileid=1260609`, linked from the [EDB binaries page](https://www.enterprisedb.com/download-postgresql-binaries). Archive bytes 384,620,317; SHA-256 `e2246ba91d22345bc3d017586c09ede52d9df180b1eeb480f050445f1cad84e2`. `postgres --version` and SHOW server_version both report **18.6**. It is extracted only under ignored private `.local/marketing-native/runtime`; no Windows service, Docker install, firewall change or application runtime upgrade. A fresh cluster under that directory listens only on `127.0.0.1:55411` and uses one-use synthetic QA passwords with scram-sha-256. Its folder ACL allows the current Windows operator and SYSTEM. No credentials enter tracked files or command output.
+
+The new initially empty database `zuri_go_marketing_qa_20261005` was inspected, synthetic `zuri_go_app` was created only in that separate cluster, and the actual `apps/api/migrate.mjs` applied 001–011 there. The native suite then verified schema 11, zero initial Businesses and non-superuser/non-BYPASSRLS runtime before creating synthetic fixtures. Private runner/logs remain under `.local/marketing-native/` (`bootstrap-run.mjs`, `native-test.log`, `snapshot-run.mjs`, `snapshot-native-test.log`); runner credentials are private, so the public command is `node --test apps/api/test/marketing-report-ledger-postgres.test.mjs` with the two private QA target environment overrides. Native committed synthetic records are QA evidence only. This does not initialize or replace the user's Local Business.
+
+Regression command: `node --test tests/campaign/*.test.mjs apps/api/test/marketing-report*.test.mjs apps/api/test/operator-guards.test.mjs apps/api/test/team-auth.test.mjs apps/api/test/visibility.test.mjs` with only the PGlite module override. Native P1 command: `node --test apps/api/test/marketing-report-db.test.mjs` with the synthetic runtime URL passed privately through its process environment.
+
+Version diff 0.3.0 → 0.4.0: native acceptance is now executed; migrator ACL correction closes the independently reproduced grant window; fresh corrected-candidate review and real-target migration remain separate gates. Application package stays 0.5.1. Authorization is recorded for both real targets; inability to resolve/connect/backup them is an environment limitation, not a new approval requirement.
 
 ## P2 approval and implementation — 2026-10-05
 
@@ -49,10 +72,10 @@ Test: `apps/api/test/marketing-report-ledger-sql.test.mjs`
 PASS 8/8 with the explicit ignored QA module. Real SQL functions, RLS/roles, append-only triggers, typed parity/hash constraints, source checks, replay and transaction fault rollback execute in a disposable in-memory PostgreSQL engine. Synthetic association identifiers remain distinct from campaign/Business IDs; no real parent review/grant is proven. Shortened expiry fixtures are owner-mutated only inside that disposable instance, preserving timestamp/hash/text parity; this proves expiry/replay branches, not waiting-lock behavior. The suite executes the migrator's actual post-broad-grant revocation statement again and checks INSERT/UPDATE/DELETE privileges, not a complete real operator migration rerun.
 
 ### TC-015-007 — Native concurrent freeze and waiting-source/expiry
-Relations: verifies: AC-015-001-03, AC-015-003-01
+Relations: verifies: AC-015-001-02, AC-015-001-03, AC-015-003-01, AC-015-003-02
 Test: `apps/api/test/marketing-report-ledger-postgres.test.mjs`
 
-NOT_RUN — 4 explicit skips. Opt-in target variables are `ZURI_GO_MARKETING_QA_ADMIN_URL` and `ZURI_GO_MARKETING_QA_RUNTIME_URL`, kept private. The runner refuses non-loopback targets, mismatched databases, names outside `zuri_go_marketing_qa_*`, a non-empty Business table, a schema other than 11 or a runtime other than non-superuser/non-BYPASSRLS `zuri_go_app`. It requires the QA owner to have already migrated that separate test-owned database; it performs no migration/credential provision. It checks multi-connection identical-key replay, different-key/preparation weekly conflicts, campaign update/audit while freeze waits, and actual-clock expiry after waiting in REPEATABLE READ with bounded retries. Committed synthetic QA records are retained as QA evidence; no application database cleanup is attempted. An initially empty fresh QA database is required for a later run.
+PASS 5/5 in native PostgreSQL 18.6, following the initial four NOT_RUN cases. Opt-in target variables are `ZURI_GO_MARKETING_QA_ADMIN_URL` and `ZURI_GO_MARKETING_QA_RUNTIME_URL`, kept private. The runner refuses non-loopback targets, mismatched databases, names outside `zuri_go_marketing_qa_*`, a non-empty Business table, a schema other than 11 or a runtime other than non-superuser/non-BYPASSRLS `zuri_go_app`. It requires an already migrated separate test-owned database; the test itself performs no migration/credential provision. It checks identical-key replay, different-key/preparation weekly conflicts, campaign update/audit while freeze waits, actual-clock expiry after waiting in REPEATABLE READ with bounded retries, and grant/revoke permission visibility/interruption across separate connections. Committed synthetic QA records remain private QA evidence; no application database cleanup is attempted. An initially empty fresh QA database is required for a later run.
 
 ## Git publication and next packet — 2026-10-05
 

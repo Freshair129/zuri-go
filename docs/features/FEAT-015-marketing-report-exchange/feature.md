@@ -7,7 +7,7 @@ runtime: SRV-002
 delivery: building
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 complexity: C-3
 risk: HIGH
@@ -30,11 +30,11 @@ relations:
 
 ## Current delivery and exit gates
 
-**BUILDING / P1 and P2 implemented in source; native database exit open.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists a server-issued preparation and atomically freezes immutable report + QUEUED + private audit. Migration 011 exists as a file, not an applied application schema. Disposable WASM SQL acceptance passed; native REPEATABLE READ concurrency/waiting expiry and live HTTP remain NOT_RUN. Current source storage has no audited reporting-timezone/coverage attestation: all measurement scalars and n/N stay null/UNKNOWN and readiness is HELD. Targets and cap remain planning context. See [verification](verification.md).
+**BUILDING / P1 and P2 implemented; native database checks passed.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists preparation and atomically freezes immutable report + QUEUED + private audit. Native PostgreSQL 18.6 passes 5 P2 concurrency/lock/ACL cases and the original P1 snapshot case. Independent L2 found a grant window; corrective review is pending. Local and Production migration are now owner-authorized but NOT_RUN because target configs are absent; live HTTP is NOT_RUN. Actual measurements remain null/UNKNOWN and readiness HELD without audited source timezone/coverage. See [verification](verification.md).
 
 P1 is C-3 / MEDIUM (API and private-data boundary). The full exchange remains HIGH risk because it adds persistence and cross-system authorization. No source timezone attestation is accepted from a caller or arbitrary state field.
 
-Remaining gates: native isolated PostgreSQL QA and independent merge review; settle parent receiver ownership/schema and Business-scoped machine authorization in its own approved records. An ordinary local/production migration, real associations/credentials, sender and rollout require separate operational scope.
+Remaining gates: fresh corrective independent merge review and PR checks; resolve real target config/schema/backup before the owner-authorized Local and Production migrations. Parent receiver ownership/schema and machine authorization require its own approved records. Real associations/credentials, sender and rollout remain outside this operational scope.
 
 ## Requirement index
 

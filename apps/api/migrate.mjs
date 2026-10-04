@@ -25,6 +25,8 @@ try{
    if((await client.query('SELECT 1 FROM public.zuri_go_migrations WHERE version=$1',[version])).rowCount)continue;
    await client.query('BEGIN');try{const sql=(await readFile(new URL('migrations/'+file,import.meta.url),'utf8')).replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,'');await client.query(sql);await client.query('INSERT INTO public.zuri_go_migrations(version) VALUES($1)',[version]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
  }
+ // Keep intermediate broad grants invisible; interruption must preserve the prior restrictive ACL.
+ await client.query('BEGIN');try{
  await client.query('GRANT USAGE ON SCHEMA zuri_go TO zuri_go_app');
  await client.query('GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA zuri_go TO zuri_go_app');
  await client.query('GRANT DELETE ON zuri_go.campaign_channels,zuri_go.goal_series,zuri_go.task_roles,zuri_go.weekly_plan_tasks,zuri_go.team_members,zuri_go.task_viewers,zuri_go.meeting_participants,zuri_go.project_viewers TO zuri_go_app');
@@ -37,6 +39,7 @@ try{
  await client.query('REVOKE INSERT ON zuri_go.visual_reviews,zuri_go.visual_decisions,zuri_go.visual_public_outputs FROM zuri_go_app');
  await client.query('GRANT UPDATE(active) ON zuri_go.visual_public_outputs TO zuri_go_app');
  await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.marketing_report_associations,zuri_go.marketing_report_preparations,zuri_go.marketing_reports,zuri_go.marketing_report_outbox FROM PUBLIC,zuri_go_app');
+ await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
  console.log('Zuri-Go schema 11 applied; runtime role grants configured.');
 }finally{await client.end();}
 }

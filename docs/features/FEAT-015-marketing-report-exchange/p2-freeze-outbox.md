@@ -2,7 +2,7 @@
 title: P2 local preparation, immutable report and queued outbox
 status: approved
 superseded_by: null
-version: 0.2.0
+version: 0.3.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,7 +11,7 @@ risk: HIGH
 
 # P2 — เก็บรายงานเดิมให้ตรวจย้อนกลับได้ ก่อนเปิดการส่งจริง
 
-**APPROVED / BUILDING.** The owner approved this P2 design on 2026-10-05 after reviewing draft commit `f9ca5aa`. This is the canonical P2 chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. Code, tests and additive migration **file** 011 are implemented; native multi-connection acceptance and ordinary local/production schema application remain NOT_RUN. API-024 stays read-only. Approval does not authorize real associations, credentials, transport, parent writes or deployment.
+**APPROVED / BUILDING.** The owner approved this P2 design on 2026-10-05 after reviewing draft commit `f9ca5aa`. This is the canonical P2 chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. Code, tests and additive migration 011 are implemented; native multi-connection acceptance now passes. The owner subsequently authorized testing/review/merge and applying 011 to both Local and Production; actual migration is NOT_RUN because private target configs are absent. API-024 stays read-only. Real associations, credentials, transport, parent writes and deployment are not authorized.
 
 ผลที่เสนอ: operator เลือก campaign/week และ association ที่ผ่านการ review แล้ว → server เก็บ sanitized preview พร้อมเวลาจับข้อมูล → operator ยืนยัน preview นั้น → ตรวจ source revision ซ้ำและบันทึก immutable report + QUEUED outbox + audit ใน transaction เดียว. ยังไม่มีการส่งเครือข่ายหรือ receipt จาก Zuri-AI.
 
@@ -86,6 +86,8 @@ RLS is ENABLED/FORCED on every new table with the existing Business predicate an
 
 After the migrator's broad grants, revoke runtime and PUBLIC INSERT/UPDATE/DELETE on the association/preparation/report/outbox tables. Grant only private scoped SELECT and EXECUTE of narrow preparation/freeze finalizers to the runtime role. Finalizers have a fixed search_path, explicit resolved-operator/current-Business assertions and strict nested whitelist, source-revision and byte/hash/scope checks. They never accept raw records or credential fields. A plain runtime SQL INSERT/UPDATE/DELETE must fail, even with an operator viewer setting; repeated migration must not reopen writes. SQL byte hashing must agree with the compact canonical text supplied by the server; JSONB's formatted text is not used as substitute bytes.
 
+The entire migrator grant/revoke reconciliation is one transaction, with explicit rollback on failure. Intermediate broad grants must never be committed or visible to another runtime connection. Independent L2 review found the initial autocommit grant window at b64da2c; RCA is recorded under `.brain/rca/marketing-report-migrator-grants.md`. Native permission-visibility/interruption tests are mandatory alongside the existing final-ACL tests; the approved final permissions are unchanged.
+
 The DB finalizer must verify persisted preview/context against the scoped source and construct/validate its exact routing and server clock, not simply bless an arbitrary JSON object because its caller used an allowed function. P2 actual scalars/n/N/cohort counts are constrained null with UNKNOWN/timezone-unattested provenance. Tests include malicious but correctly hashed documents passed directly to finalizers. The implementation review must reject a design where direct runtime SQL can fabricate a server-issued source snapshot.
 
 ## Freeze transaction, conflict and replay
@@ -130,13 +132,13 @@ Proposed scope is new **test-owned** PostgreSQL QA only, with synthetic Business
 | Migration rerun and audience | Actual restricted-role permissions stay revoked after a second run; Guest/Member raw SELECT sees nothing; private ledger never joins existing Guest workspace/state |
 | No transport or authority promotion | Queue is only QUEUED; zero network calls, send attempts or parent writes; unknown metrics/legacy approval trust remain unchanged — AC-015-002-03 |
 
-Actual test bindings are TC-015-005 (pure/parser/router), TC-015-006 (disposable WASM SQL) and TC-015-007 (native PostgreSQL concurrency/locks). The first two passed; native concurrency/waiting expiry is NOT_RUN. See [verification](verification.md) for exact commands and limits. Independent architecture/security review is required before merge; passing synthetic SQL cannot prove real binding, provider completeness or production acceptance.
+Actual test bindings are TC-015-005 (pure/parser/router), TC-015-006 (disposable WASM SQL) and TC-015-007 (native PostgreSQL concurrency/locks). All passed, including native permission-visibility/interruption regression. TC-015-003 also passed its original source snapshot case in the synthetic native cluster. See [verification](verification.md) for exact commands and limits. Independent L2 initially returned REWORK for the migrator grant window; corrected-candidate review is pending before merge. Synthetic SQL does not prove real binding, provider completeness or production acceptance.
 
 Implementation choices within the approved scope: SQL finalizers accept only the typed operation request, not source/preview/envelope JSON; construct the safe P1 projection themselves; the adapter additionally compares newly prepared SQL and P1 JS projections and rolls back on mismatch. Compact SQL serialization supports ASCII object field names (as in the campaign model), Unicode string values, ordered arrays and JavaScript numeric notation. Unsupported source keys fail closed; no implicit normalization. Preparations use millisecond server timestamps. Business `FOR NO KEY UPDATE` precedes campaign/state/association/preparation locks; this remains compatible with a campaign writer's audit FK `KEY SHARE`. Private marketing audit SELECT also requires the operator. Source changes that make reprojection invalid become SOURCE_STALE at freeze. Read/replay requires the original association version as well as active status. No outbound bytes are generated from current source at read/replay.
 
 ## Approval and exit boundary
 
-Approval recorded: owner approved this P2 design, its strict operation/storage/grant contracts and writing corresponding code/tests/additive migration **file**. No approval is inferred for applying schema to a real database, registering real parent mappings/credentials, real sending, parent source changes, merge or deployment. Parent registry/Identity contract remains a prerequisite for any real association; synthetic tests do not remove it.
+Approval recorded: owner approved P2 code/tests/additive migration file, then native concurrency/lock testing and independent review before merge plus applying migration 011 to both Local and Production. Existing authorization remains valid; real-target identity/schema/backup preflight is still required and currently blocked by missing private config. Real parent mappings/credentials, actual sending, parent changes and deployment remain outside scope. Parent registry/Identity contract is still a prerequisite for a real association.
 
 P2 exit: actual source-stale/expiry/concurrency/rollback/RLS/grant/hash tests pass in explicitly identified isolated QA; no source/private-data regression; docs and source traceability agree. Until then the feature stays building. Afterwards P3 can propose a separately approved sender and parent durable receipt contract.
 

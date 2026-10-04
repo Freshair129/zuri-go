@@ -5,7 +5,7 @@ owner: DOM-CAM
 runtime: SRV-002
 status: approved
 superseded_by: null
-version: 0.1.0
+version: 0.2.0
 date: 2026-10-05
 relations:
   implements: [FR-015-001, FR-015-003]
@@ -19,4 +19,4 @@ Approved FEAT-015 P2 component in `apps/api/marketing-report-ledger.mjs`, routed
 
 Interface signatures and ownership: [SDD-015](../../features/FEAT-015-marketing-report-exchange/design.md#interfaces--approved-p2). SQL finalizers construct projections from actual scoped rows; caller data cannot supply a preview/envelope or server clock. The runtime role can SELECT only as a resolved operator and EXECUTE the two finalizers; direct ledger writes and helper execution are revoked. Preparations, reports and QUEUED records are append-only. Association reactivation increments its version and invalidates prior preparations/replays. Current association authority is checked before result disclosure.
 
-Verification: [TC-015-005–007](../../features/FEAT-015-marketing-report-exchange/verification.md). Disposable WASM PostgreSQL checks execute real migration/functions/roles, but have one connection; native REPEATABLE READ concurrency/lock acceptance is NOT_RUN. Migration 011 has **not** been applied to the application/production database. No real association, credentials, sender, parent receiver or deployment is created.
+Verification: [TC-015-005–007](../../features/FEAT-015-marketing-report-exchange/verification.md). Native PostgreSQL 18.6 now passes five REPEATABLE READ concurrency/lock/ACL cases. The migrator grant/revoke batch is atomic after independent review found its original autocommit window; fresh corrective review is pending. Migration 011 has **not** been applied to the application/production database; both are owner-authorized but their private target configs are absent. No real association, credentials, sender, parent receiver or deployment is created.

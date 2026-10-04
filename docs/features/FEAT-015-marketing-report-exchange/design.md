@@ -3,7 +3,7 @@ id: SDD-015
 title: Marketing report exchange — design
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 relations:
   relates_to: [FEAT-015, ARCH-005, ADR-007, DOM-CAM, DOM-MET, SRV-002]
@@ -84,7 +84,7 @@ The owner approved [P2 preparation, freeze and queued outbox](p2-freeze-outbox.m
 | FR-015-003 | `canonicalText(value) → UTF8Text` | Compact canonical text, same hash domain as P1 |
 | FR-015-003 | `ledgerRetry(error) → Boolean` | Router retries only 40001/exact ledger unique conflicts, at most two retries |
 
-`PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006 pass; TC-015-007 native concurrency/locks is NOT_RUN, so P2 exit remains open.
+`PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006/007 pass, including native PostgreSQL 18.6 concurrency/locks and migrator ACL interruption. Independent L2 found the original grant window; atomic grant/revoke correction requires fresh sealed review before merge. Real application migration remains unperformed.
 
 ## Future interfaces — not implemented
 
@@ -112,7 +112,7 @@ No sender/receiver API or cross-system event is allocated; candidate delivery/pa
 1. P1 was approved on 2026-10-05: source snapshot/projector/preview. Resolve the six parent/delivery decisions in the gap analysis before cross-system implementation.
 2. Parent owner reviews the receiver and Identity extension in its own governed repository, including record IDs, permission and persistence. The existing Enterprise API auth is a lead for reuse, not an approved growth-write grant.
 3. P1 source and synthetic tests are implemented; real PostgreSQL and live local HTTP acceptance remain NOT_RUN because this checkout has no local configuration. Run TC-015-003 against the existing approved local database; it rolls back all synthetic QA writes. No migration is needed for P1.
-4. P2 ledger/outbox source and migration file are approved and implemented; run native isolated QA concurrency/lock acceptance before merge. Applying migration 011 to an application database is a separate operator action. Parent inbox/receipt and actual sending await their own approved implementation.
+4. P2 native isolated QA concurrency/locks/ACL tests pass. The owner authorized merge after independent review and migration 011 to both Local and Production. Fresh sealed corrective review, PR checks and real target/schema/backup preflight precede those actions. Private target configs are absent in this checkout. Parent inbox/receipt and sending await their own approved implementation.
 5. Run one isolated synthetic end-to-end report; only then consider credentials, hosted execution or production rollout under separate explicit operations authorization.
 
 ## Exit criteria
