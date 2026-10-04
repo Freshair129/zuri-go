@@ -2,7 +2,7 @@
 
 Let’s Go to Market. Together.
 
-โปรเจกต์หลักอยู่ที่ **D:/workspace/zuri-go** ตั้งแต่การแยก source รุ่น 0.4.1 ใช้ PostgreSQL และบัญชีสมาชิกเดิม รุ่น 0.4.2 ใช้รหัสระบุตัวตนช่องเดียวเพื่อเข้าสู่ระบบ รุ่น 0.5.0 เพิ่มระดับการมองเห็นและประชุมลับ (FEAT-011), Task Manager สำหรับทุกฝ่าย (FEAT-010) และการสร้างงานจากประชุมฝั่ง server; รุ่น 0.5.1 ซ่อนข้อมูลติดต่อของสมาชิกจาก Guest และจำกัดการแก้ทะเบียนสมาชิกให้ Business admin; ดูหลักฐานการเผยแพร่ใน docs/releases/0.5.0/ และ docs/releases/0.5.1/
+โปรเจกต์หลักอยู่ที่ **O:/zuri-go** ตั้งแต่การแยก source รุ่น 0.4.1 ใช้ PostgreSQL และบัญชีสมาชิกเดิม รุ่น 0.4.2 ใช้รหัสระบุตัวตนช่องเดียวเพื่อเข้าสู่ระบบ รุ่น 0.5.0 เพิ่มระดับการมองเห็นและประชุมลับ (FEAT-011), Task Manager สำหรับทุกฝ่าย (FEAT-010) และการสร้างงานจากประชุมฝั่ง server; รุ่น 0.5.1 ซ่อนข้อมูลติดต่อของสมาชิกจาก Guest และจำกัดการแก้ทะเบียนสมาชิกให้ Business admin; ดูหลักฐานการเผยแพร่ใน docs/releases/0.5.0/ และ docs/releases/0.5.1/
 
 Zuri-Go เป็น Marketing/Commercial edition ของ Zuri-AI ที่ deploy แยกได้พร้อม supporting functions และมีทิศทางส่งข้อมูลกลับ Marketing domain ของแพลตฟอร์ม. เริ่มอ่าน SoT ที่ [ARCH-005 — Commercial pipeline](docs/architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md); integration mapping/contract ยังเป็น draft.
 
@@ -11,7 +11,7 @@ Zuri-Go เป็น Marketing/Commercial edition ของ Zuri-AI ที่ de
 ต้องมี Node 24, Python 3, Docker Desktop และ installed Codex Data plugin สำหรับ build Dashboard เครื่องนี้ติดตั้งไว้แล้ว
 
 ```powershell
-cd D:\workspace\zuri-go
+cd O:\zuri-go
 npm run setup
 npm run build
 npm start

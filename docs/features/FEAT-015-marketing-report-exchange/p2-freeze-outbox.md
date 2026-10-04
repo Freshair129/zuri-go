@@ -2,7 +2,7 @@
 title: P2 local preparation, immutable report and queued outbox
 status: approved
 superseded_by: null
-version: 0.4.0
+version: 0.5.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,7 +11,7 @@ risk: HIGH
 
 # P2 — เก็บรายงานเดิมให้ตรวจย้อนกลับได้ ก่อนเปิดการส่งจริง
 
-**APPROVED / BUILDING.** The owner approved this P2 design on 2026-10-05 after reviewing draft commit `f9ca5aa`. This is the canonical P2 chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. Code, tests and additive migration 011 are implemented; native multi-connection acceptance now passes. The owner subsequently authorized testing/review/merge and applying 011 to both Local and Production; actual migration is NOT_RUN because private target configs are absent. API-024 stays read-only. Real associations, credentials, transport, parent writes and deployment are not authorized.
+**APPROVED / BUILDING.** The owner approved this P2 design on 2026-10-05 after reviewing draft commit `f9ca5aa`. This is the canonical P2 chapter of [SDD-015](design.md), following P1 commit `11283e34d98130f1ee1f7c73e788e577624394a4`. Code, tests and additive migration 011 are implemented; native multi-connection acceptance now passes. The owner subsequently authorized testing/review/merge and applying 011 to both Local and Production; Production migration 011 passed on 2026-10-05 after a verified full backup; Local migration remains NOT_RUN because its database/config is unavailable. See [production migration evidence](verification.md#production-migration-011--2026-10-05). API-024 stays read-only. Real associations, credentials, transport, parent writes and deployment are not authorized.
 
 ผลที่เสนอ: operator เลือก campaign/week และ association ที่ผ่านการ review แล้ว → server เก็บ sanitized preview พร้อมเวลาจับข้อมูล → operator ยืนยัน preview นั้น → ตรวจ source revision ซ้ำและบันทึก immutable report + QUEUED outbox + audit ใน transaction เดียว. ยังไม่มีการส่งเครือข่ายหรือ receipt จาก Zuri-AI.
 
@@ -118,7 +118,7 @@ These signatures are approved P2 extensions locked in [SDD-015](design.md#interf
 
 ## Isolated QA and acceptance plan
 
-Native test scope is new **test-owned** PostgreSQL QA only, with synthetic Business/campaign/association records. Before running, inspect the resolved target, major version, grants, current schema and existing data; refuse any real Business or production Neon target. Applying migration 011 to the ordinary local database and production has separate owner authorization; target/schema/backup preflight remains required. No Docker installation, database-volume removal, restore, credential provisioning or user-data import is included. Isolated native PostgreSQL 18.6 acceptance and independent migration/rerun now pass. This checkout has no application DB config or Docker in PATH, so real application HTTP and Local/Production migration remain NOT_RUN.
+Native test scope is new **test-owned** PostgreSQL QA only, with synthetic Business/campaign/association records. Before running, inspect the resolved target, major version, grants, current schema and existing data; refuse any real Business or production Neon target. Applying migration 011 to the ordinary local database and production has separate owner authorization; target/schema/backup preflight remains required. No Docker installation, database-volume removal, restore, credential provisioning or user-data import is included. Isolated native PostgreSQL 18.6 acceptance and independent migration/rerun now pass. Production admin config was recovered privately and migration 011/postchecks passed; Local database/config remain unavailable, so Local migration and API-024/025 HTTP remain NOT_RUN.
 
 | Required case | Acceptance / FR |
 |---|---|
@@ -138,7 +138,7 @@ Implementation choices within the approved scope: SQL finalizers accept only the
 
 ## Approval and exit boundary
 
-Approval recorded: owner approved P2 code/tests/additive migration file, then native concurrency/lock testing and independent review before merge plus applying migration 011 to both Local and Production. Existing authorization remains valid; real-target identity/schema/backup preflight is still required and currently blocked by missing private config. Real parent mappings/credentials, actual sending, parent changes and deployment remain outside scope. Parent registry/Identity contract is still a prerequisite for a real association.
+Approval recorded: owner approved P2 code/tests/additive migration file, then native concurrency/lock testing and independent review before merge plus applying migration 011 to both Local and Production. Existing authorization remains valid; Production identity/schema/full-backup preflight and migration/postchecks passed; Local preflight is blocked by unavailable database/config. Real parent mappings/credentials, actual sending, parent changes and deployment remain outside scope. Parent registry/Identity contract is still a prerequisite for a real association.
 
 P2 exit: actual source-stale/expiry/concurrency/rollback/RLS/grant/hash tests pass in explicitly identified isolated QA; no source/private-data regression; docs and source traceability agree. Until then the feature stays building. Afterwards P3 can propose a separately approved sender and parent durable receipt contract.
 

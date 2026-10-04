@@ -1,13 +1,13 @@
 # Current architecture index
 
-Current application version: 0.5.1. Deployment and production schema evidence: [release 0.5.1](../releases/0.5.1/verification.md) (2026-10-04). PostgreSQL schema is 10 in production and 8 in the local Docker database; these are separate states and do not synchronize automatically.
+Current application version: 0.5.1. Deployment and production schema evidence: [release 0.5.1](../releases/0.5.1/verification.md) (2026-10-04). PostgreSQL schema is 11 in production after the authorized 2026-10-05 migration ([evidence](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05)). The former local Docker database was last recorded at schema 8 and is unavailable in this checkout; Local migration remains NOT_RUN. These are separate states and do not synchronize automatically.
 
 อ่านตามลำดับ authority: user approval → [Single-code login](../features/FEAT-007-single-code-login/spec.md) → [Member identity](../features/FEAT-006-member-identity/spec.md) → [Guest access](../features/FEAT-005-guest-access/spec.md) → amendments ใน [Cloud deployment](ARCH-003-hosted-deployment.md) / [data model](ARCH-002-postgresql-data-model.md) → [architecture baseline](ARCH-001-baseline-architecture.md)
 
 เอกสาร baseline เก็บประวัติการออกแบบตั้งแต่ local-only และ shared password ข้อกำหนดเหล่านั้นถูกแทนด้วย approved Guest/Member amendments แล้ว ห้ามใช้ baseline เก่าปิด Guest หรือเปิด shared password กลับมา
 
 - UI และ API ใช้ origin เดียว; local serve build/site, production deploy build/vercel
-- Database: PostgreSQL schema 10 in production and schema 8 in local Docker; Neon and local Docker are separate states and do not synchronize automatically.
+- Database: PostgreSQL schema 11 in production; Local is unavailable here (last-recorded schema 8). Neon and local databases are separate states and do not synchronize automatically.
 - Hosted reads: public Guest ตาม Business เดิม; writes: same-origin + signed Member session + active/version checks ใน transaction
 - Local: trusted operator ผูก loopback; ไม่อ้างว่าผู้ทำรายการเป็น Member โดยไม่มี session
 - PID เป็น public stable identifier; UUID เป็น PK/FK; credentials และ handovers แยกจาก profiles และ static package

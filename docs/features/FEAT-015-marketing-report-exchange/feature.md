@@ -7,7 +7,7 @@ runtime: SRV-002
 delivery: building
 status: approved
 superseded_by: null
-version: 0.5.0
+version: 0.6.0
 date: 2026-10-05
 complexity: C-3
 risk: HIGH
@@ -30,7 +30,7 @@ relations:
 
 ## Current delivery and exit gates
 
-**BUILDING / P1 and P2 implemented; native database checks passed.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists preparation and atomically freezes immutable report + QUEUED + private audit. Native PostgreSQL 18.6 passes 5 P2 concurrency/lock/ACL cases and the original P1 snapshot case. Independent L2 found a grant window; the atomic correction passed review at `99ed23a` with an independent migration/rerun and six native cases. Local and Production migration are now owner-authorized but NOT_RUN because target configs are absent; live HTTP is NOT_RUN. Actual measurements remain null/UNKNOWN and readiness HELD without audited source timezone/coverage. See [verification](verification.md).
+**BUILDING / P1 and P2 implemented; native database checks passed.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists preparation and atomically freezes immutable report + QUEUED + private audit. Native PostgreSQL 18.6 passes 5 P2 concurrency/lock/ACL cases and the original P1 snapshot case. Independent L2 found a grant window; the atomic correction passed review at `99ed23a` with an independent migration/rerun and six native cases. Production migration 011 passed on 2026-10-05 after a verified full backup; schema 11 and unchanged existing data/ACL/RLS were verified. Existing hosted Guest reads and write denial passed. Local migration and local API-024/025 HTTP remain NOT_RUN because the Local database/config is unavailable. No marketing API rollout is claimed. Actual measurements remain null/UNKNOWN and readiness HELD without audited source timezone/coverage. See [verification](verification.md).
 
 P1 is C-3 / MEDIUM (API and private-data boundary). The full exchange remains HIGH risk because it adds persistence and cross-system authorization. No source timezone attestation is accepted from a caller or arbitrary state field.
 

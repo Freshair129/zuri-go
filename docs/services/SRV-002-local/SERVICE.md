@@ -51,7 +51,7 @@ Hosts every domain listed in the frontmatter and realises every feature in its `
 
 ## Marketing report preview — FEAT-015
 
-FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; real Local/Production migration and live HTTP remain NOT_RUN because private target configs are absent. Ready metrics, sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
+FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; Production migration 011 and metadata/source-preservation postchecks passed after a verified full backup. Local migration and API-024/025 HTTP remain NOT_RUN because the Local database/config is unavailable. Existing hosted Guest reads/write denial passed; no marketing API deployment is claimed. Ready metrics, sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
 
 ## Visual Marketing — FEAT-014
 
