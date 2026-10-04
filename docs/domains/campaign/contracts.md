@@ -6,7 +6,7 @@ API contracts owned by [DOM-CAM](README.md) ([STD-003 R2](../../governance/stand
 Relations: relates_to: FEAT-015, FR-015-001, FR-015-002, SDD-015, API-001, CMP-002
 Owner: DOM-CAM
 
-**Status:** approved for P1, 2026-10-05. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report.mjs`, nested route in `apps/api/api.mjs`. Real database/live HTTP acceptance remains NOT_RUN; no deployment is claimed.
+**Status:** approved for P1, 2026-10-05. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report.mjs`, nested route in `apps/api/api.mjs`. Native database and actual Local HTTP preview acceptance passed; browser interaction remains NOT_RUN and no hosted marketing deployment is claimed.
 
 | Operation | Authority / request | Success | Errors |
 |---|---|---|---|
@@ -18,7 +18,7 @@ Request/window, response fields and incomplete-source semantics are authored onc
 Relations: relates_to: FEAT-015, FR-015-001, FR-015-003, SDD-015, API-001, CMP-003
 Owner: DOM-CAM
 
-**Status:** approved P2, 2026-10-05; native PostgreSQL concurrency/lock/ACL checks PASS. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-ledger.mjs`, `apps/api/api.mjs` and migration 011 (applied to Production on 2026-10-05; Local remains NOT_RUN). Independent L2 review of the migrator correction passed at `99ed23a`, including fresh native migration/rerun acceptance. Denies hosted, Guest, Member and crossed configured Business before DB; SQL also checks resolved operator/Business and unchanged active association.
+**Status:** approved P2, 2026-10-05; native PostgreSQL concurrency/lock/ACL checks PASS. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-ledger.mjs`, `apps/api/api.mjs` and migration 011 (applied to Production and the separately authorized restored native Local on 2026-10-05). Independent L2 review of the migrator correction passed at `99ed23a`, including fresh native migration/rerun acceptance. Denies hosted, Guest, Member and crossed configured Business before DB; SQL also checks resolved operator/Business and unchanged active association.
 
 | Operation | Strict request | Success |
 |---|---|---|

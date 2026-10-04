@@ -2,15 +2,48 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.6.0
+version: 0.7.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
 
+## Local Production-backup restore — 2026-10-05
+
+Current operator result: **Local and Production schema 11 PASS**. The owner explicitly approved creating Local from the verified Production backup. This section supersedes the dated Local NOT_RUN statements below. Complexity C-2, risk HIGH (data restore/migration). No application code changed; package remains 0.5.1 and Production deployment is unchanged.
+
+Preflight confirmed a new empty destination, absent Local config and free loopback ports. PostgreSQL 18.6 uses the already verified portable runtime in `.local/marketing-native/runtime/pgsql`; persistent data is separately owned at `.local/postgres-local/data`, listening only on `127.0.0.1:55412`. Retain that runtime: it now serves this persistent Local as well as the separate QA engine. No old database/volume was overwritten, Docker installed, Windows service registered or firewall changed. Private folder ACL permits only the current Windows operator and SYSTEM.
+
+| Check | Result / boundary |
+|---|---|
+| Source backup | PASS — same pre-011 schema-10 Production dump/checksum recorded below; never substituted the synthetic QA database |
+| Actual persistent restore | PASS — `psql 18.6`, ON_ERROR_STOP and one transaction into new `zuri_go`; all 48 original table counts and ordered JSON hashes match the exported snapshot, including migration ledger |
+| Local identity/custody | PASS — restored Business matches the backup; new Local admin/runtime credentials, SCRAM-SHA-256; restored Member credential hashes unchanged; restricted private `.local/config.json`; Production untouched |
+| Actual Local migration 011 | PASS — reviewed `node apps/api/migrate.mjs`, loopback target guard, 5-second lock / 60-second statement limits; schema exactly 001–011 |
+| Local source preservation | PASS — all 47 original application table counts/content hashes unchanged after migration, HTTP checks and tests; four new ledger tables empty |
+| Actual Local runtime connection | PASS — real `zuri_go_app` login, non-superuser/non-BYPASSRLS/non-CREATEROLE; all 12 direct INSERT/UPDATE/DELETE probes denied with 42501, using savepoints/rollback; enabled/forced RLS and helper permissions verified |
+| Existing Visual function ACLs | PASS after independent review correction — the ACL-free dump omitted four migration-010 function permissions. Exact six approved REVOKE/GRANT statements reconciled atomically on Local only; PUBLIC EXECUTE false on all four, runtime only record-review/finalize, two actual runtime internal-helper calls denied 42501 without invoking finalizers. All 47 source hashes/counts still match after reconciliation |
+| Local server | PASS — existing server on `127.0.0.1:4319`, correct configured Business and `postgresql-local`; root, metrics, bootstrap, state and tasks GET 200; no pending Visual jobs at startup |
+| Actual API-024 preview | PASS — existing campaign POST 200, HELD, 12 UNKNOWN/null measurements and valid canonical preview hash; no source writes or fabricated source attestation |
+| Focused regression | PASS — 22 tests, 0 FAIL, 0 SKIP, including actual Local runtime snapshot test with rolled-back synthetic QA records |
+| Build | PASS — protected Data App verification and packaging; 63 allowlisted files; private backups excluded; generated output was not deployed |
+| Real API-025 preparation/freeze HTTP | NOT_RUN — no reviewed real parent association provisioned; isolated native concurrency/lock acceptance remains the separate PASS evidence below |
+| Browser visual/interaction | NOT_RUN — browser tool unavailable; opening the Local URL in a queued panel is not browser acceptance |
+| Direct Production runtime login | Still NOT_RUN — Local login evidence does not replace the unrecovered Production runtime-session check |
+
+Actual test command: `node --test apps/api/test/marketing-report-db.test.mjs apps/api/test/marketing-report-source.test.mjs apps/api/test/marketing-report-ledger.test.mjs tests/campaign/marketing-report-projection.test.mjs`. `npm run build` used the installed Python 3.13 override; no protected manifest was rewritten. No broad/destructive suite ran against restored user data.
+
+Private receipts under `.local/postgres-local/`: `restore-receipt.json`, `restore-verification.json`, `migration-receipt.json`, `post-migration-verification.json`, `http-verification.json`, `final-data-verification.json`, `marketing-tests.log`, `build.log`. Config, operator credentials, dump and raw responses stay private. Startup, shutdown and native backup commands are canonical in [RB-001](../../operations/RB-001-runbook.md#native-local-on-this-machine--2026-10-05). Local and Production are independent persistent states; this snapshot restore creates no automatic sync. No real parent association, send, parent write, Member credential rotation or Production deployment was performed.
+
+Independent restore/documentation review of `483cc4f` returned REWORK for the native backup environment and omitted existing Visual function ACL checks. Both root causes and corrective scope are documented in [backup environment RCA](../../../.brain/rca/native-local-backup-environment.md) and [restore ACL RCA](../../../.brain/rca/production-backup-restore-function-acls.md). Additional private receipts: `backup-env-verification.json`, `all-function-acl-before.json`, `all-function-acl-after.json`, `visual-acl-reconciliation.json`, `after-acl-data-verification.json`. The backup example now uses separate validated child-environment connection parameters, clears inherited PG settings and retains ACLs in future native dumps. Its read-only connection/syntax checks passed; a new full dump was not executed.
+
+Independent follow-up review of corrected candidate `f5c004a5a3088013c9470616f3f378c1d8808cd3` returned **PASS**: both findings resolved, restore/data/runtime/build/API evidence consistent and remaining limitations explicit. The reviewer made no database connections, process changes or edits. [PR #9](https://github.com/Freshair129/zuri-go/pull/9) carries the closeout; no GitHub CI checks are configured. Recording this result does not change the reviewed operations or commands.
+
+Version diff 0.6.0 → 0.7.0: new persistent Local restored from verified Production schema-10 backup, migrated to 11 and verified with actual runtime/API/build/tests; former Local NOT_RUN is superseded. The earlier Production entry remains the dated operation receipt. Application stays 0.5.1.
+
 ## Production migration 011 — 2026-10-05
 
-Current operator result: **Production PASS, schema 10 → 11; Local NOT_RUN**. The following dated native/implementation sections are prior snapshots; this section supersedes their missing-Production-config and unapplied-schema statements. Application remains 0.5.1; no build/deployment/promotion, real parent association, sender or credential rotation was performed.
+At this earlier Production operation: **Production PASS, schema 10 → 11; Local NOT_RUN**. The later Local restore section above supersedes only the Local and restore status. The following dated native/implementation sections are prior snapshots; this section supersedes their missing-Production-config and unapplied-schema statements. Application remains 0.5.1; no build/deployment/promotion, real parent association, sender or credential rotation was performed.
 
 The owner authorized both targets and supplied the existing Neon owner connection directly into ignored private `.local/cloud-config.json`. Vercel CLI 59.6.2 login and project identity verification passed. All four Production env entries are Sensitive and pull yielded placeholders; none was used as a credential. The existing Neon resource `zuri-go-postgres` matched the open Neon project. Its admin connection was normalized to the direct endpoint with `sslmode=verify-full`. The Node TLS socket was encrypted/authorized with TLSv1.3; backend `pg_stat_ssl` is behind the Neon proxy and is not client TLS proof. Server PostgreSQL 18.6, schema 001–010, table owner and the existing public site's Business all matched before applying.
 

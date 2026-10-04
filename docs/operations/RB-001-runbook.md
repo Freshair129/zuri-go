@@ -10,8 +10,58 @@ relations:
 
 Run all commands from the project root described in [README](../../README.md).
 
+## Native Local on this machine — 2026-10-05
+
+The owner-approved new Local in `O:/zuri-go` is PostgreSQL 18.6/schema 11 restored from the verified pre-011 Production backup, then migrated. Evidence and checksum: [FEAT-015 Local restore](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05). It is a persistent application database, separate from native synthetic QA and Production; neither Git nor a source-folder copy synchronizes database contents. Keep `.local/` private and retain `.local/marketing-native/runtime/pgsql` because this Local uses that verified runtime. Former Docker Local is unavailable here; do not create/reset it as a startup workaround.
+
+There is no Windows service/autostart. From a fresh PowerShell with no `ZURI_GO_*` or `VERCEL` overrides, start PostgreSQL, then the existing API in the foreground:
+
+```powershell
+cd O:\zuri-go
+& '.\.local\marketing-native\runtime\pgsql\bin\pg_ctl.exe' start -D '.\.local\postgres-local\data' -l '.\.local\postgres-local\server.log' -w
+node apps/api/server.mjs
+```
+
+If already running, do not start a second server: verify `127.0.0.1:55412` and `127.0.0.1:4319` and the configured Business first. Open `http://127.0.0.1:4319/?view=1&tab=overview`. `.local/config.json` selects only this new loopback database and its restored Business; it must never point at Neon. Local is a trusted operator, not an authenticated Member. Restored Member codes were not rotated. The previously launched hidden API keeps logs in `.local/postgres-local/api.log` and `api.stderr`, and its private process receipt records its identity; stop only that verified Node listener when switching to foreground startup.
+
+Stop a foreground API with Ctrl+C before shutting down PostgreSQL. Confirm the database data path, then:
+
+```powershell
+& '.\.local\marketing-native\runtime\pgsql\bin\pg_ctl.exe' stop -D '.\.local\postgres-local\data' -m fast -w
+```
+
+`npm start` and `npm run backup` remain Docker-only wrappers. For this native database, a matching-major dump reads the private Local admin connection only into the child environment (never command arguments/output):
+
+```powershell
+@'
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const config = JSON.parse(readFileSync('.local/config.json', 'utf8'));
+const target = new URL(config.adminUrl);
+if (target.hostname !== '127.0.0.1' || target.port !== '55412' || target.pathname !== '/zuri_go') throw new Error('Unexpected Local backup target');
+const env = { ...process.env };
+for (const key of Object.keys(env)) if (/^PG/i.test(key)) delete env[key];
+Object.assign(env, {
+  PGHOST: target.hostname, PGPORT: target.port,
+  PGDATABASE: decodeURIComponent(target.pathname.slice(1)),
+  PGUSER: decodeURIComponent(target.username), PGPASSWORD: decodeURIComponent(target.password),
+  PGCONNECT_TIMEOUT: '5', PGSSLMODE: 'disable'
+});
+const file = `.local/backups/zuri-go-local-${Date.now()}.sql`;
+const result = spawnSync('.local/marketing-native/runtime/pgsql/bin/pg_dump.exe', ['--no-owner', '--file', file], {
+  env, stdio: 'ignore'
+});
+if (result.error || result.status !== 0) throw new Error('Local backup failed; incomplete file is not a verified backup');
+console.log(`Dump written privately: ${file}; verify completeness and checksum before relying on it.`);
+'@ | node --input-type=module -
+```
+
+Check the completion trailer, expected COPY sections/counts and SHA-256; a dump alone is not restore proof. Keep dump/config/credentials outside Git and deployment. The commands above document future operations; a second new native backup was not run in this closeout. Do not restore over occupied data or roll back schema without separate authorization.
+
+The native dump example retains ACLs; restore requires the referenced restricted role to exist. The historical Production source dump used `--no-privileges`, so its restoration separately reconciled the exact existing migration-010 Visual function ACLs in one transaction: PUBLIC cannot execute any of the four functions, the runtime cannot execute the two internal helpers, and only record-review/finalize remain runtime-callable. Migration 011 configured its own function ACLs. A restored migration ledger does not replay earlier grants automatically. Verify existing table, column and function permissions against approved migrations before accepting any ACL-free restore ([RCA](../../.brain/rca/production-backup-restore-function-acls.md)). The corrected child environment was checked with read-only libpq against `zuri_go`/55412, including conflicting inherited PG settings; no additional full dump was executed ([backup example RCA](../../.brain/rca/native-local-backup-environment.md)).
+
 ## Database custody
-Existing local Docker container and volume are retained. `.local/config.json` selects the existing local Business; `.local/cloud-config.json` is for trusted operator cloud access. These files and `.local/postgres.env` are private. Never put them in apps/metrics, apps/web/src/data.json, build/site or build/vercel.
+Historical extraction retained its Docker container and volume; this machine now uses the native Local procedure above. `.local/config.json` selects the existing local Business; `.local/cloud-config.json` is for trusted operator cloud access. These files and `.local/postgres.env` are private. Never put them in apps/metrics, apps/web/src/data.json, build/site or build/vercel.
 
 Migration source is `apps/api/migrations/`; five historical SQL migrations were copied without modification. `npm run db:migrate` is an explicit schema operation, not a startup or extraction prerequisite. Do not use setup/import to initialize over an occupied Business. App runtime uses a restricted PostgreSQL role; admin credentials stay outside deployment.
 
@@ -53,7 +103,7 @@ Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign
 
 Production is schema 11 after the owner-authorized operation recorded in [FEAT-015 verification](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05). A full PostgreSQL 18.6 snapshot backup, all 48 COPY counts and checksum were verified before applying; all 47 existing table counts/content hashes remained unchanged afterwards. ACL/RLS/finalizer metadata and existing hosted Guest reads/write denial passed. This was a schema-only operation; no code deployment/promotion, association provisioning or credential rotation occurred. Later schema statements under historical release procedures describe those earlier operations.
 
-Local remains NOT_RUN: the old Docker database/config is unavailable in the owner-confirmed O:/zuri-go checkout. It was last recorded at schema 8; never substitute the synthetic QA cluster or point local trusted-operator config at Production. A restore from Production backup is a separate owner decision, not implied by migration authorization.
+Local is now schema 11 after the owner separately authorized a new persistent restore from that verified Production backup. Empty destination, atomic restore, all 48 original table counts/hashes, actual restricted runtime and Local API-024 preview passed; all 47 application tables remain unchanged after migration/tests. See the native procedure above. The former Docker database was last recorded at schema 8 and remains unavailable here; it was not overwritten. Never substitute the synthetic QA cluster or point Local trusted-operator config at Production.
 
 Vercel CLI env pull cannot recover this project's Sensitive values: they are placeholders. Use existing owner access in Neon to recover the private admin connection; retain the restricted application role. For admin operations use the direct endpoint and verified TLS. The owner cannot SET ROLE zuri_go_app here; do not grant membership or rotate its password for verification. See the evidence record for the unperformed direct-runtime session and new-backup restore drill.
 

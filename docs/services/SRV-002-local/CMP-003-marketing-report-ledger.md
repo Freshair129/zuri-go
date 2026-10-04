@@ -5,7 +5,7 @@ owner: DOM-CAM
 runtime: SRV-002
 status: approved
 superseded_by: null
-version: 0.4.0
+version: 0.5.0
 date: 2026-10-05
 relations:
   implements: [FR-015-001, FR-015-003]
@@ -19,4 +19,4 @@ Approved FEAT-015 P2 component in `apps/api/marketing-report-ledger.mjs`, routed
 
 Interface signatures and ownership: [SDD-015](../../features/FEAT-015-marketing-report-exchange/design.md#interfaces--approved-p2). SQL finalizers construct projections from actual scoped rows; caller data cannot supply a preview/envelope or server clock. The runtime role can SELECT only as a resolved operator and EXECUTE the two finalizers; direct ledger writes and helper execution are revoked. Preparations, reports and QUEUED records are append-only. Association reactivation increments its version and invalidates prior preparations/replays. Current association authority is checked before result disclosure.
 
-Verification: [TC-015-005–007](../../features/FEAT-015-marketing-report-exchange/verification.md). Native PostgreSQL 18.6 now passes five REPEATABLE READ concurrency/lock/ACL cases. The migrator grant/revoke batch is atomic after independent review found its original autocommit window; corrected code candidate `99ed23a` passed independent L2 review and a fresh native six-case rerun, including actual migration/rerun. Production migration 011 and metadata/source-preservation postchecks passed on 2026-10-05 after a verified full backup. Local migration remains NOT_RUN because its database/config is unavailable; direct production runtime-session tests were not performed. See the linked verification for exact boundaries. No real association, credentials, sender, parent receiver or deployment is created.
+Verification: [TC-015-005–007](../../features/FEAT-015-marketing-report-exchange/verification.md). Native PostgreSQL 18.6 now passes five REPEATABLE READ concurrency/lock/ACL cases. The migrator grant/revoke batch is atomic after independent review found its original autocommit window; corrected code candidate `99ed23a` passed independent L2 review and a fresh native six-case rerun, including actual migration/rerun. Production migration 011 and metadata/source-preservation postchecks passed on 2026-10-05 after a verified full backup. Local restore/migration passed and its actual restricted runtime session denied all 12 direct table write probes; direct Production runtime-session tests remain NOT_RUN. See the linked verification for exact boundaries. New Local database credentials were created under the separate restore approval; no restored Member credential or Production credential changed. No real parent association, sender, parent receiver or deployment is created.
