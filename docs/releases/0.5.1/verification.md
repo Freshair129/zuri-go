@@ -123,3 +123,13 @@ With the owner's explicit approval for this specific test record, a signed-in Bu
 - No Creative Brief was saved, and no project or creative record was deleted.
 
 This is a scoped production UI smoke check through the Creative Brief form; no Visual Marketing record was saved, and no direct production API/database readback was performed. It does not verify the Creative Brief save or downstream creative workflow, a non-admin Member session, cross-member read access, production narrow-screen behavior, real-provider execution or private credential custody. Application version remains 0.5.1; this is documentation and acceptance evidence only, with no source, schema or deployment change.
+
+## Creative Brief production acceptance — 2026-10-05
+
+After the owner approved one generic test Brief, the signed-in Business-admin session selected `PRJ-0001` and submitted the Visual Studio form. The form used the synthetic identity “Synthetic QA brand — no real brand claims,” a generic acceptance-test item and audience, test-only copy, the `Internal acceptance check` channel and `Review test brief` CTA. Campaign and due date were unset; no real claims, claim sources or customer/person data were entered. The Strategy-approval gate remained off.
+
+- The UI reported `บันทึกแล้ว` and showed the Project at **Research · revision 1**, with no Campaign and no work output.
+- After a page reload, the same Project card and revision remained visible. This is browser UI persistence evidence; no direct production API/database readback was performed.
+- The submission initialized the Visual project context and confirmed synthetic BrandProfile required by the form, then saved the Brief. No provider/run, Research output, review, approval or publication was started.
+
+Result: PASS for saving and re-reading one generic Brief through the production UI. The record remains in the production Business as an intentional test record. Downstream manual stages, non-admin Member behavior, cross-member read access, narrow-screen production layout, real-provider execution and private credential custody remain unverified or `NOT RUN`. Application version remains 0.5.1, PostgreSQL schema remains 10, and deployment is unchanged; documentation and acceptance evidence only.

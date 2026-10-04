@@ -179,3 +179,9 @@ Production Member/Admin session checks, a real project save and production narro
 The owner's approval authorized one named test Project in the sole production Business. A signed-in Business-admin session as Boss (`ZGO-P0002`) created `PRJ-0001` (“Zuri-Go acceptance check — Visual Studio — 2026-10-05”), owned by Boss with status `กำลังดำเนินการ`; the saved Project appeared in Task Manager and was selectable in Visual Studio, which opened the Creative Brief form. No Brief was saved. The Project remains as an intentional production test record. See the detailed [release evidence](../../releases/0.5.1/verification.md#production-acceptance-follow-up--2026-10-05).
 
 Result: PASS for the observed Business-admin login, ordinary Project save and Visual Studio Project-selection smoke check through the Creative Brief form. No Visual Marketing record was saved. Creative Brief save/downstream workflow, non-admin Member behavior, cross-member access and narrow-screen production acceptance remain unverified. Real-provider execution and private-preserved credential custody remain `NOT RUN`.
+
+## Creative Brief production acceptance — 2026-10-05
+
+After separate owner approval, one generic test Brief was saved under `PRJ-0001` using a clearly synthetic BrandProfile and no customer/person data. The production UI reported `บันทึกแล้ว`; after reload, the Project card showed **Research · revision 1**, no Campaign and no work output. No provider/run, manual Research output, review, approval or publication was started. The record remains in the production Business. See [release evidence](../../releases/0.5.1/verification.md#creative-brief-production-acceptance--2026-10-05).
+
+Result: PASS for production Brief save and UI readback after reload. Downstream manual stages, non-admin Member behavior, cross-member access and narrow-screen production acceptance remain unverified. Real-provider execution and private-preserved credential custody remain `NOT RUN`.
