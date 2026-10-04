@@ -1,14 +1,19 @@
+---
+status: active
+superseded_by: null
+---
+
 # AGENTS.md — Zuri-Go
 
 ## Project and authority
 
-- Active source: `D:/workspace/zuri-go`. The former `D:/zuri-brand-kit` checkout is a historical checkpoint, not a build dependency or editing target.
+- Active source: `O:/zuri-go` (owner-confirmed checkout, 2026-10-05). The former `D:/zuri-brand-kit` checkout is a historical checkpoint, not a build dependency or editing target.
 - Product: **Zuri-Go** — **Let’s Go to Market. Together.** Marketing made simple: business overview, campaign KPIs, metrics guide/graph, and Meeting & Task Manager.
 - Platform relationship: Zuri-Go is the light Marketing/Commercial edition of Zuri-AI. Read [ARCH-005](docs/architecture/commercial-pipeline/ARCH-005-commercial-pipeline.md) and [registry/relations.yaml](registry/relations.yaml) for the canonical context and source chapters. Existing local IDs remain stable; parent schema/identity parity and live integration must be verified, not inferred. Process definitions are edited there; the dated history folder is evidence only.
 - GitHub: https://github.com/Freshair129/zuri-go — private repository, default branch `main`.
 - Production: https://zuri-metrics-map.vercel.app/ — Vercel project `zuri-metrics-map`, scope `pornpons-projects`.
 - Read [README](README.md), the [documentation map](docs/README.md) and the [architecture index](docs/architecture/README.md) first. Follow the user's current instructions, approved parent/peer contracts, and applicable nested AGENTS.md. Historical documents are evidence, not newer requirements.
-- Baseline at this update: application 0.5.1 (0.5.0 plus the Member-registry and Guest-privacy fixes; FEAT-014 Visual Studio production rollout is recorded in [the 0.5.1 verification record](docs/releases/0.5.1/verification.md), with no package-version bump); PostgreSQL schema 10 in production and schema 8 in the local Docker `zuri_go` database. The isolated Visual QA database used for tests is schema 10. Release 0.5.0 first went live on 2026-10-01 (code commit `7bb538c`; deployment ID and checks in the [verification record](docs/releases/0.5.0/verification.md)). Read `package.json`, migration files and release evidence for later versions; verify live deployment rather than assuming this baseline is current forever.
+- Baseline at this update: application 0.5.1 (0.5.0 plus the Member-registry and Guest-privacy fixes; FEAT-014 Visual Studio production rollout is recorded in [the 0.5.1 verification record](docs/releases/0.5.1/verification.md), with no package-version bump); PostgreSQL schema 11 in production after the authorized 2026-10-05 migration ([FEAT-015 evidence](docs/features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05)); the former local Docker `zuri_go` database was last recorded at schema 8 and is unavailable in this checkout. Local migration remains NOT_RUN. The isolated Visual QA database used for tests is schema 10. Release 0.5.0 first went live on 2026-10-01 (code commit `7bb538c`; deployment ID and checks in the [verification record](docs/releases/0.5.0/verification.md)). Read `package.json`, migration files and release evidence for later versions; verify live deployment rather than assuming this baseline is current forever.
 
 ## Working method
 

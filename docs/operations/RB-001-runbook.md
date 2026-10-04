@@ -49,6 +49,14 @@ Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign
 - **Rollback.** Code from before FEAT-010 ignores the new columns and tables; plan it together with FEAT-011's rollback note above.
 - **Workboard backfill (FR-010-016).** `node apps/api/backfill-workboard.mjs` is a read-only dry run of the local Business (`--cloud` for production); it prints counts and writes the full report to `.local/backfill/`. `--run` writes, reconciles and needs schema 7; a production run also needs `--production-authorized`, a backup first and the owner's specific authorization. The dry run of 2026-10-01 found 0 Workboard tasks in production on schema 5 and again after the migration on schema 7, so nothing was moved and no real run was needed.
 
+## Marketing ledger migration 011 — 2026-10-05
+
+Production is schema 11 after the owner-authorized operation recorded in [FEAT-015 verification](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05). A full PostgreSQL 18.6 snapshot backup, all 48 COPY counts and checksum were verified before applying; all 47 existing table counts/content hashes remained unchanged afterwards. ACL/RLS/finalizer metadata and existing hosted Guest reads/write denial passed. This was a schema-only operation; no code deployment/promotion, association provisioning or credential rotation occurred. Later schema statements under historical release procedures describe those earlier operations.
+
+Local remains NOT_RUN: the old Docker database/config is unavailable in the owner-confirmed O:/zuri-go checkout. It was last recorded at schema 8; never substitute the synthetic QA cluster or point local trusted-operator config at Production. A restore from Production backup is a separate owner decision, not implied by migration authorization.
+
+Vercel CLI env pull cannot recover this project's Sensitive values: they are placeholders. Use existing owner access in Neon to recover the private admin connection; retain the restricted application role. For admin operations use the direct endpoint and verified TLS. The owner cannot SET ROLE zuri_go_app here; do not grant membership or rotate its password for verification. See the evidence record for the unperformed direct-runtime session and new-backup restore drill.
+
 ## Production release procedure (used for 0.5.0)
 
 First used for release 0.5.0 on 2026-10-01 (Bangkok), before the operator-script guards above (the 0.5.0 run used the Vercel and migration commands directly); the record is [docs/releases/0.5.0/verification.md](../releases/0.5.0/verification.md). Each step needs the owner's authorization for that release (AGENTS.md); no step prints or stores a secret in the repository, and every connection string is passed only through the environment of the one process that needs it.

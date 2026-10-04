@@ -1,5 +1,9 @@
 # Zuri-Go 0.5.1 — Member registry rules and Guest privacy
 
+## Database-only amendment — 2026-10-05
+
+Production migration 011 applied at the owner's request after native concurrency/lock acceptance and independent L2 review passed. PostgreSQL schema is now 11 (previously 10), with the same deployed application 0.5.1 and no new deployment/promotion. Full snapshot backup and post-migration preservation/security metadata checks passed; existing hosted Guest bootstrap/state/tasks reads and same-origin Guest write denial passed. Local migration remains NOT_RUN because its database/config is unavailable. Exact evidence, backup checksum and runtime/restore limitations are canonical in [FEAT-015 verification](../../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05). The following release entries retain their original schema/deployment dates.
+
 Released 2026-10-01 (Bangkok) at the owner's request (“commit แยก 2 ชุดแล้ว push แล้ว deploy”). C-2 / HIGH. Source: commit `2197186` on `main`. No database migration: production stays on PostgreSQL schema 7. Decisions: [PLAN-002 “Design gaps decided”](../../governance/plans/PLAN-002-task-and-meeting-domains.md) D2–D16.
 
 ## Version diff: 0.5.0 → 0.5.1

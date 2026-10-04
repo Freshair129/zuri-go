@@ -2,11 +2,37 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.5.0
+version: 0.6.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## Production migration 011 — 2026-10-05
+
+Current operator result: **Production PASS, schema 10 → 11; Local NOT_RUN**. The following dated native/implementation sections are prior snapshots; this section supersedes their missing-Production-config and unapplied-schema statements. Application remains 0.5.1; no build/deployment/promotion, real parent association, sender or credential rotation was performed.
+
+The owner authorized both targets and supplied the existing Neon owner connection directly into ignored private `.local/cloud-config.json`. Vercel CLI 59.6.2 login and project identity verification passed. All four Production env entries are Sensitive and pull yielded placeholders; none was used as a credential. The existing Neon resource `zuri-go-postgres` matched the open Neon project. Its admin connection was normalized to the direct endpoint with `sslmode=verify-full`. The Node TLS socket was encrypted/authorized with TLSv1.3; backend `pg_stat_ssl` is behind the Neon proxy and is not client TLS proof. Server PostgreSQL 18.6, schema 001–010, table owner and the existing public site's Business all matched before applying.
+
+| Check | Result / boundary |
+|---|---|
+| Full Production backup | PASS — matching `pg_dump 18.6`, `--no-owner --no-privileges`, verified TLS root bundle; exported REPEATABLE READ snapshot |
+| Backup completeness | PASS — 852,385 bytes; all 48 COPY sections/counts match that same snapshot; complete trailer; SHA-256 `9e16a8d8158f06e6c899f19648ee52d853b73c696a150574bddfe0dfc2c12110` |
+| Backup restore drill | NOT_RUN for this new backup; completeness checks are not restore proof |
+| Actual Production migration | PASS — reviewed migrator `node apps/api/migrate.mjs --cloud`, 5-second lock / 60-second statement limits; schema ledger now exactly 001–011; atomic grant reconciliation completed |
+| Existing data preservation | PASS — counts and ordered JSON content hashes unchanged for all 47 pre-existing zuri_go tables; migration ledger is the only expected existing-table addition |
+| New private ledger | PASS — four tables all empty; no real association, report, queue or audit fixture created |
+| Production security metadata | PASS — enabled/forced RLS, Business/operator restrictive policies, private audit policy, enabled immutable triggers; runtime direct INSERT/UPDATE/DELETE revoked; only prepare/freeze runtime EXECUTE, no PUBLIC helper EXECUTE; runtime non-superuser/non-BYPASSRLS |
+| Direct Production runtime session | NOT_RUN — runtime credential remains unrecovered and owner SET ROLE is denied (42501); no role membership/grant/password was changed to run the check. Native isolated runtime checks passed separately above |
+| Existing hosted API | PASS — Guest bootstrap/state/tasks GET 200, configured Business matches, Member fields remain limited; same-origin form-header Guest task POST with empty invalid payload answers 401 |
+| Local migration / API-024/025 HTTP | NOT_RUN — no Local database/config/Docker runtime available here; owner decision requested for locating the old Local database versus a separately authorized restore from the verified backup |
+| New marketing API deployment / parent integration | NOT_RUN / not implemented; merged source and applied schema do not prove API rollout, binding or sending |
+
+Source gate: the applied migrator and migration SQL match independently reviewed code `99ed23a66f3abebafa68a3a2ceec02b17a99468f`, merged through PR #6 at `001489f54de335a3cf563db8060e010d201d157c`. Postcheck comparison saved exact counts/hashes privately. The initial HTTP probe used unsupported standalone Member/meeting GET paths and omitted the required form header, giving 404/403; corrected documented state/task routes and the proper header passed. Those initial responses do not establish a database regression. A production source/RLS fix or permission escalation was neither needed nor performed.
+
+Private backup is `.local/backups/zuri-go-production-pre-011-20261005.sql`. Private evidence is under `.local/vercel-recovery/`: `production-preflight.json`, `production-tls.json`, `production-baseline.json`, `production-backup-receipt.json`, `production-migrate.log`, `production-apply-receipt.json`, `production-post-migration.json`, `hosted-post-migration.json`; configs, backup contents and connection metadata stay ignored and are not published. Local has not been relabelled as the synthetic native QA cluster.
+
+Version diff 0.5.0 → 0.6.0: restored private Production access; verified snapshot backup; authorized schema 10 → 11 applied; production source/security metadata and existing Guest API checks passed. Local is still NOT_RUN. No application version or deployed artifact changed.
 
 ## Native acceptance and independent review correction — 2026-10-05
 
