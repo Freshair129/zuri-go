@@ -2,7 +2,7 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.4.0
+version: 0.5.0
 date: 2026-10-05
 ---
 
@@ -12,7 +12,9 @@ date: 2026-10-05
 
 The owner authorized native concurrency/lock testing, independent review before merge, and migration 011 to **both Local and Production**. Read-only preflight confirms that `O:/zuri-go/.local/config.json`, `cloud-config.json` and `postgres.env` are absent, the historical D:/workspace checkout is absent and no Docker/native PostgreSQL application listener was found. Vercel CLI whoami rejected its existing token as invalid. No real database target/identity/version or backup has therefore been verified; **Local and Production migration remain NOT_RUN**. No credential value was printed or provisioned for a real account.
 
-Independent higher-tier L2 review of sealed candidate `b64da2cc1515431d58e2015089aedbf9f1b05167` returned **REWORK**: `migrate.mjs` committed its broad table grant separately from the marketing revocation. The reviewer reproduced runtime insertion of a synthetic unreviewed association during that window, and independently passed 29 marketing tests. [RCA](../../../.brain/rca/marketing-report-migrator-grants.md) records the evidence, root cause, detection gap and prevention. The correction puts the existing complete grant/revoke batch in BEGIN/COMMIT with explicit rollback on failure; final permissions are unchanged. A two-connection test now checks the intermediate state, interruption and successful final batch. Fresh sealed-delta L2 review is pending; the earlier REWORK is not a PASS for the corrected source.
+Independent higher-tier L2 review of sealed candidate `b64da2cc1515431d58e2015089aedbf9f1b05167` returned **REWORK**: `migrate.mjs` committed its broad table grant separately from the marketing revocation. The reviewer reproduced runtime insertion of a synthetic unreviewed association during that window, and independently passed 29 marketing tests. [RCA](../../../.brain/rca/marketing-report-migrator-grants.md) records the evidence, root cause, detection gap and prevention. The correction puts the existing complete grant/revoke batch in BEGIN/COMMIT with explicit rollback on failure; final permissions are unchanged. A two-connection test now checks the intermediate state, interruption and successful final batch.
+
+Independent higher-tier L2 review of corrected code candidate `99ed23a66f3abebafa68a3a2ceec02b17a99468f` returned **PASS**, with no remaining blocking code findings. The reviewer independently created fresh disposable database `zuri_go_marketing_qa_review_fd0e856898` in the same verified isolated PostgreSQL 18.6 cluster, ran the actual migrator twice (initial migration and rerun PASS), and passed all five native ledger cases plus the original P1 snapshot case. Private evidence is retained in `.local/marketing-native/independent-review-{native,snapshot}.log` and `independent-review-migrate-{0,1}.log`. Final closeout changes only documentation, without changing the reviewed runtime.
 
 | Check | Result / boundary |
 |---|---|
@@ -21,7 +23,8 @@ Independent higher-tier L2 review of sealed candidate `b64da2cc1515431d58e201508
 | Regression after correction | **PASS 87, FAIL 0, SKIP 6**, campaign/marketing/operator-guards/auth/visibility; explicit native overrides omitted for this command. Its 5 native P2 and 1 P1 skips were separately executed and passed above, not counted as PASS in that command |
 | Disposable WASM SQL | Included in regression: 8/8 PASS with the explicit ignored QA module; no application connection |
 | Local/Production migration | **NOT_RUN** — private target config absent; no application DB schema/data/credential modified |
-| Merge | Pending fresh sealed corrective review and PR checks |
+| Independent L2 | **PASS** — corrected code candidate `99ed23a`; independent migration/rerun and 6 native cases PASS |
+| PR #6 | Review complete; no GitHub checks configured (`statusCheckRollup: []`). Merge must match the final pushed head |
 
 The native engine is the official EDB portable Windows archive downloaded via `https://sbp.enterprisedb.com/getfile.jsp?fileid=1260609`, linked from the [EDB binaries page](https://www.enterprisedb.com/download-postgresql-binaries). Archive bytes 384,620,317; SHA-256 `e2246ba91d22345bc3d017586c09ede52d9df180b1eeb480f050445f1cad84e2`. `postgres --version` and SHOW server_version both report **18.6**. It is extracted only under ignored private `.local/marketing-native/runtime`; no Windows service, Docker install, firewall change or application runtime upgrade. A fresh cluster under that directory listens only on `127.0.0.1:55411` and uses one-use synthetic QA passwords with scram-sha-256. Its folder ACL allows the current Windows operator and SYSTEM. No credentials enter tracked files or command output.
 
@@ -29,7 +32,7 @@ The new initially empty database `zuri_go_marketing_qa_20261005` was inspected, 
 
 Regression command: `node --test tests/campaign/*.test.mjs apps/api/test/marketing-report*.test.mjs apps/api/test/operator-guards.test.mjs apps/api/test/team-auth.test.mjs apps/api/test/visibility.test.mjs` with only the PGlite module override. Native P1 command: `node --test apps/api/test/marketing-report-db.test.mjs` with the synthetic runtime URL passed privately through its process environment.
 
-Version diff 0.3.0 → 0.4.0: native acceptance is now executed; migrator ACL correction closes the independently reproduced grant window; fresh corrected-candidate review and real-target migration remain separate gates. Application package stays 0.5.1. Authorization is recorded for both real targets; inability to resolve/connect/backup them is an environment limitation, not a new approval requirement.
+Version diff 0.4.0 → 0.5.0: independent L2 correction review and an independent fresh-database native rerun are PASS; current acceptance statements distinguish isolated QA from real application operations. Real-target migration remains NOT_RUN. Application package stays 0.5.1. Authorization is recorded for both real targets; inability to resolve/connect/backup them is an environment limitation, not a new approval requirement.
 
 ## P2 approval and implementation — 2026-10-05
 

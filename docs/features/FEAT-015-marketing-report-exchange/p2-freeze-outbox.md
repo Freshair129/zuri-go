@@ -2,7 +2,7 @@
 title: P2 local preparation, immutable report and queued outbox
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -118,7 +118,7 @@ These signatures are approved P2 extensions locked in [SDD-015](design.md#interf
 
 ## Isolated QA and acceptance plan
 
-Proposed scope is new **test-owned** PostgreSQL QA only, with synthetic Business/campaign/association records. Before running, inspect the resolved target, major version, grants, current schema and existing data; refuse any real Business or production Neon target. Applying a new schema to the ordinary local database or production is a separate operator approval. No Docker installation, database-volume removal, restore, credential provisioning or user-data import is included. This checkout currently has neither DB config nor Docker in PATH, so runtime acceptance is NOT_RUN and no environment readiness is assumed.
+Native test scope is new **test-owned** PostgreSQL QA only, with synthetic Business/campaign/association records. Before running, inspect the resolved target, major version, grants, current schema and existing data; refuse any real Business or production Neon target. Applying migration 011 to the ordinary local database and production has separate owner authorization; target/schema/backup preflight remains required. No Docker installation, database-volume removal, restore, credential provisioning or user-data import is included. Isolated native PostgreSQL 18.6 acceptance and independent migration/rerun now pass. This checkout has no application DB config or Docker in PATH, so real application HTTP and Local/Production migration remain NOT_RUN.
 
 | Required case | Acceptance / FR |
 |---|---|
@@ -132,7 +132,7 @@ Proposed scope is new **test-owned** PostgreSQL QA only, with synthetic Business
 | Migration rerun and audience | Actual restricted-role permissions stay revoked after a second run; Guest/Member raw SELECT sees nothing; private ledger never joins existing Guest workspace/state |
 | No transport or authority promotion | Queue is only QUEUED; zero network calls, send attempts or parent writes; unknown metrics/legacy approval trust remain unchanged — AC-015-002-03 |
 
-Actual test bindings are TC-015-005 (pure/parser/router), TC-015-006 (disposable WASM SQL) and TC-015-007 (native PostgreSQL concurrency/locks). All passed, including native permission-visibility/interruption regression. TC-015-003 also passed its original source snapshot case in the synthetic native cluster. See [verification](verification.md) for exact commands and limits. Independent L2 initially returned REWORK for the migrator grant window; corrected-candidate review is pending before merge. Synthetic SQL does not prove real binding, provider completeness or production acceptance.
+Actual test bindings are TC-015-005 (pure/parser/router), TC-015-006 (disposable WASM SQL) and TC-015-007 (native PostgreSQL concurrency/locks). All passed, including native permission-visibility/interruption regression. TC-015-003 also passed its original source snapshot case in the synthetic native cluster. See [verification](verification.md) for exact commands and limits. Independent L2 initially returned REWORK for the migrator grant window; corrected code candidate `99ed23a` passed independent L2 review with a fresh native six-case rerun and actual migration/rerun. Synthetic SQL does not prove real binding, provider completeness or production acceptance.
 
 Implementation choices within the approved scope: SQL finalizers accept only the typed operation request, not source/preview/envelope JSON; construct the safe P1 projection themselves; the adapter additionally compares newly prepared SQL and P1 JS projections and rolls back on mismatch. Compact SQL serialization supports ASCII object field names (as in the campaign model), Unicode string values, ordered arrays and JavaScript numeric notation. Unsupported source keys fail closed; no implicit normalization. Preparations use millisecond server timestamps. Business `FOR NO KEY UPDATE` precedes campaign/state/association/preparation locks; this remains compatible with a campaign writer's audit FK `KEY SHARE`. Private marketing audit SELECT also requires the operator. Source changes that make reprojection invalid become SOURCE_STALE at freeze. Read/replay requires the original association version as well as active status. No outbound bytes are generated from current source at read/replay.
 
@@ -142,4 +142,6 @@ Approval recorded: owner approved P2 code/tests/additive migration file, then na
 
 P2 exit: actual source-stale/expiry/concurrency/rollback/RLS/grant/hash tests pass in explicitly identified isolated QA; no source/private-data regression; docs and source traceability agree. Until then the feature stays building. Afterwards P3 can propose a separately approved sender and parent durable receipt contract.
 
-Version diff 0.1.0 → 0.2.0: draft → owner-approved; CMP-003/API-025 and migration file 011 now implement preparation, immutable freeze and QUEUED outbox. SQL role/hash/privacy/rollback checks execute in disposable in-memory QA; native concurrency/waiting expiry remains NOT_RUN. No application version, applied local/production schema or integration/deployment change.
+Historical version diff 0.1.0 → 0.2.0: draft → owner-approved; CMP-003/API-025 and migration file 011 now implement preparation, immutable freeze and QUEUED outbox. SQL role/hash/privacy/rollback checks execute in disposable in-memory QA; native concurrency/waiting expiry remains NOT_RUN. No application version, applied local/production schema or integration/deployment change.
+
+Version diff 0.3.0 → 0.4.0: independent L2 correction review and independent native acceptance are PASS; real application migration/HTTP remain NOT_RUN pending private target configuration and preflight.

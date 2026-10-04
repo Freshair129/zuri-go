@@ -18,7 +18,7 @@ Request/window, response fields and incomplete-source semantics are authored onc
 Relations: relates_to: FEAT-015, FR-015-001, FR-015-003, SDD-015, API-001, CMP-003
 Owner: DOM-CAM
 
-**Status:** approved P2, 2026-10-05; native PostgreSQL concurrency/lock/ACL checks PASS. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-ledger.mjs`, `apps/api/api.mjs` and unapplied application migration file 011. Fresh independent review of the migrator correction is pending. Denies hosted, Guest, Member and crossed configured Business before DB; SQL also checks resolved operator/Business and unchanged active association.
+**Status:** approved P2, 2026-10-05; native PostgreSQL concurrency/lock/ACL checks PASS. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-ledger.mjs`, `apps/api/api.mjs` and unapplied application migration file 011. Independent L2 review of the migrator correction passed at `99ed23a`, including fresh native migration/rerun acceptance. Denies hosted, Guest, Member and crossed configured Business before DB; SQL also checks resolved operator/Business and unchanged active association.
 
 | Operation | Strict request | Success |
 |---|---|---|
