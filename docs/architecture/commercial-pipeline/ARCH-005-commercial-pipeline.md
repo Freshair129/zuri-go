@@ -3,7 +3,7 @@ id: ARCH-005
 title: Zuri-Go and Zuri-AI — Commercial pipeline and service boundary
 status: draft
 superseded_by: null
-version: 0.2.0
+version: 0.2.1
 date: 2026-10-04
 complexity: C-3
 risk: LOW
@@ -46,6 +46,8 @@ relations:
 Whole-platform flow: `Marketing → LINE/CRM/AI → human contact → Commerce/fulfillment → marketing outcome review`. The intended Zuri-Go exchange begins with marketing-owned summaries/decisions and reference IDs; exact fields and ownership require reconciliation below.
 
 ## Proposed exchange contract — draft, wiring unverified
+
+Detailed first-slice proposal: [FEAT-015](../../features/FEAT-015-marketing-report-exchange/feature.md), [seven-flow gap analysis](../../features/FEAT-015-marketing-report-exchange/gap-analysis.md), [SDD-015](../../features/FEAT-015-marketing-report-exchange/design.md) and [reported-evidence wire contract](../../features/FEAT-015-marketing-report-exchange/contract.md). Gap/contract preparation was approved on 2026-10-04 and the P1 local snapshot/preview on 2026-10-05; P1 is building with unit evidence and real database acceptance NOT_RUN. Parent schemas, authorization, delivery and receiver remain draft. That feature owns the specific report payload/delivery proposal; this checklist retains cross-stage concerns. No report becomes a native parent Plan review/decision or a provider-verified measurement.
 
 `Zuri-Go → scoped integration adapter → Zuri-AI Marketing contract → durable receipt`
 
@@ -224,3 +226,5 @@ Current structural checks and original screenshot provenance are in [the move re
 | No declared integration boundary | Draft entity-authority, scope/mapping, receipt/retry and evidence checklist; receiver details remain TBD |
 | Workflow drafts looked like three local domains | Chapters retain flow IDs and clearly separate parent context from Zuri-Go implementation |
 | History used as editing location | History retains screenshot and verification only |
+
+2026-10-04 v0.2.0 → v0.2.1: linked the Domain 01 gap analysis and proposed FEAT-015 exchange contract. Shared process rules and diagram drawing content are unchanged; runtime delivery remains unverified.
