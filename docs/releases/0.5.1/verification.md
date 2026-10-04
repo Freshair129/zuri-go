@@ -71,3 +71,33 @@ Deployed at the owner's request (“deploy”) from commit `ae72a77`, still appl
 ## Owner's hosted checks (2026-10-01)
 
 After the 0.5.1 follow-up deployment the owner signed in on production as a Member and as the Business admin and reported that the checks passed (“ตรวจแล้วผ่าน”). The agent did not observe these checks and holds no record of their individual results; the checks named under “Not run” above are therefore owner-reported as passed, not agent-verified.
+
+## Follow-up production rollout: Visual Studio and schema 10 (2026-10-04)
+
+This owner-authorized production rollout deployed the already-merged FEAT-014 code on the existing application package version 0.5.1. `package.json` remains 0.5.1; no additional source edits or package-version bump were made for the rollout.
+
+| Artifact | Before | After |
+|---|---|---|
+| Application package | 0.5.1 | 0.5.1 (unchanged) |
+| Production PostgreSQL schema | 7 | 10 (migrations 008–010) |
+| Public deployment | `dpl_59cfbogB4DijtVovhQkVW1SyTFtC` | `dpl_8NfE1kXSQQL3tMNJ3Jn8LMbezMXi` |
+| Served `index.html` SHA-256 | `49f39604…f08d` | `42adec47cef9f425ae11ed170edd7490a2c7174354410ffd26d423707385be51` |
+
+### Build, tests, and backup
+
+- The deployment was built from worktree `c833915`. The packaged application sources under `apps/web/`, `apps/api/` and `scripts/` matched `origin/main` at `3a45813`; the branch differed only in three FEAT-013 documentation files, which were not packaged. `npm run build` passed and produced 61 deploy files; `.local/` was excluded.
+- `npm test` passed against the isolated local QA database at schema 10. Documentation validation reported 0 errors and 166 existing warnings; the generated-view check found 11 views and 0 drift.
+- Before migration, production was schema 7 on PostgreSQL 18; there was one Business, 0 meetings and 0 Workboard tasks to backfill. The full SQL backup used `pg_dump` 18 with TLS 1.3, `verify-full`, and `--no-owner --no-privileges`. It is kept privately under `.local/backups/`: 696,141 bytes, SHA-256 `86b3bde5d0c967f883428779295093dc558f7d36b31479fdf831bb948b2d300d`, with the completion trailer and all 36 expected COPY sections. A restore drill of this backup was not run.
+
+### Migration and deployment
+
+- `npm run db:migrate -- --cloud` applied migrations 008–010. The production ledger now contains versions 1–10. Counts for every table that existed before migration match the private pre-migration manifest; all 12 new Visual tables are empty. The post-migration Workboard dry run found 0 items to write.
+- Forced RLS was verified on the Visual review/projection tables. The runtime role cannot update the public-output table or its payload, cannot insert reviews/decisions/public outputs, and can update only the `active` column used for controlled retraction.
+- Staged deployment `dpl_8NfE1kXSQQL3tMNJ3Jn8LMbezMXi` reached `READY` at `https://zuri-metrics-9bin0c7rm-pornpons-projects.vercel.app`. Its served HTML was 8,266,005 bytes and matched the build SHA-256 above exactly. It was then promoted to `https://zuri-metrics-map.vercel.app/`; Vercel inspection confirmed that the public alias resolves to the same deployment ID.
+
+### Hosted checks and limits
+
+- On both the staged URL and the public URL, Guest `/session` reported unauthenticated; `/workspace`, `/state` and `/overview` returned 200; Guest `/tasks` returned 0 tasks. Visual team/projects reads returned 200 with 8 registry agents, 0 projects and 0 public outputs. A cross-origin Visual project POST was rejected with 403 by the origin guard and made no write.
+- The public Visual Studio page loaded in Guest mode and showed no approved public output; Variants remained disabled. This was a read-only browser check.
+- The release checks did not sign in with a real Member or Business-admin code, create a production project, or test interactive saves/mobile layout. The Vercel CLI write probe was blocked by the cross-origin guard, so a hosted same-origin Guest 401 was not separately observed; the full local test suite passed the Guest mutation gates.
+- No restore drill was run for this new backup. There is no down-migration; use the rollback guidance in [RB-001](../../operations/RB-001-runbook.md) and assess schema compatibility before any code rollback or backup restore.
