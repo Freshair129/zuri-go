@@ -1,13 +1,13 @@
 # Current architecture index
 
-Current source version: 0.4.2 (layout introduced in 0.4.1). Deployment evidence: ../releases/0.4.2/verification.md. Working source: D:/workspace/zuri-go.
+Current application version: 0.5.1. Deployment and production schema evidence: [release 0.5.1](../releases/0.5.1/verification.md) (2026-10-04). PostgreSQL schema is 10 in production and 8 in the local Docker database; these are separate states and do not synchronize automatically.
 
 อ่านตามลำดับ authority: user approval → [Single-code login](../features/FEAT-007-single-code-login/spec.md) → [Member identity](../features/FEAT-006-member-identity/spec.md) → [Guest access](../features/FEAT-005-guest-access/spec.md) → amendments ใน [Cloud deployment](ARCH-003-hosted-deployment.md) / [data model](ARCH-002-postgresql-data-model.md) → [architecture baseline](ARCH-001-baseline-architecture.md)
 
 เอกสาร baseline เก็บประวัติการออกแบบตั้งแต่ local-only และ shared password ข้อกำหนดเหล่านั้นถูกแทนด้วย approved Guest/Member amendments แล้ว ห้ามใช้ baseline เก่าปิด Guest หรือเปิด shared password กลับมา
 
 - UI และ API ใช้ origin เดียว; local serve build/site, production deploy build/vercel
-- Database: PostgreSQL schema 5; local Docker กับ production Neon เป็นคนละ state ไม่ sync อัตโนมัติ
+- Database: PostgreSQL schema 10 in production and schema 8 in local Docker; Neon and local Docker are separate states and do not synchronize automatically.
 - Hosted reads: public Guest ตาม Business เดิม; writes: same-origin + signed Member session + active/version checks ใน transaction
 - Local: trusted operator ผูก loopback; ไม่อ้างว่าผู้ทำรายการเป็น Member โดยไม่มี session
 - PID เป็น public stable identifier; UUID เป็น PK/FK; credentials และ handovers แยกจาก profiles และ static package
@@ -29,4 +29,4 @@ The Business Overview, Guest access, Member identity, single-code login and logo
 
 ## Visual Marketing architecture
 
-[ARCH-004](ARCH-004-visual-marketing.md), [ADR-006](decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries), SDD-014 and the [data amendment](visual-marketing/data-model.md) are approved for FEAT-014. The first PR implements the manual C workflow and minimum D registry/dispatcher on local SRV-002. See the [verification record](../features/FEAT-014-visual-marketing-team/verification.md) for operational phase evidence and closure review; formal higher-tier review remains a separate before-merge gate. This does not claim hosted execution or production deployment.
+[ARCH-004](ARCH-004-visual-marketing.md), [ADR-006](decisions.md#adr-006--visual-marketing-is-a-node-domain-with-explicit-provider-and-executor-boundaries), SDD-014 and the [data amendment](visual-marketing/data-model.md) are approved for FEAT-014. PR #1 merged the C/manual workflow and minimum-D registry/dispatcher after the bounded R3 review passed. The production migration and deployment are recorded in [release 0.5.1](../releases/0.5.1/verification.md). Execution remains local/manual; hosted execution, real-provider qualification, Variants and performance learning are deferred. Production Member/Admin interactive acceptance remains unverified.
