@@ -2,11 +2,34 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.1.0
+version: 1.2.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## P3 parent authored records — 2026-10-05
+
+The owner approved additive parent record tooling after approving the receiver contract. Parent tooling commit `90b9df7dfb65550e9c18259fc817291126546887` is on isolated branch `codex/marketing-report-p3`; active `O:/zuri.ai` and its runtime remain unchanged. Independent source review PASS pins tree `ec3f59c4f5bfd44bcd5591b19f4b6bc30f15fce1`; manifest review PASS pins SHA-256 `7a5e6c9dbef8532389364214810d7c8b6f27484a6ec64ff8e122c972b294f10a` before actual apply.
+
+The sanctioned writer issued `ZAI:FR-278`, `ZAI:FR-279`, `ZAI:FR-280` and `ZAI:SDD-111`, each with planned delivery and no feature-membership change. It generated canonical index/exports and invoked the existing add-only ID writer; none was hand-edited. Parent SoT/evidence is `docs/migrations/document-reintegration/AUTHORED-VERIFICATION.md`, with immutable manifest/approval/issuance receipt under `record-migrations/`. These are qualified external references, not aliases or new local IDs.
+
+| Check | Result / limit |
+|---|---|
+| Plan / issuance / immediate identical reapply | PASS — PLANNED, APPLIED, ALREADY_APPLIED; no actual app/data migration |
+| Preservation | PASS — all 539 original canonical entries/bytes and 747 original pin metadata preserved; 543 records/751 pins now. Only three new standalone readiness entries were subsequently added to the FEATURES source template and generated export; old rows/membership/metadata remain unchanged |
+| Parent migration tests | PASS — 73/73, no skipped tests, including composed corpus |
+| Snapshot/verifier qualification | PASS — 32/32 serialized on reviewed tooling, unchanged snapshot/proof versions and 20-second bound. Earlier concurrent run retained 31 PASS / 1 timing failure; no confirmed resource-pressure RCA is claimed |
+| Post-presentation reapply refusal | PASS — expected output-drift denial for changed FEATURES; original issuance receipt stays historical and unchanged |
+| Composed planned/retired projection tests | PASS — 9/9; new parent subjects stay planned/not ready with zero delivery credit; no receiver test coverage is inferred |
+| Parent composed governance/output review | PASS — final `npm run govern` exit 0 (543 records, 751 pins, 96 views, fresh graph/strict preflight with accepted baseline debt). Independent composed review PASS pins tree `f579325fef7e7c619b2e068b8e15d06fd9f5c0c0` and independently verifies original bytes/pins, generated planned projection and historical receipt disclosure |
+| Receiver/sender/physical design | OPEN / NOT_RUN — reviewed physical append-only design and native test bindings remain required before application coding; P3-B/C/D acceptance remains NOT_RUN |
+
+No Go code, new applied schema, live binding/credential, real report transfer, deployment or merge occurred in this slice. Go package remains 0.5.1 and Local/Production schema remains 11 from the separately authorized operations below. Draft parent [PR #630](https://github.com/Freshair129/zuri.ai/pull/630) and Go [PR #10](https://github.com/Freshair129/zuri-go/pull/10) remain the publication surfaces.
+
+Final parent remote main advanced to `3506129f` through PM workflow documentation/guard PR #631. Read-only recheck found no collision with these four IDs and no registry/schema/Marketing/Identity changes in that range. Parent branch qualification above is not an integrated-main result; integration/retesting before merge remains NOT_RUN.
+
+Version diff 1.1.0 → 1.2.0: records separate tooling approval, governed parent issuance, preservation, executed tests and remaining physical/runtime gates. P3 chapter 0.2.0 → 0.3.0 reconciles those parent record references; no local requirement IDs or application behavior change.
 
 ## P3 approval and parent contract preparation — 2026-10-05
 

@@ -2,7 +2,7 @@
 title: P3 delivery and parent receiver — review proposal
 status: approved
 superseded_by: null
-version: 0.2.0
+version: 0.3.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,9 +11,9 @@ risk: HIGH
 
 # P3 — ส่งรายงาน Marketing และรับหลักฐานตอบกลับ
 
-**APPROVED / P3-A IN PREPARATION.** เจ้าของอนุมัติ P3 v0.1.0 เมื่อ 2026-10-05 ให้ดำเนินการตามลำดับและ gate ที่ระบุ บทนี้เป็นส่วนของ [SDD-015](design.md) ภายใต้ FEAT-015 ไม่ใช่ service หรือ SoT ใหม่ Approval ของภาพรวมนี้ไม่ใช่ผล QA หรือการอนุมัติ parent record migration ที่ยังไม่จัดทำ ฝั่ง Zuri-AI ต้องมี record migration/Identity/Marketing contract ที่อนุมัติใน repository ของตนเองก่อนเปลี่ยนพฤติกรรมหรือ schema
+**APPROVED / P3-A PARTIAL.** เจ้าของอนุมัติ P3 v0.1.0 เมื่อ 2026-10-05 ให้ดำเนินการตามลำดับและ gate ที่ระบุ บทนี้เป็นส่วนของ [SDD-015](design.md) ภายใต้ FEAT-015 ไม่ใช่ service หรือ SoT ใหม่ ฝั่ง Zuri-AI มี approved receiver contract และออก planned canonical records แล้ว; physical append-only design และ native test bindings ยังต้อง review ก่อน application coding Approval และ issued records ไม่ใช่ผล QA หรือ runtime acceptance
 
-รายละเอียด parent P3-A จัดทำใน repository Zuri-AI ที่ `docs/change-requests/marketing/ZURI-GO-REPORT-RECEIVER.md` บน isolated branch `codex/marketing-report-p3` โดยรักษา checkout/runtime เดิมไว้ Parent intake ยังเป็น draft; เจ้าของเลือก retention ขั้นต่ำ 90 วันแล้ว ไม่เปลี่ยน issued IDs/generated registry ระหว่างเตรียมเอกสาร
+รายละเอียด parent P3-A อยู่ใน repository Zuri-AI ที่ `docs/change-requests/marketing/ZURI-GO-REPORT-RECEIVER.md` บน isolated branch `codex/marketing-report-p3` โดยรักษา checkout/runtime เดิมไว้ เจ้าของอนุมัติ receiver และ tooling แยกกัน; independent review ผ่านก่อน writer ออก `ZAI:FR-278`, `ZAI:FR-279`, `ZAI:FR-280` และ `ZAI:SDD-111` ทั้งหมดเป็น planned ไม่มี FEAT membership ใหม่ หลักฐานอยู่ที่ `docs/migrations/document-reintegration/AUTHORED-VERIFICATION.md` ใน parent repository และ [verification](verification.md#p3-parent-authored-records--2026-10-05) ที่นี่ ไม่ใช่การ alias local IDs หรืออ้างว่ามี receiver แล้ว
 
 ## จุดเริ่มต้นที่ตรวจแล้ว
 
@@ -96,7 +96,7 @@ Parent ต้องมี unique authenticated binding + reportId ที่ pers
 
 ข้อเสนอ slice แรกส่งเฉพาะ frozen revision 1 ที่ P2 สร้างได้ Parent ยอมรับ revision นี้และปฏิเสธ unsupported correction แทนการเขียนทับ การสร้าง correction revision/การขยับ latest pointer ยังไม่ implement; **AC-015-005-04 ยัง OPEN** และ feature ทั้งหมดจะไม่ถูกประกาศ complete จาก P3 slice แรก
 
-เจ้าของเลือก retention ขั้นต่ำ **90 วัน** สำหรับ parent evidence/receipt เมื่อ 2026-10-05 (policy version 1 เริ่มนับจาก acceptedAt); audit ใช้นโยบาย append-only เดิม ไม่มี automatic purge ใน slice นี้ ครบ 90 วันไม่ได้ลบอัตโนมัติ และ revocation ไม่แก้ bytes ของรายงาน Parent private-reader policy/record migration ยังต้องอนุมัติก่อน schema coding ไม่อ้างว่า export รายงานทำให้ข้อมูลเป็น public
+เจ้าของเลือก retention ขั้นต่ำ **90 วัน** สำหรับ parent evidence/receipt เมื่อ 2026-10-05 (policy version 1 เริ่มนับจาก acceptedAt); audit ใช้นโยบาย append-only เดิม ไม่มี automatic purge ใน slice นี้ ครบ 90 วันไม่ได้ลบอัตโนมัติ และ revocation ไม่แก้ bytes ของรายงาน Parent private-reader policy อนุมัติและออก planned records แล้ว; physical design ยังเป็น gate ก่อน schema coding ไม่อ้างว่า export รายงานทำให้ข้อมูลเป็น public
 
 ## Acceptance และ exit
 
@@ -116,6 +116,8 @@ Parent ต้องมี unique authenticated binding + reportId ที่ pers
 Exit ของ slice: parent records approved, P2 QA HTTP และ P3 required cases ผ่าน, docs/traceability/current source ตรงกัน และ review ผ่าน ไม่มี real-target rollout จากผล QA นี้
 
 ## Version diff
+
+0.2.0 → 0.3.0: บันทึก parent tooling approval และ reviewed canonical issuance; ชี้ qualified parent IDs โดยไม่ alias local IDs คง physical design/QA/application gates และไม่เปลี่ยน schema/runtime
 
 0.1.0 → 0.2.0: บันทึก owner approval ของ P3 และ retention ขั้นต่ำ 90 วัน; เริ่ม P3-A parent-owned intake/record migration ใน worktree แยก โดย parent migration approval ยังเป็น gate ก่อน coding ไม่มี code/schema/runtime/credential/Production เปลี่ยนแปลง
 
