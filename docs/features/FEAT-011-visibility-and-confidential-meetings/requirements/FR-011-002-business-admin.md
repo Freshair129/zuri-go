@@ -14,7 +14,7 @@ relations:
 
 The system SHALL mark Business admins on their Member record, set only through the operator path. Business-admin status SHALL NOT add or remove access to Business records; every active Member has equal record rights under [ADR-008](../../../architecture/decisions.md).
 
-> **Supersession:** ADR-008 (approved 2026-10-05) supersedes the former statement that admin status is excluded from an item's audience. The privileged identity grant remains operator-managed; the new access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
+> **Supersession:** ADR-008 (approved 2026-10-05) supersedes the former statement that admin status is excluded from an item's audience. The privileged identity grant remains operator-managed; the new access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Acceptance criteria
 - AC-011-002-01 — Given the initial rollout, when the operator runs the admin step, then only the owner’s own Member is admin (PLAN-002 Q3).

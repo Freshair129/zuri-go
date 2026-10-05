@@ -287,10 +287,9 @@ test('a stub cannot be overwritten, and only custody can mark a revision withhel
  await assert.rejects(write(m0,c=>saveLegacy(c,b,{version:open.version,meetingTaskManager:o})),e=>e.status===422,'a revision of a meeting that is not local_only cannot claim to be withheld');
 });
 test('an empty transcript upload cannot change custody; transcript revisions may upload without batches',async()=>{
- const empty=await savedByMember('FR010-empty-upload',[m0,m1]),emptyMeeting=await meetingRow(empty.mid);
- await owner('DELETE FROM zuri_go.meeting_draft_batches WHERE business_id=$1 AND meeting_id=$2',[b,emptyMeeting.id]);
- await owner("DELETE FROM zuri_go.meeting_revisions WHERE business_id=$1 AND meeting_id=$2 AND kind='review'",[b,emptyMeeting.id]);
- await owner("DELETE FROM zuri_go.meeting_revisions WHERE business_id=$1 AND meeting_id=$2 AND kind='source'",[b,emptyMeeting.id]);
+ const local=await as('operator',c=>readLegacy(c,b)),empty=await addMeeting(local.meetingTaskManager,'FR010-empty-upload',restricted(m0,m1));
+ await write('operator',c=>saveLegacy(c,b,{version:local.version,meetingTaskManager:local.meetingTaskManager}));
+ const emptyMeeting=await meetingRow(empty.mid);
  const input={reason:'QA empty transcript upload',sources:[],reviews:[],batches:[]};
  await assert.rejects(write(m0,c=>uploadTranscript(c,b,empty.mid,input)),e=>e.status===422,'the service rejects a custody transition with no withheld transcript revisions');
  await assert.rejects(write(m0,c=>c.query('SELECT zuri_go.complete_meeting_transcript_upload($1::uuid,$2::uuid,$3::text,$4::jsonb,$5::text[])',[b,emptyMeeting.id,input.reason,JSON.stringify([]),[]])),{code:'22023'},'the database routine rejects an empty revision set even when there are no stubs');
@@ -317,6 +316,21 @@ test('only a meeting participant may explicitly upload a custody-held transcript
  assert.equal((await meetingRow(made.mid)).transcript_custody,'local_only','invalid direct routine calls leave custody unchanged');
  assert.deepEqual(await revisionRows(made.mid),beforeNonparticipant,'nonparticipant attempts leave stored transcript stubs unchanged');
  assert.equal((await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='meetings' AND event_type='transcript_upload' AND entity_id=$2",[b,heldMeeting.id])).rows[0].n,0,'invalid direct routine calls append no audit event');
+ const edit=await as(m2,c=>readLegacy(c,b));
+ edit.meetingTaskManager.meetings.find(m=>m.id===made.mid).participantIds.push(m2.legacy);
+ await write(m2,c=>saveLegacy(c,b,{version:edit.version,meetingTaskManager:edit.meetingTaskManager}));
+ assert.equal((await as(m2,c=>c.query('SELECT 1 FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2 AND member_id=$3',[b,heldMeeting.id,m2.id]))).rowCount,1,'ordinary workspace CRUD adds the caller to the roster');
+ const eligibility=(await owner('SELECT eligible_member_ids FROM zuri_go.meeting_transcript_upload_eligibility WHERE business_id=$1 AND meeting_id=$2',[b,heldMeeting.id])).rows[0];
+ assert.deepEqual(eligibility.eligible_member_ids.sort(),[m0.id,m1.id].sort(),'the custody-time eligibility snapshot ignores a later roster edit');
+ await assert.rejects(as(m2,c=>c.query('UPDATE meeting_transcript_upload_eligibility SET eligible_member_ids=$3 WHERE business_id=$1 AND meeting_id=$2',[b,heldMeeting.id,[m0.id,m1.id,m2.id]])),{code:'42501'},'runtime Members cannot edit upload eligibility');
+ const beforeSelfAddUpload={meeting:await meetingRow(made.mid),revisions:await revisionRows(made.mid),revision:(await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,events:(await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='meetings' AND event_type='transcript_upload' AND entity_id=$2",[b,heldMeeting.id])).rows[0].n};
+ await assert.rejects(write(m2,c=>uploadTranscript(c,b,made.mid,body())),e=>e.status===403,'roster self-add does not grant upload consent through the service');
+ await assert.rejects(write(m2,c=>c.query('SELECT zuri_go.complete_meeting_transcript_upload($1::uuid,$2::uuid,$3::text,$4::jsonb,$5::text[])',[b,heldMeeting.id,'QA upload reason',JSON.stringify(revisionUploads),batchIds])),{code:'42501'},'roster self-add does not grant upload consent through SQL');
+ await assert.rejects(as(m2,c=>c.query("UPDATE meetings SET transcript_custody='cloud' WHERE business_id=$1 AND id=$2",[b,heldMeeting.id])),{code:'42501'},'direct runtime custody changes cannot bypass upload');
+ assert.deepEqual(await meetingRow(made.mid),beforeSelfAddUpload.meeting,'denied upload leaves custody and meeting row unchanged');
+ assert.deepEqual(await revisionRows(made.mid),beforeSelfAddUpload.revisions,'denied upload leaves revisions unchanged');
+ assert.equal((await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,beforeSelfAddUpload.revision,'denied upload leaves Business revision unchanged');
+ assert.equal((await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='meetings' AND event_type='transcript_upload' AND entity_id=$2",[b,heldMeeting.id])).rows[0].n,beforeSelfAddUpload.events,'denied upload appends no upload audit event');
  await assert.rejects(write('guest',c=>uploadTranscript(c,b,made.mid,body())),e=>e.status===401);
  await assert.rejects(write('operator',c=>uploadTranscript(c,b,made.mid,body())),e=>e.status===401,'operator identity is not an authenticated Member session');
  await assert.rejects(write(m0,c=>uploadTranscript(c,b,made.mid,body({reason:'  '}))),e=>e.status===422);

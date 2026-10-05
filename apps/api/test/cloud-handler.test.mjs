@@ -67,6 +67,29 @@ test('the transcript upload route needs a signed-in Member and reaches the meeti
  assert.equal((await call(route,{method:'POST',cookie,body:{reason:'x'}})).status,404,'an unknown or hidden meeting answers 404');
  assert.equal((await call('businesses/'+business+'/meetings/'+randomUUID()+'/transcript',{method:'PATCH',cookie,body:{}})).status,404,'only POST uploads');
 });
+
+test('a hosted roster self-add cannot authorize transcript upload (FR-011-010)',async()=>{
+ const base='businesses/'+business,participant=(await call('login',{method:'POST',body:{password:'isolated-qa-team-password1'}})).headers['Set-Cookie'],outsider=(await call('login',{method:'POST',body:{password:'isolated-qa-team-password2'}})).headers['Set-Cookie'];
+ const workspace=(await call(base+'/workspace',{cookie:participant})).body,d=workspace.meetingTaskManager;
+ const src={sourceInstanceId:'qa-consent',projectId:'p',recordingId:randomUUID(),contentHash:'h-'+randomUUID(),sourceMode:'native',segments:[{segmentId:'s1',startMs:0,endMs:500,text:'QA transcript consent'}]};
+ const mid=addSource(d,src,{title:'QA custody consent'}),meeting=d.meetings.find(m=>m.id===mid),review=randomUUID();
+ saveReview(d,{id:review,sourceId:meeting.sourceId,segments:src.segments,reviewHash:await reviewHash(review,src.segments)});
+ Object.assign(meeting,{visibility:'restricted',participantIds:[members[1].id],organizerId:members[1].id});
+ const full={reason:'QA explicit participant upload',sources:d.sources.filter(x=>x.meetingId===mid),reviews:d.reviews.filter(x=>x.meetingId===mid),batches:[]};
+ const saved=await call(base+'/workspace',{method:'PUT',cookie:participant,body:{version:workspace.version,meetingTaskManager:d}});assert.equal(saved.status,200,JSON.stringify(saved.body));
+ const edited=(await call(base+'/workspace',{cookie:outsider})).body;edited.meetingTaskManager.meetings.find(m=>m.id===mid).participantIds.push(members[2].id);
+ const rosterSave=await call(base+'/workspace',{method:'PUT',cookie:outsider,body:{version:edited.version,meetingTaskManager:edited.meetingTaskManager}});assert.equal(rosterSave.status,200,JSON.stringify(rosterSave.body));
+ const row=(await asOwner("SELECT id,transcript_custody FROM zuri_go.meetings WHERE business_id=$1 AND legacy_metadata->>'id'=$2",[business,mid])).rows[0];
+ const before={meeting:row,revision:(await asOwner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[business])).rows[0].domain_revision,revisions:(await asOwner('SELECT id,segments,legacy_metadata FROM zuri_go.meeting_revisions WHERE business_id=$1 AND meeting_id=$2 ORDER BY id',[business,row.id])).rows,events:(await asOwner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[business,row.id])).rows[0].n};
+ assert.equal(row.transcript_custody,'local_only');
+ assert.equal((await call(base+'/meetings/'+mid+'/transcript',{method:'POST',cookie:outsider,body:full})).status,403,'the roster edit does not grant upload consent');
+ assert.deepEqual((await asOwner('SELECT id,transcript_custody FROM zuri_go.meetings WHERE business_id=$1 AND id=$2',[business,row.id])).rows[0],before.meeting);
+ assert.deepEqual((await asOwner('SELECT id,segments,legacy_metadata FROM zuri_go.meeting_revisions WHERE business_id=$1 AND meeting_id=$2 ORDER BY id',[business,row.id])).rows,before.revisions);
+ assert.equal((await asOwner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[business])).rows[0].domain_revision,before.revision);
+ assert.equal((await asOwner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[business,row.id])).rows[0].n,before.events);
+ assert.equal((await call(base+'/meetings/'+mid+'/transcript',{method:'POST',cookie:participant,body:full})).status,200,'the original participant keeps the explicit upload path');
+ assert.equal(JSON.stringify((await call(base+'/workspace')).body).includes('QA transcript consent'),true,'Guest reads the uploaded transcript under ADR-008');
+});
 test('the meeting commit on the hosted API: Guest 401, a Member commits and replays, PUT refuses a receipt, the package carries the module (WI-09)',async()=>{
  const login=await call('login',{method:'POST',body:{password:'isolated-qa-team-password1'}}),cookie=login.headers['Set-Cookie'],base='businesses/'+business,route=base+'/meeting-commits';
  assert.equal((await call(route,{method:'POST',body:{meetingId:'x',batchId:'y',choices:[]}})).status,401,'a Guest cannot commit');

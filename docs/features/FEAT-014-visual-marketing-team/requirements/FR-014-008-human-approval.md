@@ -13,7 +13,7 @@ relations:
 
 The system SHALL allow any active authenticated Member in the Business to make an internal decision over each final artifact hash after current QA and revision checks, and SHALL preserve append-only audit. Guest and agent identities cannot approve. This internal decision does not authorize provider egress, spend, actual external publication or deployment; those remain separately gated.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) replaces the Project-owner-only rule with equal internal decision rights for active Members. This changed authorization is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; implementation evidence below records the earlier rule.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) replaces the Project-owner-only rule with equal internal decision rights for active Members. This changed authorization is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment; implementation evidence below records the earlier rule.
 
 ## Acceptance criteria
 

@@ -14,7 +14,7 @@ relations:
 
 The system SHALL retain RACI and explicit-viewer values as assignment/provenance metadata and SHALL let any active Member manage those mutable values. They do not grant or restrict Business-record access.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the access effects in the criteria below; this new policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the access effects in the criteria below; this new policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Acceptance criteria
 - AC-011-005-01 — Given a task, when a Member is added or removed as I, then the assignment metadata changes; all Guests and active Members retain the same Business-scoped read access.

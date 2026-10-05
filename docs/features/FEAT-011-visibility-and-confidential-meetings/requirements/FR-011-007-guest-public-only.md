@@ -14,7 +14,7 @@ relations:
 
 The system SHALL return every non-secret record in the configured Business to a Guest on every read path, regardless of audience, team, owner, participant or named-viewer metadata. Guest mutations and internal approvals remain denied; credential/session/provider/operator secrets remain hidden.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the public-only read limit and restricted Member-field projection below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the implementation evidence records earlier behavior.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the public-only read limit and restricted Member-field projection below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment; the implementation evidence records earlier behavior.
 
 ## Acceptance criteria
 - AC-011-007-01 — Given any non-secret records in the configured Business, when a Guest calls `/workspace`, `/state` and `/overview`, then all record families and linked content are returned within that Business.

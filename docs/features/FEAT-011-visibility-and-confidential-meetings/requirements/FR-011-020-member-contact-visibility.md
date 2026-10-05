@@ -15,7 +15,7 @@ relations:
 
 The system SHALL retain any Member contact-visibility field as metadata, but SHALL NOT use it to filter non-secret profile access. Guests read all non-secret Member profile and contact fields; every active Member has equal CRUD and internal approval rights for Member records. Credentials, sessions and operator/provider secrets remain excluded.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes contact-level filtering and the limited Guest profile projection below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; earlier evidence is historical.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes contact-level filtering and the limited Guest profile projection below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment; earlier evidence is historical.
 
 ## Acceptance criteria
 - AC-011-020-01 — Given the Members that exist when this is released, then every one is `business` and every signed-in Member reads every field as before.

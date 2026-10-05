@@ -31,6 +31,7 @@ try{
  await client.query('GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA zuri_go TO zuri_go_app');
  await client.query('GRANT DELETE ON zuri_go.campaign_channels,zuri_go.goal_series,zuri_go.task_roles,zuri_go.weekly_plan_tasks,zuri_go.team_members,zuri_go.task_viewers,zuri_go.meeting_participants,zuri_go.project_viewers TO zuri_go_app');
  await client.query('REVOKE UPDATE ON zuri_go.metric_observations,zuri_go.meeting_revisions FROM zuri_go_app');
+ await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.meeting_transcript_upload_eligibility FROM zuri_go_app');
  await client.query('REVOKE INSERT,UPDATE ON zuri_go.metric_definitions FROM zuri_go_app');
  await client.query('REVOKE UPDATE ON zuri_go.change_events,zuri_go.ai_briefs,zuri_go.meeting_task_links FROM zuri_go_app');
  await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.member_credentials FROM zuri_go_app');

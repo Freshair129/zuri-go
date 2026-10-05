@@ -1,6 +1,6 @@
 # RCA — ADR-008 transcript upload consent bypass — 2026-10-05
 
-Risk: HIGH. Complexity: C-3. Scope: ADR-008's schema-12 implementation candidate on `codex/adr008-shared-business-access`. Production remains on schema 11. No commit, push, database migration, or deployment has been made for this candidate.
+Risk: HIGH. Complexity: C-3. Scope: ADR-008's schema-12 implementation candidate on `codex/adr008-shared-business-access`. Production remains on schema 11. The original ReviewGate finding preceded the current isolated QA migration and fix; no Production or restored Local migration or deployment has been made for this candidate.
 
 ## Symptom
 
@@ -23,6 +23,6 @@ The transcript-transfer guard treats the current participant roster as proof of 
 
 The existing nonparticipant tests attempt an upload without first changing the roster. They verify denial for a nonparticipant in the current row set, but not the two-request sequence that first adds the caller and then uploads. The broad Member CRUD review did not trace this special local-to-cloud transfer through its participant check.
 
-## Proposed Prevention
+## Approved Prevention
 
-Do not authorize transcript transfer using the mutable current roster alone. If participant-only consent remains the rule, establish a session-attributed authorization record that a Member cannot grant or alter through ordinary workspace CRUD, enforce it in both the service and database routine, and test the roster-edit-then-upload sequence for denial plus unchanged custody, revisions, and audit state. If the intended policy is that any active Member may transfer any transcript, amend the approved transcript-custody contract first because that transfer exposes content to Guests. The product-policy decision is pending; no code fix is authorized until it is resolved.
+The owner approved participant-only consent with authorization evidence independent of the editable roster. Migration 012 now captures eligible Member UUIDs once when custody first becomes `local_only`, after roster writes in the same transaction. Ordinary runtime CRUD cannot edit this evidence or directly flip custody; the service and SQL upload routine require both current participation and captured eligibility. Existing held meetings without evidence fail closed. Isolated schema-11-to-12 QA passed the roster-self-add sequence through the hosted handler, service and direct SQL, proving denial with unchanged custody, revisions, Business revision and upload audit state. The original participant upload and nonempty-revisions/zero-batches paths passed. Production remains schema 11; release and deployment were not performed.

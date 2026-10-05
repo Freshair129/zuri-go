@@ -1,6 +1,6 @@
 # ADR-008 follow-up RCA — immutable observations and Visual Guest reads — 2026-10-05
 
-Risk: C-3 / HIGH. Scope: the local schema-12 implementation candidate only. Production remains on schema 11; no production migration or deployment is authorized here. This RCA records findings made against the earlier pre-FEAT-015 candidate numbered 011 and the resulting corrections now carried in `apps/api/migrations/012_business_wide_access.sql`; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap.
+Risk: C-3 / HIGH. Scope: the local schema-12 implementation candidate only. Production remains on schema 11; no production migration or deployment is authorized here. This RCA records findings made against the earlier pre-FEAT-015 candidate numbered 011 and the resulting corrections now carried in `apps/api/migrations/012_business_wide_access.sql`; the earlier handoff's NOT_RUN status was superseded by isolated schema-11-to-12 QA on 2026-10-05.
 
 ## Finding 1 — Metric observations can be updated by the runtime role
 
@@ -97,7 +97,7 @@ The earlier transcript tests covered the service validation and successful uploa
 
 ### Prevention
 
-Pass an explicitly typed `text[]` key list to both JSONB operands and retain exact equality for every field outside `segments` and `withheld`. Keep the NULL-array and forged-withheld rejection cases in the schema-12 regression suite. This correction is present in the final SQL source, but its fresh schema-11-to-12 replay and DB regression remain NOT_RUN after the command runner rejected the bootstrap command.
+Pass an explicitly typed `text[]` key list to both JSONB operands and retain exact equality for every field outside `segments` and `withheld`. Keep the NULL-array and forged-withheld rejection cases in the schema-12 regression suite. Fresh isolated schema-11-to-12 QA found that the left JSONB operand also needed parentheses for PostgreSQL to parse the subtraction correctly; that correction and both rejection cases now pass the database suite.
 
 ## Finding 5 — Empty transcript upload can switch custody without transcript content
 
@@ -121,7 +121,7 @@ The existing database regression exercised a meeting with source/review stubs an
 
 ### Prevention
 
-Require at least one withheld source or review revision in both `uploadTranscript()` and `complete_meeting_transcript_upload()` before changing custody or writing audit. Keep `batches: []` valid when transcript revisions exist and no withheld draft batches are stored. The regression must prove an empty revision set is rejected, custody remains `local_only` and no upload event is added, while a non-empty revision upload with zero batches remains valid. Fresh schema-11-to-12 replay and database regressions for this correction remain NOT_RUN because the command runner rejected database bootstrap; no production database was accessed.
+Require at least one withheld source or review revision in both `uploadTranscript()` and `complete_meeting_transcript_upload()` before changing custody or writing audit. Keep `batches: []` valid when transcript revisions exist and no withheld draft batches are stored. Isolated QA confirmed empty revisions are rejected with unchanged custody and no upload event, while nonempty revisions with zero batches upload successfully. No production database was migrated.
 
 ## Finding 6 — Business-wide Member CRUD bypasses transcript participant consent
 

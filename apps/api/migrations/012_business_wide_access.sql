@@ -3,6 +3,60 @@ SET search_path TO zuri_go,public;
 -- ADR-008: tenant scope stays mandatory; Business-record audience metadata is no longer an authorization rule.
 ALTER TABLE meetings ADD COLUMN archived_at timestamptz;
 ALTER TABLE weekly_plans ADD COLUMN archived_at timestamptz;
+-- A roster edit cannot grant authority to move a locally held transcript to the cloud.
+CREATE TABLE meeting_transcript_upload_eligibility (
+ business_id uuid NOT NULL, meeting_id uuid NOT NULL, eligible_member_ids uuid[] NOT NULL, captured_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY(business_id,meeting_id), FOREIGN KEY(business_id,meeting_id) REFERENCES meetings(business_id,id)
+);
+ALTER TABLE meeting_transcript_upload_eligibility ENABLE ROW LEVEL SECURITY;
+ALTER TABLE meeting_transcript_upload_eligibility FORCE ROW LEVEL SECURITY;
+CREATE POLICY business_scope ON meeting_transcript_upload_eligibility USING (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid) WITH CHECK (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid);
+CREATE POLICY member_read ON meeting_transcript_upload_eligibility AS RESTRICTIVE FOR SELECT USING (zuri_go.viewer_kind() IN ('member','operator'));
+CREATE POLICY owner_insert ON meeting_transcript_upload_eligibility AS RESTRICTIVE FOR INSERT WITH CHECK (current_user<>'zuri_go_app');
+CREATE POLICY owner_update ON meeting_transcript_upload_eligibility AS RESTRICTIVE FOR UPDATE USING (current_user<>'zuri_go_app') WITH CHECK (current_user<>'zuri_go_app');
+CREATE POLICY owner_delete ON meeting_transcript_upload_eligibility AS RESTRICTIVE FOR DELETE USING (current_user<>'zuri_go_app');
+GRANT SELECT ON meeting_transcript_upload_eligibility TO zuri_go_app;
+REVOKE INSERT,UPDATE,DELETE ON meeting_transcript_upload_eligibility FROM PUBLIC,zuri_go_app;
+
+CREATE FUNCTION zuri_go.guard_meeting_transcript_custody() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+ IF current_user='zuri_go_app' THEN
+  IF TG_OP='INSERT' AND NEW.transcript_custody<>'cloud' THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
+  IF TG_OP='UPDATE' AND OLD.transcript_custody IS DISTINCT FROM NEW.transcript_custody THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE TRIGGER meeting_transcript_custody_guard BEFORE INSERT OR UPDATE ON meetings FOR EACH ROW EXECUTE FUNCTION zuri_go.guard_meeting_transcript_custody();
+
+CREATE FUNCTION zuri_go.capture_meeting_transcript_upload_eligibility() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,zuri_go,pg_temp AS $$
+BEGIN
+ IF EXISTS(SELECT 1 FROM zuri_go.meetings m WHERE m.business_id=NEW.business_id AND m.id=NEW.id AND m.transcript_custody='local_only') THEN
+  INSERT INTO zuri_go.meeting_transcript_upload_eligibility(business_id,meeting_id,eligible_member_ids)
+  SELECT NEW.business_id,NEW.id,coalesce(array_agg(p.member_id ORDER BY p.member_id),'{}'::uuid[])
+  FROM zuri_go.meeting_participants p WHERE p.business_id=NEW.business_id AND p.meeting_id=NEW.id
+  ON CONFLICT(business_id,meeting_id) DO NOTHING;
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE CONSTRAINT TRIGGER capture_meeting_transcript_upload_eligibility AFTER UPDATE ON meetings DEFERRABLE INITIALLY DEFERRED
+ FOR EACH ROW WHEN (OLD.transcript_custody IS DISTINCT FROM NEW.transcript_custody AND NEW.transcript_custody='local_only')
+ EXECUTE FUNCTION zuri_go.capture_meeting_transcript_upload_eligibility();
+
+CREATE FUNCTION zuri_go.begin_meeting_transcript_custody(p_business_id uuid,p_meeting_id uuid)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,zuri_go,pg_temp AS $$
+BEGIN
+ IF nullif(current_setting('zuri_go.business_id',true),'')::uuid IS DISTINCT FROM p_business_id
+  OR zuri_go.viewer_kind() NOT IN ('member','operator') THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
+ IF zuri_go.viewer_kind()='member' AND NOT EXISTS(SELECT 1 FROM zuri_go.members m JOIN zuri_go.member_credentials c ON c.business_id=m.business_id AND c.member_id=m.id
+  WHERE m.business_id=p_business_id AND m.id=zuri_go.viewer_member() AND m.status='active' AND c.enabled) THEN
+  RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
+ END IF;
+ UPDATE zuri_go.meetings SET transcript_custody='local_only'
+ WHERE business_id=p_business_id AND id=p_meeting_id AND visibility='restricted' AND transcript_custody='cloud';
+ IF NOT FOUND THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_STALE' USING ERRCODE='P0001'; END IF;
+END $$;
+REVOKE ALL ON FUNCTION zuri_go.begin_meeting_transcript_custody(uuid,uuid) FROM PUBLIC,zuri_go_app;
+GRANT EXECUTE ON FUNCTION zuri_go.begin_meeting_transcript_custody(uuid,uuid) TO zuri_go_app;
 
 DROP POLICY IF EXISTS audience_read ON tasks;
 DROP POLICY IF EXISTS audience_update ON tasks;
@@ -286,6 +340,9 @@ BEGIN
  IF NOT EXISTS(SELECT 1 FROM zuri_go.meeting_participants p WHERE p.business_id=p_business_id AND p.meeting_id=p_meeting_id AND p.member_id=v_member) THEN
   RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
  END IF;
+ IF NOT EXISTS(SELECT 1 FROM zuri_go.meeting_transcript_upload_eligibility e WHERE e.business_id=p_business_id AND e.meeting_id=p_meeting_id AND v_member=ANY(e.eligible_member_ids)) THEN
+  RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
+ END IF;
  IF nullif(btrim(p_reason),'') IS NULL OR jsonb_typeof(p_revisions) IS DISTINCT FROM 'array' OR p_batch_ids IS NULL THEN
   RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_INVALID' USING ERRCODE='22023';
  END IF;
@@ -311,7 +368,7 @@ BEGIN
   IF NOT FOUND OR revision_row.legacy_metadata->>'withheld'<>'true' OR revision_row.segments<>'[]'::jsonb
    OR (item->'metadata'->'id') IS DISTINCT FROM (revision_row.legacy_metadata->'id')
    OR (item->'metadata'->'segments') IS DISTINCT FROM item->'segments'
-   OR (item->'metadata' - ARRAY['segments','withheld']::text[]) IS DISTINCT FROM (revision_row.legacy_metadata - ARRAY['segments','withheld']::text[])
+   OR ((item->'metadata') - ARRAY['segments','withheld']::text[]) IS DISTINCT FROM (revision_row.legacy_metadata - ARRAY['segments','withheld']::text[])
    OR coalesce(item->'metadata'->>'withheld','false')='true' OR jsonb_array_length(item->'segments')=0 THEN
    RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_MISMATCH' USING ERRCODE='42501';
   END IF;

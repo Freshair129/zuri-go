@@ -14,7 +14,7 @@ relations:
 
 The system SHALL retain meeting audience, confidentiality and participant values as business metadata, but SHALL NOT use them to filter access. Guests read every non-secret meeting record in the Business; every active Member has equal CRUD and internal approval rights.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes participant, team, organizer and audience access restrictions below. Transcript-provider custody remains a separate rule; this access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes participant, team, organizer and audience access restrictions below. Transcript-provider custody remains a separate rule; this access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Acceptance criteria
 - AC-011-006-01 — Given any meeting, including one marked confidential, when a Guest or active Member in the Business lists meetings, then the non-secret meeting is present.

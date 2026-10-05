@@ -15,7 +15,7 @@ relations:
 
 The system SHALL return every non-secret campaign record in the configured Business to a Guest, including campaign ledgers and linked content, regardless of audience metadata. Guests remain read-only; every active Member has equal CRUD and internal approval rights. Credential/session/provider/operator secrets remain excluded.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes public-campaign-only access and ledger/customer-data withholding. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; prior delivery evidence is historical.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes public-campaign-only access and ledger/customer-data withholding. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment; prior delivery evidence is historical.
 
 ## Acceptance criteria
 - AC-011-015-01 — Given any campaign with non-secret ledger and linked records, when a Guest reads `/state`, `/workspace` and `/overview`, then those records are returned within the configured Business regardless of audience metadata.

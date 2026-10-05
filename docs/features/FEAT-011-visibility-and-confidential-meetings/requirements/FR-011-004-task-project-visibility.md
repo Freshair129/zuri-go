@@ -14,7 +14,7 @@ relations:
 
 The system SHALL retain task and Project audience fields as business metadata, but SHALL NOT use them to filter access. Guests read all non-secret records in the configured Business; every active Member has identical CRUD and internal approval rights for mutable non-secret records, regardless of level, team, owner, assignment or named viewer.
 
-> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the audience-based access criteria below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; implementation evidence remains historical.
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes the audience-based access criteria below. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification passed in isolated QA on 2026-10-05 (ADR-008 current QA record); production remains on schema 11 pending separately authorized migration 012 and deployment; implementation evidence remains historical.
 
 ## Acceptance criteria
 - AC-011-004-01 — Given a new task saved without a visibility, then its visibility is `business` (PLAN-002 Q2).

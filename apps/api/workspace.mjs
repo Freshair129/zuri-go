@@ -163,10 +163,11 @@ export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerO
    const a=await access('meeting_visibility',mid,old&&{visibility:old.visibility,team_id:old.team_id},m,people,oldOrganizer||organizer);
    // A meeting that becomes restricted keeps its transcript on the recording machine until a participant uploads it (FR-011-010).
    const held=a.visibility==='restricted'&&old?.visibility!=='restricted'?'local_only':old?.transcript_custody||'cloud';custody.set(mid,held);
-   await writeItem(c,b,'meetings',mid,{title:m.title,campaign_id:campaignId(m.campaignId),started_at:m.startedAt||m.meetingStartedAt||null,source_instance_id:m.sourceInstanceId,source_project_id:m.projectId,source_recording_id:m.recordingId,legacy_metadata:withoutAccess(m,['visibility','teamId','participantIds','organizerId','visibilityReason','transcriptCustody',...(held==='local_only'&&viewer.kind!=='operator'?['workingCopy']:[])]),visibility:a.visibility,team_id:a.team_id,transcript_custody:held},!!old);
+   await writeItem(c,b,'meetings',mid,{title:m.title,campaign_id:campaignId(m.campaignId),started_at:m.startedAt||m.meetingStartedAt||null,source_instance_id:m.sourceInstanceId,source_project_id:m.projectId,source_recording_id:m.recordingId,legacy_metadata:withoutAccess(m,['visibility','teamId','participantIds','organizerId','visibilityReason','transcriptCustody',...(held==='local_only'&&viewer.kind!=='operator'?['workingCopy']:[])]),visibility:a.visibility,team_id:a.team_id,transcript_custody:old?.transcript_custody||'cloud'},!!old);
    const before=oldPeople.map(p=>p.member_id+':'+p.role).sort(),after=people.map(p=>p+':'+(p===organizer?'organizer':'participant')).sort();
    if(m.participantIds!==undefined&&hash(before)!==hash(after)){await c.query('DELETE FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2',[b,mid]);for(const p of people)await c.query('INSERT INTO meeting_participants(business_id,meeting_id,member_id,role) VALUES($1,$2,$3,$4)',[b,mid,p,p===organizer?'organizer':'participant']);await audit(c,b,'meeting_participants',mid,old?{participants:before}:null,{participants:after});}
    await setAccess(c,b,'meetings',mid,old,a);
+   if(held==='local_only'&&old?.transcript_custody!=='local_only')await c.query('SELECT zuri_go.begin_meeting_transcript_custody($1::uuid,$2::uuid)',[b,mid]);
  }
  // Anyone but the local operator stores a revision or draft batch of a 'local_only' meeting as a stub (FR-011-010); what is already stored is never rewritten.
  const putRevision=async(r,kind)=>{const rid=id(kind,r.id),mid=id('meeting',r.meetingId),held=custodyFor(mid),prior=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND id=$2',[b,rid])).rows[0];
@@ -203,6 +204,7 @@ export async function uploadTranscript(c,b,ref,input){
  if(!meeting)fail('ไม่พบประชุม',404);
  if(viewer.kind!=='member')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
  if(!(await c.query('SELECT 1 FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2 AND member_id=$3',[b,meeting.id,viewer.memberId])).rowCount)fail('เฉพาะผู้เข้าร่วมประชุมอัปโหลด transcript ได้',403);
+ if(!(await c.query('SELECT 1 FROM meeting_transcript_upload_eligibility WHERE business_id=$1 AND meeting_id=$2 AND $3::uuid=ANY(eligible_member_ids)',[b,meeting.id,viewer.memberId])).rowCount)fail('เฉพาะผู้เข้าร่วมประชุมที่มีสิทธิ์อัปโหลด transcript ได้',403);
  const reason=String(input?.reason??'').trim();if(!reason)fail('ระบุเหตุผลที่อัปโหลด transcript',422);
  if(meeting.transcript_custody!=='local_only')fail('transcript ของประชุมนี้อยู่บน cloud แล้ว',409);
  const list=v=>new Map((Array.isArray(v)?v:[]).map(d=>[d?.id,d])),sent={source:list(input.sources),review:list(input.reviews)},sentBatches=list(input.batches);
