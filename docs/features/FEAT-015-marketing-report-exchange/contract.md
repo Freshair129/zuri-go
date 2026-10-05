@@ -1,15 +1,15 @@
 ---
-title: Zuri-Go to Zuri-AI reported marketing evidence — wire proposal
-status: draft
+title: Zuri-Go to Zuri-AI reported marketing evidence — approved wire contract
+status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 source_document: SDD-015
 ---
 
-# Reported marketing evidence contract — proposed v0.1
+# Reported marketing evidence contract — v0.1
 
-**NOT_WIRED.** The owner approved this wire whitelist for local P2 envelope generation on 2026-10-05; CMP-003 now creates immutable bytes with contractVersion `zuri-marketing-report/0.1`. Parent protocol negotiation, authentication and receiver remain draft. Existing receiver routes do not implement this contract. Sources and incompatibilities are in [gap-analysis.md](gap-analysis.md); behavior belongs to the [requirement index](feature.md#requirement-index). P2 operations/storage/locks are authored once in [the approved P2 chapter](p2-freeze-outbox.md), with no actual sending.
+**NOT_WIRED.** The owner approved the paired wire/physical delivery scope on 2026-10-05, following the earlier local P2 whitelist approval. CMP-003 creates immutable bytes with contractVersion `zuri-marketing-report/0.1`. Receiver and sender implementation/native acceptance remain pending. Sources and incompatibilities are in [gap-analysis.md](gap-analysis.md); behavior belongs to the [requirement index](feature.md#requirement-index). P2 operations/storage/locks are authored once in [the approved P2 chapter](p2-freeze-outbox.md). First delivery supports revision 1/null supersedes only; future corrections are outside this approval.
 
 ## Direction, entity and authority
 
@@ -121,8 +121,10 @@ Receiver uniqueness: authenticated binding + reportId; same bytes/hash returns t
 | strict schema/target/auth/idempotency conflict | REJECTED; no automatic changes or fallback identity; operator reviews |
 | maximum attempts or age exhausted without receipt | EXHAUSTED, with last outcome and operator action; never success |
 
-Proposed limits for review: 20 seconds per network call; maximum four total sends within 24 hours of first send, retry delays 1/5/15 minutes; if Retry-After exceeds the remaining age window, exhaust/hold for operator rather than shorten the requested delay. Manual retry checks eligibility and active lease. An interrupted SENDING lease becomes UNKNOWN after expiry, not QUEUED success. Rebinding, source correction or new credentials never mutates frozen envelope bytes; incompatible binding requires a newly reviewed report identity. State updates cannot modify report payload or accepted receipt.
+Approved limits: 20 seconds per network call; maximum four total sends within 24 hours of the first committed claim, retry delays 1/5/15 minutes. The committed-claim clock is conservative: a crash before sending consumes the attempt and starts the age clock. If Retry-After reaches/exceeds the remaining age window, exhaust rather than shorten the requested delay. Manual retry checks eligibility and active lease. An interrupted SENDING lease becomes UNKNOWN after expiry, not QUEUED success. Rebinding, source correction or new credentials never mutates frozen envelope bytes; incompatible binding requires a newly reviewed report identity. State updates cannot modify report payload or accepted receipt.
 
 ## Review gates
 
-P1 source/preview approval is recorded above. Before cross-system exchange coding: approve wire schema/limits, publish parent-owned evidence storage and Identity permission/binding contracts, reconcile candidate paths/hash rules and decide retention/private-reader policy. Before migrations/real sending: approve isolated QA and operator operations explicitly. Frozen-wire tests and live receiver acceptance remain NOT_RUN; [verification.md](verification.md) lists required adversarial cases.
+Paired wire/physical approval and isolated native QA authorization are recorded above. Implementation and native receiver/sender acceptance remain pending. Real migrations, provisioning, sending and deployment require separately scoped operational approval. Live receiver acceptance remains NOT_RUN; [verification.md](verification.md) lists required adversarial cases.
+
+Version diff 0.3.0 → 0.4.0: records owner approval of paired wire/physical scope and the first-committed-claim age clock. ContractVersion, envelope fields and immutable P2 bytes stay unchanged. Isolated native QA is authorized; real migrations, provisioning, transfer and deployment remain separate operations.

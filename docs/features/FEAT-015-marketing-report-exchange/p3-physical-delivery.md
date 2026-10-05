@@ -1,8 +1,8 @@
 ---
-title: P3 explicit delivery — physical design for review
-status: draft
+title: P3 explicit delivery — approved physical design
+status: approved
 superseded_by: null
-version: 0.1.0
+version: 0.3.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,11 +11,11 @@ risk: HIGH
 
 # P3 — delivery ledger, lease and receipt
 
-Final main gate: parent main `07779662` issued FR-278 for a different dashboard subject. The parent subject references below belong to inspected task branch `fcb7ade3`, not active main. Parent `ZURI-GO-REPORT-MAIN-RECONCILIATION.md` proposes fresh coordinated issuance while preserving both histories; latest-main integration/coding is BLOCKED pending that decision. This does not redefine local Go identities or change wire bytes.
+Owner approved this physical design and main-first reconciliation on 2026-10-05. Parent main `07779662` issued FR-278 for a different dashboard subject; the historical references below belong to task branch `fcb7ade3`. Implementation proceeds from the new `codex/marketing-report-reconciled` branch, preserving both histories; independent exact-manifest review preceded fresh FR-281–283/SDD-112 issuance at `d08f08a8f2604bd9657360d37f7c135d636189b7`. No local Go identity or wire byte is redefined.
 
-This chapter of [SDD-015](design.md) elaborates approved [P3](p3-delivery-receiver.md), [FR-015-004](requirements/FR-015-004-durable-delivery-receipt.md) and [FR-015-005](requirements/FR-015-005-source-preserving-receiver.md). Physical design approval is OPEN. The [wire contract](contract.md) v0.3.0 remains the only field/hash/receipt SoT; its complete cross-system delivery scope needs approval with this design. Revision 1/null supersedes only in the first slice; wire descriptions of future corrections do not authorize implementation.
+This chapter of [SDD-015](design.md) elaborates approved [P3](p3-delivery-receiver.md), [FR-015-004](requirements/FR-015-004-durable-delivery-receipt.md) and [FR-015-005](requirements/FR-015-005-source-preserving-receiver.md). The owner approved the paired physical/wire scope, including the first committed claim as the age clock, deny-default parent machine policy and refusal of unsupported legacy JSON backup. The [wire contract](contract.md) v0.4.0 remains the only field/hash/receipt SoT. Revision 1/null supersedes only in the first slice; future corrections remain outside this approval.
 
-Source inspected at Go `f06ef4d3e2321ff9ab24f125503bf32900343e37`, schema 11. Parent composition `fcb7ade3a022029cf47530643edc74fab2e49420` includes main `3506129f`; its reviewed physical counterpart is proposed at `docs/change-requests/marketing/ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.1.0. Parent owns credential/current machine gate/SQLite evidence. Go owns PostgreSQL delivery and receipt validation. Pin both approved document blobs before coding; these external ZAI references are not local ID aliases.
+Source inspected at Go `f06ef4d3e2321ff9ab24f125503bf32900343e37`, schema 11. Parent composition `fcb7ade3a022029cf47530643edc74fab2e49420` includes main `3506129f`; the approved current physical counterpart is `docs/change-requests/marketing/ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.3.0 on `codex/marketing-report-reconciled`. Parent owns credential/current machine gate/SQLite evidence. Go owns PostgreSQL delivery and receipt validation. Pin both approved document blobs in implementation evidence; these external ZAI references are not local ID aliases.
 
 [ASSUMPTIONS]
 
@@ -104,3 +104,7 @@ These are filenames for review, not additional issued TC artifacts or executed r
 Use isolated QA Businesses and synthetic credentials only. Never run destructive tests against restored Local or Neon Production. Review PostgreSQL/SQLite migrations and private-config separation independently before applying anything. Application completion requires native tests and independent review, not documentation checks. Deployment, live provisioning, real send and migration have separate authorization gates.
 
 Version diff 0 → 0.1.0: adds proposed delivery/attempt/receipt physical storage, operator finalizer/lease transitions, late-worker recovery, bounded receipt/network handling and native test bindings. Package stays 0.5.1; no schema, API, credential, data transfer or deployment changed.
+
+Version diff 0.1.0 → 0.2.0: records owner approval of the paired design and main-first reconciliation. Authorizes implementation and isolated native QA; live migrations, bindings, credentials, sends and deployment retain separate authorization. Fresh parent references will be rebound after reviewed issuance; current native acceptance remains NOT_RUN.
+
+Version diff 0.2.0 → 0.3.0: rebinds current implementation to independently reviewed fresh parent FR-281–283/SDD-112 and approved wire v0.4.0; old branch issuance remains historical, not aliased.

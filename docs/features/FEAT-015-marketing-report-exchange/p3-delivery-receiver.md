@@ -2,7 +2,7 @@
 title: P3 delivery and parent receiver — review proposal
 status: approved
 superseded_by: null
-version: 0.4.0
+version: 0.5.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -11,11 +11,11 @@ risk: HIGH
 
 # P3 — ส่งรายงาน Marketing และรับหลักฐานตอบกลับ
 
-Physical follow-up: [sender physical design](p3-physical-delivery.md) v0.1.0 เป็น DRAFT สำหรับ review คู่กับ parent `ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.1.0 กำหนด delivery/attempt/receipt, finalizer และ lease โดยรักษา migration 011; parent เสนอ Business machine gate ที่ปิดเป็นค่าเริ่มต้น การเพิ่มลิงก์นี้ไม่ใช่ approval ของ schema/physical decisions ใหม่ ไม่มี application coding หรือ native QA ผลผ่านในขั้นนี้
+Physical follow-up: เจ้าของอนุมัติ [sender physical design](p3-physical-delivery.md), wire v0.4.0 และ parent `ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.3.0 แล้ว รวม machine gate แบบ deny-default, first committed claim clock และ legacy backup refusal งาน implementation/native QA อยู่ระหว่างดำเนินการ; ยังไม่ใช่ runtime acceptance หรือ live operation approval.
 
-**APPROVED / P3-A PARTIAL.** เจ้าของอนุมัติ P3 v0.1.0 เมื่อ 2026-10-05 ให้ดำเนินการตามลำดับและ gate ที่ระบุ บทนี้เป็นส่วนของ [SDD-015](design.md) ภายใต้ FEAT-015 ไม่ใช่ service หรือ SoT ใหม่ ฝั่ง Zuri-AI มี approved receiver contract และออก planned canonical records แล้ว; physical append-only design และ native test bindings ยังต้อง review ก่อน application coding Approval และ issued records ไม่ใช่ผล QA หรือ runtime acceptance
+**APPROVED / P3-A PARTIAL.** Parent main-first reconciliation และ exact manifest ผ่าน independent review ก่อนออก fresh `ZAI:FR-281`, `ZAI:FR-282`, `ZAI:FR-283`, `ZAI:SDD-112` ที่ `d08f08a8f2604bd9657360d37f7c135d636189b7` บน `codex/marketing-report-reconciled` ทุก record ยัง planned ไม่มี FEAT membership ใหม่ หลักฐานอยู่ที่ parent `ZURI-GO-RECONCILED-TOOLING-VERIFICATION.md`; manifest digest `758bd232d12fa7c8768ce0f924b3b83344aea3dc118bdc6047d387792c440ee0`.
 
-รายละเอียด parent P3-A อยู่ใน repository Zuri-AI ที่ `docs/change-requests/marketing/ZURI-GO-REPORT-RECEIVER.md` บน isolated branch `codex/marketing-report-p3` โดยรักษา checkout/runtime เดิมไว้ เจ้าของอนุมัติ receiver และ tooling แยกกัน; independent review ผ่านก่อน writer ออก `ZAI:FR-278`, `ZAI:FR-279`, `ZAI:FR-280` และ `ZAI:SDD-111` ทั้งหมดเป็น planned ไม่มี FEAT membership ใหม่ หลักฐานอยู่ที่ `docs/migrations/document-reintegration/AUTHORED-VERIFICATION.md` ใน parent repository และ [verification](verification.md#p3-parent-authored-records--2026-10-05) ที่นี่ ไม่ใช่การ alias local IDs หรืออ้างว่ามี receiver แล้ว
+ชุดเก่า `FR-278/279/280/SDD-111` ที่ `cdb9518bc50019e876c15c6b1f6c1c98af84f65a` บน `codex/marketing-report-p3` และ receipt เดิมเป็น historical evidence ไม่ใช่ alias ของชุดใหม่ Main FR-278 เป็น dashboard และคงเดิม ไม่มีการ merge PR630 ที่ conflict หรือแก้ checkout/runtime หลัก การออก records ไม่ใช่ native receiver proof.
 
 ## จุดเริ่มต้นที่ตรวจแล้ว
 
@@ -126,3 +126,5 @@ Exit ของ slice: parent records approved, P2 QA HTTP และ P3 required 
 0.1.0 → 0.2.0: บันทึก owner approval ของ P3 และ retention ขั้นต่ำ 90 วัน; เริ่ม P3-A parent-owned intake/record migration ใน worktree แยก โดย parent migration approval ยังเป็น gate ก่อน coding ไม่มี code/schema/runtime/credential/Production เปลี่ยนแปลง
 
 0 → 0.1.0: เพิ่มบท draft P3 ใน feature เดิม ตรวจ parent source ปัจจุบัน เสนอ report-only credential, separate delivery ledger และลำดับ QA acceptance; ระบุ correction/retention gates ที่ยังเปิด ไม่มี code/schema/runtime/credential/Production เปลี่ยนแปลง
+
+Version diff 0.4.0 → 0.5.0: records paired physical approval and fresh parent issuance; preserves historical evidence and NOT_RUN native acceptance.
