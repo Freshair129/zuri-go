@@ -1,5 +1,33 @@
 # Zuri-Go 0.5.1 — Member registry rules and Guest privacy
 
+## Marketing report code rollout — 2026-10-06
+
+Owner authorized `deploy` after Go PR #10, parent PR #633 and migration closeout PR #11 merged. This rollout deploys **Zuri-Go only**, from clean main `197fe6c4ee5447ed2a36c12b4764c5bd45c51f65`; package remains **0.5.1**, both actual databases already schema **12**. No migration was rerun. Parent deployment/database, live bindings/credentials and actual report sending were not changed. Marketing preview, preparation/freeze and delivery remain local-operator-only; hosted code must deny them.
+
+| Artifact | Before | After |
+|---|---|---|
+| Application package | 0.5.1 | 0.5.1 |
+| Local / Production schema | 12 / 12 | 12 / 12 |
+| Public deployment | `dpl_8NfE1kXSQQL3tMNJ3Jn8LMbezMXi` | `dpl_EGUg7uHqGE1Pf3brpcipgzR6X4mc` |
+| Hosted HTML SHA-256 | `42adec47cef9f425ae11ed170edd7490a2c7174354410ffd26d423707385be51` (previous release record) | `de931e75490591596908435e00dc15046a92d004ca9b0e9115a536768b61330b` (actual stage and public reads) |
+
+Build PASS with the installed protected Data App runtime and documented bundled Python override; 64 allowlisted files, unchanged app identity, matching current API sources, durable existing Vercel project binding and actual known-private-value scan PASS. Focused sender/source/operator checks PASS 23/23; the first combined run also skipped eight unconfigured disposable SQL cases, then those eight passed separately with the explicit ignored PGlite dependency. Python packaging tests PASS 16/16. The previously sealed native concurrency/lock and paired 18/18 acceptance remains valid for unchanged application source; it was not rerun on real storage during deployment.
+
+The historical extraction checker returned FAIL at raw `apps/web/AGENTS.md` SHA-256 because Windows `core.autocrlf=true` materializes CRLF; working text equals the committed text after line-ending normalization. Its source also still expects 61 package files, predating the three approved Marketing modules. No source/check/manifest was changed to turn that historical checker green. Current protected-runtime verification, package import-closure tests, exact 64-file scope and known-secret scan passed separately. The current metrics static receipt is private under the deployment evidence folder; its only difference from the retained historical receipt is the actual checkout path F: → O:.
+
+Vercel CLI 61.1.0 was authenticated in the existing `pornpons-projects` scope, then `npm run deploy` used `--prod --skip-domain`. The unique stage [zuri-metrics-3hszomigs](https://zuri-metrics-3hszomigs-pornpons-projects.vercel.app/) reached READY; the public domain was independently inspected and still resolved to the old deployment before promotion. The wrapper printed a project alias because it extracts the last URL from the CLI's new JSON-bearing output; the unique URL and ID were instead verified through `vercel inspect` before any promotion ([RCA](../../../.brain/rca/2026-10-06-vercel-deployment-output-url.md)). No wrapper code was changed in this rollout.
+
+Stage acceptance PASS 15/15 at `2026-10-05T23:43:36.397Z`, using authenticated `vercel curl` for deployment protection. `npm run promote -- https://zuri-metrics-3hszomigs-pornpons-projects.vercel.app` succeeded. Public acceptance PASS 15/15 at `2026-10-05T23:44:22.755Z`; `inspect` confirms READY and that [the public domain](https://zuri-metrics-map.vercel.app/) resolves to the same deployment ID.
+
+- Guest session unauthenticated; bootstrap/state/workspace/tasks GET 200; configured Business matched and Member fields remain limited to public identity/status.
+- Same-origin Guest task POST 401, cross-origin task POST 403; hosted Marketing delivery/preview GET 403 and Guest send POST 401. Empty denied payloads created no records and emitted no report send.
+- Served HTML, full reviewed snapshot and metrics guide match build bytes exactly. Snapshot SHA-256 `91b8e50eb23e5946ef83398ce2d32690cfa81577040aa75716e01fe05f4f1484`.
+- Production browser: Overview rendered in Guest mode; Task Manager showed public-only access and adding a task opened the single-code login dialog, which was closed without entering any code. Visual Studio loaded the public-output view and kept Variants disabled. Console error log was empty at the observed checkpoints. Member/Admin login, successful writes, mobile acceptance and real Marketing sends remain NOT_RUN.
+
+Private build/test/deploy/inspect logs, response bodies and receipts stay in `.local/deploy-20261006/`; no credential or real Business data is published. Migration/backup evidence remains canonical in [FEAT-015 verification](../../features/FEAT-015-marketing-report-exchange/verification.md#local-and-production-migration-012--2026-10-06). Do not infer sender/receiver provisioning or parent rollout from this deployment. Prior source rollback must be assessed against schema 12 before a separately authorized promotion; no rollback/restore was performed.
+
+Documentation closeout: validation PASS with 0 errors/166 baseline warnings; generated views PASS with 11 views/0 drift; whitespace/private-path checks passed. Deployment artifacts contain application source from the pinned main commit; the later receipt documentation is not packaged application code.
+
 ## Local restore amendment — 2026-10-05
 
 The owner separately authorized creating a new persistent Local from the verified pre-011 Production backup. Native PostgreSQL 18.6 restored all 48 original tables atomically, then applied migration 011; Local and Production are now schema 11. All 47 application table counts/content hashes remain unchanged after Local runtime/API tests. Actual restricted Local login, 12 direct write denials, HTTP preview and 22 focused tests passed; build passed. Existing Member hashes were retained; only new Local database role credentials were created. Production deployment/application version remains 0.5.1 with no promotion or automatic data sync. Canonical evidence and remaining API-025/browser/Production-runtime limitations are in [FEAT-015 verification](../../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05); native startup/backup is in [RB-001](../../operations/RB-001-runbook.md#native-local-on-this-machine--2026-10-05). The older amendments below retain their dated operation status.

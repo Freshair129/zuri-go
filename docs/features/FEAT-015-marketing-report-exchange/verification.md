@@ -2,11 +2,17 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.7.0
+version: 1.8.0
 date: 2026-10-06
 ---
 
 # Verification — FEAT-015
+
+## Zuri-Go production code rollout — 2026-10-06
+
+Owner-authorized deploy completed from Go main `197fe6c4ee5447ed2a36c12b4764c5bd45c51f65`: staged deployment `dpl_EGUg7uHqGE1Pf3brpcipgzR6X4mc` READY, then verified and promoted to the existing public domain. Stage/public Guest authorization and HTML/snapshot/metrics artifact checks each PASS 15/15. Build, focused 23-case checks, isolated disposable SQL 8/8 and packaging 16/16 passed. Current deployment details and the historical extraction-check limitation are canonical in [release 0.5.1](../../releases/0.5.1/verification.md#marketing-report-code-rollout--2026-10-06).
+
+Version diff 1.7.0 → 1.8.0: records the actual Go code rollout after migration 012. Package 0.5.1 → 0.5.1; Local/Production schema 12 → 12. Hosted Marketing operations remain intentionally denied; no real association/binding/credential/send or parent deployment/migration occurred. FEAT-015 stays `building`, not a live paired integration. The historical unapplied/undeployed checkpoints below retain their original dates and are superseded by the current operational sections.
 
 ## Local and Production migration 012 — 2026-10-06
 

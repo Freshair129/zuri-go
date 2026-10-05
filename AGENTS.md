@@ -92,6 +92,8 @@ Run checks appropriate to changed behavior. A documentation-only change needs li
 
 ## Documentation update record
 
+2026-10-06 (Go code rollout): owner-authorized deployment from main `197fe6c` staged and promoted `dpl_EGUg7uHqGE1Pf3brpcipgzR6X4mc` to the existing public domain. Stage/public Guest and artifact checks passed 15/15 each; desktop Guest Overview, Task Manager login prompt and Visual Studio loaded. Package remains 0.5.1; both databases remain schema 12; no parent deployment or real report send. Canonical deployment details and check limitations are in release 0.5.1 verification.
+
 2026-10-06: recorded the owner-authorized merge and migration 012 on actual persistent Local and Production, both schema 11 → 12. Fresh consistent backups, preservation of existing data/ACLs/functions, exact new catalog checks and independent receipt review passed; existing hosted Guest reads/write denial passed. Production restricted-runtime login and new backup restore drills remain NOT_RUN. Application/deployment unchanged; canonical evidence is FEAT-015 verification. Documentation-only update.
 
 2026-09-30: expanded the post-extraction instructions for the private GitHub repository, 0.4.2 single-code login, source ownership, data custody, verification and staged Vercel releases. Documentation-only; no application version, database or deployment change.
