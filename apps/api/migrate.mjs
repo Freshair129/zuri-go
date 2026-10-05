@@ -21,7 +21,7 @@ const client=new pg.Client({connectionString:adminUrl});await client.connect();
 try{
  await client.query('SELECT pg_advisory_lock(973091)');
  await client.query('CREATE TABLE IF NOT EXISTS public.zuri_go_migrations(version integer PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())');
- for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql'],[4,'004_task_attachments.sql'],[5,'005_member_identity.sql'],[6,'006_visibility.sql'],[7,'007_tasks_projects.sql'],[8,'008_visual_marketing.sql'],[9,'009_visual_public_output_immutability.sql'],[10,'010_visual_approval_boundary.sql'],[11,'011_marketing_report_ledger.sql']]){
+ for(const [version,file] of [[1,'001_core.sql'],[2,'002_compatibility.sql'],[3,'003_team_access.sql'],[4,'004_task_attachments.sql'],[5,'005_member_identity.sql'],[6,'006_visibility.sql'],[7,'007_tasks_projects.sql'],[8,'008_visual_marketing.sql'],[9,'009_visual_public_output_immutability.sql'],[10,'010_visual_approval_boundary.sql'],[11,'011_marketing_report_ledger.sql'],[12,'012_marketing_report_delivery.sql']]){
    if((await client.query('SELECT 1 FROM public.zuri_go_migrations WHERE version=$1',[version])).rowCount)continue;
    await client.query('BEGIN');try{const sql=(await readFile(new URL('migrations/'+file,import.meta.url),'utf8')).replace(/^BEGIN;\s*/,'').replace(/COMMIT;\s*$/,'');await client.query(sql);await client.query('INSERT INTO public.zuri_go_migrations(version) VALUES($1)',[version]);await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
  }
@@ -38,8 +38,8 @@ try{
  await client.query('REVOKE UPDATE (business_id,project_id,artifact_id,decision_id,payload,active,created_at) ON zuri_go.visual_public_outputs FROM zuri_go_app');
  await client.query('REVOKE INSERT ON zuri_go.visual_reviews,zuri_go.visual_decisions,zuri_go.visual_public_outputs FROM zuri_go_app');
  await client.query('GRANT UPDATE(active) ON zuri_go.visual_public_outputs TO zuri_go_app');
- await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.marketing_report_associations,zuri_go.marketing_report_preparations,zuri_go.marketing_reports,zuri_go.marketing_report_outbox FROM PUBLIC,zuri_go_app');
+ await client.query('REVOKE INSERT,UPDATE,DELETE ON zuri_go.marketing_report_associations,zuri_go.marketing_report_preparations,zuri_go.marketing_reports,zuri_go.marketing_report_outbox,zuri_go.marketing_report_deliveries,zuri_go.marketing_report_delivery_attempts,zuri_go.marketing_report_delivery_receipts FROM PUBLIC,zuri_go_app');
  await client.query('COMMIT');}catch(e){await client.query('ROLLBACK');throw e;}
- console.log('Zuri-Go schema 11 applied; runtime role grants configured.');
+ console.log('Zuri-Go schema 12 applied; runtime role grants configured.');
 }finally{await client.end();}
 }

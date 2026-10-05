@@ -2,11 +2,46 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.4.0
+version: 1.5.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## Native sender and full paired QA — 2026-10-05
+
+The owner selected existing trusted local operator plus the configured non-archived Business. Approved documentation checkpoint `73a450f` binds that decision; no separate Go DOM-CAM policy was added. CMP-004/API-026 and additive migration 012 are implemented as an unmerged candidate. The parent retains its independent deny-default ingest policy. This section supersedes the earlier sender-authority/NOT_IMPLEMENTED checkpoint below.
+
+| Check | Executed result / boundary |
+|---|---|
+| Actual QA migration 001–012 | PASS on fresh empty databases under the test-owned loopback PostgreSQL 18.6 cluster; actual `apps/api/migrate.mjs`, restricted non-superuser/non-BYPASSRLS `zuri_go_app`. No restored Local or Production target was accessed. Migration 011 bytes unchanged; 012 does no backfill. |
+| TC-015-008 transport/orchestration | PASS 6/6: strict receipt/private configuration, actual bounded loopback HTTP, expired committed claim emits zero HTTP, rolled-back transaction retries emit one HTTP, hosted/Guest/Member/foreign Business and caller URL/token denial. |
+| TC-015-009 native sender | PASS 10/10: concurrent lazy projection produces one committed send; atomic matching receipt/ACK with rollback and immutable custody; forced RLS/helper/direct DML denial; Claim committed and connection/Business lock released before HTTP; four-attempt quota/backoff/Retry-After; expired settlement/stale-worker fence; post-lock current archive/association denial; held Business lock times out at five seconds without repeating HTTP; held final attempt-row lock crossing expiry rejects ACK and UNKNOWN; actual first-claim 24-hour deadline and valid fourth-attempt ACK. |
+| Paired native receiver/full delivery | PASS 18/18 (13 integration, 5 wire) in the reconciled parent runner, final 22:02:49 Asia/Bangkok, 33.06 seconds. Actual Go prepare/freeze → PostgreSQL Claim → actual Go bounded HTTP → actual Next route/Prisma 5.22 SQLite commit → dropped response UNKNOWN → eligible explicit same-byte retry → durable Go ACK with original receipt. Exactly two attempts, one Go receipt, one parent report/audit; original report/outbox bytes and all parent preexisting non-Audit tables preserved. Valid changed-byte conflict is 409; disabled parent policy denies identical replay. |
+| Independent source/test review | PASS after all three lease findings were resolved. Reviewed migration `c4ef2ea6ea732886da8e34cf31731b7fc99edbea`, sender `452ce1054014e4e6af3edc7359b9a2f487fc8e2d`, native tests `12bb9b0b6df3bfa1b375d032b28db2f9a243ad3d`, orchestration `7488aa6b798890edf97dd0d8d8c31f7b837a6a29`, parent cross test `1fd049b60fef5c3c450ce72bb38d98f5d8330114`. Reviewer did not rerun databases; executed QA is primary-agent evidence, independently reviewed. |
+
+Exact Go command: `node --test apps/api/test/marketing-report-delivery-postgres.test.mjs apps/api/test/marketing-report-delivery-orchestration.test.mjs apps/api/test/marketing-report-delivery.test.mjs` — 16 PASS, 0 FAIL, 0 SKIP. Native tests require both explicit `ZURI_GO_MARKETING_QA_ADMIN_URL` and `ZURI_GO_MARKETING_QA_RUNTIME_URL`, same guarded loopback QA database named `zuri_go_marketing_qa_*`, initially empty and schema 12. Without targets they report NOT_RUN rather than touching application storage. Parent `apps/server/scripts/run-marketing-report-native.mjs` adds `ZURI_REPORT_GO_SOURCE` and these same QA targets for the full paired case; otherwise that case is skipped. It uses a pinned generated baseline plus the candidate additive SQLite migration, not a historical migration-chain replay.
+
+Fast deadline/backoff tests change only synthetic QA timestamps using an owner transaction that disables and re-enables the specific guards atomically. Actual lock waits are observed with `pg_blocking_pids`; production immutability is never bypassed. Independent review caught delayed pre-network lease, unbounded DB wait and a time sample before the final attempt lock. [RCA](../../../.brain/rca/2026-10-05-p3-sender-lease-boundaries.md) records the fixes and regression evidence. The first paired run failed its changed-byte fixture (invalid shape produced 422); the final run changes an existing allowed campaign field and observes 409.
+
+Real API-026 success, new migration 012 on either real database, real association/credential/send and deployment remain NOT_RUN. No real private delivery config was created, no merge or promotion occurred. Application 0.5.1 → 0.5.1; real Local/Production schema 11 → 11; QA schema 12 only. Feature/requirements remain building; isolated acceptance is not an operational release.
+
+Go build PASS; source/projection/operator-guard checks PASS28/28, disposable PGlite P2 regression PASS8/8, native P1/P2 regression PASS6/6 and Python packaging suite PASS16/16. Go documents validate with0 errors/166 baseline warnings and11 views/0 drift. Parent hosted CI at5958b38 fails stale record/count fixtures and a separate Phase B frozen-inventory compatibility check. The stale reconciliation fixtures are corrected in the paired candidate; Phase B194→197 custody/schema rebind is a separate draft parent proposal. Both PRs remain draft and no global CI/merge readiness is claimed.
+
+Version diff 1.4.0 → 1.5.0: closes the owner authority clarification and records candidate native sender/full paired QA with explicit operational limits.
+
+### TC-015-008 — Strict transport, orchestration and route authority
+Relations: verifies: AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04
+Test: `apps/api/test/marketing-report-delivery.test.mjs`
+Test: `apps/api/test/marketing-report-delivery-orchestration.test.mjs`
+
+PASS 6/6. Files: `apps/api/test/marketing-report-delivery.test.mjs`, `apps/api/test/marketing-report-delivery-orchestration.test.mjs`. Pure fixtures and actual loopback transport; route denials are exercised through `handleApi`, not a hosted deployment or successful real operator send.
+
+### TC-015-009 — Native PostgreSQL delivery fences and full paired custody
+Relations: verifies: AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04
+Test: `apps/api/test/marketing-report-delivery-postgres.test.mjs`
+
+PASS 10/10 native sender plus the full paired case in the parent's 18/18 runner. File: `apps/api/test/marketing-report-delivery-postgres.test.mjs`; parent file: `apps/server/tests/integration/marketing-report-native.test.js`. Schema 012, RLS/ACL, concurrency, lease/age/quota, final-lock clock, receipt atomicity and immutable source evidence are exercised on synthetic isolated databases only.
 
 ## Reconciled bounded receiver/transport checkpoint — 2026-10-05
 

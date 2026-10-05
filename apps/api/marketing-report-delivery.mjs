@@ -78,3 +78,53 @@ export async function readDeliveryRequest(req){
  let value;try{value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(raw));}catch{reject('JSON_INVALID',400);}
  if(!fields(value,[]))reject('DELIVERY_FIELDS_INVALID');
 }
+
+// @trace implements FR-015-004 — transaction retries never repeat an HTTP send.
+function deliveryOperator(tx,b,r){
+ if(process.env.VERCEL==='1'||tx.zuriViewer?.kind!=='operator'||!UUID.test(b)||!UUID.test(r))reject('REPORT_OPERATOR_REQUIRED',403);
+}
+const deliveryCodes={REPORT_DENIED:403,ASSOCIATION_DENIED:403,REPORT_NOT_READABLE:404,ASSOCIATION_STALE:409,
+ DELIVERY_CONFIGURATION_STALE:409,DELIVERY_LEASE_ACTIVE:409,DELIVERY_LEASE_STALE:409,DELIVERY_TERMINAL:409,DELIVERY_NOT_ELIGIBLE:409,DELIVERY_RESULT_INVALID:422,FROZEN_REPORT_INVALID:422};
+async function deliverySql(tx,b,r,sql,args=[],timeoutMs=5000){
+ deliveryOperator(tx,b,r);
+ try{
+  await tx.query("SELECT set_config('lock_timeout',$1,true),set_config('statement_timeout',$1,true)",[Math.max(1,Math.floor(timeoutMs))+'ms']);
+  return (await tx.query(sql,[b,r,...args])).rows[0].result;
+ }catch(e){if(['55P03','57014'].includes(e.code))reject('DELIVERY_LOCK_TIMEOUT',409);if(e.code==='P0001'&&Object.hasOwn(deliveryCodes,e.message))reject(e.message,deliveryCodes[e.message]);throw e;}
+}
+async function deliveryTransaction(transaction,fn){
+ for(let attempt=0;;attempt++)try{return await transaction(fn);}catch(e){if(!['40001','40P01'].includes(e.code)||attempt>=2)throw e;}
+}
+export const readMarketingDelivery=(tx,b,r)=>deliverySql(tx,b,r,'SELECT zuri_go.marketing_delivery_read($1::uuid,$2::uuid) AS result');
+export const settleMarketingDelivery=(tx,b,r)=>deliverySql(tx,b,r,'SELECT zuri_go.marketing_delivery_settle($1::uuid,$2::uuid) AS result');
+export function completeMarketingDelivery(tx,b,r,claim,result){
+ const remaining=Date.parse(claim.leaseExpiresAt)-Date.now();
+ if(!Number.isFinite(remaining)||remaining<=0)reject('DELIVERY_LEASE_STALE',409);
+ return deliverySql(tx,b,r,
+  'SELECT zuri_go.marketing_delivery_complete($1::uuid,$2::uuid,$3::uuid,$4::integer,$5::text,$6::integer,$7::text,$8::integer,$9::timestamptz) AS result',
+  [claim.leaseId,claim.attemptNumber,result.outcome,result.httpStatus??null,result.canonicalReceipt??null,result.retryDelaySeconds??null,result.retryAt??null],Math.min(5000,remaining));
+}
+
+export async function sendMarketingDelivery({transaction,businessId:b,reportId:r,bindings=readDeliveryConfiguration(),requestReceipt=requestMarketingReceipt}){
+ let binding;
+ const started=performance.now();
+ const result=await deliveryTransaction(transaction,async tx=>{
+  await readMarketingDelivery(tx,b,r);
+  const row=(await tx.query(`SELECT p.association_id,p.association_version::text,r.external_binding_id FROM zuri_go.marketing_reports r
+   JOIN zuri_go.marketing_report_preparations p ON p.business_id=r.business_id AND p.id=r.preparation_id WHERE r.business_id=$1 AND r.id=$2`,[b,r])).rows[0];
+  binding=bindings.find(x=>x.associationId===row?.association_id&&x.rowVersion===row.association_version&&x.bindingId===row.external_binding_id);
+  if(!binding)reject('DELIVERY_CONFIGURATION_STALE',409);
+  return deliverySql(tx,b,r,'SELECT zuri_go.marketing_delivery_claim($1::uuid,$2::uuid,$3::uuid,$4::text,$5::text) AS result',[binding.associationId,binding.rowVersion,binding.bindingId]);
+ });
+ if(!result.claimed)return {delivery:result.delivery};
+ // Claim is committed and its connection released before the bounded network call.
+ const {claim}=result,envelope=JSON.parse(claim.canonicalEnvelope);
+ if(!Number.isFinite(Date.parse(claim.leaseExpiresAt))||Date.now()>=Date.parse(claim.leaseExpiresAt)||performance.now()-started>=60000)reject('DELIVERY_LEASE_STALE',409);
+ const response=await requestReceipt({binding,canonicalEnvelope:claim.canonicalEnvelope,envelope});
+ return deliveryTransaction(transaction,tx=>completeMarketingDelivery(tx,b,r,claim,response));
+}
+
+export async function marketingDeliveryAction({transaction,businessId,reportId,action}){
+ if(action==='send')return sendMarketingDelivery({transaction,businessId,reportId});
+ return deliveryTransaction(transaction,tx=>(action==='settle'?settleMarketingDelivery:readMarketingDelivery)(tx,businessId,reportId));
+}
