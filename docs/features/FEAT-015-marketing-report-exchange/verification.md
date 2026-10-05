@@ -2,11 +2,29 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.5.0
-date: 2026-10-05
+version: 1.6.0
+date: 2026-10-06
 ---
 
 # Verification — FEAT-015
+
+## Parent Phase B compatibility rebind — 2026-10-06
+
+Owner approved the separate bounded parent Phase B rebind:194→197 models, all
+original194 mappings preserved, three Marketing custody models still excluded
+from legacy JSON. Complete catalog/privilege/lock/census accounting remains;
+nonempty/unreadable custody and unsupported snapshot fields refuse before
+mutation. Historical schema bindings remain refused. Parent focused adapter/unit
+tests PASS57/57; fresh native sender/receiver regression PASS18/18 with no skipped
+case, including actual PostgreSQL schema12 Go freeze/Claim and lost-ACK recovery
+against the native SQLite parent. Parent RCA/spec/results are canonical in PR633
+`docs/change-requests/marketing/ZURI-GO-REPORT-IMPLEMENTATION-VERIFICATION.md`.
+Independent Phase B review PASS with an independent57-case rerun. Exact pushed-head
+hosted CI/final composed results are recorded on PR633; no merge readiness is inferred.
+
+Version diff1.5.0→1.6.0: records the approved parent compatibility fix and repeated
+paired QA. Go code/package unchanged; real Local and Production schema11, live
+credentials/bindings/sends and deployment remain untouched.
 
 ## Native sender and full paired QA — 2026-10-05
 
