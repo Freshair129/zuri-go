@@ -1,8 +1,8 @@
 ---
 id: FR-015-004
 title: Send with bounded recovery and durable receiver receipt
-delivery: declared
-status: draft
+delivery: building
+status: approved
 superseded_by: null
 relations:
   specified_by: [SDD-015]
@@ -21,4 +21,4 @@ The system SHALL send only an explicitly requested frozen report to a fixed appr
 
 ## Implementation
 
-NOT_IMPLEMENTED. No parent credential or sender worker is configured; proposed limits and states are in [the contract](../contract.md#sender-delivery-states-and-bounded-recovery).
+Owner-approved P3 is implemented as a candidate in CMP-004/API-026 and additive migration 012. Existing trusted local operator plus configured non-archived Business authority applies; the parent independently enforces its deny-default policy. Claim/Complete/Settle recheck current authority and DB time after all locks, with bounded waits and no automatic network retry. TC-015-008/009 cover pure/router/native delivery acceptance; [verification](../verification.md) records exact results and limitations. No real credential, binding, schema 012 application, send, deployment or worker is configured. This remains building until real operational gates close.

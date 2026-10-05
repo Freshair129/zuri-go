@@ -1,8 +1,8 @@
 ---
 id: FR-015-005
 title: Preserve parent ownership and receipt evidence
-delivery: declared
-status: draft
+delivery: building
+status: approved
 superseded_by: null
 relations:
   specified_by: [SDD-015]
@@ -22,4 +22,4 @@ The system SHALL require the separately reviewed parent Identity/Marketing recei
 
 ## Implementation
 
-NOT_IMPLEMENTED. Parent changes require their own governed records and source tests; this local requirement describes the end-to-end prerequisite, not an allocation or claim of implementation in Zuri-AI.
+The separately approved parent first-slice candidate is implemented under fresh FR-281–283/SDD-112 in paired draft PR633. Its native SQLite tests and full paired PostgreSQL sender case pass authority/replay, atomic receipt/audit and source-preservation checks. Parent readiness remains planned/partial/not_ready and the Phase B compatibility gate is open. AC-015-005-04 correction-pointer behavior is deferred: wire0.1 accepts only original reportRevision1 with no superseding report. This requirement remains building; no real receiver migration, binding, send or release is claimed. [Verification](../verification.md) records the paired evidence without allocating or renaming parent identities.

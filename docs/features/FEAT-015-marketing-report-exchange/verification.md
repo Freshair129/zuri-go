@@ -2,11 +2,144 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 0.7.0
-date: 2026-10-05
+version: 1.6.0
+date: 2026-10-06
 ---
 
 # Verification — FEAT-015
+
+## Parent Phase B compatibility rebind — 2026-10-06
+
+Owner approved the separate bounded parent Phase B rebind:194→197 models, all
+original194 mappings preserved, three Marketing custody models still excluded
+from legacy JSON. Complete catalog/privilege/lock/census accounting remains;
+nonempty/unreadable custody and unsupported snapshot fields refuse before
+mutation. Historical schema bindings remain refused. Parent focused adapter/unit
+tests PASS57/57; fresh native sender/receiver regression PASS18/18 with no skipped
+case, including actual PostgreSQL schema12 Go freeze/Claim and lost-ACK recovery
+against the native SQLite parent. Parent RCA/spec/results are canonical in PR633
+`docs/change-requests/marketing/ZURI-GO-REPORT-IMPLEMENTATION-VERIFICATION.md`.
+Independent Phase B review PASS with an independent57-case rerun. Exact pushed-head
+hosted CI/final composed results are recorded on PR633; no merge readiness is inferred.
+
+Version diff1.5.0→1.6.0: records the approved parent compatibility fix and repeated
+paired QA. Go code/package unchanged; real Local and Production schema11, live
+credentials/bindings/sends and deployment remain untouched.
+
+## Native sender and full paired QA — 2026-10-05
+
+The owner selected existing trusted local operator plus the configured non-archived Business. Approved documentation checkpoint `73a450f` binds that decision; no separate Go DOM-CAM policy was added. CMP-004/API-026 and additive migration 012 are implemented as an unmerged candidate. The parent retains its independent deny-default ingest policy. This section supersedes the earlier sender-authority/NOT_IMPLEMENTED checkpoint below.
+
+| Check | Executed result / boundary |
+|---|---|
+| Actual QA migration 001–012 | PASS on fresh empty databases under the test-owned loopback PostgreSQL 18.6 cluster; actual `apps/api/migrate.mjs`, restricted non-superuser/non-BYPASSRLS `zuri_go_app`. No restored Local or Production target was accessed. Migration 011 bytes unchanged; 012 does no backfill. |
+| TC-015-008 transport/orchestration | PASS 6/6: strict receipt/private configuration, actual bounded loopback HTTP, expired committed claim emits zero HTTP, rolled-back transaction retries emit one HTTP, hosted/Guest/Member/foreign Business and caller URL/token denial. |
+| TC-015-009 native sender | PASS 10/10: concurrent lazy projection produces one committed send; atomic matching receipt/ACK with rollback and immutable custody; forced RLS/helper/direct DML denial; Claim committed and connection/Business lock released before HTTP; four-attempt quota/backoff/Retry-After; expired settlement/stale-worker fence; post-lock current archive/association denial; held Business lock times out at five seconds without repeating HTTP; held final attempt-row lock crossing expiry rejects ACK and UNKNOWN; actual first-claim 24-hour deadline and valid fourth-attempt ACK. |
+| Paired native receiver/full delivery | PASS 18/18 (13 integration, 5 wire) in the reconciled parent runner, final 22:02:49 Asia/Bangkok, 33.06 seconds. Actual Go prepare/freeze → PostgreSQL Claim → actual Go bounded HTTP → actual Next route/Prisma 5.22 SQLite commit → dropped response UNKNOWN → eligible explicit same-byte retry → durable Go ACK with original receipt. Exactly two attempts, one Go receipt, one parent report/audit; original report/outbox bytes and all parent preexisting non-Audit tables preserved. Valid changed-byte conflict is 409; disabled parent policy denies identical replay. |
+| Independent source/test review | PASS after all three lease findings were resolved. Reviewed migration `c4ef2ea6ea732886da8e34cf31731b7fc99edbea`, sender `452ce1054014e4e6af3edc7359b9a2f487fc8e2d`, native tests `12bb9b0b6df3bfa1b375d032b28db2f9a243ad3d`, orchestration `7488aa6b798890edf97dd0d8d8c31f7b837a6a29`, parent cross test `1fd049b60fef5c3c450ce72bb38d98f5d8330114`. Reviewer did not rerun databases; executed QA is primary-agent evidence, independently reviewed. |
+
+Exact Go command: `node --test apps/api/test/marketing-report-delivery-postgres.test.mjs apps/api/test/marketing-report-delivery-orchestration.test.mjs apps/api/test/marketing-report-delivery.test.mjs` — 16 PASS, 0 FAIL, 0 SKIP. Native tests require both explicit `ZURI_GO_MARKETING_QA_ADMIN_URL` and `ZURI_GO_MARKETING_QA_RUNTIME_URL`, same guarded loopback QA database named `zuri_go_marketing_qa_*`, initially empty and schema 12. Without targets they report NOT_RUN rather than touching application storage. Parent `apps/server/scripts/run-marketing-report-native.mjs` adds `ZURI_REPORT_GO_SOURCE` and these same QA targets for the full paired case; otherwise that case is skipped. It uses a pinned generated baseline plus the candidate additive SQLite migration, not a historical migration-chain replay.
+
+Fast deadline/backoff tests change only synthetic QA timestamps using an owner transaction that disables and re-enables the specific guards atomically. Actual lock waits are observed with `pg_blocking_pids`; production immutability is never bypassed. Independent review caught delayed pre-network lease, unbounded DB wait and a time sample before the final attempt lock. [RCA](../../../.brain/rca/2026-10-05-p3-sender-lease-boundaries.md) records the fixes and regression evidence. The first paired run failed its changed-byte fixture (invalid shape produced 422); the final run changes an existing allowed campaign field and observes 409.
+
+Real API-026 success, new migration 012 on either real database, real association/credential/send and deployment remain NOT_RUN. No real private delivery config was created, no merge or promotion occurred. Application 0.5.1 → 0.5.1; real Local/Production schema 11 → 11; QA schema 12 only. Feature/requirements remain building; isolated acceptance is not an operational release.
+
+Go build PASS; source/projection/operator-guard checks PASS28/28, disposable PGlite P2 regression PASS8/8, native P1/P2 regression PASS6/6 and Python packaging suite PASS16/16. Go documents validate with0 errors/166 baseline warnings and11 views/0 drift. Parent hosted CI at5958b38 fails stale record/count fixtures and a separate Phase B frozen-inventory compatibility check. The stale reconciliation fixtures are corrected in the paired candidate; Phase B194→197 custody/schema rebind is a separate draft parent proposal. Both PRs remain draft and no global CI/merge readiness is claimed.
+
+Version diff 1.4.0 → 1.5.0: closes the owner authority clarification and records candidate native sender/full paired QA with explicit operational limits.
+
+### TC-015-008 — Strict transport, orchestration and route authority
+Relations: verifies: AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04
+Test: `apps/api/test/marketing-report-delivery.test.mjs`
+Test: `apps/api/test/marketing-report-delivery-orchestration.test.mjs`
+
+PASS 6/6. Files: `apps/api/test/marketing-report-delivery.test.mjs`, `apps/api/test/marketing-report-delivery-orchestration.test.mjs`. Pure fixtures and actual loopback transport; route denials are exercised through `handleApi`, not a hosted deployment or successful real operator send.
+
+### TC-015-009 — Native PostgreSQL delivery fences and full paired custody
+Relations: verifies: AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04
+Test: `apps/api/test/marketing-report-delivery-postgres.test.mjs`
+
+PASS 10/10 native sender plus the full paired case in the parent's 18/18 runner. File: `apps/api/test/marketing-report-delivery-postgres.test.mjs`; parent file: `apps/server/tests/integration/marketing-report-native.test.js`. Schema 012, RLS/ACL, concurrency, lease/age/quota, final-lock clock, receipt atomicity and immutable source evidence are exercised on synthetic isolated databases only.
+
+## Reconciled bounded receiver/transport checkpoint — 2026-10-05
+
+The owner approved main-first reconciliation and the paired physical designs. Parent fresh branch `codex/marketing-report-reconciled` preserves main `077796622233bf9f35905f7eac226f0963760dcb`, its dashboard FR-278 and the old branch's immutable issuance evidence. Independently reviewed fresh issuance at `d08f08a8f2604bd9657360d37f7c135d636189b7` supplies FR-281–283/SDD-112. This resolves the prior identity-collision coding gate; it does not qualify the old PR #630 for merge. Final remote checks still found those parent-main and Go-main `89b525aa` heads. Paired approved documentation is pinned at Go `4faf6334ce1eadcd291958606b70b94e2ab6b658`.
+
+| Check | Executed result / limit |
+|---|---|
+| Go pure transport | PASS 3/3, `node --test apps/api/test/marketing-report-delivery.test.mjs`. Strict bounded receipt/config validation, actual loopback HTTP timeout/body bounds, fixed-origin no-redirect single send. Source: CMP-004. No sender ledger, route or durable Go receipt write. |
+| Parent wire/native SQLite | PASS 17/17 (5 wire, 12 integration), final opt-in native runner 19:25 Asia/Bangkok. Actual Next route, isolated Prisma 5.22.0 SQLite, atomic commit/replay, crossed scopes/revocation/deny-default, contention retries, backup guards and native-table preservation. Generated pinned baseline DDL plus actual candidate additive migration; not full historical chain or a live migration. |
+| Cross-repository lost response | PASS actual Go transport → loopback HTTP → actual Next/native SQLite commit, response loss UNKNOWN, explicit identical replay ACK with original receipt and one parent report/audit. Does not exercise PostgreSQL Claim/Complete/Settle or durable sender ACK. |
+| Parent PostgreSQL artifact | PASS structural QA compilation only, seven guards; receiver PostgreSQL runtime is disabled and unqualified. |
+| Parent governance snapshot suites | PASS 38/38 on reconciled tooling; fresh issuance preserves 540 main canonical entries and 748 original pin metadata (544 records/752 pins). Final composed governance is recorded in the parent verification. |
+| Independent application source/test review | PASS bounded receiver and pure transport, after enum/CTR/scope findings were resolved. No independent native rerun or full-sender acceptance claim. Parent verification: `docs/change-requests/marketing/ZURI-GO-REPORT-IMPLEMENTATION-VERIFICATION.md`. |
+
+Sender authority remains a material clarification: existing trusted local operator plus non-archived configured Business, or a new separate deny-default sender policy. The inspected Go schema has no separate DOM-CAM switch. Migration 012, Claim/Complete/Settle, API-026, PostgreSQL delivery concurrency/lease/age/attempt acceptance and full freeze-to-durable-ACK remain NOT_IMPLEMENTED/NOT_RUN pending that decision. No real migration, association, credential, send, deployment or production change occurred. Package remains 0.5.1; restored Local and Production remain schema 11.
+
+Version diff 1.3.0 → 1.4.0: records reviewed fresh parent identities, the bounded implemented transport/receiver checks and remaining sender/operational gates; prior sections retain historical evidence.
+
+## Final parent main collision gate — 2026-10-05
+
+Latest parent-main integration is **BLOCKED**, despite the earlier successful `3506129f` composition below. Final remote check fetched `077796622233bf9f35905f7eac226f0963760dcb` (PR #632), issuing FR-278 for an executive dashboard, while the report branch issued that key for its machine credential. Parent RCA `marketing-report-branch-id-collision.md` records both rows/ledger digests and branch-local allocation evidence. Parent DRAFT `ZURI-GO-REPORT-MAIN-RECONCILIATION.md` proposes preserving main identities and old branch evidence, then a fresh coordinated record migration before coding. No conflicting merge/renumber/alias was attempted; this section supersedes any reading of the earlier tests as qualification of the latest main. Go main `89b525aa` remains an ancestor of this branch; no new Go integration is needed.
+
+## P3 integrated main and physical proposals — 2026-10-05
+
+The owner approved integrating current main and preparing physical receiver/sender design. Parent task branch merged upstream `3506129ffc1feb93773d2110901e248609f80f7c` without conflicts as `fcb7ade3a022029cf47530643edc74fab2e49420`; active parent checkout/runtime stayed in place. This is branch integration, not merging PR #630. Go remote main needed no additional integration. Parent provenance/issuance records were not rebased or rewritten.
+
+| Integrated check | Result / limit |
+|---|---|
+| Parent migration / source snapshot-verifier / upstream PM guard | PASS — 73/73, 32/32 serialized, 23/23 respectively; source/governance fixtures only |
+| Regenerated parent graph/views/corpus/full governance | PASS — serial generation/corpus check and full govern exit 0, 543 records/751 pins/96 views with baseline debt; composed planned/retired projection 9/9 PASS |
+| Go documentation validation/views | PASS — 0 errors / 166 baseline warnings; 11 views / 0 drift; diff checks clean |
+| Physical independent design review | PASS for owner-review readiness — parent blob `8da2f63af23919ec8f26a0537885d6dda778893d`, Go blob `5a85e532f5ab9e96ee5eceab50bc26db860b5796`; lazy initialization, backup custody and lease/age/error findings resolved. New policy/backup/first-claim clock decisions still need owner approval; no runtime acceptance |
+| Application / native receiver-sender QA / new migration | NOT_RUN — no code/schema or actual database operation |
+
+New [Go physical chapter](p3-physical-delivery.md) v0.1.0 and parent `docs/change-requests/marketing/ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.1.0 are DRAFT for owner review. Go proposes fenced explicit delivery; parent proposes a current Business machine-ingest gate with default denial because no native Business-wide growth switch exists in inspected source. Complete wire/delivery physical approval remains OPEN. Version diff 1.2.0 → 1.3.0 adds this evidence/proposal status; P3 0.3.0 → 0.4.0 adds navigation. Package stays 0.5.1 and Local/Production stay schema 11; no live association, credential, transfer or deployment changed.
+
+## P3 parent authored records — 2026-10-05
+
+The owner approved additive parent record tooling after approving the receiver contract. Parent tooling commit `90b9df7dfb65550e9c18259fc817291126546887` is on isolated branch `codex/marketing-report-p3`; active `O:/zuri.ai` and its runtime remain unchanged. Independent source review PASS pins tree `ec3f59c4f5bfd44bcd5591b19f4b6bc30f15fce1`; manifest review PASS pins SHA-256 `7a5e6c9dbef8532389364214810d7c8b6f27484a6ec64ff8e122c972b294f10a` before actual apply.
+
+The sanctioned writer issued `ZAI:FR-278`, `ZAI:FR-279`, `ZAI:FR-280` and `ZAI:SDD-111`, each with planned delivery and no feature-membership change. It generated canonical index/exports and invoked the existing add-only ID writer; none was hand-edited. Parent SoT/evidence is `docs/migrations/document-reintegration/AUTHORED-VERIFICATION.md`, with immutable manifest/approval/issuance receipt under `record-migrations/`. These are qualified external references, not aliases or new local IDs.
+
+| Check | Result / limit |
+|---|---|
+| Plan / issuance / immediate identical reapply | PASS — PLANNED, APPLIED, ALREADY_APPLIED; no actual app/data migration |
+| Preservation | PASS — all 539 original canonical entries/bytes and 747 original pin metadata preserved; 543 records/751 pins now. Only three new standalone readiness entries were subsequently added to the FEATURES source template and generated export; old rows/membership/metadata remain unchanged |
+| Parent migration tests | PASS — 73/73, no skipped tests, including composed corpus |
+| Snapshot/verifier qualification | PASS — 32/32 serialized on reviewed tooling, unchanged snapshot/proof versions and 20-second bound. Earlier concurrent run retained 31 PASS / 1 timing failure; no confirmed resource-pressure RCA is claimed |
+| Post-presentation reapply refusal | PASS — expected output-drift denial for changed FEATURES; original issuance receipt stays historical and unchanged |
+| Composed planned/retired projection tests | PASS — 9/9; new parent subjects stay planned/not ready with zero delivery credit; no receiver test coverage is inferred |
+| Parent composed governance/output review | PASS — final `npm run govern` exit 0 (543 records, 751 pins, 96 views, fresh graph/strict preflight with accepted baseline debt). Independent composed review PASS pins tree `f579325fef7e7c619b2e068b8e15d06fd9f5c0c0` and independently verifies original bytes/pins, generated planned projection and historical receipt disclosure |
+| Receiver/sender/physical design | OPEN / NOT_RUN — reviewed physical append-only design and native test bindings remain required before application coding; P3-B/C/D acceptance remains NOT_RUN |
+
+No Go code, new applied schema, live binding/credential, real report transfer, deployment or merge occurred in this slice. Go package remains 0.5.1 and Local/Production schema remains 11 from the separately authorized operations below. Draft parent [PR #630](https://github.com/Freshair129/zuri.ai/pull/630) and Go [PR #10](https://github.com/Freshair129/zuri-go/pull/10) remain the publication surfaces.
+
+At record-issuance closeout, parent remote main advanced to `3506129f` through PM workflow documentation/guard PR #631. Read-only recheck found no collision with these four IDs and no registry/schema/Marketing/Identity changes in that range. Integration/retesting was then NOT_RUN; the later integrated-main section above supersedes that limitation with actual scoped results.
+
+Version diff 1.1.0 → 1.2.0: records separate tooling approval, governed parent issuance, preservation, executed tests and remaining physical/runtime gates. P3 chapter 0.2.0 → 0.3.0 reconciles those parent record references; no local requirement IDs or application behavior change.
+
+## P3 approval and parent contract preparation — 2026-10-05
+
+The owner approved [P3](p3-delivery-receiver.md) v0.1.0 and subsequently selected minimum **90-day** retention for evidence/receipt, with no automatic deletion; audit retains the existing parent policy. P3 v0.2.0 records that scope/policy approval. Parent detailed intake is prepared at `docs/change-requests/marketing/ZURI-GO-REPORT-RECEIVER.md` in Zuri-AI, on isolated branch `codex/marketing-report-p3` from `332b88c9`; the active parent checkout/runtime is unchanged.
+
+The intake specifies report-only credentials, source/target binding, atomic SQLite evidence/receipt/audit, private readers and strict replay/source-preservation tests. It proposes new canonical requirement/design subjects and preserves current IDs/pinned rows. The approved parent writer profile requires a separately reviewed normative record migration; this intake is not an issued record or receiver implementation. Parent migration/read-policy gate remains OPEN. No sender/receiver code, new applied schema, real association/credential, data send or deployment was performed. P3-B/C/D tests remain NOT_RUN; the previously verified Local/Production operations below are unchanged.
+
+Version diff 0.7.0 → 0.8.0: P3 scope and 90-day minimum-retention approval recorded; detailed parent proposal prepared through the Doc Writer intake boundary. Documentation evidence does not mark P3 delivery or parent acceptance passed.
+
+Documentation checks: Go validation PASS (0 errors, 166 existing warnings); generated views PASS (11 views, no drift). Parent `npm run govern` PASS at intake revision `31ff2d4558a4d762a293b785472512e615a7b41b`: 539 canonical records remain pinned, registry/identity/graph/views and strict preflight pass with recorded baseline debt. Parent navigation was regenerated by its generator; no canonical records or ID ledger were edited. Independent architecture review PASS for Go `696c387bc9db171151c93b96edf0ee230542ecd7` and that parent intake revision, documentation scope only. The reviewer did not independently rerun full governance or runtime tests. The later rerun after `5237e5ea8c8af4364f40b18e67acadc0fac88587` stopped during graph generation without an exit receipt during Windows resource pressure and is NOT_COMPLETED, not another PASS.
+
+The parent intake v0.3.0 incorporates the review's clarification: current machine growth permission requires an active binding, report-ingest permission and currently enabled target growth domain, rechecked inside every intake/replay/retry transaction. Disable/revoke must deny receipt replay as well as new writes; native human visibility is tested separately. This clarifies the proposed contract without changing application behavior. The parent normative record migration remains OPEN.
+
+Version diff 0.8.0 → 0.9.0: recorded executed documentation checks, the independent review's exact revisions and the proposed machine-permission clarification. Application version, schemas, source data and deployments unchanged; P3 runtime acceptance remains NOT_RUN.
+
+The owner subsequently approved the detailed parent receiver intake (v0.4.0 records the approval). Independent narrow review PASS for the Go verification blob `89b8425fb0d4af6f6d119624822303aaf49cfb5b` and parent v0.3.0 intake blob `d1e8e58f03cd7f1f8462da606fa3e986322515a0`. The proposed receiver behavior is approved; canonical issuance is still pending because the current parent parser/writer supports only initial source-preserved records. Parent `docs/change-requests/marketing/ZURI-GO-RECORD-AUTHORING.md` v0.1.0 is a separate DRAFT for additive authored-record support, preserving all 539 imported records. It is not receiver code or an executed migration.
+
+Version diff 0.9.0 → 1.0.0: recorded receiver-intake approval and made the independently reviewable governance-tool prerequisite explicit. No application, schema, live binding, data transfer or deployment changed.
+
+Final documentation closeout: parent full `npm run govern` PASS (exit 0) at `095332c67bac9ed2bbd2cf3d5adecfba77463473`, after regenerating navigation from the updated graph. All 539 imported records and 747 issued IDs remain intact. Independent architecture review PASS for authored-record proposal blob `35df4c1935467751575b82b5d5f7aeab83291c75`, approved receiver intake blob `5e5826f490f722a75b3e4a8b59df68376012ee58` and Go verification blob `becffd3f6723e62060d706d57a939f70592dff80`. The reviewer checked document quality/compatibility scope, not owner approval or execution of the proposed tooling. Reviewable draft PRs: [Go #10](https://github.com/Freshair129/zuri-go/pull/10), [parent #630](https://github.com/Freshair129/zuri.ai/pull/630). Both remain unmerged. Parent receiver behavior is approved; authored-record tooling is DRAFT; issued receiver records, tooling implementation and P3 runtime acceptance remain pending/NOT_RUN.
+
+Version diff 1.0.0 → 1.1.0: records the final parent governance exit receipt, reviewed document blobs and paired draft PRs; no application, schema or runtime change.
 
 ## Local Production-backup restore — 2026-10-05
 
@@ -226,12 +359,12 @@ Status: PARTIAL — TC-015-005/006 pass strict frozen-envelope and persisted SQL
 ### Acceptance plan 04 — Bounded delivery and receipt recovery
 Coverage: FR-015-004; AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04; NFR-015-001.
 
-Status: NOT_RUN. Proposed test file: `apps/api/test/marketing-report-delivery.test.mjs`. Holdout: commit then dropped response, 429 Retry-After, mismatch receipt, worker/lease interruption, fifth send, stale age, concurrent send and redirect to other origin.
+Status: PARTIAL. Actual `apps/api/test/marketing-report-delivery.test.mjs` passes 3 pure/HTTP cases; parent native tests cover committed response loss and explicit same-byte replay through this transport. PostgreSQL sender worker/lease interruption, fifth send, stale age, concurrent Claim/Complete/Settle and durable ACK remain NOT_RUN. Receipt mismatch, 429 parsing and redirect refusal are transport evidence, not sender ledger acceptance.
 
 ### Acceptance plan 05 — Parent writer and authorization boundaries
 Coverage: FR-015-005; AC-015-005-01, AC-015-005-02, AC-015-005-03, AC-015-005-04.
 
-Status: NOT_RUN. Proposed parent test files require allocation in Zuri-AI's own reviewed record. Holdout: inactive/revoked credential after acceptance, Tenant-wide key without Business grant, valid key/crossed target, replay receipt disclosure, same key/new hash, concurrent corrections, immutable native Plan/review/decision and verified revenue.
+Status: PARTIAL. Fresh parent FR-281–283/SDD-112 bind actual `marketing-report-wire.test.js` and `marketing-report-native.test.js`; bounded checks above pass. Inactive/revoked policy and replay, wrong credential family, crossed scope, same key/new bytes, race/commit failure and native row preservation have isolated SQLite evidence. Full paired sender acceptance and hosted/live checks remain NOT_RUN; correction chains are outside approved revision 1.
 
 ## Completion gate and version diff
 

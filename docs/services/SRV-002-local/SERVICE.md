@@ -6,7 +6,7 @@ hosts: [DOM-BIZ, DOM-CAM, DOM-MET, DOM-TSK, DOM-MTG, DOM-IAM, DOM-PLT, DOM-BRN, 
 implements: [FEAT-001, FEAT-002, FEAT-003, FEAT-004, FEAT-008, FEAT-009, FEAT-013, FEAT-014, FEAT-015]
 relations:
   relates_to: [ARCH-005, ADR-007]
-  exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, API-024, API-025, EVT-001]
+  exposes: [API-001, API-002, API-003, API-004, API-005, API-006, API-007, API-008, API-009, API-010, API-011, API-012, API-013, API-014, API-015, API-016, API-017, API-018, API-019, API-020, API-024, API-025, API-026, EVT-001]
   consumes: [API-021, API-022]
 ---
 
@@ -51,7 +51,7 @@ Hosts every domain listed in the frontmatter and realises every feature in its `
 
 ## Marketing report preview — FEAT-015
 
-FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; Production migration 011 and metadata/source-preservation postchecks passed after a verified full backup. Local migration 011 passed after the separately owner-authorized restore of the verified Production backup into a new persistent loopback database; schema 11 and all 47 source table counts/content hashes match. Local API-024 HTTP preview passed (200, HELD, 12 UNKNOWN/null measurements and valid canonical hash); real API-025 preparation/freeze HTTP remains NOT_RUN because no reviewed parent association is provisioned. Existing hosted Guest reads/write denial passed; no marketing API deployment is claimed. Ready metrics, sending and parent receiver are not implemented. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
+FEAT-015 is **building**: approved P1 [CMP-002](CMP-002-marketing-report-preview.md) / API-024 stays read-only; approved P2 [CMP-003](CMP-003-marketing-report-ledger.md) / API-025 adds preparation, immutable freeze/read and QUEUED. Native concurrency/lock/ACL checks pass in isolated PostgreSQL 18.6. Independent L2 correction review passed at `99ed23a`; Production migration 011 and metadata/source-preservation postchecks passed after a verified full backup. Local migration 011 passed after the separately owner-authorized restore of the verified Production backup into a new persistent loopback database; schema 11 and all 47 source table counts/content hashes match. Local API-024 HTTP preview passed (200, HELD, 12 UNKNOWN/null measurements and valid canonical hash); real API-025 preparation/freeze HTTP remains NOT_RUN because no reviewed parent association is provisioned. Existing hosted Guest reads/write denial passed; no marketing API deployment is claimed. Ready metrics remain HELD. Approved P3 [CMP-004](CMP-004-marketing-report-delivery.md) / API-026 now implements candidate explicit delivery with schema file012; isolated native sender and paired receiver checks pass. Real schema012, association, credential, send and rollout remain open; Local and Production stay schema11. See [verification](../../features/FEAT-015-marketing-report-exchange/verification.md). Service `implements` records ownership, not full acceptance.
 
 ## Visual Marketing — FEAT-014
 

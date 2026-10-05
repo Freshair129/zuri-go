@@ -22,7 +22,7 @@ before(async()=>{
  admin=new pg.Pool({connectionString:adminUrl,max:2,connectionTimeoutMillis:4000,options:'-c search_path=zuri_go,public'});
  runtime=new pg.Pool({connectionString:runtimeUrl,max:3,connectionTimeoutMillis:4000,options:'-c search_path=zuri_go,public'});
  const inspected=(await admin.query("SELECT current_setting('server_version_num')::int version,(SELECT count(*)::int FROM zuri_go.businesses) businesses,(SELECT max(version) FROM public.zuri_go_migrations) schema")).rows[0];
- assert.ok(inspected.version>=160000);assert.equal(inspected.businesses,0,'QA database must be empty before this suite');assert.equal(inspected.schema,11,'QA schema must already be migrated by its owner');
+ assert.ok(inspected.version>=160000);assert.equal(inspected.businesses,0,'QA database must be empty before this suite');assert.equal(inspected.schema,12,'QA schema must already be migrated by its owner');
  const role=(await runtime.query('SELECT current_user AS name,rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user')).rows[0];assert.equal(role.name,'zuri_go_app');assert.equal(role.rolsuper,false);assert.equal(role.rolbypassrls,false);
 });
 after(async()=>{await Promise.all([admin?.end(),runtime?.end()]);});
@@ -97,20 +97,22 @@ test('expiry is checked after waiting, rather than against transaction-start tim
 
 test('migration grant reconciliation hides intermediate INSERT privileges and rolls them back on interruption',{skip},async()=>{
  const f=await fixture(),source=await readFile(new URL('../migrate.mjs',import.meta.url),'utf8');
- const batch=source.slice(source.indexOf('// Keep intermediate broad grants invisible;'),source.indexOf("console.log('Zuri-Go schema 11"));
+ const batch=source.slice(source.indexOf('// Keep intermediate broad grants invisible;'),source.indexOf("console.log('Zuri-Go schema 12"));
  const statements=[...batch.matchAll(/await client.query\('([^']+)'\)/g)].map(m=>m[1]);
  assert.equal(statements[0],'BEGIN');assert.deepEqual(statements.slice(-2),['COMMIT','ROLLBACK']);
+ const retained=['marketing_report_associations','marketing_report_preparations','marketing_reports','marketing_report_outbox','marketing_report_deliveries','marketing_report_delivery_attempts','marketing_report_delivery_receipts'];
  const owner=await admin.connect(),caller=await runtime.connect();
+ const denied=async()=>{for(const table of retained)assert.deepEqual((await caller.query("SELECT has_table_privilege(current_user,$1,'INSERT') i,has_table_privilege(current_user,$1,'UPDATE') u,has_table_privilege(current_user,$1,'DELETE') d",['zuri_go.'+table])).rows[0],{i:false,u:false,d:false});};
  try{
   await caller.query("SELECT set_config('zuri_go.business_id',$1,false),set_config('zuri_go.viewer_kind','operator',false)",[f.b]);
   await owner.query(statements[0]);await owner.query(statements[1]);await owner.query(statements[2]);
-  assert.equal((await caller.query("SELECT has_table_privilege(current_user,'zuri_go.marketing_report_associations','INSERT') allowed")).rows[0].allowed,false);
+  await denied();
   await assert.rejects(caller.query("INSERT INTO marketing_report_associations(business_id,source_deployment_id,external_binding_id,parent_tenant_id,parent_business_id,parent_initiative_id,reviewed_at,review_ref) VALUES($1,'forged-source','forged-binding','qa-tenant','qa-business','qa-initiative',clock_timestamp(),'fake-review')",[f.b]),e=>e.code==='42501');
   await owner.query('ROLLBACK');
-  assert.equal((await caller.query("SELECT has_table_privilege(current_user,'zuri_go.marketing_report_associations','INSERT') allowed")).rows[0].allowed,false);
+  await denied();
   // Execute the exact complete migrator batch (omit the catch-only ROLLBACK after its COMMIT).
   for(const statement of statements.slice(0,-1))await owner.query(statement);
-  for(const table of ['marketing_report_associations','marketing_report_preparations','marketing_reports','marketing_report_outbox'])assert.deepEqual((await caller.query("SELECT has_table_privilege(current_user,$1,'INSERT') i,has_table_privilege(current_user,$1,'UPDATE') u,has_table_privilege(current_user,$1,'DELETE') d",['zuri_go.'+table])).rows[0],{i:false,u:false,d:false});
+  await denied();
   assert.equal((await owner.query('SELECT count(*)::int n FROM marketing_report_associations WHERE business_id=$1',[f.b])).rows[0].n,1);
  }finally{await owner.query('ROLLBACK');owner.release();caller.release();}
 });

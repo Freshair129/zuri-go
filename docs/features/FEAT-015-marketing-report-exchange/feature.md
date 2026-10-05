@@ -7,7 +7,7 @@ runtime: SRV-002
 delivery: building
 status: approved
 superseded_by: null
-version: 0.7.0
+version: 0.9.0
 date: 2026-10-05
 complexity: C-3
 risk: HIGH
@@ -30,6 +30,8 @@ relations:
 
 ## Current delivery and exit gates
 
+P3 candidate now implements [CMP-004](../../services/SRV-002-local/CMP-004-marketing-report-delivery.md)/API-026/schema file 012 under paired approval and the owner-selected existing operator/Business authority. Isolated PostgreSQL sender and full paired SQLite receiver acceptance pass; [verification](verification.md#native-sender-and-full-paired-qa--2026-10-05) owns exact checks and limits. Real migration 012, binding, credentials, sending, deployment and merge remain open. The earlier P1/P2 operational facts below remain valid for the real schema-11 databases.
+
 **BUILDING / P1 and P2 implemented; native database checks passed.** [API-024](../../domains/campaign/contracts.md#api-024--local-marketing-report-preview) stays a read-only preview; [API-025](../../domains/campaign/contracts.md#api-025--local-marketing-report-preparation-and-freeze) persists preparation and atomically freezes immutable report + QUEUED + private audit. Native PostgreSQL 18.6 passes 5 P2 concurrency/lock/ACL cases and the original P1 snapshot case. Independent L2 found a grant window; the atomic correction passed review at `99ed23a` with an independent migration/rerun and six native cases. Production migration 011 passed on 2026-10-05 after a verified full backup; schema 11 and unchanged existing data/ACL/RLS were verified. Existing hosted Guest reads and write denial passed. Local migration 011 passed after the separately owner-authorized restore of the verified Production backup into a new persistent loopback database; schema 11 and all 47 source table counts/content hashes match. Local API-024 HTTP preview passed (200, HELD, 12 UNKNOWN/null measurements and valid canonical hash); real API-025 preparation/freeze HTTP remains NOT_RUN because no reviewed parent association is provisioned. No marketing API rollout is claimed. Actual measurements remain null/UNKNOWN and readiness HELD without audited source timezone/coverage. See [verification](verification.md).
 
 P1 is C-3 / MEDIUM (API and private-data boundary). The full exchange remains HIGH risk because it adds persistence and cross-system authorization. No source timezone attestation is accepted from a caller or arbitrary state field.
@@ -43,8 +45,8 @@ Completed operational gates: independent corrective review, PR #6 merge and migr
 | [FR-015-001](requirements/FR-015-001-scoped-source-snapshot.md) | Freeze one authorized campaign source snapshot | building |
 | [FR-015-002](requirements/FR-015-002-reported-metric-semantics.md) | Export truthful metrics and reported review semantics | building |
 | [FR-015-003](requirements/FR-015-003-immutable-report-envelope.md) | Build a strict immutable envelope and explicit binding | building |
-| [FR-015-004](requirements/FR-015-004-durable-delivery-receipt.md) | Send with bounded recovery and durable receiver receipt | declared |
-| [FR-015-005](requirements/FR-015-005-source-preserving-receiver.md) | Preserve parent authority and receipt evidence | declared |
+| [FR-015-004](requirements/FR-015-004-durable-delivery-receipt.md) | Send with bounded recovery and durable receiver receipt | building |
+| [FR-015-005](requirements/FR-015-005-source-preserving-receiver.md) | Preserve parent authority and receipt evidence | building |
 
 ## Documents
 
@@ -52,10 +54,15 @@ Completed operational gates: independent corrective review, PR #6 merge and migr
 - [SDD-015](design.md) — sequence, persistent boundaries, authority and implementation gates.
 - [Approved P2 design](p2-freeze-outbox.md) — server-issued preparation, immutable freeze/QUEUED storage and isolated-QA/grant checks; code reviewed, migration 011 applied on both targets.
 - [Wire contract proposal](contract.md) — field types, allowed payload, states and proposed interfaces.
+- [Approved P3 scope](p3-delivery-receiver.md) — sequencing, report-only Identity binding, minimum 90-day evidence/receipt retention, delivery state and isolated end-to-end acceptance; parent record migration gate remains open before coding.
 - [Quality/security constraints](requirements/NFR-015-001-bounded-private-exchange.md).
 - [Verification plan and executed checks](verification.md).
 
 ## Version diff
+
+0.8.0 → 0.9.0: records the approved existing operator/Business sender authority and P3 candidate implementation (CMP-004/API-026/schema file 012). Parent reconciled issuance supplies FR-281–283/SDD-112. Isolated sender/cross-system acceptance is recorded in verification; live migration, credentials, sends, deployment and merge remain separate gates. Application stays 0.5.1; real Local and Production stay schema 11.
+
+0.7.0 → 0.8.0: recorded P3 owner approval and minimum 90-day evidence/receipt retention; parent-owned detailed contract/record migration prepared as intake. Coding/QA delivery remains unperformed until that parent gate closes.
 
 0.6.0 → 0.7.0: separately approved persistent Local restore/migration and actual runtime/API-024/build acceptance passed; schema 11 on both targets. API-025 real binding, browser and parent/sender acceptance remain open. No application version or Production deployment change.
 

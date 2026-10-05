@@ -3,7 +3,7 @@ id: SDD-015
 title: Marketing report exchange — design
 status: approved
 superseded_by: null
-version: 0.7.0
+version: 0.8.0
 date: 2026-10-05
 relations:
   relates_to: [FEAT-015, ARCH-005, ADR-007, DOM-CAM, DOM-MET, SRV-002]
@@ -87,6 +87,8 @@ The owner approved [P2 preparation, freeze and queued outbox](p2-freeze-outbox.m
 `PreparationResult` and `FrozenReportResult` carry `{replayed, preparation/report}`; 201 new, 200 replay. SQL's `marketing_prepare(uuid,uuid,jsonb)` and `marketing_freeze(uuid,uuid,jsonb)` construct source/clock/routing themselves. Helpers are not runtime-callable. API-024/CMP-002 keep their read-only P1 promise. TC-015-005/006/007 pass, including native PostgreSQL 18.6 concurrency/locks and migrator ACL interruption. Independent L2 found the original grant window; atomic grant/revoke correction passed independent L2 review at `99ed23a`, including an independent six-case native rerun and actual migration/rerun. Production and Local migration/postchecks pass; real API-025 HTTP freeze remains NOT_RUN without a reviewed parent association.
 
 ## Future interfaces — not implemented
+
+P3 sequencing, credential options and QA exit are authored in [P3 delivery and receiver](p3-delivery-receiver.md) (**owner-approved scope**, 2026-10-05). It preserves the approved P2 immutable records. The owner selected minimum 90-day evidence/receipt retention; detailed parent-owned record migration/contracts remain gates before coding.
 
 - FR-015-004 · `dispatchMarketingReport(scope, reportId, now) → DeliveryResult` — manual invocation, leased attempt and bounded retries; no worker starts at application boot.
 - FR-015-005 · parent `acceptReportedMarketingEvidence(authenticatedBinding, envelope) → DurableReceipt` — candidate signature in this design only; parent record/schema/authorization approval is mandatory.

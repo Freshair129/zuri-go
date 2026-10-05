@@ -13,6 +13,7 @@ import {commitMeeting} from './meeting-commit.mjs';
 import {visualApi} from './visual-marketing/api.mjs';
 import {readPreviewRequest,readMarketingReportSource,previewMarketingReport} from './marketing-report.mjs';
 import {readLedgerRequest,prepareMarketingReport,freezeMarketingReport,readMarketingReport,ledgerRetry} from './marketing-report-ledger.mjs';
+import {readDeliveryRequest,marketingDeliveryAction} from './marketing-report-delivery.mjs';
 export function send(res,status,value){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));}
 export function sendError(res,e){const status=e.status||(['23502','23503','23505','23514','22P02','22007','22008'].includes(e.code)?422:e.code==='40001'?409:e.code==='ENOENT'?404:500);send(res,status,{error:e.status?e.message:status===422?'ข้อมูลขัดกับข้อกำหนดหรือรายการที่อ้างอิง กรุณาตรวจอีกครั้ง':status===409?'ข้อมูลถูกแก้จากอีกหน้าต่าง กรุณาโหลดใหม่':status===404?'ไม่พบรายการ':'บันทึกไม่สำเร็จ กรุณาลองใหม่',code:e.code||null});if(status===500)console.error('Request failed',e.code||e.name);}
 // principal: OPERATOR on the local server, session(claims) on the hosted API; nothing else selects the viewer (FR-011-003).
@@ -32,7 +33,17 @@ export async function handleApi(req,res,url,{businessId,storage,principal=null,r
     const window=await readPreviewRequest(req);
     send(res,200,await scopedTransaction(b,async c=>previewMarketingReport(await readMarketingReportSource(c,b,campaign),window)));return;
    }
-   // @trace implements FR-015-001, FR-015-003 — private local ledger; no send operation.
+   // @trace implements FR-015-004 — explicit local operator delivery only.
+   const delivery=route.match(/^\/businesses\/([a-f0-9-]{36})\/marketing-reports\/([a-f0-9-]{36})\/delivery(?:\/(send|settle))?$/);
+   if(delivery){
+    const [,b,id,action]=delivery;
+    if(b!==businessId||storage!=='postgresql-local'||requireMember||principal?.kind!=='operator'||process.env.VERCEL==='1')fail('Local operator delivery only',403);
+    if(method!==(action?'POST':'GET'))fail('Method not allowed',405);
+    if(action)await readDeliveryRequest(req);
+    else if(req.headers['transfer-encoding']||Number(req.headers['content-length']||0)>0||req.body!==undefined&&(typeof req.body!=='object'||Object.keys(req.body).length))fail('GET body not allowed',422);
+    send(res,200,await marketingDeliveryAction({transaction:fn=>scopedTransaction(b,fn),businessId:b,reportId:id,action}));return;
+   }
+   // @trace implements FR-015-001, FR-015-003 — private local preparation/freeze ledger.
    const ledgerWrite=route.match(/^\/businesses\/([a-f0-9-]{36})\/campaigns\/([a-f0-9-]{36})\/(marketing-report-preparations|marketing-reports)$/);
    const ledgerRead=route.match(/^\/businesses\/([a-f0-9-]{36})\/marketing-reports\/([a-f0-9-]{36})$/);
    if(ledgerWrite||ledgerRead){

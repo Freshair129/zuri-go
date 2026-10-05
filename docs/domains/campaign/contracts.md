@@ -14,6 +14,20 @@ Owner: DOM-CAM
 
 Request/window, response fields and incomplete-source semantics are authored once in [FEAT-015 contract](../../features/FEAT-015-marketing-report-exchange/contract.md#p1-preview-contract--approved-2026-10-05). All actual metrics remain UNKNOWN/null without audited server source-timezone/coverage evidence; caller timezone is not attestation. No envelope, outbox, target binding, parent network call, credential or receipt is created. Shared same-origin/header/no-store/error-envelope rules remain API-001.
 
+### API-026 — Explicit local marketing report delivery
+Relations: relates_to: FEAT-015, FR-015-004, SDD-015, API-001, CMP-004
+Owner: DOM-CAM
+
+**Status:** approved P3, 2026-10-05. **Served by:** SRV-002 only. **Code:** `apps/api/marketing-report-delivery.mjs`, `apps/api/api.mjs`, additive migration 012. The configured non-archived Business and trusted local operator are required; hosted, Guest, Member and foreign Business are denied before DB/network.
+
+| Operation | Request | Success | Errors |
+|---|---|---|---|
+| `GET /businesses/{b}/marketing-reports/{reportId}/delivery` | No body | 200 safe delivery status/receipt; absent projection reads QUEUED without initialization | 403 authority; 404 unavailable report; 409 stale association or bounded DB wait |
+| `POST .../delivery/send` | Empty bytes or exact `{}`, max 1024 UTF-8 bytes | 200 delivery status after one Claim, one HTTP call and fenced Complete; includes ACK only with atomic durable receipt | 403 authority; 400 JSON; 413 size; 422 fields; 409 missing/stale private config, active/stale lease, terminal/ineligible state or bounded DB wait |
+| `POST .../delivery/settle` | Same empty command | 200 UNKNOWN/EXHAUSTED after expired lease settlement; never network | Same authority/body/wait errors; 409 unexpired lease |
+
+Shared prefix/header/origin/no-store/error-envelope rules are API-001. The [physical design](../../features/FEAT-015-marketing-report-exchange/p3-physical-delivery.md) owns states, locks, quota, backoff and receipt rules. Public callers cannot choose URL, credentials or completion outcome. Local runtime and Production remain schema 11 until separately authorized migration; QA schema 12 does not make these routes operational on real data.
+
 ### API-025 — Local marketing report preparation and freeze
 Relations: relates_to: FEAT-015, FR-015-001, FR-015-003, SDD-015, API-001, CMP-003
 Owner: DOM-CAM
