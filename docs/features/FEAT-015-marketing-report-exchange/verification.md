@@ -2,7 +2,7 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.0.0
+version: 1.1.0
 date: 2026-10-05
 ---
 
@@ -25,6 +25,10 @@ Version diff 0.8.0 → 0.9.0: recorded executed documentation checks, the indepe
 The owner subsequently approved the detailed parent receiver intake (v0.4.0 records the approval). Independent narrow review PASS for the Go verification blob `89b8425fb0d4af6f6d119624822303aaf49cfb5b` and parent v0.3.0 intake blob `d1e8e58f03cd7f1f8462da606fa3e986322515a0`. The proposed receiver behavior is approved; canonical issuance is still pending because the current parent parser/writer supports only initial source-preserved records. Parent `docs/change-requests/marketing/ZURI-GO-RECORD-AUTHORING.md` v0.1.0 is a separate DRAFT for additive authored-record support, preserving all 539 imported records. It is not receiver code or an executed migration.
 
 Version diff 0.9.0 → 1.0.0: recorded receiver-intake approval and made the independently reviewable governance-tool prerequisite explicit. No application, schema, live binding, data transfer or deployment changed.
+
+Final documentation closeout: parent full `npm run govern` PASS (exit 0) at `095332c67bac9ed2bbd2cf3d5adecfba77463473`, after regenerating navigation from the updated graph. All 539 imported records and 747 issued IDs remain intact. Independent architecture review PASS for authored-record proposal blob `35df4c1935467751575b82b5d5f7aeab83291c75`, approved receiver intake blob `5e5826f490f722a75b3e4a8b59df68376012ee58` and Go verification blob `becffd3f6723e62060d706d57a939f70592dff80`. The reviewer checked document quality/compatibility scope, not owner approval or execution of the proposed tooling. Reviewable draft PRs: [Go #10](https://github.com/Freshair129/zuri-go/pull/10), [parent #630](https://github.com/Freshair129/zuri.ai/pull/630). Both remain unmerged. Parent receiver behavior is approved; authored-record tooling is DRAFT; issued receiver records, tooling implementation and P3 runtime acceptance remain pending/NOT_RUN.
+
+Version diff 1.0.0 → 1.1.0: records the final parent governance exit receipt, reviewed document blobs and paired draft PRs; no application, schema or runtime change.
 
 ## Local Production-backup restore — 2026-10-05
 
