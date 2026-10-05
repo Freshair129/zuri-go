@@ -13,7 +13,7 @@ An active Member who is not listed as a meeting participant can add themself to 
 - `apps/api/workspace.mjs` authorizes `uploadTranscript` by checking the session Member against the current `meeting_participants` rows.
 - `apps/api/migrations/012_business_wide_access.sql` repeats that current-roster check inside the transcript upload SQL routine.
 - `docs/features/FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-010-transcript-custody.md` requires explicit participant upload consent. ADR-008 grants Members full CRUD on mutable Business records and makes uploaded non-secret transcripts Guest-readable.
-- ReviewGate statically confirmed the sequential API path. Database replay, database regressions, and this HTTP sequence are NOT_RUN.
+- At the original ReviewGate finding, database replay, database regressions, and this HTTP sequence had not yet run; later isolated QA evidence is recorded below.
 
 ## Root Cause
 
@@ -23,6 +23,10 @@ The transcript-transfer guard treats the current participant roster as proof of 
 
 The existing nonparticipant tests attempt an upload without first changing the roster. They verify denial for a nonparticipant in the current row set, but not the two-request sequence that first adds the caller and then uploads. The broad Member CRUD review did not trace this special local-to-cloud transfer through its participant check.
 
+## ReviewGate rework evidence and root cause
+
+ReviewGate returned REWORK for local commit `963516d`. Capturing eligibility at the first `local_only` transition still trusts a roster that any Member may edit immediately beforehand. The Member-callable custody function also permits a second transition after upload. The SQL upload routine checks participation before locking the meeting, so a concurrent roster removal can leave that check stale. These escaped the first regression because it added the outsider only after custody started and did not exercise repeated transitions or concurrent edits.
+
 ## Approved Prevention
 
-The owner approved participant-only consent with authorization evidence independent of the editable roster. Migration 012 now captures eligible Member UUIDs once when custody first becomes `local_only`, after roster writes in the same transaction. Ordinary runtime CRUD cannot edit this evidence or directly flip custody; the service and SQL upload routine require both current participation and captured eligibility. Existing held meetings without evidence fail closed. Isolated schema-11-to-12 QA passed the roster-self-add sequence through the hosted handler, service and direct SQL, proving denial with unchanged custody, revisions, Business revision and upload audit state. The original participant upload and nonempty-revisions/zero-batches paths passed. Production remains schema 11; release and deployment were not performed.
+The owner approved sealing eligibility when a new meeting is created and, for existing cloud meetings, from the roster at the operator-controlled schema-12 migration. Already-held meetings without evidence fail closed. A database-enforced first restriction starts local custody once, with no Member-callable transition. Upload locks the meeting before rechecking both current participation and sealed eligibility; roster edits coordinate through that row so repeatable-read transactions cannot authorize against a removed participant. Test self-add before restriction, repeated custody attempts, concurrent removal, denial state and the legitimate upload paths. Production remains schema 11; release and deployment are not authorized.

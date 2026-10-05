@@ -101,7 +101,7 @@ export const CHANGE_ERRORS={WIDEN_DENIED:['เฉพาะผู้รับผ�
 // restore: a backup import by the local operator, which keeps the people, roles and registry as they were (WI-12 D2, D3); a Member's import obeys both rules.
 export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerOf(c),{refuseNewReceipts=false,restore=false}={}){
  validateState(state);const existingTasks=readable(viewer,await all(c,b,'tasks'),await taskNames(c,b)),existingMembers=await all(c,b,'members'),id=(kind,value)=>value?safeId(b,kind,value):null;
- const existingRoles=await all(c,b,'task_roles'),existingViewers=await all(c,b,'task_viewers'),existingMeetings=readable(viewer,await all(c,b,'meetings'),await meetingNames(c,b)),existingParticipants=await all(c,b,'meeting_participants');
+ const existingRoles=await all(c,b,'task_roles'),existingViewers=await all(c,b,'task_viewers'),existingMeetings=readable(viewer,await all(c,b,'meetings'),await meetingNames(c,b)),existingParticipants=await all(c,b,'meeting_participants'),everHeld=new Set((await all(c,b,'meeting_transcript_upload_eligibility')).filter(e=>e.first_custody_at).map(e=>e.meeting_id));
  const visibleMeetingIds=new Set(existingMeetings.map(r=>r.id)),oldBatches=(await all(c,b,'meeting_draft_batches')).filter(r=>visibleMeetingIds.has(r.meeting_id)),stateTasks=new Set(state.tasks.map(t=>t.id)),stateMeetings=new Set(state.meetings.map(m=>m.id));
  // Meetings whose transcript stays on the recording machine; the local operator always keeps full content (FR-011-010).
  const custody=new Map(existingMeetings.map(r=>[r.id,r.transcript_custody])),custodyFor=mid=>viewer.kind!=='operator'&&custody.get(mid)==='local_only'?'local_only':'cloud';
@@ -162,12 +162,11 @@ export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerO
  for(const m of state.meetings){const mid=id('meeting',m.id),old=existingMeetings.find(r=>r.id===mid),{oldPeople,oldOrganizer,organizer,people}=peopleOf(m,mid);
    const a=await access('meeting_visibility',mid,old&&{visibility:old.visibility,team_id:old.team_id},m,people,oldOrganizer||organizer);
    // A meeting that becomes restricted keeps its transcript on the recording machine until a participant uploads it (FR-011-010).
-   const held=a.visibility==='restricted'&&old?.visibility!=='restricted'?'local_only':old?.transcript_custody||'cloud';custody.set(mid,held);
+   const held=a.visibility==='restricted'&&old?.visibility!=='restricted'&&(!old||!everHeld.has(mid))?'local_only':old?.transcript_custody||'cloud';custody.set(mid,held);
    await writeItem(c,b,'meetings',mid,{title:m.title,campaign_id:campaignId(m.campaignId),started_at:m.startedAt||m.meetingStartedAt||null,source_instance_id:m.sourceInstanceId,source_project_id:m.projectId,source_recording_id:m.recordingId,legacy_metadata:withoutAccess(m,['visibility','teamId','participantIds','organizerId','visibilityReason','transcriptCustody',...(held==='local_only'&&viewer.kind!=='operator'?['workingCopy']:[])]),visibility:a.visibility,team_id:a.team_id,transcript_custody:old?.transcript_custody||'cloud'},!!old);
    const before=oldPeople.map(p=>p.member_id+':'+p.role).sort(),after=people.map(p=>p+':'+(p===organizer?'organizer':'participant')).sort();
    if(m.participantIds!==undefined&&hash(before)!==hash(after)){await c.query('DELETE FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2',[b,mid]);for(const p of people)await c.query('INSERT INTO meeting_participants(business_id,meeting_id,member_id,role) VALUES($1,$2,$3,$4)',[b,mid,p,p===organizer?'organizer':'participant']);await audit(c,b,'meeting_participants',mid,old?{participants:before}:null,{participants:after});}
    await setAccess(c,b,'meetings',mid,old,a);
-   if(held==='local_only'&&old?.transcript_custody!=='local_only')await c.query('SELECT zuri_go.begin_meeting_transcript_custody($1::uuid,$2::uuid)',[b,mid]);
  }
  // Anyone but the local operator stores a revision or draft batch of a 'local_only' meeting as a stub (FR-011-010); what is already stored is never rewritten.
  const putRevision=async(r,kind)=>{const rid=id(kind,r.id),mid=id('meeting',r.meetingId),held=custodyFor(mid),prior=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND id=$2',[b,rid])).rows[0];

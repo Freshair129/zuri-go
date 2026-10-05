@@ -200,7 +200,16 @@ Both are `STABLE` and `SECURITY INVOKER`. Migration 005 had to disable row-level
   - For a meeting with `transcript_custody = 'local_only'`, the hosted API stores a revision as a stub: its `content_hash`, lineage and `segments = []`, with `{withheld: true}` in `legacy_metadata`. Draft-batch items are stored without evidence text.
   - The recording machine keeps the full content; the stored hash lets that machine prove its local copy matches.
   - Uploading the transcript needs a participant, a reason and an explicit request. It sets `transcript_custody = 'cloud'`, stores the segments under the meeting's audience and writes an audit event (AC-011-010-02).
-  - ADR-008/schema 12 preserves participant consent independently of the editable roster: a database-owned snapshot of eligible Member UUIDs is captured once at the first `local_only` transition, after the roster write in the same transaction. Upload requires the session Member in both that snapshot and the current roster. Runtime CRUD cannot edit the snapshot or directly flip custody; a later-added participant does not automatically gain upload eligibility. Meetings already `local_only` without the snapshot fail closed rather than deriving consent from the current roster.
+  - ADR-008/schema 12 preserves participant consent independently of the editable roster: a database-owned snapshot of eligible Member UUIDs is captured at meeting creation after its initial roster write, or from the existing cloud-meeting roster in the operator-controlled migration. The migration marks prior audited transcript uploads as already held. Upload requires the session Member in both that sealed snapshot and the current roster. Runtime CRUD cannot edit the snapshot or directly flip custody; adding oneself before or after first restriction does not grant upload eligibility. Meetings already `local_only` without the snapshot fail closed. The database starts local custody on first restriction and records that one-time transition; after upload, re-restriction does not return cloud content to local custody. Roster writes coordinate through the meeting row, which the SQL upload routine locks before rechecking authorization.
+  ```mermaid
+  flowchart LR
+    Creation[Meeting creation or migration baseline] --> Seal[Protected eligibility snapshot]
+    Restriction[First restriction] --> Hold[Local custody once]
+    Seal --> Gate[Upload authorization]
+    Hold --> Gate
+    Roster[Current roster after meeting lock] --> Gate
+    Gate --> Upload[Explicit upload and audit]
+  ```
   - A meeting that is not restricted keeps today's rule: the user chooses and sees the scope before a transcript goes to the cloud (AC-011-010-04).
 
 ## Failure modes

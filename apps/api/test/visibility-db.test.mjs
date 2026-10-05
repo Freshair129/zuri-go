@@ -352,6 +352,62 @@ test('only a meeting participant may explicitly upload a custody-held transcript
  const outside=await as('guest',c=>readLegacy(c,b));assert.equal(everywhere(outside,made.quote),true);assert.equal(outside.meetingTaskManager.sources.some(s=>s.meetingId===made.mid),true);
  await write(m1,c=>saveLegacy(c,b,{version:audience.version,meetingTaskManager:audience.meetingTaskManager}));// full content saves back unchanged
  await assert.rejects(write(m0,c=>uploadTranscript(c,b,made.mid,body())),e=>e.status===409,'a second upload is refused');
+ await assert.rejects(as(m0,c=>c.query("UPDATE meetings SET transcript_custody='local_only' WHERE business_id=$1 AND id=$2",[b,heldMeeting.id])),{code:'42501'},'direct re-hold after upload is denied');
+ assert.equal((await owner("SELECT to_regprocedure('zuri_go.begin_meeting_transcript_custody(uuid,uuid)') AS routine")).rows[0].routine,null,'runtime custody transition routine is absent');
+ let changed=await as(m0,c=>readLegacy(c,b));changed.meetingTaskManager.meetings.find(m=>m.id===made.mid).visibility='business';
+ changed=await write(m0,c=>saveLegacy(c,b,{version:changed.version,meetingTaskManager:changed.meetingTaskManager}));
+ changed.meetingTaskManager.meetings.find(m=>m.id===made.mid).visibility='restricted';
+ await write(m0,c=>saveLegacy(c,b,{version:changed.version,meetingTaskManager:changed.meetingTaskManager}));
+ assert.equal((await meetingRow(made.mid)).transcript_custody,'cloud','re-restriction after audited upload cannot re-hold cloud content');
+ assert.equal((await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[b,heldMeeting.id])).rows[0].n,1);
+});
+test('self-add before the first restriction cannot enter creation-time upload eligibility',async()=>{
+ let read=await as(m0,c=>readLegacy(c,b));const d=read.meetingTaskManager,made=await addMeeting(d,'FR010-pre-add',{visibility:'business',participantIds:[m0.legacy],organizerId:m0.legacy});
+ read=await write(m0,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));const row=await meetingRow(made.mid);
+ let eligibility=(await owner('SELECT eligible_member_ids,first_custody_at FROM zuri_go.meeting_transcript_upload_eligibility WHERE business_id=$1 AND meeting_id=$2',[b,row.id])).rows[0];
+ assert.deepEqual(eligibility.eligible_member_ids,[m0.id]);assert.equal(eligibility.first_custody_at,null);
+ read=await as(m2,c=>readLegacy(c,b));read.meetingTaskManager.meetings.find(m=>m.id===made.mid).participantIds.push(m2.legacy);
+ read=await write(m2,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:read.meetingTaskManager}));
+ const meeting=read.meetingTaskManager.meetings.find(m=>m.id===made.mid),source=read.meetingTaskManager.sources.find(s=>s.meetingId===made.mid),review=randomUUID();
+ Object.assign(meeting,{visibility:'restricted',visibilityReason:'QA first restriction'});
+ const rid=saveReview(read.meetingTaskManager,{id:review,sourceId:meeting.sourceId,segments:source.segments,reviewHash:await reviewHash(review,source.segments)});
+ const full=read.meetingTaskManager.reviews.find(r=>r.id===rid);
+ await write(m2,c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:read.meetingTaskManager}));
+ eligibility=(await owner('SELECT eligible_member_ids,first_custody_at FROM zuri_go.meeting_transcript_upload_eligibility WHERE business_id=$1 AND meeting_id=$2',[b,row.id])).rows[0];
+ assert.deepEqual(eligibility.eligible_member_ids,[m0.id],'pre-restriction roster edit cannot alter sealed eligibility');assert.ok(eligibility.first_custody_at);
+ assert.equal((await meetingRow(made.mid)).transcript_custody,'local_only');
+ const stub=(await revisionRows(made.mid)).find(r=>r.legacy_metadata.id===rid),body={reason:'QA pre-add denial',sources:[],reviews:[full],batches:[]};
+ assert.equal(stub.legacy_metadata.withheld,true);
+ const before={custody:(await meetingRow(made.mid)).transcript_custody,revisions:await revisionRows(made.mid),revision:(await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,events:(await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[b,row.id])).rows[0].n};
+ await assert.rejects(write(m2,c=>uploadTranscript(c,b,made.mid,body)),e=>e.status===403);
+ await assert.rejects(write(m2,c=>c.query('SELECT zuri_go.complete_meeting_transcript_upload($1::uuid,$2::uuid,$3::text,$4::jsonb,$5::text[])',[b,row.id,body.reason,JSON.stringify([{id:stub.id,segments:full.segments,metadata:full}]),[]])),{code:'42501'});
+ assert.equal((await meetingRow(made.mid)).transcript_custody,before.custody);assert.deepEqual(await revisionRows(made.mid),before.revisions);
+ assert.equal((await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,before.revision);
+ assert.equal((await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[b,row.id])).rows[0].n,before.events);
+});
+test('a concurrent roster removal cannot authorize upload from a stale snapshot',async()=>{
+ const made=await savedByMember('FR010-race',[m0,m1]),row=await meetingRow(made.mid),stubs=await revisionRows(made.mid);
+ const uploads=stubs.map(r=>{const doc=(r.kind==='source'?made.full.sources:made.full.reviews).find(x=>x.id===r.legacy_metadata.id);return {id:r.id,segments:doc.segments,metadata:doc};});
+ const batchIds=(await owner("SELECT legacy_metadata->'batch'->>'id' AS id FROM zuri_go.meeting_draft_batches WHERE business_id=$1 AND meeting_id=$2 AND legacy_metadata->>'withheld'='true'",[b,row.id])).rows.map(r=>r.id);
+ const before={custody:row.transcript_custody,revisions:stubs,revision:(await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,events:(await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[b,row.id])).rows[0].n};
+ const remover=new pg.Client({connectionString:config().databaseUrl}),uploader=new pg.Client({connectionString:config().databaseUrl});await remover.connect();await uploader.connect();
+ const begin=async(c,member)=>{await c.query('BEGIN ISOLATION LEVEL REPEATABLE READ');await c.query('SET LOCAL search_path TO zuri_go,public');await c.query("SELECT set_config('zuri_go.business_id',$1,true),set_config('zuri_go.viewer_kind','member',true),set_config('zuri_go.viewer_member',$2,true)",[b,member.id]);};
+ try{
+  await begin(remover,m1);
+  await remover.query('DELETE FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2 AND member_id=$3',[b,row.id,m0.id]);
+  await begin(uploader,m0);await uploader.query("SET LOCAL statement_timeout='5000ms'");
+  await uploader.query('SELECT id FROM meetings WHERE business_id=$1 AND id=$2',[b,row.id]);
+  const pid=(await uploader.query('SELECT pg_backend_pid() AS pid')).rows[0].pid;
+  const attempted=uploader.query('SELECT zuri_go.complete_meeting_transcript_upload($1::uuid,$2::uuid,$3::text,$4::jsonb,$5::text[])',[b,row.id,'QA concurrent upload',JSON.stringify(uploads),batchIds]).then(()=>null,e=>e);
+  let blocked=false;for(let i=0;i<40;i++){blocked=(await owner("SELECT wait_event_type='Lock' AS blocked FROM pg_stat_activity WHERE pid=$1",[pid])).rows[0]?.blocked===true;if(blocked)break;await new Promise(resolve=>setTimeout(resolve,25));}
+  assert.equal(blocked,true,'upload waits on the meeting row held by the roster edit');
+  await remover.query('COMMIT');
+  const error=await attempted;assert.equal(error?.code,'40001','repeatable-read upload aborts after concurrent roster removal');
+ }finally{await remover.query('ROLLBACK').catch(()=>{});await uploader.query('ROLLBACK').catch(()=>{});await remover.end();await uploader.end();}
+ assert.equal((await meetingRow(made.mid)).transcript_custody,before.custody);
+ assert.deepEqual(await revisionRows(made.mid),before.revisions);
+ assert.equal((await owner('SELECT domain_revision FROM zuri_go.businesses WHERE id=$1',[b])).rows[0].domain_revision,before.revision);
+ assert.equal((await owner("SELECT count(*)::int AS n FROM zuri_go.change_events WHERE business_id=$1 AND entity_id=$2 AND event_type='transcript_upload'",[b,row.id])).rows[0].n,before.events);
 });
 test('a meeting that is not restricted keeps today\'s behaviour; one that becomes restricted stubs what is saved later (AC-011-010-04)',async()=>{
  let read=await as(m0,c=>readLegacy(c,b));const d=read.meetingTaskManager,open=await addMeeting(d,'FR010-open',{visibility:'business'});

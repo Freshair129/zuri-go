@@ -61,7 +61,7 @@ The delivery values rest on the current code, the tests named in each file (run 
 - Verified and promoted to production, including production-browser Guest and file checks: [history/zuri-go-guest-review](../../history/zuri-go-guest-review/verification.md).
 
 ## Notes
-- Approved 2026-10-05: [ADR-008](../../architecture/decisions.md) supersedes the prior public-only Guest rule and audience-based Member restrictions. This access policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; the delivery evidence above is historical.
+- Approved 2026-10-05: [ADR-008](../../architecture/decisions.md) supersedes the prior public-only Guest rule and audience-based Member restrictions. This access policy is implemented in local source, and fresh schema-11-to-12 replay and focused database regressions passed in isolated QA on 2026-10-05; the delivery evidence above is historical.
 - Amended by [FEAT-006](../FEAT-006-member-identity/feature.md) (shared-team password replaced) and [FEAT-007](../FEAT-007-single-code-login/feature.md) (single code). The write-intent modal, action resume, file limits and safe downloads remain part of the feature.
 - The attachments section is a candidate for its own DOM-TSK feature (PLAN-001 WI-14).
 - Historical 0.5.0 release rule: the Guest view narrowed to public items and attachments followed task visibility. ADR-008 supersedes those access restrictions.

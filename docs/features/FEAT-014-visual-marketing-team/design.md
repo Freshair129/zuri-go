@@ -11,7 +11,7 @@ relations:
 
 ## Current access amendment — ADR-008 (approved 2026-10-05)
 
-ADR-008 supersedes Project-owner, audience and named-member restrictions for internal Visual-record access and approval. Guests may read every non-secret Visual record in the Business but cannot mutate or approve; every active Member has equal CRUD and internal approval rights regardless of Project ownership, audience or RACI. Business scope, actor attribution, secret custody and append-only audit remain; immutable Visual history is retained. Internal creative approval is separate from provider egress, spend, actual external publication and deployment. The existing owner-only approval and trusted-public-projection rules below are historical design/implementation evidence; the new policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap.
+ADR-008 supersedes Project-owner, audience and named-member restrictions for internal Visual-record access and approval. Guests may read every non-secret Visual record in the Business but cannot mutate or approve; every active Member has equal CRUD and internal approval rights regardless of Project ownership, audience or RACI. Business scope, actor attribution, secret custody and append-only audit remain; immutable Visual history is retained. Internal creative approval is separate from provider egress, spend, actual external publication and deployment. The existing owner-only approval and trusted-public-projection rules below are historical design/implementation evidence; the new policy is implemented in local source, and fresh schema-11-to-12 replay and focused database regressions passed in isolated QA on 2026-10-05.
 
 ## Components and data
 

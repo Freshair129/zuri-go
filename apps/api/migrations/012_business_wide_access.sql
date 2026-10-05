@@ -5,9 +5,23 @@ ALTER TABLE meetings ADD COLUMN archived_at timestamptz;
 ALTER TABLE weekly_plans ADD COLUMN archived_at timestamptz;
 -- A roster edit cannot grant authority to move a locally held transcript to the cloud.
 CREATE TABLE meeting_transcript_upload_eligibility (
- business_id uuid NOT NULL, meeting_id uuid NOT NULL, eligible_member_ids uuid[] NOT NULL, captured_at timestamptz NOT NULL DEFAULT now(),
+ business_id uuid NOT NULL, meeting_id uuid NOT NULL, eligible_member_ids uuid[] NOT NULL, captured_at timestamptz NOT NULL DEFAULT now(), first_custody_at timestamptz,
  PRIMARY KEY(business_id,meeting_id), FOREIGN KEY(business_id,meeting_id) REFERENCES meetings(business_id,id)
 );
+-- The migration operator accepts the existing cloud-meeting roster as the baseline. Already-held meetings have no inferred consent.
+-- Relax FORCE only inside this migration transaction so the table owner can see every Business before restoring it.
+ALTER TABLE meetings NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE meeting_participants NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE change_events NO FORCE ROW LEVEL SECURITY;
+INSERT INTO meeting_transcript_upload_eligibility(business_id,meeting_id,eligible_member_ids,first_custody_at)
+SELECT m.business_id,m.id,coalesce(array_agg(p.member_id ORDER BY p.member_id) FILTER (WHERE p.member_id IS NOT NULL),'{}'::uuid[]),uploads.first_upload
+FROM meetings m LEFT JOIN meeting_participants p ON p.business_id=m.business_id AND p.meeting_id=m.id
+LEFT JOIN (SELECT business_id,entity_id,min(occurred_at) AS first_upload FROM change_events
+ WHERE entity_type='meetings' AND event_type='transcript_upload' GROUP BY business_id,entity_id) uploads ON uploads.business_id=m.business_id AND uploads.entity_id=m.id
+WHERE m.transcript_custody='cloud' GROUP BY m.business_id,m.id,uploads.first_upload;
+ALTER TABLE meetings FORCE ROW LEVEL SECURITY;
+ALTER TABLE meeting_participants FORCE ROW LEVEL SECURITY;
+ALTER TABLE change_events FORCE ROW LEVEL SECURITY;
 ALTER TABLE meeting_transcript_upload_eligibility ENABLE ROW LEVEL SECURITY;
 ALTER TABLE meeting_transcript_upload_eligibility FORCE ROW LEVEL SECURITY;
 CREATE POLICY business_scope ON meeting_transcript_upload_eligibility USING (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid) WITH CHECK (business_id=nullif(current_setting('zuri_go.business_id',true),'')::uuid);
@@ -24,39 +38,51 @@ BEGIN
   IF TG_OP='INSERT' AND NEW.transcript_custody<>'cloud' THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
   IF TG_OP='UPDATE' AND OLD.transcript_custody IS DISTINCT FROM NEW.transcript_custody THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
  END IF;
+ IF TG_OP='INSERT' AND NEW.visibility='restricted' THEN NEW.transcript_custody:='local_only'; END IF;
+ IF TG_OP='UPDATE' AND OLD.visibility<>'restricted' AND NEW.visibility='restricted' AND OLD.transcript_custody='cloud' THEN
+  IF NOT EXISTS(SELECT 1 FROM zuri_go.meeting_transcript_upload_eligibility e WHERE e.business_id=NEW.business_id AND e.meeting_id=NEW.id) THEN
+   RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
+  END IF;
+  IF EXISTS(SELECT 1 FROM zuri_go.meeting_transcript_upload_eligibility e WHERE e.business_id=NEW.business_id AND e.meeting_id=NEW.id AND e.first_custody_at IS NULL) THEN
+   NEW.transcript_custody:='local_only';
+  END IF;
+ END IF;
  RETURN NEW;
 END $$;
 CREATE TRIGGER meeting_transcript_custody_guard BEFORE INSERT OR UPDATE ON meetings FOR EACH ROW EXECUTE FUNCTION zuri_go.guard_meeting_transcript_custody();
 
 CREATE FUNCTION zuri_go.capture_meeting_transcript_upload_eligibility() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,zuri_go,pg_temp AS $$
 BEGIN
- IF EXISTS(SELECT 1 FROM zuri_go.meetings m WHERE m.business_id=NEW.business_id AND m.id=NEW.id AND m.transcript_custody='local_only') THEN
+ IF TG_OP='INSERT' THEN
   INSERT INTO zuri_go.meeting_transcript_upload_eligibility(business_id,meeting_id,eligible_member_ids)
   SELECT NEW.business_id,NEW.id,coalesce(array_agg(p.member_id ORDER BY p.member_id),'{}'::uuid[])
   FROM zuri_go.meeting_participants p WHERE p.business_id=NEW.business_id AND p.meeting_id=NEW.id
   ON CONFLICT(business_id,meeting_id) DO NOTHING;
+  IF NEW.transcript_custody='local_only' THEN
+   UPDATE zuri_go.meeting_transcript_upload_eligibility SET first_custody_at=now() WHERE business_id=NEW.business_id AND meeting_id=NEW.id AND first_custody_at IS NULL;
+  END IF;
+ ELSIF OLD.transcript_custody='cloud' AND NEW.transcript_custody='local_only' THEN
+  UPDATE zuri_go.meeting_transcript_upload_eligibility SET first_custody_at=now() WHERE business_id=NEW.business_id AND meeting_id=NEW.id AND first_custody_at IS NULL;
  END IF;
  RETURN NEW;
 END $$;
-CREATE CONSTRAINT TRIGGER capture_meeting_transcript_upload_eligibility AFTER UPDATE ON meetings DEFERRABLE INITIALLY DEFERRED
- FOR EACH ROW WHEN (OLD.transcript_custody IS DISTINCT FROM NEW.transcript_custody AND NEW.transcript_custody='local_only')
+CREATE CONSTRAINT TRIGGER capture_meeting_transcript_upload_eligibility AFTER INSERT OR UPDATE ON meetings DEFERRABLE INITIALLY DEFERRED
+ FOR EACH ROW
  EXECUTE FUNCTION zuri_go.capture_meeting_transcript_upload_eligibility();
 
-CREATE FUNCTION zuri_go.begin_meeting_transcript_custody(p_business_id uuid,p_meeting_id uuid)
-RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,zuri_go,pg_temp AS $$
+-- A direct roster write must touch the meeting row, so an upload that started with an older repeatable-read snapshot aborts.
+CREATE FUNCTION zuri_go.bump_meeting_for_participant_change() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
- IF nullif(current_setting('zuri_go.business_id',true),'')::uuid IS DISTINCT FROM p_business_id
-  OR zuri_go.viewer_kind() NOT IN ('member','operator') THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
- IF zuri_go.viewer_kind()='member' AND NOT EXISTS(SELECT 1 FROM zuri_go.members m JOIN zuri_go.member_credentials c ON c.business_id=m.business_id AND c.member_id=m.id
-  WHERE m.business_id=p_business_id AND m.id=zuri_go.viewer_member() AND m.status='active' AND c.enabled) THEN
-  RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
+ IF TG_OP IN ('UPDATE','DELETE') THEN
+  UPDATE zuri_go.meetings SET row_version=row_version WHERE business_id=OLD.business_id AND id=OLD.meeting_id;
  END IF;
- UPDATE zuri_go.meetings SET transcript_custody='local_only'
- WHERE business_id=p_business_id AND id=p_meeting_id AND visibility='restricted' AND transcript_custody='cloud';
- IF NOT FOUND THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_STALE' USING ERRCODE='P0001'; END IF;
+ IF TG_OP IN ('INSERT','UPDATE') AND (TG_OP='INSERT' OR NEW.business_id IS DISTINCT FROM OLD.business_id OR NEW.meeting_id IS DISTINCT FROM OLD.meeting_id) THEN
+  UPDATE zuri_go.meetings SET row_version=row_version WHERE business_id=NEW.business_id AND id=NEW.meeting_id;
+ END IF;
+ RETURN coalesce(NEW,OLD);
 END $$;
-REVOKE ALL ON FUNCTION zuri_go.begin_meeting_transcript_custody(uuid,uuid) FROM PUBLIC,zuri_go_app;
-GRANT EXECUTE ON FUNCTION zuri_go.begin_meeting_transcript_custody(uuid,uuid) TO zuri_go_app;
+CREATE TRIGGER meeting_participant_parent_bump AFTER INSERT OR UPDATE OR DELETE ON meeting_participants
+ FOR EACH ROW EXECUTE FUNCTION zuri_go.bump_meeting_for_participant_change();
 
 DROP POLICY IF EXISTS audience_read ON tasks;
 DROP POLICY IF EXISTS audience_update ON tasks;
@@ -337,17 +363,17 @@ BEGIN
  SELECT m.pid INTO v_pid FROM zuri_go.members m JOIN zuri_go.member_credentials c ON c.business_id=m.business_id AND c.member_id=m.id
  WHERE m.business_id=p_business_id AND m.id=v_member AND m.status='active' AND c.enabled;
  IF NOT FOUND THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501'; END IF;
+ IF nullif(btrim(p_reason),'') IS NULL OR jsonb_typeof(p_revisions) IS DISTINCT FROM 'array' OR p_batch_ids IS NULL THEN
+  RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_INVALID' USING ERRCODE='22023';
+ END IF;
+ SELECT * INTO meeting_row FROM zuri_go.meetings WHERE business_id=p_business_id AND id=p_meeting_id FOR UPDATE;
+ IF NOT FOUND OR meeting_row.transcript_custody<>'local_only' THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_STALE' USING ERRCODE='P0001'; END IF;
  IF NOT EXISTS(SELECT 1 FROM zuri_go.meeting_participants p WHERE p.business_id=p_business_id AND p.meeting_id=p_meeting_id AND p.member_id=v_member) THEN
   RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
  END IF;
  IF NOT EXISTS(SELECT 1 FROM zuri_go.meeting_transcript_upload_eligibility e WHERE e.business_id=p_business_id AND e.meeting_id=p_meeting_id AND v_member=ANY(e.eligible_member_ids)) THEN
   RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_DENIED' USING ERRCODE='42501';
  END IF;
- IF nullif(btrim(p_reason),'') IS NULL OR jsonb_typeof(p_revisions) IS DISTINCT FROM 'array' OR p_batch_ids IS NULL THEN
-  RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_INVALID' USING ERRCODE='22023';
- END IF;
- SELECT * INTO meeting_row FROM zuri_go.meetings WHERE business_id=p_business_id AND id=p_meeting_id FOR UPDATE;
- IF NOT FOUND OR meeting_row.transcript_custody<>'local_only' THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_STALE' USING ERRCODE='P0001'; END IF;
  SELECT count(*)::integer INTO stub_count FROM zuri_go.meeting_revisions
  WHERE business_id=p_business_id AND meeting_id=p_meeting_id AND legacy_metadata->>'withheld'='true';
  IF stub_count=0 THEN RAISE EXCEPTION 'TRANSCRIPT_UPLOAD_INVALID' USING ERRCODE='22023'; END IF;
