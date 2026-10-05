@@ -296,7 +296,7 @@ Relations: relates_to: ADR-004, ADR-005, FEAT-005, FEAT-006, FEAT-011, FEAT-014,
 3. Requests cannot cross the selected Business boundary; inactive Members cannot write; client-supplied actor IDs cannot change audit attribution.
 4. No Guest or Member data response contains credential hashes/codes, session material, provider secrets or operator configuration.
 5. Provider, spend, publication and deployment gates still reject unauthorized external actions.
-6. The forward migration preserves all pre-existing rows and audit history. Verification uses an isolated schema-10 QA database and covers direct row-level-security queries and every API/read/export/search/history path.
+6. The forward migration preserves all pre-existing rows and audit history. Verification replays schema 11 into schema 12 in an isolated QA database and covers direct row-level-security queries and every API/read/export/search/history path.
 
 **Alternatives considered.** The former approved design kept Guests public-only and retained audience rules among Members; other options were requiring login for all reads or allowing Guest reads only for selected record families. These preserve more confidentiality but do not implement the owner's requested two-class policy.
 
