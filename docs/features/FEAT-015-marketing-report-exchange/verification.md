@@ -2,11 +2,40 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.6.0
+version: 1.7.0
 date: 2026-10-06
 ---
 
 # Verification — FEAT-015
+
+## Local and Production migration 012 — 2026-10-06
+
+Current operator result: **Local and Production PASS, schema 11 → 12**. The owner explicitly authorized merging both candidates and applying 012 to both actual databases. This section supersedes the earlier unmerged/unapplied checkpoints below. Complexity C-3, risk HIGH. Application package remains 0.5.1; no deployment, promotion, real report send, association provisioning, credential rotation or parent database migration occurred. FEAT-015 remains `building`; schema readiness is not a live integration release.
+
+Source and merge gate: [parent PR #633](https://github.com/Freshair129/zuri.ai/pull/633) merged at `2026-10-05T23:09:04Z`, commit `fd9ca7c606fbe0fd69d35467802f56916675fd7a`; [Go PR #10](https://github.com/Freshair129/zuri-go/pull/10) merged at `2026-10-05T23:09:12Z`, commit `eebc090aa3dcf1af8486d655fa360fb5f699edcd`. Go was clean and fast-forwarded to that main commit before operating. Parent primary checkout/runtime was left untouched. The exact parent candidate head `37fbe3e6c7052b4deaae228cc58f807e54392045` passed hosted build/govern/verify and all four test shards ([CI run](https://github.com/Freshair129/zuri.ai/actions/runs/37355003883)); Edge CI passed after one unchanged timeout rerun. The full-size compatibility fixture passed on hosted Linux in 16.048 seconds; its Windows timeout remains a platform limitation, not a locally passing result. Workflow-skipped E2E/desktop checks remain skipped. Sealed independent source review and native concurrency/lock/full paired QA passed before merge; Go has no configured PR checks.
+
+| Check | Actual result / boundary |
+|---|---|
+| Target identity and baseline | PASS — persistent native Local `127.0.0.1:55412/zuri_go`, actual direct Neon Production `neondb`, both PostgreSQL 18.6 and configured Business matched; exact schema 001–011, no delivery tables. Production client TLS encrypted and certificate verified. No configuration override or synthetic QA substitution. |
+| Fresh consistent backups | PASS — matching `pg_dump 18.6`, exported REPEATABLE READ snapshot held through dump, 52 COPY counts matched the same census, complete trailer and SHA-256 verified; ACLs retained (`--no-owner`, without `--no-privileges`). Each target was compared again to its full backup baseline immediately before migration. |
+| Local backup | PASS — 911,565 bytes; SHA-256 `d4c767acc70e994af684b5eaf110ed51dceb13bd11ce8e86441737fbad7e7682`; captured `2026-10-05T23:14:20.904Z`. |
+| Production backup | PASS — 912,006 bytes; SHA-256 `f13fa6ea1fa7ecff263d406899a50c6699c5452ceb56c3447fcb978f98e4b441`; captured `2026-10-05T23:16:51.161Z`. |
+| New backup restore drills | NOT_RUN — snapshot/census/trailer/checksum validation is not restore proof; no occupied database was restored. |
+| Actual migrations | PASS — actual reviewed `node apps/api/migrate.mjs`, then `node apps/api/migrate.mjs --cloud`, with `PGOPTIONS` 5-second lock / 60-second statement limits. Local passed all preservation and exact catalog checks, independently reviewed, before Production. Both ledgers are exactly 001–012; final grant reconciliation completed. |
+| Existing data and permissions | PASS on both — all 51 existing application table counts/content hashes and the original 11 migration rows unchanged; prior table/column effective ACLs and all prior function definitions/settings/EXECUTE privileges unchanged. Only migration row 12 was added to the old ledger. |
+| New custody/security | PASS on both — three new tables empty, forced RLS, direct runtime INSERT/UPDATE/DELETE denied on all seven report custody tables, no PUBLIC EXECUTE, only four intended delivery functions runtime-callable. All ten new function bodies/languages/volatility/definer/settings/admin ownership match reviewed 012; six exact Business/operator policy expressions, roles and restrictive/permissive modes match; three exact unconditional BEFORE row INSERT/UPDATE/DELETE guard bindings match. |
+| Applied source binding | PASS — canonical Git blob `c4ef2ea6ea732886da8e34cf31731b7fc99edbea` for migration 012 and matching working source. Migration 011 bytes unchanged. Private operational verifier refuses reviewed-source drift or any failed check. |
+| Actual Local restricted connection | PASS — non-superuser/non-BYPASSRLS runtime connected and read the empty new tables. Empty-table reads prove connectivity only; populated authorization/concurrency behavior is isolated native QA evidence, not a live destructive test. |
+| Direct Production runtime session | NOT_RUN — existing restricted login remains unavailable; privileges verified through catalog, no password or membership changes. |
+| Existing hosted API after migration | PASS — Guest bootstrap/state/tasks GET 200, configured Business matched; same-origin form-header Guest task POST with empty payload returned 401, no record created. Checked `2026-10-05T23:20:07.477Z`. This tests the existing deployment, not new Marketing API rollout. |
+
+Independent operational review found that flags/counts alone did not verify the new policy expressions, function bodies or trigger bindings. The added exact read-only catalog checks closed that gap before Production; the reviewer independently reconciled both targets' receipts against reviewed migration source. Final Production receipt review PASS: before blob `c466e0e2`, after `992638e3`, hosted `553a5a1b`; reviewed migration remains `c4ef2ea6`. This is independent receipt/catalog review, not independent live database attestation. No real database fixtures were created.
+
+Private backups, before/after receipts, migration logs and hosted check receipt remain under `.local/migration-012-20261006/{local,production}/`; operational helpers remain ignored under `.local/`. Neither raw business data nor credentials are published. Postchecks captured Local at `2026-10-05T23:18:14.033Z` and Production at `2026-10-05T23:19:46.415Z`.
+
+Documentation closeout checks PASS: `docs:validate` 0 errors/166 baseline warnings; `docs:views` 11 views/0 drift; diff whitespace and ignored private-path checks passed. The first validator launch could not find Python on PATH; rerunning with the documented bundled `ZURI_GO_PYTHON` override passed without source changes.
+
+Version diff 1.6.0 → 1.7.0: records both merges, fresh backups and actual schema 11 → 12 on Local/Production, data/ACL preservation and exact catalog/Guest checks. Package 0.5.1 → 0.5.1; deployed artifacts and parent database unchanged.
 
 ## Parent Phase B compatibility rebind — 2026-10-06
 

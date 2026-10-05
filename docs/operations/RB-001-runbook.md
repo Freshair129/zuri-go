@@ -12,7 +12,7 @@ Run all commands from the project root described in [README](../../README.md).
 
 ## Native Local on this machine — 2026-10-05
 
-The owner-approved new Local in `O:/zuri-go` is PostgreSQL 18.6/schema 11 restored from the verified pre-011 Production backup, then migrated. Evidence and checksum: [FEAT-015 Local restore](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05). It is a persistent application database, separate from native synthetic QA and Production; neither Git nor a source-folder copy synchronizes database contents. Keep `.local/` private and retain `.local/marketing-native/runtime/pgsql` because this Local uses that verified runtime. Former Docker Local is unavailable here; do not create/reset it as a startup workaround.
+The owner-approved new Local in `O:/zuri-go` is PostgreSQL 18.6/schema 12, restored from the verified pre-011 Production backup, then migrated through 012 on 2026-10-06. Restore evidence and checksum: [FEAT-015 Local restore](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05); current schema evidence: [migration 012](../features/FEAT-015-marketing-report-exchange/verification.md#local-and-production-migration-012--2026-10-06). It is a persistent application database, separate from native synthetic QA and Production; neither Git nor a source-folder copy synchronizes database contents. Keep `.local/` private and retain `.local/marketing-native/runtime/pgsql` because this Local uses that verified runtime. Former Docker Local is unavailable here; do not create/reset it as a startup workaround.
 
 There is no Windows service/autostart. From a fresh PowerShell with no `ZURI_GO_*` or `VERCEL` overrides, start PostgreSQL, then the existing API in the foreground:
 
@@ -99,7 +99,15 @@ Migration `007_tasks_projects.sql` adds `projects`, `project_viewers`, `campaign
 - **Rollback.** Code from before FEAT-010 ignores the new columns and tables; plan it together with FEAT-011's rollback note above.
 - **Workboard backfill (FR-010-016).** `node apps/api/backfill-workboard.mjs` is a read-only dry run of the local Business (`--cloud` for production); it prints counts and writes the full report to `.local/backfill/`. `--run` writes, reconciles and needs schema 7; a production run also needs `--production-authorized`, a backup first and the owner's specific authorization. The dry run of 2026-10-01 found 0 Workboard tasks in production on schema 5 and again after the migration on schema 7, so nothing was moved and no real run was needed.
 
+## Marketing delivery migration 012 — 2026-10-06
+
+Current Local and Production are schema 12 after both PRs were merged and the owner explicitly authorized both database operations. [FEAT-015 verification](../features/FEAT-015-marketing-report-exchange/verification.md#local-and-production-migration-012--2026-10-06) is the canonical receipt. Local was applied and independently checked before Production; each had a fresh consistent PostgreSQL 18.6 backup retaining ACLs, 52 matched COPY counts and checksum, and an unchanged pre-migration baseline. The actual migrator used 5-second lock / 60-second statement limits. All existing data/ACL/function metadata was preserved and the exact new function/policy/guard definitions verified. Private backups/logs/receipts remain under `.local/migration-012-20261006/`. Restore drills for these new backups remain NOT_RUN.
+
+The actual Local restricted connection and existing hosted Guest reads/write denial passed. A direct Production runtime session remains NOT_RUN because its credential is unavailable; do not rotate it or grant membership for testing. Three new tables are empty; no real report was sent. Application remains 0.5.1 and no deploy/promotion or parent database migration occurred. This operation does not authorize a subsequent migration, binding, send or release; never replay a restore over either occupied target.
+
 ## Marketing ledger migration 011 — 2026-10-05
+
+Historical checkpoint; current schema 12 is recorded above. The following schema-11 statements describe the 2026-10-05 operations only.
 
 Production is schema 11 after the owner-authorized operation recorded in [FEAT-015 verification](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05). A full PostgreSQL 18.6 snapshot backup, all 48 COPY counts and checksum were verified before applying; all 47 existing table counts/content hashes remained unchanged afterwards. ACL/RLS/finalizer metadata and existing hosted Guest reads/write denial passed. This was a schema-only operation; no code deployment/promotion, association provisioning or credential rotation occurred. Later schema statements under historical release procedures describe those earlier operations.
 

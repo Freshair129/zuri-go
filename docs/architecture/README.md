@@ -1,13 +1,13 @@
 # Current architecture index
 
-Current application version: 0.5.1. Deployment and production schema evidence: [release 0.5.1](../releases/0.5.1/verification.md) (2026-10-04). PostgreSQL schema is 11 in production after the authorized 2026-10-05 migration ([evidence](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05)). The new native Local is schema 11 after the separately authorized Production-backup restore ([Local evidence](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05)); the former Docker Local remains unavailable here. These are separate states and do not synchronize automatically.
+Current application version: 0.5.1. Deployment evidence: [release 0.5.1](../releases/0.5.1/verification.md) (2026-10-04). PostgreSQL schema is 12 in both Production and the persistent native Local after the authorized 2026-10-06 migration ([evidence](../features/FEAT-015-marketing-report-exchange/verification.md#local-and-production-migration-012--2026-10-06)). Local was created by the separately authorized Production-backup restore ([restore evidence](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05)); the former Docker Local remains unavailable here. These are separate states and do not synchronize automatically; schema migration did not deploy application code or migrate the parent database.
 
 อ่านตามลำดับ authority: user approval → [Single-code login](../features/FEAT-007-single-code-login/spec.md) → [Member identity](../features/FEAT-006-member-identity/spec.md) → [Guest access](../features/FEAT-005-guest-access/spec.md) → amendments ใน [Cloud deployment](ARCH-003-hosted-deployment.md) / [data model](ARCH-002-postgresql-data-model.md) → [architecture baseline](ARCH-001-baseline-architecture.md)
 
 เอกสาร baseline เก็บประวัติการออกแบบตั้งแต่ local-only และ shared password ข้อกำหนดเหล่านั้นถูกแทนด้วย approved Guest/Member amendments แล้ว ห้ามใช้ baseline เก่าปิด Guest หรือเปิด shared password กลับมา
 
 - UI และ API ใช้ origin เดียว; local serve build/site, production deploy build/vercel
-- Database: PostgreSQL schema 11 in both Production and the restored native Local. Neon and local databases are separate states and do not synchronize automatically.
+- Database: PostgreSQL schema 12 in both Production and the restored native Local. Neon and local databases are separate states and do not synchronize automatically.
 - Hosted reads: public Guest ตาม Business เดิม; writes: same-origin + signed Member session + active/version checks ใน transaction
 - Local: trusted operator ผูก loopback; ไม่อ้างว่าผู้ทำรายการเป็น Member โดยไม่มี session
 - PID เป็น public stable identifier; UUID เป็น PK/FK; credentials และ handovers แยกจาก profiles และ static package

@@ -54,7 +54,7 @@ node apps/api/server.mjs
 
 ## ฐานข้อมูลและรหัสสมาชิก
 
-Local เครื่องนี้ใช้ PostgreSQL 18.6 native ที่ 127.0.0.1:55412 ฐาน `zuri_go` schema 11 และข้อมูล persistent ใน `.local/postgres-local/data` ซึ่ง restore จาก backup Production ที่ตรวจแล้วตามอนุมัติของเจ้าของ; Docker Local เดิมที่พอร์ต 54329 ไม่พร้อมใช้บนเครื่องนี้ Production ใช้ Neon และเว็บไซต์ https://zuri-metrics-map.vercel.app/ เหมือนเดิม Local/cloud ไม่ sync กันอัตโนมัติ
+Local เครื่องนี้ใช้ PostgreSQL 18.6 native ที่ 127.0.0.1:55412 ฐาน `zuri_go` schema 12 และข้อมูล persistent ใน `.local/postgres-local/data` ซึ่ง restore จาก backup Production ที่ตรวจแล้วตามอนุมัติของเจ้าของ; ทั้ง Local และ Production apply migration 012 แล้วเมื่อ 2026-10-06 ตาม [หลักฐาน FEAT-015](docs/features/FEAT-015-marketing-report-exchange/verification.md#local-and-production-migration-012--2026-10-06) Docker Local เดิมที่พอร์ต 54329 ไม่พร้อมใช้บนเครื่องนี้ Production ใช้ Neon และเว็บไซต์ https://zuri-metrics-map.vercel.app/ เหมือนเดิม Local/cloud ไม่ sync กันอัตโนมัติ
 
 Connection ของเครื่องนี้อยู่ `.local/config.json`; cloud operator config อยู่ `.local/cloud-config.json` ส่วน Vercel runtime ใช้ encrypted environment variables เดิม ไม่มี connection string ใน frontend
 
