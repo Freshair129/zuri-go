@@ -2,11 +2,28 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.3.0
+version: 1.4.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## Reconciled bounded receiver/transport checkpoint — 2026-10-05
+
+The owner approved main-first reconciliation and the paired physical designs. Parent fresh branch `codex/marketing-report-reconciled` preserves main `077796622233bf9f35905f7eac226f0963760dcb`, its dashboard FR-278 and the old branch's immutable issuance evidence. Independently reviewed fresh issuance at `d08f08a8f2604bd9657360d37f7c135d636189b7` supplies FR-281–283/SDD-112. This resolves the prior identity-collision coding gate; it does not qualify the old PR #630 for merge. Final remote checks still found those parent-main and Go-main `89b525aa` heads. Paired approved documentation is pinned at Go `4faf6334ce1eadcd291958606b70b94e2ab6b658`.
+
+| Check | Executed result / limit |
+|---|---|
+| Go pure transport | PASS 3/3, `node --test apps/api/test/marketing-report-delivery.test.mjs`. Strict bounded receipt/config validation, actual loopback HTTP timeout/body bounds, fixed-origin no-redirect single send. Source: CMP-004. No sender ledger, route or durable Go receipt write. |
+| Parent wire/native SQLite | PASS 17/17 (5 wire, 12 integration), final opt-in native runner 19:25 Asia/Bangkok. Actual Next route, isolated Prisma 5.22.0 SQLite, atomic commit/replay, crossed scopes/revocation/deny-default, contention retries, backup guards and native-table preservation. Generated pinned baseline DDL plus actual candidate additive migration; not full historical chain or a live migration. |
+| Cross-repository lost response | PASS actual Go transport → loopback HTTP → actual Next/native SQLite commit, response loss UNKNOWN, explicit identical replay ACK with original receipt and one parent report/audit. Does not exercise PostgreSQL Claim/Complete/Settle or durable sender ACK. |
+| Parent PostgreSQL artifact | PASS structural QA compilation only, seven guards; receiver PostgreSQL runtime is disabled and unqualified. |
+| Parent governance snapshot suites | PASS 38/38 on reconciled tooling; fresh issuance preserves 540 main canonical entries and 748 original pin metadata (544 records/752 pins). Final composed governance is recorded in the parent verification. |
+| Independent application source/test review | PASS bounded receiver and pure transport, after enum/CTR/scope findings were resolved. No independent native rerun or full-sender acceptance claim. Parent verification: `docs/change-requests/marketing/ZURI-GO-REPORT-IMPLEMENTATION-VERIFICATION.md`. |
+
+Sender authority remains a material clarification: existing trusted local operator plus non-archived configured Business, or a new separate deny-default sender policy. The inspected Go schema has no separate DOM-CAM switch. Migration 012, Claim/Complete/Settle, API-026, PostgreSQL delivery concurrency/lease/age/attempt acceptance and full freeze-to-durable-ACK remain NOT_IMPLEMENTED/NOT_RUN pending that decision. No real migration, association, credential, send, deployment or production change occurred. Package remains 0.5.1; restored Local and Production remain schema 11.
+
+Version diff 1.3.0 → 1.4.0: records reviewed fresh parent identities, the bounded implemented transport/receiver checks and remaining sender/operational gates; prior sections retain historical evidence.
 
 ## Final parent main collision gate — 2026-10-05
 
@@ -289,12 +306,12 @@ Status: PARTIAL — TC-015-005/006 pass strict frozen-envelope and persisted SQL
 ### Acceptance plan 04 — Bounded delivery and receipt recovery
 Coverage: FR-015-004; AC-015-004-01, AC-015-004-02, AC-015-004-03, AC-015-004-04; NFR-015-001.
 
-Status: NOT_RUN. Proposed test file: `apps/api/test/marketing-report-delivery.test.mjs`. Holdout: commit then dropped response, 429 Retry-After, mismatch receipt, worker/lease interruption, fifth send, stale age, concurrent send and redirect to other origin.
+Status: PARTIAL. Actual `apps/api/test/marketing-report-delivery.test.mjs` passes 3 pure/HTTP cases; parent native tests cover committed response loss and explicit same-byte replay through this transport. PostgreSQL sender worker/lease interruption, fifth send, stale age, concurrent Claim/Complete/Settle and durable ACK remain NOT_RUN. Receipt mismatch, 429 parsing and redirect refusal are transport evidence, not sender ledger acceptance.
 
 ### Acceptance plan 05 — Parent writer and authorization boundaries
 Coverage: FR-015-005; AC-015-005-01, AC-015-005-02, AC-015-005-03, AC-015-005-04.
 
-Status: NOT_RUN. Proposed parent test files require allocation in Zuri-AI's own reviewed record. Holdout: inactive/revoked credential after acceptance, Tenant-wide key without Business grant, valid key/crossed target, replay receipt disclosure, same key/new hash, concurrent corrections, immutable native Plan/review/decision and verified revenue.
+Status: PARTIAL. Fresh parent FR-281–283/SDD-112 bind actual `marketing-report-wire.test.js` and `marketing-report-native.test.js`; bounded checks above pass. Inactive/revoked policy and replay, wrong credential family, crossed scope, same key/new bytes, race/commit failure and native row preservation have isolated SQLite evidence. Full paired sender acceptance and hosted/live checks remain NOT_RUN; correction chains are outside approved revision 1.
 
 ## Completion gate and version diff
 
