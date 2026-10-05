@@ -2,7 +2,7 @@
 title: P3 explicit delivery — approved physical design
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -19,7 +19,7 @@ Source inspected at Go `f06ef4d3e2321ff9ab24f125503bf32900343e37`, schema 11. Pa
 
 [ASSUMPTIONS]
 
-1. Explicit local operator send/retry only; no startup worker, hosted sending, browser token or automatic network retry. Existing operator/Business/DOM-CAM gates remain mandatory.
+1. Owner clarification: explicit local operator send/retry uses the existing trusted operator and configured non-archived Business. No separate Go DOM-CAM switch/policy is introduced. SQL rechecks operator/Business scope and the current non-archived Business after its lock on Claim/Complete/Settle/read. The parent deny-default ingest policy remains unchanged. No startup worker, hosted sending, browser token or automatic network retry.
 2. Frozen reports/outbox from migration 011 stay immutable. New delivery schema is additive; allocate the next migration/API/component/test IDs only after approval and fresh-main check.
 
 ## PostgreSQL storage proposal
@@ -32,13 +32,13 @@ Every new table carries Business scope with same-Business composite FK relations
 | `marketing_report_delivery_attempts` | UUID attemptId; Business/report/delivery identity, UNIQUE(report,attemptNumber), lease UUID, start/lease expiry, expected association row_version, bounded outcome/http-status and finish time. Claim identity/times immutable; result may transition exactly once from null to a safe terminal result. No request/response body, URL token, raw exception or credential |
 | `marketing_report_delivery_receipts` | UUID local id; Business/report/attempt FK; parent receiverReceiptId, exact strict receipt fields, bounded canonical receipt bytes, acceptedAt, locally observedAt; UNIQUE(report), UNIQUE(bindingId,receiverReceiptId). All fields immutable; matching report binding/campaign/initiative/revision/hash required |
 
-Runtime direct-write-denial and cross-Business FK tests are required, including function bypass attempts. Original `marketing_reports`, associations and QUEUED outbox from 011 are not modified. Migration can create QUEUED delivery projections for existing frozen outbox rows with count zero, without sending or changing original rows; validate every source FK before that additive backfill. Failed validation aborts migration. No real association is provisioned by migration.
+Runtime direct-write-denial and cross-Business FK tests are required, including function bypass attempts. Original `marketing_reports`, associations and QUEUED outbox from 011 are not modified. Migration 012 adds the three tables/finalizers without backfill; Claim initializes a projection atomically for both pre-migration and newly frozen reports. No real association is provisioned by migration. The migrator's atomic grant reconciliation also revokes direct writes on all three new tables.
 
 Reports frozen after migration enter delivery through atomic lazy initialization inside Claim: after locking/checking Business and association and verifying the scoped immutable report/outbox, insert the missing QUEUED projection under its unique Business/report key, then lock it and run claim checks in that same transaction. A uniqueness contender reads the existing row; it cannot create a second delivery or reset an existing state/count. Initialization has no attempt, first_sent_at or network effect by itself; a failed claim rolls back its new projection. Migration backfill is optional convenience, not the only initialization path; no trigger/change to the 011 freeze finalizer is needed.
 
 ## Operator operations and transaction boundary
 
-Candidate local API operation is a POST send/retry for one report; no new public route or automatic scheduler. Exact path/issued API ID is a later approval-scoped allocation. `apps/api/api.mjs` must retain hosted/Guest/Member denial before any claim/network action, matching current local report routes. Operator commands use private server config mapping association UUID + exact row_version + external binding to one HTTPS receiver origin and credential; credentials/URLs are not accepted from request bodies. Exact path is `/api/growth/external-marketing-reports`, no redirects. Synthetic loopback HTTP is permitted only by isolated test injection, never production config fallback.
+API-026 owns `GET /businesses/{b}/marketing-reports/{reportId}/delivery`, `POST .../delivery/send` (explicit send/retry) and `POST .../delivery/settle` (expired lease only, no send). The shared `/api/zuri-go/v1` prefix and API-001 transport apply; POST accepts empty bytes or exactly `{}`, at most 1024 UTF-8 bytes. GET accepts no body. No public route, completion endpoint or automatic scheduler. `apps/api/api.mjs` must retain hosted/Guest/Member denial before any claim/network action, matching current local report routes. Operator commands use private server config mapping association UUID + exact row_version + external binding to one HTTPS receiver origin and credential; credentials/URLs are not accepted from request bodies. Exact parent path is `/api/growth/external-marketing-reports`, no redirects. Synthetic loopback HTTP is permitted only by isolated test injection, never production config fallback.
 
 | Operation | Atomic PostgreSQL result |
 |---|---|
@@ -108,3 +108,5 @@ Version diff 0 → 0.1.0: adds proposed delivery/attempt/receipt physical storag
 Version diff 0.1.0 → 0.2.0: records owner approval of the paired design and main-first reconciliation. Authorizes implementation and isolated native QA; live migrations, bindings, credentials, sends and deployment retain separate authorization. Fresh parent references will be rebound after reviewed issuance; current native acceptance remains NOT_RUN.
 
 Version diff 0.2.0 → 0.3.0: rebinds current implementation to independently reviewed fresh parent FR-281–283/SDD-112 and approved wire v0.4.0; old branch issuance remains historical, not aliased.
+
+Version diff 0.3.0 → 0.4.0: records the owner's existing operator + configured non-archived Business decision; binds API-026, migration 012 and lazy initialization without a separate sender policy. Existing paired approval authorizes implementation/isolated QA; live operations remain separately gated.

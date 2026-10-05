@@ -5,7 +5,7 @@ owner: DOM-CAM
 runtime: SRV-002
 status: approved
 superseded_by: null
-version: 0.1.0
+version: 0.2.0
 date: 2026-10-05
 ---
 
@@ -17,6 +17,8 @@ Claim/Complete/Settle follow the physical chapter's Business→association→del
 
 Native acceptance remains NOT_RUN. Existing frozen report/outbox bytes and migration 011 are preserved. No live migration, binding, send, scheduler or deployment is implied.
 
-2026-10-05 candidate checkpoint: pure receipt/config/HTTP transport is implemented and its three Node tests pass, including actual loopback HTTP body timeout, bounded response and no redirects. This is not the PostgreSQL sender ledger or router. The Go source has no separate DOM-CAM enable switch; clarification remains pending between existing local operator + non-archived configured Business authority and a new deny-default sender policy. Claim/Complete/Settle and migration 012 are not implemented until that material interpretation is settled. Parent receiver native evidence is recorded in its reconciled worktree, independently of Go delivery acceptance.
+2026-10-05 candidate checkpoint: pure receipt/config/HTTP transport is implemented and its three Node tests pass, including actual loopback HTTP body timeout, bounded response and no redirects. Owner subsequently chose existing local operator + non-archived configured Business authority, closing the sender clarification without a new Go policy. Claim/Complete/Settle and migration 012 now proceed under paired approval; parent deny-default policy is unchanged. Parent receiver native evidence is recorded in its reconciled worktree, independently of full Go delivery acceptance.
 
 Version diff 0 → 0.1.0: binds approved P3 implementation paths and private server configuration custody; no delivered runtime claim.
+
+Version diff 0.1.0 → 0.2.0: records the sender authority decision and closes its implementation prerequisite. Native/full paired acceptance is still pending execution.
