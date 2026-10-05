@@ -43,26 +43,42 @@ export async function readLegacy(c,b,viewer=viewerOf(c)){
  const memberMap=new Map(members.map(m=>[m.id,legacyId(m)])),campaignMap=new Map(campaignRows.map(r=>[r.id,r.id]));
  // Campaign tasks are projected from the task records and their details (FR-010-015); the R's name stands in for the owner text.
  const details=new Map((await all(c,b,'campaign_task_details')).map(d=>[d.task_id,d])),rName=t=>{const r=roles.find(x=>x.task_id===t.id&&x.role==='R');return r?members.find(m=>m.id===r.member_id)?.display_name||'':'';};
- const campaigns=campaignRows.filter(x=>!x.archived_at).map(r=>{const payload=states.find(s=>s.campaign_id===r.id)?.state_json||createCampaign(r.name,r.objective,false);return {...payload,id:r.id,name:r.name,objective:r.objective,owner:members.find(m=>m.id===r.owner_member_id)?.display_name||payload.legacyOwnerLabel||'',start:r.planned_start||'',end:r.planned_end||'',createdAt:iso(r.created_at),tasks:tasks.filter(t=>t.campaign_id===r.id&&(t.source_kind==='campaign-legacy'||!t.archived_at)).map(t=>projectCampaignTask(t,details.get(t.id)||null,rName(t)))};});
+ const campaigns=campaignRows.map(r=>{const payload=states.find(s=>s.campaign_id===r.id)?.state_json||createCampaign(r.name,r.objective,false);return {...payload,id:r.id,name:r.name,objective:r.objective,owner:members.find(m=>m.id===r.owner_member_id)?.display_name||payload.legacyOwnerLabel||'',start:r.planned_start||'',end:r.planned_end||'',archived_at:r.archived_at||null,createdAt:iso(r.created_at),tasks:tasks.filter(t=>t.campaign_id===r.id).map(t=>({...projectCampaignTask(t,details.get(t.id)||null,rName(t)),archived_at:t.archived_at||null}))};});
  const domain=empty();domain.revision=Number(business.domain_revision);domain.seedKeys=business.legacy_metadata.seedKeys||[];
- // A Guest reads only the ID, PID, display name and status of a Member (WI-12 D16).
- domain.members=members.map(r=>{if(viewer.kind==='guest')return {id:legacyId(r),pid:r.pid,displayName:r.display_name,status:r.status};const m={...r.legacy_metadata,id:legacyId(r),pid:r.pid,version:Number(r.row_version),createdAt:iso(r.created_at),updatedAt:iso(r.updated_at)};for(const [k,v] of Object.entries(M_FIELDS))m[k]=r[v];return m;});
- domain.tasks=tasks.filter(t=>t.source_kind!=='campaign-legacy'&&!t.archived_at).map(r=>{const result={...r.legacy_metadata,id:legacyId(r),version:Number(r.row_version),campaignId:r.campaign_id||null,createdAt:iso(r.created_at),updatedAt:iso(r.updated_at),sourceKind:r.source_kind,sourceRefs:r.legacy_metadata.sourceRefs||[],consultedIds:[],informedIds:[]};for(const [k,v] of Object.entries(T_FIELDS))result[k]=r[v];for(const role of ['R','A','C','I']){const matches=roles.filter(x=>x.task_id===r.id&&x.role===role);if(role==='R'||role==='A')result[role==='R'?'responsibleId':'accountableId']=matches[0]?memberMap.get(matches[0].member_id):null;else result[role==='C'?'consultedIds':'informedIds']=matches.map(x=>memberMap.get(x.member_id));if(role==='A')result.accountableConfirmed=matches[0]?.confirmation==='confirmed';}return result;});
+ domain.members=members.map(r=>{const m={id:legacyId(r),pid:r.pid,version:Number(r.row_version),createdAt:iso(r.created_at),updatedAt:iso(r.updated_at)};for(const [k,v] of Object.entries(M_FIELDS))m[k]=r[v];return m;});
+ domain.tasks=tasks.filter(t=>t.source_kind!=='campaign-legacy').map(r=>{const result={...r.legacy_metadata,id:legacyId(r),version:Number(r.row_version),campaignId:r.campaign_id||null,createdAt:iso(r.created_at),updatedAt:iso(r.updated_at),archived_at:r.archived_at||null,sourceKind:r.source_kind,sourceRefs:r.legacy_metadata.sourceRefs||[],consultedIds:[],informedIds:[]};for(const [k,v] of Object.entries(T_FIELDS))result[k]=r[v];for(const role of ['R','A','C','I']){const matches=roles.filter(x=>x.task_id===r.id&&x.role===role);if(role==='R'||role==='A')result[role==='R'?'responsibleId':'accountableId']=matches[0]?memberMap.get(matches[0].member_id):null;else result[role==='C'?'consultedIds':'informedIds']=matches.map(x=>memberMap.get(x.member_id));if(role==='A')result.accountableConfirmed=matches[0]?.confirmation==='confirmed';}return result;});
  const rowOf=new Map(tasks.map(t=>[legacyId(t),t]));
  for(const t of domain.tasks){const row=rowOf.get(t.id);t.visibility=row.visibility;t.teamId=row.team_id||null;t.viewerIds=viewerRows.filter(v=>v.task_id===row.id).map(v=>memberMap.get(v.member_id));delete t.visibilityReason;delete t.sourceRefsWithheld;
   // References to meetings this viewer cannot read are withheld here and kept on save.
   const refs=t.sourceRefs.filter(ref=>visibleMeetings.has(ref.meetingId)).map(ref=>Array.isArray(ref.evidence)?ref:{...ref,evidence:links.get(row.id+':'+ref.proposalId)||{withheld:true}});if(refs.length!==t.sourceRefs.length)t.sourceRefsWithheld=true;t.sourceRefs=refs;}
  const taskMap=new Map(tasks.map(t=>[t.id,legacyId(t)]));// Entries keep the order the client saved (weekly_plans.legacy_metadata), not the physical row order.
  const saved=w=>(w.legacy_metadata?.entries||[]).map(e=>e.taskId),position=(w,id)=>{const i=saved(w).indexOf(id);return i<0?Infinity:i;};
- domain.weeks=weeks.map(w=>({weekStart:w.week_start,timezone:w.timezone,entries:entries.filter(e=>e.weekly_plan_id===w.id).map(e=>({taskId:taskMap.get(e.task_id),priority:e.priority,priorityNote:e.priority_note})).sort((x,y)=>position(w,x.taskId)-position(w,y.taskId))}));
- domain.meetings=meetingRows.map(r=>{const people=participants.filter(p=>p.meeting_id===r.id);return {...r.legacy_metadata,campaignId:r.campaign_id||null,visibility:r.visibility,teamId:r.team_id||null,transcriptCustody:r.transcript_custody,participantIds:people.map(p=>memberMap.get(p.member_id)),organizerId:memberMap.get(people.find(p=>p.role==='organizer')?.member_id)||null};});
+ domain.weeks=weeks.map(w=>({id:w.id,weekStart:w.week_start,timezone:w.timezone,archived_at:w.archived_at||null,entries:entries.filter(e=>e.weekly_plan_id===w.id).map(e=>({taskId:taskMap.get(e.task_id),priority:e.priority,priorityNote:e.priority_note})).sort((x,y)=>position(w,x.taskId)-position(w,y.taskId))}));
+ domain.meetings=meetingRows.map(r=>{const people=participants.filter(p=>p.meeting_id===r.id);return {...r.legacy_metadata,id:r.legacy_metadata.id||r.id,archived_at:r.archived_at||null,campaignId:r.campaign_id||null,visibility:r.visibility,teamId:r.team_id||null,transcriptCustody:r.transcript_custody,participantIds:people.map(p=>memberMap.get(p.member_id)),organizerId:memberMap.get(people.find(p=>p.role==='organizer')?.member_id)||null};});
  for(const r of (await all(c,b,'meeting_revisions')).filter(r=>meetingIds.has(r.meeting_id)))domain[r.kind==='source'?'sources':'reviews'].push(r.legacy_metadata);
  const shownTasks=new Set(domain.tasks.map(t=>t.id));
  // A receipt that names a task this viewer cannot read is withheld; the stored receipt is kept on save.
  for(const r of (await all(c,b,'meeting_draft_batches')).filter(r=>meetingIds.has(r.meeting_id))){domain.batches.push(r.legacy_metadata.batch);const receipt=r.legacy_metadata.receipt;if(receipt&&receipt.taskIds.every(id=>shownTasks.has(id)))domain.receipts.push(receipt);}
- const events=await c.query("SELECT entity_id,after_data FROM change_events WHERE business_id=$1 AND entity_type='legacy_task_event' ORDER BY occurred_at,id",[b]);domain.events=viewer.kind==='guest'?[]:events.rows.filter(r=>r.entity_id===b||visibleIds.has(r.entity_id)).map(r=>withholdQuotes(r.after_data,visibleMeetings));
+ const events=await c.query("SELECT entity_id,after_data FROM change_events WHERE business_id=$1 AND entity_type='legacy_task_event' ORDER BY occurred_at,id",[b]);domain.events=events.rows.filter(r=>r.entity_id===b||visibleIds.has(r.entity_id)).map(r=>withholdQuotes(r.after_data,visibleMeetings));
+ const auditEvents=(await c.query('SELECT * FROM change_events WHERE business_id=$1 ORDER BY occurred_at,id',[b])).rows;
  const selected=campaigns[0]?.id||null;
- return {schemaVersion:2,appId:APP_ID,version:Number(business.domain_revision),campaignWorkspace:{schemaVersion:1,selected,campaigns},meetingTaskManager:domain};
+ return {schemaVersion:2,appId:APP_ID,version:Number(business.domain_revision),campaignWorkspace:{schemaVersion:1,selected,campaigns},meetingTaskManager:domain,auditEvents};
+}
+export async function archiveMeeting(c,b,ref,viewer=viewerOf(c)){
+ if(viewer.kind==='guest')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+ const old=(await c.query("SELECT * FROM meetings WHERE business_id=$1 AND (id::text=$2 OR legacy_metadata->>'id'=$2) ORDER BY (id::text=$2) DESC LIMIT 1 FOR UPDATE",[b,ref])).rows[0];
+ if(!old)fail('ไม่พบประชุม',404);if(old.archived_at)return {id:old.legacy_metadata?.id||old.id,archived_at:old.archived_at};
+ const row=(await c.query('UPDATE meetings SET archived_at=now() WHERE business_id=$1 AND id=$2 RETURNING *',[b,old.id])).rows[0];
+ await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);await audit(c,b,'meetings',old.id,old,row,'archive');
+ return {id:row.legacy_metadata?.id||row.id,archived_at:row.archived_at};
+}
+export async function archiveWeeklyPlan(c,b,id,viewer=viewerOf(c)){
+ if(viewer.kind==='guest')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+ const old=(await c.query('SELECT * FROM weekly_plans WHERE business_id=$1 AND id=$2 FOR UPDATE',[b,id])).rows[0];
+ if(!old)fail('ไม่พบแผนสัปดาห์',404);if(old.archived_at)return {id:old.id,archived_at:old.archived_at};
+ const row=(await c.query('UPDATE weekly_plans SET archived_at=now() WHERE business_id=$1 AND id=$2 RETURNING *',[b,id])).rows[0];
+ await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);await audit(c,b,'weekly_plans',id,old,row,'archive');
+ return {id:row.id,archived_at:row.archived_at};
 }
 function validateCampaignWorkspace(ws){if(ws?.schemaVersion===1&&Array.isArray(ws.campaigns)&&!ws.campaigns.length)return ws;return restoreWorkspace(ws);}
 async function writeCampaigns(c,b,ws,initial=false){
@@ -157,7 +173,9 @@ export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerO
  if(prior){if(![r,custodyRevision({legacy_metadata:r},held).legacy_metadata].some(v=>hash(v)===hash(prior.legacy_metadata)))fail('ห้ามเขียนทับ transcript revision เดิม');return;}
  if(isWithheld(r)&&held!=='local_only')fail('transcript revision นี้ไม่ได้อยู่ในสถานะเก็บไว้ที่เครื่องที่บันทึกการประชุม');
  const row=custodyRevision({meeting_id:mid,kind,parent_revision_id:kind==='review'?id(r.parentRevisionId?'review':'source',r.parentRevisionId||r.sourceId):null,content_hash:r.contentHash||r.reviewHash,source_revision:r.sourceRevision||null,source_cursor:r.sourceCursor||null,source_mode:r.sourceMode||null,segments:r.segments,coverage:r.coverage||null,captured_at:r.capturedAt||r.reviewedAt||new Date().toISOString(),legacy_metadata:r},held);
- await upsert(c,b,'meeting_revisions',rid,{...row,segments:JSON.stringify(row.segments)});};
+ const values={...row,segments:JSON.stringify(row.segments)},keys=Object.keys(values);
+ try{await c.query(`INSERT INTO meeting_revisions(business_id,id,${keys.join(',')}) VALUES($1,$2,${keys.map((_,i)=>'$'+(i+3)).join(',')})`,[b,rid,...Object.values(values)]);}
+ catch(error){if(error.code==='23505')fail('ข้อมูลถูกแก้แล้ว กรุณาโหลด workspace ใหม่',409);throw error;}};
  for(const src of state.sources)await putRevision(src,'source');
  const pending=[...state.reviews];const done=new Set();while(pending.length){const ix=pending.findIndex(r=>!r.parentRevisionId||done.has(r.parentRevisionId));if(ix<0)fail('Review lineage มีวงวน');const [r]=pending.splice(ix,1);await putRevision(r,'review');done.add(r.id);}
  for(const batch of state.batches){const priorBatch=oldBatches.find(r=>r.id===id('batch',batch.id)),receipt=receiptOf(batch,priorBatch),held=custodyFor(id('meeting',batch.meetingId)),kept=priorBatch?priorBatch.legacy_metadata.batch:custodyBatch(batch,held),stub=priorBatch?priorBatch.legacy_metadata.withheld===true:held==='local_only';await upsert(c,b,'meeting_draft_batches',id('batch',batch.id),{meeting_id:id('meeting',batch.meetingId),review_revision_id:id('review',batch.reviewRevisionId),request_id:batch.requestId||batch.id,source_hash:batch.sourceHash,review_hash:batch.reviewHash,mode:batch.modelName?'local_ai':'manual',model_ref:batch.modelName||null,items:JSON.stringify(kept.items),generated_at:batch.generatedAt||new Date().toISOString(),committed_at:receipt?.committedAt||null,commit_key:receipt?.idempotencyKey||null,commit_payload_hash:receipt?receipt.payloadHash||hash(receipt.payload):null,legacy_metadata:{batch:kept,receipt,...(stub?{withheld:true}:{})}});
@@ -171,36 +189,37 @@ export async function writeDomain(c,b,state,campaignMap=new Map(),viewer=viewerO
  await c.query('UPDATE businesses SET legacy_metadata=jsonb_set(legacy_metadata,\'{seedKeys}\',$2::jsonb) WHERE id=$1',[b,JSON.stringify(state.seedKeys)]);
 }
 export async function saveLegacy(c,b,input){
+ if(viewerOf(c).kind==='guest')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
  const current=(await c.query('SELECT * FROM businesses WHERE id=$1 FOR UPDATE',[b])).rows[0];if(Number(input.version)!==Number(current.domain_revision))fail('ข้อมูลถูกแก้แล้ว กรุณาโหลด workspace ใหม่',409);
  let map=new Map();if(input.campaignWorkspace)map=await writeCampaigns(c,b,input.campaignWorkspace);
  if(input.meetingTaskManager)await writeDomain(c,b,input.meetingTaskManager,map,viewerOf(c),{refuseNewReceipts:true});
  await audit(c,b,'workspace',b,null,{domains:[...(input.campaignWorkspace?['campaigns']:[]),...(input.meetingTaskManager?['meetings_tasks_members']:[])]},'save');
  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);const result=await readLegacy(c,b);if(input.campaignWorkspace?.selected)result.campaignWorkspace.selected=map.get(input.campaignWorkspace.selected)||result.campaignWorkspace.selected;return result;
 }
-// FR-011-010: a participant's explicit, audited upload of a transcript kept on the recording machine. Every stub must be matched by
+// An active Member's explicit, audited upload of a transcript kept on the recording machine. Every stub must be matched by
 // the full content it came from (the stub equals that content with its text removed), so nothing else can be stored through here.
 export async function uploadTranscript(c,b,ref,input){
  const viewer=viewerOf(c),names=await meetingNames(c,b),meeting=readable(viewer,await all(c,b,'meetings'),names).find(r=>r.id===ref||r.legacy_metadata?.id===ref);
  if(!meeting)fail('ไม่พบประชุม',404);
- if(viewer.kind!=='member'||!(names.get(meeting.id)||[]).includes(viewer.memberId))fail('เฉพาะผู้เข้าร่วมประชุมอัปโหลด transcript ได้',403);
+ if(viewer.kind!=='member')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+ if(!(await c.query('SELECT 1 FROM meeting_participants WHERE business_id=$1 AND meeting_id=$2 AND member_id=$3',[b,meeting.id,viewer.memberId])).rowCount)fail('เฉพาะผู้เข้าร่วมประชุมอัปโหลด transcript ได้',403);
  const reason=String(input?.reason??'').trim();if(!reason)fail('ระบุเหตุผลที่อัปโหลด transcript',422);
  if(meeting.transcript_custody!=='local_only')fail('transcript ของประชุมนี้อยู่บน cloud แล้ว',409);
  const list=v=>new Map((Array.isArray(v)?v:[]).map(d=>[d?.id,d])),sent={source:list(input.sources),review:list(input.reviews)},sentBatches=list(input.batches);
  const revisions=(await c.query('SELECT * FROM meeting_revisions WHERE business_id=$1 AND meeting_id=$2',[b,meeting.id])).rows,stubs=revisions.filter(r=>isWithheld(r.legacy_metadata));
  const stubBatches=(await c.query('SELECT * FROM meeting_draft_batches WHERE business_id=$1 AND meeting_id=$2',[b,meeting.id])).rows.filter(r=>r.legacy_metadata.withheld===true);
  const mismatch=()=>fail('transcript ที่ส่งมาไม่ตรงกับฉบับที่บันทึกไว้');
- if(sent.source.size+sent.review.size!==stubs.length||sentBatches.size!==stubBatches.length)mismatch();
+ if(!stubs.length||sent.source.size+sent.review.size!==stubs.length||sentBatches.size!==stubBatches.length)mismatch();
  for(const row of stubs){const doc=sent[row.kind].get(row.legacy_metadata.id);
   if(!doc||isWithheld(doc)||!Array.isArray(doc.segments)||!doc.segments.length||doc.segments.some(s=>typeof s?.segmentId!=='string'||typeof s.text!=='string'||!Number.isFinite(s.startMs)||!Number.isFinite(s.endMs)||s.startMs<0||s.endMs<s.startMs)||hash(custodyRevision({legacy_metadata:doc},'local_only').legacy_metadata)!==hash(row.legacy_metadata)||(row.kind==='review'&&await reviewHash(doc.id,doc.segments)!==doc.reviewHash))mismatch();}
  const whole=new Map(revisions.filter(r=>!isWithheld(r.legacy_metadata)).map(r=>[r.legacy_metadata.id,r.legacy_metadata]));
  for(const row of stubBatches){const doc=sentBatches.get(row.legacy_metadata.batch.id),review=doc&&(sent.review.get(doc.reviewRevisionId)||whole.get(doc.reviewRevisionId));
   if(!doc||!review||!Array.isArray(doc.items)||hash(custodyBatch(doc,'local_only'))!==hash(row.legacy_metadata.batch))mismatch();
   try{for(const item of doc.items)validateEvidence(review,item.evidence);}catch{mismatch();}}
- for(const row of stubs)await c.query('UPDATE meeting_revisions SET segments=$3,legacy_metadata=$4 WHERE business_id=$1 AND id=$2',[b,row.id,JSON.stringify(sent[row.kind].get(row.legacy_metadata.id).segments),sent[row.kind].get(row.legacy_metadata.id)]);
+ const revisionUploads=stubs.map(row=>{const doc=sent[row.kind].get(row.legacy_metadata.id);return {id:row.id,segments:doc.segments,metadata:doc};});
+ const batchIds=stubBatches.map(row=>row.legacy_metadata.batch.id);
+ await c.query('SELECT zuri_go.complete_meeting_transcript_upload($1::uuid,$2::uuid,$3::text,$4::jsonb,$5::text[])',[b,meeting.id,reason,JSON.stringify(revisionUploads),batchIds]);
  for(const row of stubBatches){const doc=sentBatches.get(row.legacy_metadata.batch.id);await c.query('UPDATE meeting_draft_batches SET items=$3,legacy_metadata=$4 WHERE business_id=$1 AND id=$2',[b,row.id,JSON.stringify(doc.items),{batch:doc,receipt:row.legacy_metadata.receipt}]);}
- await c.query("UPDATE meetings SET transcript_custody='cloud' WHERE business_id=$1 AND id=$2",[b,meeting.id]);
- await audit(c,b,'meetings',meeting.id,{transcript_custody:'local_only'},{transcript_custody:'cloud',reason,revisionIds:stubs.map(r=>r.legacy_metadata.id),batchIds:stubBatches.map(r=>r.legacy_metadata.batch.id)},'transcript_upload');
- await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
  return readLegacy(c,b);
 }
 function decodeBackup(value){if(value.schemaVersion===2){if(value.appId!==APP_ID)fail('Backup เป็นของแอปอื่น');validateCampaignWorkspace(value.campaignWorkspace);if(value.meetingTaskManager?.restoreJournal)fail('Backup มี restore ที่ยังไม่เสร็จ');validateState(value.meetingTaskManager);return value;}return {schemaVersion:2,appId:APP_ID,campaignWorkspace:restoreWorkspace(value),meetingTaskManager:empty()};}

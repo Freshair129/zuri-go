@@ -3,7 +3,7 @@ id: FR-011-011
 title: Widening the visibility of a task or project
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: implemented
+delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]

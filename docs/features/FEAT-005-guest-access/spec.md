@@ -3,11 +3,15 @@
 Date: 2026-09-30. Complexity: C-3. Risk: HIGH (production authorization boundary).
 Authority: user explicitly requested public viewing without login, Guest mode at the upper right, and shared-team login only when creating/deleting/editing; user also requested Vercel deployment.
 
+## Current access contract — ADR-008 (approved 2026-10-05)
+
+ADR-008 supersedes the Guest read scope and Member write restrictions described in the historical sections below, including the later public-only and inherited-visibility rules in FEAT-011. A Guest reads every non-secret record in the configured Business and cannot create, update, delete or approve records. Every active authenticated Member has identical CRUD and internal approval rights for every mutable non-secret record in that Business, including Member and Team records, regardless of audience, ownership, team, assignee or RACI metadata. DELETE follows each record family's existing archive, deactivate, cancel or retract lifecycle; add a reversible tombstone/archive only for mutable Task, Meeting or week-plan records without one. Preserve foreign keys, work, append-only audit and immutable measurement/Visual history; no hard-delete or purge is in scope. Member removal is logical deactivation/retirement; preserve the Member UUID/PID. Credential/session/provider/operator secrets remain hidden, actor identity comes from the verified individual session, and provider, spend, publication and deployment actions keep their separate gates. This approved contract is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; the release checks below are historical evidence of earlier behavior.
+
 This supersedes the mandatory-login-for-reading rule in the 0.3.0 cloud spec. Parent: [Cloud architecture](../../architecture/ARCH-003-hosted-deployment.md). Peers: Business Overview, campaign editor, Meeting/Tasks, Metrics/Graph.
 
 **0.4.0 amendment:** [Member identity](../FEAT-006-member-identity/spec.md) replaces the shared-team password/session references below with individual PID/password sign-in and authenticated Member attribution. Public Guest reads, write-intent modal, action resume, file limits and downloads are unchanged. The old team password/cookie is no longer accepted by 0.4.0.
 
-## Behavior
+## Historical 0.3.1 behavior (access scope superseded by ADR-008)
 - An anonymous visitor opens the same live PostgreSQL workspace immediately and sees **Guest mode** in the upper-right authored toolbar, with an explicit login action.
 - Session/bootstrap and existing business read routes are public and remain restricted to the configured Business. No arbitrary tenant selection, database credentials or private server files are exposed.
 - All state-changing API methods still require a valid shared-team session and same-origin write checks. Guest mutation attempts return 401 and do not change database rows.
@@ -15,7 +19,7 @@ This supersedes the mandatory-login-for-reading rule in the 0.3.0 cloud spec. Pa
 - Expired sessions return to Guest mode and request login for a write. Logout clears the session and keeps the readable workspace visible.
 - The existing shared team password stays unchanged. Shared access still does not identify individual members.
 
-## Verification
+## Historical verification criteria
 1. Anonymous browser renders Overview and current tasks without a login wall; badge is visible.
 2. Anonymous API reads succeed; wrong Business fails. Anonymous POST/PATCH/PUT fail with no mutation.
 3. Create/edit intents and task-status changes request login; cancelling causes no writes. Successful login resumes the chosen editor.

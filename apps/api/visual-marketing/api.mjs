@@ -2,15 +2,17 @@
 import {fail,uuid,assetText} from './contracts.mjs';
 import {getAgentRegistry} from './registry.mjs';
 import {localProvider} from './providers.mjs';
-import {actor,initialize,brand,brief,detail,manual,review,approve,strategy} from './service.mjs';
+import {actor,initialize,brand,brief,detail,manual,review,approve,strategy,publish} from './service.mjs';
 import {enqueue,jobAction} from './jobs.mjs';
 export async function visualApi(c,b,path,method,input,params=new URLSearchParams()){
  const ready=(await c.query(`SELECT
   to_regclass('zuri_go.visual_projects') IS NOT NULL
   AND EXISTS(SELECT 1 FROM pg_attribute WHERE attrelid=to_regclass('zuri_go.visual_artifacts') AND attname='canonical_hash' AND NOT attisdropped)
   AND has_function_privilege(current_user,to_regprocedure('zuri_go.visual_record_review(uuid,uuid,uuid,jsonb)'),'EXECUTE')
-  AND has_function_privilege(current_user,to_regprocedure('zuri_go.visual_finalize_approval(uuid,uuid,uuid,bigint,text,uuid,text,text)'),'EXECUTE') AS ready`)).rows[0].ready;
- if(!ready)fail('FEATURE_UNAVAILABLE',503,'Visual Studio ต้องใช้ schema 10 โดย operator เป็นผู้ติดตั้ง');
+  AND has_function_privilege(current_user,to_regprocedure('zuri_go.visual_finalize_approval(uuid,uuid,uuid,bigint,text,uuid,text,text)'),'EXECUTE')
+  AND has_function_privilege(current_user,to_regprocedure('zuri_go.visual_publish_approved(uuid,uuid,uuid)'),'EXECUTE') AS ready`)).rows[0].ready;
+ if(!ready)fail('FEATURE_UNAVAILABLE',503,'Visual Studio ต้องใช้ schema 11 โดย operator เป็นผู้ติดตั้ง');
+ if(method==='DELETE')fail('Visual approval and history records are retained',409,'รายการอนุมัติและประวัติ Visual เก็บไว้ถาวร');
  if(method!=='GET')actor(c);
  const parts=path.split('/').filter(Boolean),[resource,id,action]=parts;if(parts.length>3||id&&!uuid(id))fail('NOT_FOUND',404);
  if(resource==='team'&&method==='GET'&&!id){let available=false;try{available=c.zuriViewer.kind==='operator'&&process.env.VERCEL!=='1'&&!!localProvider();}catch{/* Invalid optional configuration must not block manual work. */}return {agents:getAgentRegistry(),local_model_available:available,image_generation_available:false};}
@@ -27,11 +29,11 @@ export async function visualApi(c,b,path,method,input,params=new URLSearchParams
    LEFT JOIN visual_briefs brief ON brief.business_id=v.business_id AND brief.id=v.current_brief_id
    LEFT JOIN campaigns campaign ON campaign.business_id=brief.business_id AND campaign.id=brief.campaign_id
    WHERE v.business_id=$1 AND ($2::uuid IS NULL OR v.project_id>$2) ORDER BY v.project_id LIMIT $3`,[b,cursor,limit+1])).rows;
-  const outputs=(await c.query('SELECT project_id,artifact_id,payload FROM visual_public_outputs WHERE business_id=$1 AND ($2::uuid IS NULL OR project_id>$2) ORDER BY project_id LIMIT $3',[b,cursor,limit])).rows;
+  const outputs=(await c.query('SELECT project_id,artifact_id,payload FROM visual_public_outputs WHERE business_id=$1 AND active AND ($2::uuid IS NULL OR project_id>$2) ORDER BY project_id LIMIT $3',[b,cursor,limit])).rows;
   return {projects:rows.slice(0,limit),next_cursor:rows.length>limit?rows[limit-1].project_id:null,public_outputs:outputs};
  }
  if(resource==='projects'&&method==='GET'&&id&&!action)return detail(c,b,id);
- if(resource==='projects'&&method==='POST'&&id){if(action==='stages')return manual(c,b,id,input);if(action==='strategy-decision')return strategy(c,b,id,input);if(action==='run')return enqueue(c,b,id,input);}
+ if(resource==='projects'&&method==='POST'&&id){if(action==='stages')return manual(c,b,id,input);if(action==='strategy-decision')return strategy(c,b,id,input);if(action==='run')return enqueue(c,b,id,input);if(action==='publish')return publish(c,b,id,input);}
  if(resource==='artifacts'&&method==='POST'&&id){if(action==='review')return review(c,b,id,input);if(action==='approve')return approve(c,b,id,input);if(action==='variants')fail('FEATURE_UNAVAILABLE',409);}
  if(resource==='jobs'&&method==='POST'&&id&&['cancel','retry'].includes(action))return jobAction(c,b,id,action,input);
  if(method==='GET'&&id){

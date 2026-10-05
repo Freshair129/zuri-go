@@ -6,6 +6,7 @@ import {resolve} from 'node:path';
 import {memberToken,memberCookie,readMemberSession,loginMember,resolveMember} from '../member-auth.mjs';
 import {provisionMembers} from '../provision-members.mjs';
 import {pool,transaction} from '../db.mjs';
+import {OPERATOR} from '../viewer.mjs';
 import {config} from '../config.mjs';
 const secret='isolated-member-test-key-at-least-32-bytes',b=randomUUID(),m={memberId:randomUUID(),credentialVersion:1};
 after(()=>pool.end());
@@ -16,13 +17,15 @@ test('member session is versioned, signed, bounded and distinct from team cookie
  assert.equal(readMemberSession(memberCookie(''),b,secret,now),null);
 });
 test('PID creation is unique and immutable; operator provisioning is idempotent and reset revokes sessions',async()=>{
- await transaction(b,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'QA ONLY member provisioning',b]));
- const make=async name=>transaction(b,async c=>(await c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2) RETURNING *',[b,name])).rows[0]);
+ await transaction(b,OPERATOR,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'QA ONLY member provisioning',b]));
+ const make=async name=>transaction(b,OPERATOR,async c=>(await c.query('INSERT INTO members(business_id,display_name) VALUES($1,$2) RETURNING *',[b,name])).rows[0]);
  const a=await make('QA A'),d=await make('QA B');assert.notEqual(a.pid,d.pid);
  const contenders=await Promise.allSettled([make('QA concurrent 1'),make('QA concurrent 2')]);
  for(const r of contenders)if(r.status==='rejected')assert.equal(r.reason.code,'40001');
  const rows=(await transaction(b,c=>c.query('SELECT id,pid FROM members WHERE business_id=$1',[b]))).rows;assert.equal(new Set(rows.map(x=>x.pid)).size,rows.length);
- await transaction(b,c=>c.query("UPDATE members SET display_name='QA renamed' WHERE id=$1",[a.id]));assert.equal((await transaction(b,c=>c.query('SELECT pid FROM members WHERE id=$1',[a.id]))).rows[0].pid,a.pid);
+ await transaction(b,OPERATOR,c=>c.query("UPDATE members SET display_name='QA renamed' WHERE id=$1",[a.id]));
+ await assert.rejects(()=>transaction(b,OPERATOR,c=>c.query("UPDATE members SET pid='ZGO-P9999' WHERE id=$1",[a.id])),/PID is immutable/);
+ assert.equal((await transaction(b,c=>c.query('SELECT pid FROM members WHERE id=$1',[a.id]))).rows[0].pid,a.pid);
  const cfg={...config(),businessId:b},folder=await mkdtemp(new URL('../../../.local/qa-members-',import.meta.url));
  const first=await provisionMembers(cfg,folder),again=await provisionMembers(cfg,folder);assert.equal(first.length,rows.length);assert.ok(again.every(x=>!x.created));
  const files=await Promise.all(first.map(x=>readFile(x.path,'utf8').then(JSON.parse)));assert.equal(new Set(files.map(x=>x.password)).size,files.length);assert.ok(files.every(x=>x.password.length===24));
@@ -32,7 +35,7 @@ test('PID creation is unique and immutable; operator provisioning is idempotent 
  assert.equal(await transaction(b,c=>resolveMember(c,b,claims)),null);assert.equal(await transaction(b,c=>loginMember(c,b,initial.password)),null);
  await provisionMembers(cfg,folder,{disablePid:a.pid});assert.equal(await transaction(b,c=>loginMember(c,b,updated.password)),null);
  await provisionMembers(cfg,folder,{enablePid:a.pid});assert.ok(await transaction(b,c=>loginMember(c,b,updated.password)));
- await transaction(b,c=>c.query("UPDATE members SET status='inactive' WHERE id=$1",[a.id]));assert.equal(await transaction(b,c=>loginMember(c,b,updated.password)),null);
+ await transaction(b,OPERATOR,c=>c.query("UPDATE members SET status='inactive' WHERE id=$1",[a.id]));assert.equal(await transaction(b,c=>loginMember(c,b,updated.password)),null);
 });
 
 test('single code rejects ambiguity even with a disabled duplicate and validates input',async()=>{

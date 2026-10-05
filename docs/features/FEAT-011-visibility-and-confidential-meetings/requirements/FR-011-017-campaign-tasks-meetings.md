@@ -7,11 +7,13 @@ delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-005, ADR-004]
+  decided_by: [ADR-005, ADR-004, ADR-008]
   relates_to: [FR-010-013, FR-011-004, FR-011-006, FR-011-009]
 ---
 
 # FR-011-017 — Tasks and meetings of a campaign
+
+> **Current access rule — ADR-008 (approved 2026-10-05):** campaign-linked tasks and meetings, and their inherited or linked content, are readable to Guests and active Members when they are non-secret and in the selected Business. Active Members have equal CRUD and internal approval rights; campaign audience, owner, team, participant and assignment metadata do not filter access. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the audience-based rules and acceptance criteria below are historical and superseded.
 
 The system SHALL keep the audience of a task or meeting independent of its campaign's level, SHALL serve a task or meeting whose campaign the viewer cannot read with the campaign's ID and no other campaign field, and SHALL start a task created on the Workboard of a `team` or `restricted` campaign at that campaign's level, with its team or its named people, unless the creator picks another level.
 

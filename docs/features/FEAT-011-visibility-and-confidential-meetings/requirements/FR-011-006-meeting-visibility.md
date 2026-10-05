@@ -1,24 +1,26 @@
 ---
 id: FR-011-006
-title: Visibility and participants of meetings
+title: Meeting audience metadata and participants
 part: FEAT-011-P03
 owner: DOM-MTG
-delivery: implemented
+delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-004]
+  decided_by: [ADR-004, ADR-008]
 ---
 
 # FR-011-006 — Visibility and participants of meetings
 
-The system SHALL store a visibility level and a participant list on every meeting, defaulting the level to `business`, and SHALL treat a confidential meeting as `restricted` to its participants, organizer included.
+The system SHALL retain meeting audience, confidentiality and participant values as business metadata, but SHALL NOT use them to filter access. Guests read every non-secret meeting record in the Business; every active Member has equal CRUD and internal approval rights.
+
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes participant, team, organizer and audience access restrictions below. Transcript-provider custody remains a separate rule; this access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Acceptance criteria
-- AC-011-006-01 — Given a meeting marked confidential, when a Member who is not a participant lists meetings, then it is absent, title and date included.
-- AC-011-006-02 — Given a restricted meeting, when a participant is added, then they can read it; when removed, then they no longer can.
-- AC-011-006-03 — Given a `team` meeting, when a Member of that team reads meetings, then it is present.
-- AC-011-006-04 — Given a meeting whose visibility is widened, then only its organizer may do so, with a reason, and the change is audited; any editor who can see it may narrow it.
+- AC-011-006-01 — Given any meeting, including one marked confidential, when a Guest or active Member in the Business lists meetings, then the non-secret meeting is present.
+- AC-011-006-02 — Given a meeting, when participants change, then participant metadata changes without changing Business-record access.
+- AC-011-006-03 — Given a meeting with any team value, then team membership does not change which Business records a Guest or active Member can read.
+- AC-011-006-04 — Given any active Member, when they change mutable meeting or audience metadata, then the change is audited and access remains Business-scoped.
 
 ## Implementation
 - Built locally 2026-10-01: columns `visibility`, `team_id`, `transcript_custody` on `meetings`; table `meeting_participants`; `participantIds` and `organizerId` on the meeting payload (`apps/api/workspace.mjs`); meeting form in `apps/web/src/content/meeting/Meetings.jsx`. `project_id` follows with FEAT-010.

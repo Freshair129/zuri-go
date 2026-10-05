@@ -9,6 +9,10 @@ relations:
 
 # SDD-011 — Visibility, teams and confidential meetings — design
 
+## Current access amendment — ADR-008 (approved 2026-10-05)
+
+ADR-008 supersedes the audience-based authorization described in this design, across records and content inherited or linked from them. Guests read every non-secret record in the configured Business and have no mutation or approval rights. Every active Member has identical CRUD and internal approval rights for each mutable non-secret Business record. Visibility levels, named viewers, owners, organizers, participants, team membership and RACI remain metadata and no longer filter reads, writes, search, history or derived content. RLS and API checks continue to enforce the Business boundary; secrets stay hidden; audit events remain append-only; provider, spend, publication and deployment gates remain separate. The source implementation is present locally as migration 012 targeting schema 12; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap. Production remains on schema 11 pending separately authorized migration 012 and deployment. The design and release evidence below preserve the earlier authorization model as historical implementation context.
+
 > **Approved by the owner on 2026-10-01; built and released to production the same day with 0.5.0 ([verification](../../releases/0.5.0/verification.md)).** Designs the approved requirements [FR-011-001…012 and NFR-011-001](feature.md#requirement-index) under [ADR-004](../../architecture/decisions.md) (approved). The schema change (migration 006) and the production change each needed their own authorization (AGENTS.md, [PLAN-002](../../governance/plans/PLAN-002-task-and-meeting-domains.md)); both were given and applied on 2026-10-01.
 
 ## Scope and delivery

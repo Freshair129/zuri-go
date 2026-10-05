@@ -8,6 +8,7 @@ import pg from 'pg';
 import {config} from '../config.mjs';
 import {pool,transaction} from '../db.mjs';
 import {OPERATOR,session} from '../viewer.mjs';
+import {authorizeWrite} from '../member-auth.mjs';
 import {passwordHash} from '../team-auth.mjs';
 import {createProject} from '../projects.mjs';
 import {visualApi} from '../visual-marketing/api.mjs';
@@ -22,7 +23,7 @@ for(const [id,name] of [[m0,'Owner'],[m1,'Reviewer']]){
  await admin.query('INSERT INTO zuri_go.member_credentials(business_id,member_id,password_hash) VALUES($1,$2,$3)',[b,id,await passwordHash(randomUUID())]);
 }
 const as=(who,fn)=>transaction(b,who==='operator'?OPERATOR:who?session({m:who,cv:1}):null,fn);
-const api=(path,method='GET',input=null,who='operator')=>as(who,c=>visualApi(c,b,path,method,input));
+const api=(path,method='GET',input=null,who='operator')=>as(who,async c=>{if(method!=='GET'&&who!=='operator')await authorizeWrite(c,b);return visualApi(c,b,path,method,input);});
 const key=()=>randomUUID();
 async function setup(visibility='business',strategy=false){
  const p=await as('operator',c=>createProject(c,b,{name:'QA creative '+key().slice(0,8),owner_member_id:m0,visibility}));
@@ -32,7 +33,7 @@ async function setup(visibility='business',strategy=false){
  const input={project_id:p.id,idempotency_key:key(),row_version:1,brief:payload},brief=await api('/briefs','POST',input);assert.equal((await api('/briefs','POST',input)).id,brief.id);return {p,brief,payload};
 }
 async function complete(p,brief){for(const stage of STAGES){const d=await api('/projects/'+p.id);await api(`/projects/${p.id}/stages`,'POST',{row_version:d.project.row_version,idempotency_key:key(),stage,input_hash:brief.input_hash,output:{text:stage+' ชา',claims:[]}});}return api('/projects/'+p.id);}
-test('AC-014-001-01 / AC-014-003-01 manual vertical slice persists, reloads and binds owner approval',async()=>{
+test('AC-014-001-01 / AC-014-003-01 manual vertical slice persists and any active Member may internally approve',async()=>{
  const {p,brief}=await setup();let d=await complete(p,brief);assert.equal(d.project.stage,'QA');assert.equal(d.runs.length,11);
  const item=d.artifacts.find(a=>a.kind==='BUNDLE'),input={row_version:d.project.row_version,idempotency_key:key(),assessment:Object.fromEntries(CHECKS.map(c=>[c,true]))};
  const qa=await api(`/artifacts/${item.id}/review`,'POST',input,m1);assert.equal(qa.result.status,'pass');
@@ -40,13 +41,13 @@ test('AC-014-001-01 / AC-014-003-01 manual vertical slice persists, reloads and 
  assert.deepEqual(await api(`/artifacts/${item.id}/review`,'POST',input,m1),JSON.parse(JSON.stringify(qa)),'receipt replay');
  await assert.rejects(api(`/artifacts/${item.id}/review`,'POST',{...input,assessment:{}},m1),{code:'IDEMPOTENCY_CONFLICT'});
  d=await api('/projects/'+p.id);const decision={row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'};
- await assert.rejects(api(`/artifacts/${item.id}/approve`,'POST',decision,m1),{code:'APPROVAL_DENIED'});
  await assert.rejects(api(`/artifacts/${item.id}/approve`,'POST',{...decision,artifact_hash:'f'.repeat(64)},m0),{code:'STALE'});
- const out=await api(`/artifacts/${item.id}/approve`,'POST',decision,m0);assert.equal(out.actor_member_id,m0);
+ const out=await api(`/artifacts/${item.id}/approve`,'POST',decision,m1);assert.equal(out.actor_member_id,m1);
  d=await api('/projects/'+p.id);assert.equal(d.project.stage,'READY_FOR_CAMPAIGN');assert.equal(d.assets.length,1);
  const download=await api(`/assets/${d.assets[0].id}/download`);assert.match(download.text,/ART_DIRECTION/);assert.equal(createHash('sha256').update(download.text).digest('hex'),d.assets[0].metadata.checksum);
- await assert.rejects(api('/projects/'+p.id,'GET',null,null),{code:'NOT_FOUND'});
- await assert.rejects(api(`/assets/${d.assets[0].id}`,'GET',null,null),{code:'NOT_FOUND'});
+ assert.equal((await api('/projects/'+p.id,'GET',null,null)).project.project_id,p.id,'Guest reads Visual records');
+ assert.equal((await api(`/assets/${d.assets[0].id}`,'GET',null,null)).id,d.assets[0].id,'Guest reads Visual assets');
+ assert.equal((await as(m1,c=>c.query('SELECT count(*)::int AS n FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rows[0].n,0,'internal approval does not publish');
 });
 test('approved claims require bounded source references that persist into reloaded QA context',async()=>{
  const {p,payload}=await setup();const profile={identity:'QA claims',approved_claims:['approved QA claim']};
@@ -59,23 +60,28 @@ test('approved claims require bounded source references that persist into reload
  const item=d.artifacts.find(a=>a.kind==='BUNDLE'),qa=await api(`/artifacts/${item.id}/review`,'POST',{row_version:d.project.row_version,idempotency_key:key(),assessment:Object.fromEntries(CHECKS.map(c=>[c,true]))},m1);
  const finding=qa.result.findings.find(row=>row.category==='claim_source_refs');assert.equal(finding.status,'pass');assert.deepEqual(finding.evidenceRefs,['https://example.test/approved-claim']);assert.equal(qa.result.status,'pass');
 });
-test('AC-014-009-01 / AC-014-009-02 forced RLS excludes Guest and widening does not expose frozen context',async()=>{
+test('AC-014-009-01 / AC-014-009-02 Guest and Members read restricted Visual context under tenant RLS',async()=>{
  const {p}=await setup('restricted');
- await assert.rejects(api('/projects/'+p.id,'GET',null,m1),{code:'NOT_FOUND'});
+ assert.equal((await api('/projects/'+p.id,'GET',null,null)).project.project_id,p.id,'Guest reads restricted Visual record');
+ assert.equal((await api('/projects/'+p.id,'GET',null,m1)).project.project_id,p.id,'active Member reads the same record');
  await admin.query("UPDATE zuri_go.projects SET visibility='business' WHERE id=$1",[p.id]);
- await assert.rejects(api('/projects/'+p.id,'GET',null,m1),{code:'NOT_FOUND'});
+ assert.equal((await api('/projects/'+p.id,'GET',null,m1)).project.project_id,p.id);
  assert.equal((await api('/projects/'+p.id,'GET',null,m0)).project.project_id,p.id);
  await assert.rejects(api('/brand-profiles','POST',{project_id:p.id,idempotency_key:key(),confirmed:true,profile:{identity:'x'}},null),{code:'AUTH_REQUIRED'});
- assert.equal((await as(null,c=>c.query('SELECT * FROM visual_briefs'))).rowCount,0);
+ assert.ok((await as(null,c=>c.query('SELECT * FROM visual_briefs WHERE business_id=$1',[b]))).rowCount>0,'Guest reads Business-wide Visual briefs');
  const other=randomUUID();assert.equal((await transaction(other,OPERATOR,c=>c.query('SELECT * FROM visual_projects'))).rowCount,0);
 });
-test('AC-014-008-01 public projection contains only approved output; private context remains hidden',async()=>{
+test('AC-014-008-01 internal approval does not publish; explicit trusted publication exposes only approved output',async()=>{
  const {p,brief,payload}=await setup('public');let d=await complete(p,brief);const item=d.artifacts.find(a=>a.kind==='BUNDLE');
  assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false);
  const qa=await api(`/artifacts/${item.id}/review`,'POST',{row_version:d.project.row_version,idempotency_key:key(),assessment:Object.fromEntries(CHECKS.map(c=>[c,true]))});d=await api('/projects/'+p.id);
- await api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m0);
+ await api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m1);
+ assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false,'approval alone creates no public projection');
+ d=await api('/projects/'+p.id);
+ await assert.rejects(api(`/projects/${p.id}/publish`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_id:item.id},null),{code:'AUTH_REQUIRED'});
+ await api(`/projects/${p.id}/publish`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_id:item.id},m1);
  const projected=(await api('/projects','GET',null,null)).public_outputs.find(x=>x.project_id===p.id);assert.ok(projected.payload.copy);assert.equal(projected.payload.outputs,undefined);
- await assert.rejects(api('/briefs/'+brief.id,'GET',null,null),{code:'NOT_FOUND'});
+ assert.equal((await api('/briefs/'+brief.id,'GET',null,null)).id,brief.id,'Guest reads non-secret Visual brief records');
  d=await api('/projects/'+p.id);await api('/briefs','POST',{project_id:p.id,row_version:d.project.row_version,idempotency_key:key(),brief:{...payload,message:'new revision'}});
  assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false);
  assert.equal((await api('/projects/'+p.id)).decisions.length,1,'approval is historical');
@@ -83,9 +89,15 @@ test('AC-014-008-01 public projection contains only approved output; private con
 test('R2 runtime role keeps approved public output immutable except one-way retraction',async()=>{
  const {p,brief}=await setup('public');let d=await complete(p,brief);const item=d.artifacts.find(a=>a.kind==='BUNDLE');
  const qa=await api(`/artifacts/${item.id}/review`,'POST',{row_version:d.project.row_version,idempotency_key:key(),assessment:Object.fromEntries(CHECKS.map(c=>[c,true]))},m1);d=await api('/projects/'+p.id);
- await api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m0);
+ await api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m1);
+ assert.equal((await as(m1,c=>c.query('SELECT * FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rowCount,0,'internal approval creates no projection');
+ d=await api('/projects/'+p.id);await api(`/projects/${p.id}/publish`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_id:item.id},m1);
  const projection=(await as(m1,c=>c.query('SELECT * FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rows[0];assert.ok(projection);
  try{
+  const guestOutput=await as(null,c=>c.query('SELECT active,trusted_publication FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]));
+  assert.equal(guestOutput.rowCount,1,'Guest reads every in-Business non-secret output record');assert.equal(guestOutput.rows[0].active,true);
+  assert.equal((await as(null,c=>c.query('UPDATE visual_public_outputs SET active=false WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rowCount,0,'Guest RLS denies mutation of a publication record');
+  assert.equal((await as(null,c=>c.query('SELECT active FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rows[0].active,true,'Guest denial leaves the output unchanged');
   const forged={...projection.payload,copy:'UNAPPROVED QA MARKER',content_hash:'f'.repeat(64)};
   await assert.rejects(as(m1,c=>c.query('UPDATE visual_public_outputs SET payload=$3 WHERE business_id=$1 AND project_id=$2 AND artifact_id=$4',[b,p.id,forged,item.id])),{code:'42501'});
   await assert.rejects(as(m1,c=>c.query('UPDATE visual_public_outputs SET artifact_id=$3 WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])),{code:'42501'});
@@ -93,6 +105,9 @@ test('R2 runtime role keeps approved public output immutable except one-way retr
   const unchanged=(await as(m1,c=>c.query('SELECT payload,artifact_id,decision_id FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2',[b,p.id]))).rows[0];
   assert.deepEqual(unchanged,{payload:projection.payload,artifact_id:projection.artifact_id,decision_id:projection.decision_id});
   assert.equal((await as(m1,c=>c.query('UPDATE visual_public_outputs SET active=false WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rowCount,1);
+  const retractedGuest=await as(null,c=>c.query('SELECT active,trusted_publication FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]));
+  assert.equal(retractedGuest.rowCount,1,'Guest can read the retained retracted record');assert.equal(retractedGuest.rows[0].active,false);
+  assert.equal((await api(`/projects/${p.id}`,'GET',null,null)).public_outputs.find(x=>x.artifact_id===item.id).active,false,'Guest detail retains retracted publication history');
   assert.equal((await api('/projects','GET',null,null)).public_outputs.some(x=>x.project_id===p.id),false);
   assert.equal((await as(m1,c=>c.query('UPDATE visual_public_outputs SET active=true WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id]))).rowCount,0);
  }finally{
@@ -125,15 +140,16 @@ test('R3 runtime DML cannot forge review, decision, or Guest-visible publication
   await admin.query('DELETE FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2',[b,p.id]);
  }
 });
-test('RG-R3-001 review function enforces current Project audience after visibility narrows',async()=>{
+test('RG-R3-001 any active Member can internally review after visibility narrows',async()=>{
  const {p,brief}=await setup('public');const d=await complete(p,brief),item=d.artifacts.find(a=>a.kind==='BUNDLE'),assessment=Object.fromEntries(CHECKS.map(c=>[c,true]));
  await admin.query("UPDATE zuri_go.projects SET visibility='restricted' WHERE business_id=$1 AND id=$2",[b,p.id]);
  const before=Number((await admin.query('SELECT count(*) FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])).rows[0].count);
- await assert.rejects(as(m1,c=>c.query('SELECT * FROM zuri_go.visual_record_review($1::uuid,$2::uuid,$3::uuid,$4::jsonb)',[b,p.id,item.id,assessment])),error=>error.code==='42501');
+ const allowedB=(await as(m1,c=>c.query('SELECT * FROM zuri_go.visual_record_review($1::uuid,$2::uuid,$3::uuid,$4::jsonb)',[b,p.id,item.id,assessment]))).rows[0];
+ assert.equal(allowedB.actor_member_id,m1,'Team-unrelated active Member review is attributed to the session actor');
  const after=Number((await admin.query('SELECT count(*) FROM zuri_go.visual_reviews WHERE business_id=$1 AND project_id=$2 AND artifact_id=$3',[b,p.id,item.id])).rows[0].count);
- assert.equal(after,before,'excluded Member must not append a validated review');
+ assert.equal(after,before+1,'active Member appends a validated internal review');
  const allowed=(await as(m0,c=>c.query('SELECT * FROM zuri_go.visual_record_review($1::uuid,$2::uuid,$3::uuid,$4::jsonb)',[b,p.id,item.id,assessment]))).rows[0];
- assert.equal(allowed.validated,true,'current Project owner must retain the review path');assert.equal(allowed.validated_pass,true);
+ assert.equal(allowed.validated,true,'another active Member retains the review path');assert.equal(allowed.validated_pass,true);
 });
 test('AC-014-006-01 / AC-014-006-02 job lease, restart, cancellation fence and bounded execution',async()=>{
  process.env.ZURI_GO_VISUAL_ENDPOINT='http://127.0.0.1:11434';process.env.ZURI_GO_VISUAL_MODEL='qa-fake';
@@ -188,12 +204,13 @@ test('AC-014-003-02 / AC-014-008-02 strategy gate, illegal stage, blocking QA an
  d=await api('/projects/'+p.id);const decision={row_version:d.project.row_version,idempotency_key:key(),input_hash:brief.input_hash,decision:'approve'};
  await assert.rejects(api(`/projects/${p.id}/stages`,'POST',{...decision,stage:'CONCEPT',output:{text:'x'},decision:undefined}),{code:'FIELD_UNKNOWN'});
  await assert.rejects(api(`/projects/${p.id}/stages`,'POST',{row_version:d.project.row_version,idempotency_key:key(),input_hash:brief.input_hash,stage:'CONCEPT',output:{text:'x'}}),{code:'STRATEGY_APPROVAL_REQUIRED'});
- await assert.rejects(api(`/projects/${p.id}/strategy-decision`,'POST',decision,m1),{code:'APPROVAL_DENIED'});await api(`/projects/${p.id}/strategy-decision`,'POST',decision,m0);
+ await api(`/projects/${p.id}/strategy-decision`,'POST',decision,m1);
  for(const stage of ['CONCEPT','COPY','ART_DIRECTION']){d=await api('/projects/'+p.id);await api(`/projects/${p.id}/stages`,'POST',{row_version:d.project.row_version,idempotency_key:key(),stage,input_hash:brief.input_hash,output:{text:stage}});}
  d=await api('/projects/'+p.id);const item=d.artifacts.find(a=>a.kind==='BUNDLE'),qa=await api(`/artifacts/${item.id}/review`,'POST',{row_version:d.project.row_version,idempotency_key:key(),assessment:{}});assert.equal(qa.result.status,'needs_revision');d=await api('/projects/'+p.id);
  await assert.rejects(api(`/artifacts/${item.id}/approve`,'POST',{row_version:d.project.row_version,idempotency_key:key(),artifact_hash:item.content_hash,qa_revision:qa.id,decision:'approve'},m0),{code:'STALE'});
  await admin.query('UPDATE zuri_go.member_credentials SET enabled=false WHERE business_id=$1 AND member_id=$2',[b,m1]);
- await assert.rejects(api('/projects/'+p.id,'GET',null,m1),{code:'NOT_FOUND'});
+ assert.equal((await api('/projects/'+p.id,'GET',null,m1)).project.project_id,p.id,'revoked credential resolves to Guest and retains Business-wide reads');
+ await assert.rejects(api(`/projects/${p.id}/stages`,'POST',{row_version:d.project.row_version,idempotency_key:key(),stage:'CONCEPT',input_hash:brief.input_hash,output:{text:'inactive Member'}},m1),{code:'AUTH_REQUIRED'});
 });
 test('AC-014-005-03 invalid optional provider configuration preserves manual access',async()=>{
  process.env.ZURI_GO_VISUAL_ENDPOINT='not a URL';process.env.ZURI_GO_VISUAL_MODEL='qa-only';

@@ -10,7 +10,7 @@ import {empty,seedWorkspace,addSource,saveReview,addBatch,commitBatch,saveTask,v
 import {createWorkspace,measure} from '../../web/src/content/shared/model.mjs';
 import {goalProgress,midnight} from '../../web/src/content/business/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
-async function business(){const id=randomUUID();await transaction(id,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · isolated verification',id]));return id;}
+async function business(){const id=randomUUID();await transaction(id,OPERATOR,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · isolated verification',id]));return id;}
 // Service calls run as the trusted local operator, who sees the whole local database (FR-011-003 AC-04).
 const run=(b,fn)=>transaction(b,OPERATOR,fn);
 after(()=>pool.end());

@@ -101,7 +101,7 @@ function Boards({businessId,teams,dir,epoch,onChanged}){
   };
   return <section className="mt-boards" aria-label="Boards">
     <div className="mt-boards-bar"><SegmentedControl value={effKind} options={KINDS.filter(k=>!(noMine&&k.value==='mine'))} onChange={v=>{setKind(v);setError('');}}/>
-      {needsId&&(options.length?<Field label={KINDS.find(k=>k.value===effKind).label} value={boardId} options={options} onChange={setPickedId}/>:<p className="mc-note">{effKind==='team'?(guest?'ยังไม่มีฝ่ายที่เห็นได้':'ยังไม่มีฝ่าย · ให้ผู้ดูแลธุรกิจสร้างที่หน้า Members'):effKind==='project'?'ยังไม่มีโปรเจกต์ · สร้างที่แท็บ Projects':'ยังไม่มีแคมเปญ'}</p>)}
+      {needsId&&(options.length?<Field label={KINDS.find(k=>k.value===effKind).label} value={boardId} options={options} onChange={setPickedId}/>:<p className="mc-note">{effKind==='team'?'ยังไม่มีฝ่าย · สร้างที่หน้า Members':effKind==='project'?'ยังไม่มีโปรเจกต์ · สร้างที่แท็บ Projects':'ยังไม่มีแคมเปญ'}</p>)}
       <div className="mt-boards-actions"><Button onClick={()=>{setError('');load();}}>โหลดใหม่</Button><Button className="mc-primary" onClick={()=>requestWrite(()=>setEditor({task:null}))}>＋ เพิ่มงาน</Button></div></div>
     {error&&<div className="mc-errors" role="alert">{error}<button aria-label="ปิดข้อความ" onClick={()=>setError('')}>×</button></div>}
     {tasks===null?<p role="status">กำลังโหลดงาน…</p>:<div className="mt-board">{TASK_STATUSES.map(lane=>{const cards=tasks.filter(t=>t.status===lane);return <section key={lane} className={`mt-lane ${lane}`} aria-label={LANES[lane]} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();const t=tasks.find(t=>t.id===e.dataTransfer.getData('application/x-zuri-task'));if(t)move(t,lane);}}><header><h3>{LANES[lane]}</h3><span>{cards.length}</span></header>{cards.map(card)}{!cards.length&&<p className="mt-empty-lane">ยังไม่มีงานในช่องนี้</p>}</section>;})}</div>}
@@ -245,7 +245,7 @@ function ProjectForm({businessId,project,dir,teams,onClose,onSaved}){
         <Field label="ฝ่าย" value={draft.teamId} options={[{value:'',label:'ไม่ผูกฝ่าย'},...teams.filter(t=>!t.archived_at||t.id===draft.teamId).map(t=>({value:t.id,label:t.name+(t.archived_at?' (ปิดแล้ว)':'')}))]} onChange={v=>set({teamId:v})}/>
         <Field label="วันเริ่มตามแผน" type="date" value={draft.planned_start} onChange={v=>set({planned_start:v})}/>
         <Field label="วันจบตามแผน" type="date" value={draft.planned_end} onChange={v=>set({planned_end:v})}/>
-        <VisibilityFields value={draft} original={project?{visibility:project.visibility,teamId:project.team_id}:null} onChange={set} teams={teams} members={dir.members} peopleKey="viewer_ids" hint="เจ้าของโปรเจกต์เห็นเสมอ · เฉพาะเจ้าของหรือผู้ดูแลธุรกิจขยายการมองเห็นได้"/>
+        <VisibilityFields value={draft} original={project?{visibility:project.visibility,teamId:project.team_id}:null} onChange={set} teams={teams} members={dir.members} peopleKey="viewer_ids" hint="เจ้าของและผู้ชมที่ระบุยังคงเป็น metadata · Guest และ active Member อ่านและแก้ไขได้"/>
       </div>
       <div className="mc-form-actions"><Button type="button" onClick={onClose}>ยกเลิก</Button><Button type="submit" className="mc-primary" disabled={busy}>{busy?'กำลังบันทึก…':'บันทึกโปรเจกต์'}</Button></div>
     </form></fieldset>

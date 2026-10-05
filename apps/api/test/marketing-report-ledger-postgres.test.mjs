@@ -97,7 +97,7 @@ test('expiry is checked after waiting, rather than against transaction-start tim
 
 test('migration grant reconciliation hides intermediate INSERT privileges and rolls them back on interruption',{skip},async()=>{
  const f=await fixture(),source=await readFile(new URL('../migrate.mjs',import.meta.url),'utf8');
- const batch=source.slice(source.indexOf('// Keep intermediate broad grants invisible;'),source.indexOf("console.log('Zuri-Go schema 11"));
+ const batch=source.slice(source.indexOf('// Keep intermediate broad grants invisible;'),source.indexOf("console.log('Zuri-Go schema 12"));
  const statements=[...batch.matchAll(/await client.query\('([^']+)'\)/g)].map(m=>m[1]);
  assert.equal(statements[0],'BEGIN');assert.deepEqual(statements.slice(-2),['COMMIT','ROLLBACK']);
  const owner=await admin.connect(),caller=await runtime.connect();

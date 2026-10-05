@@ -1,15 +1,14 @@
-// Teams (ฝ่าย) and team membership (FR-011-001). Only a Business admin or the local operator changes them;
-// being admin never widens what the admin may read (FR-011-002).
+// Team membership is Business data: Guests read it, and every active Member may manage it.
 // @trace implements FR-011-001, FR-011-002
 import {fail,audit} from './service.mjs';
-const canManage=v=>v?.kind==='operator'||v?.kind==='member'&&v.admin===true;
+const canManage=v=>v?.kind==='operator'||v?.kind==='member';
 const legacyId=row=>row.legacy_metadata?.id||row.id;
 async function withMembers(c,b,teams){
  const members=(await c.query('SELECT id,legacy_metadata FROM members WHERE business_id=$1',[b])).rows,links=(await c.query('SELECT team_id,member_id FROM team_members WHERE business_id=$1',[b])).rows;
  return teams.map(t=>({...t,memberIds:links.filter(l=>l.team_id===t.id).map(l=>legacyId(members.find(m=>m.id===l.member_id)))}));
 }
 export async function listTeams(c,b,viewer){
- if(viewer?.kind!=='member'&&viewer?.kind!=='operator')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+ if(!['guest','member','operator'].includes(viewer?.kind||'guest'))fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
  return withMembers(c,b,(await c.query('SELECT * FROM teams WHERE business_id=$1 ORDER BY archived_at NULLS FIRST,name',[b])).rows);
 }
 export async function saveTeam(c,b,viewer,input,id=null){
@@ -33,5 +32,16 @@ export async function saveTeam(c,b,viewer,input,id=null){
  // Membership decides who sees team items, so open clients reload.
  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
  await audit(c,b,'teams',team.id,old&&{...old,memberIds:before},{...team,...(after?{memberIds:after}:{})},old?'update':'create');
+ return (await withMembers(c,b,[team]))[0];
+}
+
+export async function archiveTeam(c,b,viewer,id){
+ if(!canManage(viewer))fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+ const old=(await c.query('SELECT * FROM teams WHERE business_id=$1 AND id=$2 FOR UPDATE',[b,id])).rows[0];
+ if(!old)fail('ไม่พบฝ่าย',404);if(old.archived_at)return (await withMembers(c,b,[old]))[0];
+ const team=(await c.query('UPDATE teams SET archived_at=now() WHERE business_id=$1 AND id=$2 RETURNING *',[b,id])).rows[0];
+ await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
+ const memberIds=(await c.query('SELECT member_id FROM team_members WHERE business_id=$1 AND team_id=$2 ORDER BY member_id',[b,id])).rows.map(r=>r.member_id);
+ await audit(c,b,'teams',id,{...old,memberIds},{...team,memberIds},'archive');
  return (await withMembers(c,b,[team]))[0];
 }

@@ -9,11 +9,15 @@ risk: HIGH
 
 # Zuri-Go — Member PID and individual sign-in
 
+## Current record-access contract — ADR-008 (approved 2026-10-05)
+
+ADR-008 supersedes earlier Member-record permission limits and Guest profile-field limits in this specification. Every active authenticated Member has equal CRUD and internal approval rights for all mutable non-secret records in the configured Business, including Member profile/status and Team records. A Member removal request logically deactivates/retires the identity; it never hard-deletes the UUID/PID row or cascades to foreign keys, work or audit history. Guest reads include all non-secret Member profile/contact fields. Business-admin status, credentials, credential versions, sessions and operator capabilities remain protected by the individual-login and operator custody rules below. Audit events are readable and append-only. Provider egress, spend, publication and deployment remain separately gated. This approved access policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; the sections below preserve the 0.4.0 design and release history.
+
 User request: create a different sign-in password for each Member and a PID identifying that Member. The user approved this contract under R5/SOP on 2026-09-30. Implementation and verification are tracked in the [release evidence](../../history/zuri-go-member-review/verification.md).
 
 Parent: [Cloud architecture](../../architecture/ARCH-003-hosted-deployment.md). Peers: [Guest access and files](../FEAT-005-guest-access/spec.md), [PostgreSQL data model](../../architecture/ARCH-002-postgresql-data-model.md), [Architecture](../../architecture/ARCH-001-baseline-architecture.md). It supersedes only the shared-team identity/authentication parts after approval; Guest visibility, task assignments, file limits, logos and metrics remain as previously approved.
 
-## 1. Current evidence and intended change
+## Historical 0.4.0 evidence and original design
 
 Current source: `apps/api/team-auth.mjs` signs a Business-only team session; `cloud.mjs` checks one shared password hash. `service.mjs:audit` records authenticated subject `shared_team`. `workspace.mjs:writeDomain` imports/persists legacy task events with local actor labels. These cannot identify an individual authenticated member.
 

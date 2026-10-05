@@ -14,7 +14,7 @@ export default async function handler(req,res){
   const origins=[base,...(process.env.VERCEL_URL?['https://'+process.env.VERCEL_URL]:[])];
   if(!cloudOriginAllowed(req,origins)){send(res,403,{error:'เปิดผ่านเว็บไซต์ Zuri-Go เท่านั้น'});return;}
   const url=new URL(req.url,base),route=url.searchParams.has('route')?'/'+url.searchParams.get('route'):url.pathname.replace(/^\/api\/zuri-go\/v1/,'');
-  if(!['GET','POST','PATCH','PUT'].includes(req.method)){send(res,405,{error:'Method not allowed'});return;}
+  if(!['GET','POST','PATCH','PUT','DELETE'].includes(req.method)){send(res,405,{error:'Method not allowed'});return;}
   if(req.method!=='GET'&&(req.headers['x-zuri-go']!=='1'||!req.headers['content-type']?.startsWith('application/json'))){send(res,403,{error:'ใช้แบบฟอร์มจากเว็บไซต์'});return;}
   if(route==='/login'&&req.method==='POST'){
    const input=await body(req);const allowed=await transaction(cfg.businessId,c=>consumeLoginAttempt(c,cfg.businessId,req.headers['x-vercel-forwarded-for']||req.headers['x-real-ip'],secret));

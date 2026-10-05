@@ -5,22 +5,20 @@ import {createCampaign,restoreWorkspace} from '../web/src/content/shared/model.m
 import {viewerOf,taskNames,meetingNames,projectNames,readable,withholdQuotes} from './audience.mjs';
 export const hash=v=>createHash('sha256').update(hashable(v)).digest('hex');
 export function fail(message,status=422){throw Object.assign(Error(message),{status});}
-// Member registry (WI-12 D3, D16). Adding a Member and changing any status need the Business admin or the local operator; a Member edits their
-// own details but not their own status; another Member's record needs the admin or the operator. `row` is the stored row (null for a new Member), `fields` the changed columns.
-export const canEditMembers=v=>v?.kind==='operator'||v?.kind==='member'&&v.admin===true;
+// Every active Member may manage Business profiles; credential custody and admin grants stay operator-owned.
+export const canEditMembers=v=>v?.kind==='operator'||v?.kind==='member';
 export const memberChanged=(row,fields)=>!row||Object.entries(fields).some(([k,v])=>v!==(row[k]??null));
 export function checkMemberWrite(viewer,row,fields){
- if(row&&viewer?.kind==='member'&&row.id===viewer.memberId&&fields.status!==undefined&&fields.status!==row.status)fail('เปลี่ยนสถานะของตัวเองไม่ได้ ติดต่อ Business admin',403);
- if(!canEditMembers(viewer)&&memberChanged(row,fields)&&!(row&&viewer?.kind==='member'&&row.id===viewer.memberId))fail('เฉพาะ Business admin แก้ทะเบียนสมาชิกของคนอื่นหรือเพิ่มสมาชิกได้',403);
+ if(!canEditMembers(viewer))fail('เข้าสู่ระบบด้วย รหัสระบุตัวตนก่อนแก้ไข',401);
 }
-// What a Guest may read of a Member: the ID, the PID, the display name and the status (WI-12 D16).
-export const guestMember=m=>({id:m.id,pid:m.pid,display_name:m.display_name,status:m.status});
-export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks','projects','campaign_task_details'];
+// Business profile fields are readable to both access classes; identity credentials and admin grants never enter record DTOs.
+export const guestMember=m=>({id:m.id,pid:m.pid,display_name:m.display_name,full_name:m.full_name,nickname:m.nickname,team:m.team,position:m.position,email:m.email,phone:m.phone,notes:m.notes,status:m.status,created_at:m.created_at,updated_at:m.updated_at,row_version:m.row_version});
+export const TABLES=['members','channel_accounts','campaigns','content_items','publications','metric_series','metric_observations','goals','goal_series','tasks','task_roles','weekly_plans','weekly_plan_tasks','projects','campaign_task_details','change_events'];
 // Only the viewer's tasks, with their roles and weekly entries (FR-011-007, FR-011-008).
 export async function snapshot(c,b,viewer=viewerOf(c)){
  const business=(await c.query('SELECT * FROM businesses WHERE id=$1',[b])).rows[0];if(!business)fail('ไม่พบธุรกิจ',404);
  const result={business};for(const t of TABLES)result[t]=await rows(c,t,b);
- if(viewer.kind==='guest')result.members=result.members.map(guestMember);
+ result.members=result.members.map(guestMember);
  result.tasks=readable(viewer,result.tasks,await taskNames(c,b));const ids=new Set(result.tasks.map(t=>t.id));
  for(const t of ['task_roles','weekly_plan_tasks','campaign_task_details'])result[t]=result[t].filter(r=>ids.has(r.task_id));
  result.projects=readable(viewer,result.projects,await projectNames(c,b));
@@ -95,7 +93,33 @@ export async function save(c,b,resource,input,id=null){
  if(resource==='campaigns'&&!old){const detail=createCampaign(result.name,result.objective,false);for(const key of ['id','name','objective','owner','start','end','createdAt','tasks'])delete detail[key];await c.query('INSERT INTO campaign_states(business_id,campaign_id,state_json,payload_hash) VALUES($1,$2,$3,$4)',[b,result.id,detail,hash(detail)]);}
  if(resource==='goals'){await c.query('DELETE FROM goal_series WHERE business_id=$1 AND goal_id=$2',[b,result.id]);for(const sid of new Set(input.series_ids))await c.query('INSERT INTO goal_series(business_id,goal_id,series_id) VALUES($1,$2,$3)',[b,result.id,sid]);}
  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
- await audit(c,b,table,result.id,old,{...result,...(input.series_ids?{series_ids:input.series_ids}:{})},old?'update':'create');return result;
+ const auditBefore=resource==='members'&&old?guestMember(old):old,auditAfter=resource==='members'?guestMember({...result,...(input.series_ids?{series_ids:input.series_ids}:{})}):{...result,...(input.series_ids?{series_ids:input.series_ids}:{})};
+ await audit(c,b,table,result.id,auditBefore,auditAfter,old?'update':'create');return resource==='members'?guestMember(result):result;
+}
+export async function archiveRecord(c,b,resource,id,viewer=viewerOf(c)){
+ if(viewer.kind==='guest')fail('เข้าสู่ระบบด้วย รหัสระบุตัวตนก่อนแก้ไข',401);
+ if(resource==='members'){
+  const row=(await c.query('SELECT * FROM members WHERE business_id=$1 AND id=$2',[b,id])).rows[0];if(!row)fail('ไม่พบรายการ',404);
+  if(row.status==='inactive')return guestMember(row);
+  return save(c,b,'members',{status:'inactive',row_version:Number(row.row_version)},id);
+ }
+ if(resource==='campaigns'||resource==='content'||resource==='channels'||resource==='goals'||resource==='publications'){
+  const table=CONFIG[resource]?.[0];if(!table)fail('ไม่พบ resource',404);
+  const row=(await c.query(`SELECT * FROM ${table} WHERE business_id=$1 AND id=$2`,[b,id])).rows[0];if(!row)fail('ไม่พบรายการ',404);
+  if(resource==='campaigns'&&row.archived_at||resource==='content'&&row.archived_at||resource==='channels'&&row.status==='inactive'||resource==='goals'&&row.status==='archived'||resource==='publications'&&row.status==='cancelled')return row;
+  if(resource==='publications'&&row.status==='published')fail('รายการที่เผยแพร่แล้วเก็บเป็นประวัติ ลบไม่ได้',409);
+  const fields={campaigns:{archived_at:row.archived_at||new Date().toISOString()},content:{archived_at:row.archived_at||new Date().toISOString()},channels:{status:'inactive'},goals:{status:'archived'},publications:{status:'cancelled'}}[resource];
+  const input={...fields,row_version:Number(row.row_version)};
+  if(resource==='goals')input.series_ids=(await c.query('SELECT series_id FROM goal_series WHERE business_id=$1 AND goal_id=$2 ORDER BY series_id',[b,id])).rows.map(r=>r.series_id);
+  return save(c,b,resource,input,id);
+ }
+ if(resource==='metric-series'){
+  const old=(await c.query('SELECT * FROM metric_series WHERE business_id=$1 AND id=$2 FOR UPDATE',[b,id])).rows[0];if(!old)fail('ไม่พบรายการ',404);
+  if(old.status==='inactive')return old;
+  const row=(await c.query("UPDATE metric_series SET status='inactive' WHERE business_id=$1 AND id=$2 RETURNING *",[b,id])).rows[0];
+  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);await audit(c,b,'metric_series',id,old,row,'deactivate');return row;
+ }
+ fail('การลบรายการประวัติถาวรไม่รองรับ',409);
 }
 export async function observe(c,b,input){
  const s=(await c.query('SELECT s.*,d.kind,d.integer_only,d.allows_negative FROM metric_series s JOIN metric_definitions d ON d.code=s.metric_code WHERE s.business_id=$1 AND s.id=$2 FOR UPDATE OF s',[b,input.series_id])).rows[0];if(!s)fail('ไม่พบ metric series');
@@ -108,10 +132,13 @@ export async function observe(c,b,input){
    periodStart=midnight(input.date,business.timezone);const next=new Date(Date.parse(input.date+'T12:00:00Z')+86400000).toISOString().slice(0,10);
    if(effective.toISOString()!==midnight(next,business.timezone))fail('ข้อมูลรายวันต้องอ้างถึงวันสิ้นสุดช่วงนั้น');
  }
- const previous=(await c.query('SELECT * FROM metric_observations WHERE business_id=$1 AND series_id=$2 AND effective_at=$3 AND is_current FOR UPDATE',[b,s.id,effective])).rows[0];
+ const previous=(await c.query('SELECT * FROM metric_observations WHERE business_id=$1 AND series_id=$2 AND effective_at=$3 AND is_current',[b,s.id,effective])).rows[0];
  if(previous&&(!input.correction_reason?.trim()||input.expected_id!==previous.id))fail('มีข้อมูลเวลานี้แล้ว เปิดรายการเดิมและระบุเหตุผลเพื่อแก้ไข',409);
- if(previous)await c.query('UPDATE metric_observations SET is_current=false WHERE business_id=$1 AND id=$2',[b,previous.id]);
- const row=(await c.query('INSERT INTO metric_observations(business_id,series_id,effective_at,period_start,value,coverage,source_ref,revision,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *',[b,s.id,effective,periodStart,value,input.coverage||'complete',input.source_ref,(previous?.revision||0)+1,previous?.id||null,input.correction_reason||null])).rows[0];await audit(c,b,'metric_observations',row.id,previous,row,'observe');return row;
+ if(previous){
+  try{return (await c.query('SELECT * FROM zuri_go.correct_metric_observation($1::uuid,$2::uuid,$3::uuid,$4::timestamptz,$5::timestamptz,$6::numeric,$7::text,$8::text,$9::text)',[b,s.id,previous.id,effective,periodStart,value,input.coverage||'complete',input.source_ref,input.correction_reason])).rows[0];}
+  catch(error){if(error?.message==='OBSERVATION_STALE')fail('ข้อมูลถูกแก้แล้ว กรุณาโหลดใหม่',409);throw error;}
+ }
+ const row=(await c.query('INSERT INTO metric_observations(business_id,series_id,effective_at,period_start,value,coverage,source_ref,revision,supersedes_id,correction_reason) VALUES($1,$2,$3,$4,$5,$6,$7,1,NULL,$8) RETURNING *',[b,s.id,effective,periodStart,value,input.coverage||'complete',input.source_ref,input.correction_reason||null])).rows[0];await audit(c,b,'metric_observations',row.id,null,row,'observe');return row;
 }
 export async function brief(c,b,options,viewer=viewerOf(c)){
  const data=await snapshot(c,b,viewer),view=overview(data,options),facts=summaryFacts(view),inputHash=hash({facts,goals:view.goals,counts:view.counts,asOf:view.asOf,period:view.period,audience:audienceKey(data)});

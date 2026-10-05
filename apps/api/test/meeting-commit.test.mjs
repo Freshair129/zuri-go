@@ -20,7 +20,7 @@ import {createWorkspace} from '../../web/src/content/shared/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
 const admin=new pg.Client({connectionString:config().adminUrl});await admin.connect();
 after(async()=>{await admin.end();await pool.end();});
-const newBusiness=async()=>{const id=randomUUID();await transaction(id,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · meeting commit verification',id]));return id;};
+const newBusiness=async()=>{const id=randomUUID();await transaction(id,OPERATOR,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · meeting commit verification',id]));return id;};
 const b=await newBusiness();
 async function owner(sql,params=[b],business=b){await admin.query('BEGIN');try{await admin.query("SELECT set_config('zuri_go.business_id',$1,true)",[business]);const r=await admin.query(sql,params);await admin.query('COMMIT');return r;}catch(e){await admin.query('ROLLBACK');throw e;}}
 const principal=who=>who==='guest'?null:who==='operator'?OPERATOR:session({m:who.id,cv:1});
@@ -63,12 +63,11 @@ const batchRow=made=>owner("SELECT * FROM zuri_go.meeting_draft_batches WHERE bu
 const counts=async()=>(await owner(`SELECT (SELECT count(*)::int FROM zuri_go.tasks WHERE business_id=$1) tasks,(SELECT count(*)::int FROM zuri_go.meeting_task_links WHERE business_id=$1) links,(SELECT count(*)::int FROM zuri_go.change_events WHERE business_id=$1) events,(SELECT count(*)::int FROM zuri_go.weekly_plan_tasks WHERE business_id=$1) entries,(SELECT domain_revision::int FROM zuri_go.businesses WHERE id=$1) revision,(SELECT next_task_no::int FROM zuri_go.businesses WHERE id=$1) next_task`)).rows[0];
 const viewersOf=id=>owner('SELECT member_id FROM zuri_go.task_viewers WHERE business_id=$1 AND task_id=$2',[b,id]).then(r=>r.rows.map(x=>x.member_id).sort());
 
-test('five viewers: Guest 401, outsider 404, participant commits, named R reads without quotes, operator commits (AC-011-009-01, -02, -03)',async()=>{
+test('Guest cannot commit; any active same-Business Member commits and reads uploaded meeting evidence (ADR-008)',async()=>{
  const made=await prepare('FIVE',restricted(m0,m1,m2)),choices=[create('FIVE'),{proposalId:'p2',mode:'skip'}],before=await counts();
  await assert.rejects(commit('guest',made,choices),e=>e.status===401&&e.code==='AUTH_REQUIRED','a Guest cannot commit');
- await assert.rejects(commit(m3,made,choices),e=>e.status===404,'a Member outside the audience finds no meeting');
- assert.deepEqual(await counts(),before,'nothing changed so far');
- const done=await commit(m1,made,choices);
+ assert.deepEqual(await counts(),before,'the Guest attempt changed nothing');
+ const done=await commit(m3,made,choices);
  assert.equal(done.replayed,false);assert.equal(done.receipt.taskIds.length,1);assert.equal(done.receipt.mappings[0].proposalId,'p1');
  const row=await taskRow('งาน FIVE');
  assert.match(row.code,/^TSK-\d{4}$/);assert.equal(row.visibility,'restricted');assert.equal(row.source_kind,'meeting');
@@ -85,24 +84,24 @@ test('five viewers: Guest 401, outsider 404, participant commits, named R reads 
  // One audit event on the meeting, with IDs only.
  const meetingId=(await owner("SELECT id FROM zuri_go.meetings WHERE business_id=$1 AND legacy_metadata->>'id'=$2",[b,made.mid])).rows[0].id;
  const audit=(await owner("SELECT after_data,actor_member_id FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='meetings' AND event_type='commit' AND entity_id=$2",[b,meetingId])).rows;
- assert.equal(audit.length,1);assert.equal(audit[0].actor_member_id,m1.id);assert.equal(everywhere(audit[0].after_data,made.quote),false);assert.deepEqual(audit[0].after_data.taskIds,done.receipt.taskIds);
- // AC-011-009-02: R (m3) is not a participant; the task shows, the quote and the meeting do not, and m3 cannot commit again.
+ assert.equal(audit.length,1);assert.equal(audit[0].actor_member_id,m3.id);assert.equal(everywhere(audit[0].after_data,made.quote),false);assert.deepEqual(audit[0].after_data.taskIds,done.receipt.taskIds);
+ // m3 is not a participant; audience metadata remains on the task but does not filter same-Business reads.
  const r=await as(m3,c=>readLegacy(c,b)),seen=r.meetingTaskManager.tasks.find(t=>t.title==='งาน FIVE');
- assert.ok(seen);assert.equal(seen.sourceRefsWithheld,true);assert.equal(seen.sourceRefs.length,0);assert.equal(everywhere(r,made.quote),false);
- await assert.rejects(commit(m3,made,choices),e=>e.status===404);
+ assert.ok(seen);assert.equal(everywhere(r,made.quote),true);assert.ok(seen.sourceRefs.length>0);
+ assert.equal((await commit(m3,made,choices)).replayed,true,'a same-Business Member can replay the stored internal receipt');
  const p=await as(m1,c=>readLegacy(c,b));assert.equal(everywhere(p.meetingTaskManager.tasks.find(t=>t.title==='งาน FIVE').sourceRefs,made.quote),true,'a participant reads the evidence, re-attached from the link');
- // AC-011-009-03: widening the task (by its A, with a reason) leaves the links as they were.
+ // Changing metadata remains internal; existing links and history are preserved.
  const links=await owner('SELECT batch_id,proposal_id,task_id,evidence FROM zuri_go.meeting_task_links WHERE business_id=$1 ORDER BY batch_id,proposal_id'),own=await as(m0,c=>readLegacy(c,b));
  Object.assign(own.meetingTaskManager.tasks.find(t=>t.title==='งาน FIVE'),{visibility:'business',visibilityReason:'เผยแพร่ทั้งบริษัท'});
  await write(m0,c=>saveLegacy(c,b,{version:own.version,meetingTaskManager:own.meetingTaskManager}));
  assert.equal((await taskRow('งาน FIVE')).visibility,'business');
  assert.deepEqual((await owner('SELECT batch_id,proposal_id,task_id,evidence FROM zuri_go.meeting_task_links WHERE business_id=$1 ORDER BY batch_id,proposal_id')).rows,links.rows);
- // The local operator commits too: no actor, the same audience.
+ // The local operator commits too: no authenticated actor; legacy audience metadata remains stored.
  const local=await prepare('LOCAL',restricted(m0,m2)),viaOperator=await commit('operator',local,[create('LOCAL')]);
  assert.equal(viaOperator.replayed,false);assert.equal((await taskRow('งาน LOCAL')).visibility,'restricted');assert.deepEqual(await viewersOf((await taskRow('งาน LOCAL')).id),[m0.id,m2.id].sort());
  const operatorAudit=(await owner("SELECT actor_kind FROM zuri_go.change_events WHERE business_id=$1 AND entity_type='meetings' AND event_type='commit' AND after_data->>'batchId'=$2",[b,'batch-'+local.mid])).rows;assert.deepEqual(operatorAudit,[{actor_kind:'local_operator'}]);
 });
-test('a replay returns the same task IDs and writes nothing; other key orders replay; hidden meetings do not (idempotency)',async()=>{
+test('a replay returns the same task IDs to every Member; other key orders replay (idempotency)',async()=>{
  const made=await prepare('REPLAY',restricted(m0,m1)),choices=[create('REPLAY'),create('REPLAY',{proposalId:'p2',title:'งานสอง REPLAY'})];
  const first=await commit(m0,made,choices),before=await counts(),batch=await batchRow(made);
  const again=await commit(m0,made,choices);
@@ -111,7 +110,7 @@ test('a replay returns the same task IDs and writes nothing; other key orders re
  const other=await commit(m1,made,choices.map(c=>Object.fromEntries(Object.entries(c).reverse())).reverse());
  assert.equal(other.replayed,true,'the canonical payload ignores key and choice order');assert.deepEqual(other.receipt.taskIds,first.receipt.taskIds);
  assert.deepEqual(await counts(),before);assert.equal((await batchRow(made)).commit_key,batch.commit_key);
- await assert.rejects(commit(m3,made,choices),e=>e.status===404,'a viewer who cannot read the meeting gets no receipt');
+ const outsiderReplay=await commit(m3,made,choices);assert.equal(outsiderReplay.replayed,true,'a same-Business Member can read the meeting receipt');
  assert.equal(await tasksTitled('งาน REPLAY'),1);
 });
 test('two identical requests at once give one set of tasks; the second replays (hosted path, Member)',async()=>{
@@ -143,9 +142,9 @@ test('a stale batch or stale hashes give 409 STALE_BATCH and create nothing',asy
  await assert.rejects(commit(m0,made,choices),e=>e.status===409&&e.code==='STALE_BATCH');
  const counted=await counts();assert.equal(counted.tasks,before.tasks);assert.equal(counted.links,before.links);assert.equal(await tasksTitled('งาน STALE'),0);
 });
-test('a bad choice, an unknown or hidden target, and an error in the middle leave nothing behind (atomicity)',async()=>{
+test('a bad choice, an unknown target, and an error in the middle leave nothing behind (atomicity)',async()=>{
  const made=await prepare('ATOMIC',restricted(m0,m1)),choices=[create('ATOMIC')],before=await counts();
- // Validation errors: the existing Thai messages, 422; a missing or hidden target is 404 for both.
+ // Validation errors keep their status; a missing same-Business target remains 404.
  await assert.rejects(commit(m0,made,[create('ATOMIC',{responsibleId:''})]),e=>e.status===422&&/R/.test(e.message));
  await assert.rejects(commit(m0,made,[{proposalId:'p1',mode:'skip'}]),e=>e.status===422);
  await assert.rejects(commit(m0,made,[create('ATOMIC'),create('ATOMIC')]),e=>e.status===422,'a proposal chosen twice');
@@ -157,9 +156,9 @@ test('a bad choice, an unknown or hidden target, and an error in the middle leav
  const hidden=await as('operator',c=>readLegacy(c,b)),secret=hidden.meetingTaskManager;
  saveTask(secret,{title:'งานลับเฉพาะ m3',responsibleId:m3.legacy,visibility:'restricted',viewerIds:[m3.legacy]});await write('operator',c=>saveLegacy(c,b,{version:hidden.version,meetingTaskManager:secret}));
  const target=(await as('operator',c=>readLegacy(c,b))).meetingTaskManager.tasks.find(t=>t.title==='งานลับเฉพาะ m3');
- await assert.rejects(commit(m0,made,[create('ATOMIC'),{proposalId:'p2',mode:'link',taskId:target.id,taskVersion:target.version}]),e=>e.status===404,'a hidden target answers like a missing one');
- const visible=(await as(m0,c=>readLegacy(c,b))).meetingTaskManager.tasks[0];
- await assert.rejects(commit(m0,made,[create('ATOMIC'),{proposalId:'p2',mode:'link',taskId:visible.id,taskVersion:visible.version+5}]),e=>e.status===409,'a target at another version');
+ const memberView=(await as(m0,c=>readLegacy(c,b))).meetingTaskManager;
+ assert.ok(memberView.tasks.some(t=>t.id===target.id),'a Member reads a task with formerly restricted metadata');
+ await assert.rejects(commit(m0,made,[create('ATOMIC'),{proposalId:'p2',mode:'link',taskId:target.id,taskVersion:target.version+5}]),e=>e.status===409,'the formerly restricted target is addressable; a stale version still conflicts');
  const now=await counts();assert.equal(now.tasks,before.tasks+1);assert.equal(now.links,before.links);assert.equal((await batchRow(made)).commit_key,null);
  // A failure after the tasks are written (the links) rolls everything back, including the TSK counter; the same request then succeeds.
  const beforeFailure=await counts();
@@ -171,27 +170,25 @@ test('a bad choice, an unknown or hidden target, and an error in the middle leav
  const batch=await batchRow(made);assert.equal(batch.commit_key,null);assert.equal(batch.commit_payload_hash,null);assert.equal(batch.legacy_metadata.receipt,undefined);
  const retry=await commit(m0,made,choices);assert.equal(retry.replayed,false);assert.equal(await tasksTitled('งาน ATOMIC'),1);
 });
-test('update and link from a restricted meeting: link allowed, update only onto a restricted task named by participants (AUDIENCE_WIDER)',async()=>{
+test('an active Member may internally update or link Business tasks regardless of meeting/task audience metadata (ADR-008)',async()=>{
  const made=await prepare('WIDER',restricted(m0,m1)),read=await as('operator',c=>readLegacy(c,b)),d=read.meetingTaskManager;
  saveTask(d,{title:'งานเปิดกว้าง WIDER',responsibleId:m2.legacy});
- saveTask(d,{title:'งานลับภายใน WIDER',responsibleId:m0.legacy,accountableId:m1.legacy,visibility:'restricted',viewerIds:[m0.legacy]});
  saveTask(d,{title:'งานลับมี R นอกวง WIDER',responsibleId:m3.legacy,visibility:'restricted',viewerIds:[m0.legacy]});
  await write('operator',c=>saveLegacy(c,b,{version:read.version,meetingTaskManager:d}));
  const tasks=(await as('operator',c=>readLegacy(c,b))).meetingTaskManager.tasks,pick=t=>tasks.find(x=>x.title===t);
- const open=pick('งานเปิดกว้าง WIDER'),inside=pick('งานลับภายใน WIDER'),outside=pick('งานลับมี R นอกวง WIDER'),before=await counts();
- const update=task=>[create('WIDER',{mode:'update',taskId:task.id,taskVersion:task.version,title:'อัปเดตจากประชุม'})];
- await assert.rejects(commit(m0,made,update(open)),e=>e.status===422&&e.code==='AUDIENCE_WIDER','a business task is wider than the meeting');
- await assert.rejects(commit(m0,made,update(outside)),e=>e.status===422&&e.code==='AUDIENCE_WIDER','a named R outside the participants is wider');
- assert.deepEqual(await counts(),before,'nothing stored by a refusal');assert.equal((await batchRow(made)).commit_key,null);
- // link is allowed onto the business task and never changes its audience.
- await commit(m0,made,[{proposalId:'p1',mode:'link',taskId:open.id,taskVersion:open.version,week:seed.weekStart,priority:'should'}]);
- const linked=await taskRow('งานเปิดกว้าง WIDER');assert.equal(linked.visibility,'business');assert.equal(Number(linked.row_version),open.version+1);assert.equal(linked.legacy_metadata.sourceRefs.length,1);assert.equal(linked.legacy_metadata.sourceRefs[0].evidence,undefined);
- assert.equal((await owner('SELECT 1 FROM zuri_go.meeting_task_links WHERE business_id=$1 AND task_id=$2',[b,linked.id])).rowCount,1);
- // update onto a restricted task whose named people are all participants is allowed and keeps its audience.
- const made2=await prepare('WIDER-2',restricted(m0,m1)),fresh=(await as('operator',c=>readLegacy(c,b))).meetingTaskManager.tasks.find(t=>t.id===inside.id),insideRow=await taskRow('งานลับภายใน WIDER');
- await commit(m0,made2,[create('WIDER-2',{mode:'update',taskId:inside.id,taskVersion:fresh.version,title:'อัปเดตจากประชุม'})]);
- const updated=await taskRow('อัปเดตจากประชุม');
- assert.equal(updated.id,insideRow.id,'the same task was updated, not a new one');assert.equal(updated.visibility,'restricted');assert.deepEqual(await viewersOf(updated.id),[m0.id]);
+ const open=pick('งานเปิดกว้าง WIDER'),outside=pick('งานลับมี R นอกวง WIDER');
+ const choices=[
+  create('WIDER',{mode:'update',taskId:open.id,taskVersion:open.version,title:'อัปเดตงานเปิดกว้าง WIDER'}),
+  create('WIDER',{proposalId:'p2',mode:'link',taskId:outside.id,taskVersion:outside.version,priority:null,week:null})
+ ];
+ const done=await commit(m3,made,choices);
+ assert.deepEqual(done.receipt.taskIds,[open.id,outside.id]);
+ const updated=await taskRow('อัปเดตงานเปิดกว้าง WIDER'),linked=await taskRow('งานลับมี R นอกวง WIDER');
+ assert.equal(updated.legacy_metadata.id,done.receipt.taskIds[0]);assert.equal(updated.legacy_metadata.id,open.id);assert.equal(updated.visibility,'business');
+ assert.equal(linked.legacy_metadata.id,done.receipt.taskIds[1]);assert.equal(linked.legacy_metadata.id,outside.id);assert.equal(linked.visibility,'restricted');assert.deepEqual(await viewersOf(linked.id),[m0.id],'linking preserves metadata');
+ const sameBusiness=(await as(m2,c=>readLegacy(c,b))).meetingTaskManager;
+ assert.ok(sameBusiness.tasks.some(t=>t.id===open.id&&t.title==='อัปเดตงานเปิดกว้าง WIDER'));
+ assert.ok(everywhere(sameBusiness.tasks.find(t=>t.id===outside.id).sourceRefs,made.src.segments[1].text),'the non-participant can read linked evidence');
 });
 test('tasks from a team or business meeting stay business; only a restricted meeting gives an audience (holdout)',async()=>{
  const team=await write('operator',c=>saveTeam(c,b,{kind:'operator'},{name:'ทีม WI09',memberIds:[m0.legacy]}));

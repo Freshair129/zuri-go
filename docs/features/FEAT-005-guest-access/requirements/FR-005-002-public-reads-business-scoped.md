@@ -1,11 +1,11 @@
 ---
 id: FR-005-002
 title: Session, bootstrap and Business reads are public and limited to the configured Business
-delivery: implemented
+delivery: declared
 status: approved
 legacy: []
 relations:
-  decided_by: []
+  decided_by: [ADR-008]
   relates_to: [FEAT-005, FR-011-003, FR-011-007]
 ---
 
@@ -15,7 +15,7 @@ The system SHALL answer the session, the bootstrap and the Business read routes 
 
 ## Acceptance criteria
 - AC-005-002-01 — Given no session, when `/session` and `/bootstrap` are read, then each answers 200 and `/session` reports `authenticated: false`.
-- AC-005-002-02 — Given no session, when a read route of the configured Business is called, then it answers 200 with the content that the Guest rule allows ([FR-011-007](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-007-guest-public-only.md)).
+- AC-005-002-02 — Given no session, when a read route of the configured Business is called, then it answers 200 with every non-secret Business record, regardless of former visibility, team, owner or named-viewer metadata.
 - AC-005-002-03 — Given a read or a write that names another Business ID, then it answers 403 and returns no data.
 - AC-005-002-04 — Given a public request for a backend source file, the private environment file or a member handover path, then it answers 404; no response holds a database credential.
 
@@ -26,4 +26,4 @@ The system SHALL answer the session, the bootstrap and the Business read routes 
 
 ## Notes
 - Spec: [spec.md](../spec.md) “Behavior” bullet 2, “Verification” item 2 (“wrong Business fails”).
-- What a Guest read returns is narrower than in 0.3.1: [FR-011-007](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-007-guest-public-only.md) (public items; Members reduced to ID, PID, display name and status).
+- Supersession: [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) makes all non-secret records in the configured Business Guest-readable. Secret material remains excluded; the older public-only rule and restricted Member projection are historical. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.

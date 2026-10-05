@@ -3,23 +3,25 @@ id: FR-011-009
 title: Tasks from a confidential meeting
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: implemented
+delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-004]
+  decided_by: [ADR-004, ADR-008]
 ---
 
 # FR-011-009 — Tasks from a confidential meeting
 
-The system SHALL create every task that comes from a restricted meeting as `restricted`, with the meeting’s participants as viewers, and SHALL show that task’s evidence quotes only to people who may read the meeting.
+The system SHALL retain the source meeting's audience, participant and confidentiality metadata on linked tasks as provenance, but SHALL NOT use those values to filter task or evidence access. Guests read all non-secret Business records; every active Member has equal CRUD and internal approval rights.
+
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes inherited audience restrictions on tasks, quotes, transcripts, attachments and history. Transcript custody remains an external-transfer rule; this access policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Acceptance criteria
-- AC-011-009-01 — Given a restricted meeting with three participants, when a draft task is committed from it, then the task is `restricted` and the three participants are its viewers.
-- AC-011-009-02 — Given such a task, when its R is not a meeting participant, then they see the task with a note that its evidence comes from a confidential meeting, and without the quotes.
-- AC-011-009-03 — Given such a task, when its visibility is widened, then its evidence quotes stay with the meeting’s audience.
+- AC-011-009-01 — Given a meeting with any audience and three participants, when a draft task is committed from it, then source/participant metadata may be retained but does not change who can read or mutate the task.
+- AC-011-009-02 — Given such a task, when any Guest or active Member in the Business reads it, then all non-secret task evidence is available regardless of meeting participation.
+- AC-011-009-03 — Given such a task, when its visibility metadata changes, then evidence access remains Business-scoped and unchanged.
 - AC-011-009-04 — Given a restricted meeting with an Inactive participant, whose chosen R and A are Active, when a draft task is committed from it, then the task is created `restricted` and the Inactive participant is one of its viewers; given an Inactive R or A, then the commit is refused with 422 “สมาชิกนี้ปิดใช้งานอยู่ กรุณาเลือกคนที่ Active” and nothing is stored ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D2).
-- AC-011-009-05 — Given a task with meeting evidence, when a history event of it is stored — at the commit or at a later edit — then the event holds no evidence quote: a reference whose evidence lives in `meeting_task_links` is stored without its `evidence`, in the task snapshots of the event (`detail.before`, `detail.after`) and in a `source-linked` event’s reference; a direct query of `change_events` finds no quote of that meeting. Events stored before this rule keep what they hold and stay withheld on read ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D14).
+- AC-011-009-05 — Given a task with meeting evidence, when an audit event is stored, then the event remains append-only and stores only the defined snapshot fields; any non-secret content present in an event is readable under the Business policy, including legacy events.
 
 ## Implementation
 - Built 2026-10-01. `meetingAudience` (`apps/web/src/content/shared/visibility.mjs`) returns the audience of a restricted meeting. `writeDomain` (`apps/api/workspace.mjs`) applies it to every new task whose `sourceRefs` point to a restricted meeting in the same save: the task is stored `restricted` and the meeting’s participants are added to its viewers, whatever level and viewers the client sent. An existing task is never changed by it.

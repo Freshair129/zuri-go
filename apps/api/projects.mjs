@@ -89,3 +89,8 @@ export async function updateProject(c,b,id,input,viewer=viewerOf(c)){
   await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
   const {project}=await readProject(c,b,id,viewer);await audit(c,b,'projects',id,before,project);return project;
 }
+export async function archiveProject(c,b,id,viewer=viewerOf(c)){
+  const {project}=await readProject(c,b,id,viewer);
+  if(project.status==='archived')return project;
+  return updateProject(c,b,id,{row_version:project.row_version,status:'archived'},viewer);
+}

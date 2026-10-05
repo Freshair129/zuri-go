@@ -7,11 +7,13 @@ delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-005, ADR-004]
+  decided_by: [ADR-005, ADR-004, ADR-008]
   relates_to: [FR-011-011, FR-011-017]
 ---
 
 # FR-011-016 — Changing the level of a campaign
+
+> **Current access rule — ADR-008 (approved 2026-10-05):** any active Member may change mutable campaign fields, including audience/owner/viewer metadata, within the Business; metadata changes do not change who can read or edit the record. Guest edits remain denied. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the owner/operator-only audience-change rules and acceptance criteria below are historical and superseded.
 
 The system SHALL let only the campaign's owner, as stored before the request, or the local operator widen its level or move a `team` campaign to another team, with a non-empty reason; SHALL let any Member who can read the campaign narrow it without a reason; SHALL audit every change; and SHALL keep the stored owner when a workspace save carries the same owner text.
 

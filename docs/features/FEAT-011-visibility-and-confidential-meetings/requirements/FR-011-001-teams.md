@@ -1,23 +1,25 @@
 ---
 id: FR-011-001
-title: Teams and team membership
+title: Teams and team membership records
 part: FEAT-011-P01
 owner: DOM-IAM
-delivery: implemented
+delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-004]
+  decided_by: [ADR-004, ADR-008]
 ---
 
-# FR-011-001 — Teams and team membership
+# FR-011-001 — Teams and team membership records
 
-The system SHALL let a Business admin create, rename and archive teams (ฝ่าย) and add or remove Members from them. A Member MAY belong to several teams, and only a Business admin SHALL change teams or team membership.
+The system SHALL let every active authenticated Member create, rename and archive teams (ฝ่าย), and add or remove Members from teams in the same Business. A Member MAY belong to several teams. Team membership remains business metadata and SHALL NOT grant or restrict access to other Business records.
+
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, replaces the admin-only write rule; Business-admin grants remain operator-managed and do not change record access. The new policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the implementation evidence below records the previous runtime behavior.
 
 ## Acceptance criteria
-- AC-011-001-01 — Given a Business admin, when they create the team “บัญชี” and add two Members, then both appear as members of that team and one audit event per change records the admin as actor.
-- AC-011-001-02 — Given a signed-in Member who is not an admin, when they try to create a team or change membership through the API, then the request is refused with 403 and nothing changes.
-- AC-011-001-03 — Given a Member in two teams, when team visibility is evaluated, then items of either team are visible to them.
+- AC-011-001-01 — Given any active authenticated Member, when they create the team “บัญชี” and add two Members, then both appear as members of that team and one audit event per change records the session-derived Member as actor.
+- AC-011-001-02 — Given any active authenticated Member, when they change a Team or its membership through the API, then the change is accepted within the same Business and audited; Guest writes remain denied.
+- AC-011-001-03 — Given a Member in any team, when another Business record is read, then team membership does not grant or restrict access to that record.
 - AC-011-001-04 — Given an archived team, when a new item is saved, then that team cannot be chosen, while existing items keep their team and audience.
 
 ## Implementation

@@ -11,37 +11,46 @@ const TEAM='00000000-0000-4000-a000-0000000000f1',OTHER='00000000-0000-4000-a000
 const member=(memberId,teamIds=[],admin=false)=>({kind:'member',memberId,teamIds,admin});
 const operator={kind:'operator',memberId:null,teamIds:[],admin:false};
 
-test('canRead: SDD-011 acceptance examples',()=>{
+test('ADR-008: every Business audience is readable to Guest and any authenticated Member',()=>{
+ for(const visibility of ['public','business','team','restricted']){
+  const item={visibility,team_id:TEAM};
+  assert.equal(canRead(GUEST,item),true,'Guest reads '+visibility);
+  assert.equal(canRead(member(A,[],false),item),true,'non-admin Member reads '+visibility);
+  assert.equal(canRead(member(R,[OTHER],true),item),true,'admin flag does not change '+visibility);
+ }
+});
+
+test('canRead: ADR-008 shared Business reads',()=>{
  assert.equal(canRead(GUEST,{visibility:'public'}),true);
- assert.equal(canRead(GUEST,{visibility:'business'}),false);
+ assert.equal(canRead(GUEST,{visibility:'business'}),true);
  assert.equal(canRead(member(X,[TEAM]),{visibility:'team',team_id:TEAM}),true);
  assert.equal(canRead(member(X,[]),{visibility:'team',teamId:TEAM},[X]),true);
- assert.equal(canRead(member(X,[],true),{visibility:'restricted'},[A]),false,'admin reads nothing extra (FR-011-002)');
+ assert.equal(canRead(member(X,[],true),{visibility:'restricted'},[A]),true,'RACI, viewers, and admin flag do not limit reads');
 });
-test('canRead: SDD-011 holdout examples',()=>{
+test('canRead: every former audience remains readable',()=>{
  assert.equal(canRead(operator,{visibility:'restricted'}),true);
- assert.equal(canRead(member(X),{visibility:'restricted'},[A,R]),false);
- assert.equal(canRead(member(X,[OTHER]),{visibility:'team',team_id:TEAM},[A]),false);
+ assert.equal(canRead(member(X),{visibility:'restricted'},[A,R]),true);
+ assert.equal(canRead(member(X,[OTHER]),{visibility:'team',team_id:TEAM},[A]),true);
 });
-test('canRead: missing level reads as business and a Guest never sees it',()=>{
- assert.equal(canRead(member(X),{}),true);assert.equal(canRead(GUEST,{}),false);assert.equal(canRead(undefined,{visibility:'business'}),false);
- assert.equal(canRead({kind:'member'},{visibility:'business'}),false,'a member without an ID is not a Member');
+test('canRead: missing level and Guest both use the Business boundary',()=>{
+ assert.equal(canRead(member(X),{}),true);assert.equal(canRead(GUEST,{}),true);assert.equal(canRead(undefined,{visibility:'business'}),true);
+ assert.equal(canRead({kind:'member'},{visibility:'business'}),true,'authentication validates identity before this projection');
+ assert.equal(canRead({kind:'unknown'},{visibility:'business'}),false);
 });
-test('visibilityChange: SDD-011 acceptance examples (FR-011-011)',()=>{
+test('visibilityChange keeps optional audience metadata without authorizing by owner or role',()=>{
  const named=[A,R];
- assert.deepEqual(visibilityChange(member(R),{visibility:'restricted'},{visibility:'business'},{accountableId:A,reason:'ทีมทั้งหมดต้องเห็น',named}),{error:'WIDEN_DENIED'});
+ assert.deepEqual(visibilityChange(member(R),{visibility:'restricted'},{visibility:'business'},{accountableId:A,named}),{ok:true});
  assert.deepEqual(visibilityChange(member(A),{visibility:'restricted'},{visibility:'business'},{accountableId:A,reason:'ทีมทั้งหมดต้องเห็น',named}),{ok:true});
  assert.deepEqual(visibilityChange(member(X,[TEAM]),{visibility:'business'},{visibility:'team',team_id:TEAM},{accountableId:A,named}),{ok:true});
 });
-test('visibilityChange: SDD-011 holdout examples',()=>{
- assert.deepEqual(visibilityChange(member(A),{visibility:'restricted'},{visibility:'public'},{accountableId:A,reason:'  ',named:[A]}),{error:'REASON_REQUIRED'});
+test('visibilityChange validates only retained metadata shape',()=>{
+ assert.deepEqual(visibilityChange(member(A),{visibility:'restricted'},{visibility:'public'},{accountableId:A,reason:'  ',named:[A]}),{ok:true});
  assert.deepEqual(visibilityChange(member(A),{visibility:'business'},{visibility:'team'},{accountableId:A,named:[A]}),{error:'TEAM_REQUIRED'});
- assert.deepEqual(visibilityChange(member(X),{visibility:'business'},{visibility:'restricted'},{accountableId:A,named:[A]}),{error:'SELF_EXCLUDED'});
+ assert.deepEqual(visibilityChange(member(X),{visibility:'business'},{visibility:'restricted'},{accountableId:A,named:[A]}),{ok:true});
 });
-test('visibilityChange: moving a team item to another team is widening; the operator may widen with a reason',()=>{
- assert.deepEqual(visibilityChange(member(X,[TEAM,OTHER]),{visibility:'team',team_id:TEAM},{visibility:'team',team_id:OTHER},{accountableId:A,reason:'ย้ายฝ่าย',named:[A]}),{error:'WIDEN_DENIED'});
+test('visibilityChange no longer gates by audience widening or named-viewer role',()=>{
+ assert.deepEqual(visibilityChange(member(X,[TEAM,OTHER]),{visibility:'team',team_id:TEAM},{visibility:'team',team_id:OTHER},{accountableId:A,reason:'ย้ายฝ่าย',named:[A]}),{ok:true});
  assert.deepEqual(visibilityChange(operator,{visibility:'restricted'},{visibility:'business'},{accountableId:A,reason:'operator'}),{ok:true});
- assert.deepEqual(visibilityChange(operator,{visibility:'restricted'},{visibility:'business'},{accountableId:A}),{error:'REASON_REQUIRED'});
  assert.deepEqual(visibilityChange(member(A),null,{visibility:'restricted'},{named:[]}),{error:'NAMED_REQUIRED'});
  assert.deepEqual(visibilityChange(member(A),null,{visibility:'secret'},{}),{error:'LEVEL_INVALID'});
  assert.deepEqual(visibilityChange(member(A),null,{visibility:'business'},{}),{ok:true},'a new item is not a widening');

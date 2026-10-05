@@ -2,6 +2,7 @@
 import {randomUUID} from 'node:crypto';
 import {digest,fail,uuid,object,validateBrand,validateBrief,validateStage,validateAsset,assetChecksum,STAGES,CHECKS} from './contracts.mjs';
 import {STAGE_AGENT,checkDelegation,getAgentRegistry} from './registry.mjs';
+import {audit} from '../service.mjs';
 export const actor=c=>{const v=c.zuriViewer;if(!['operator','member'].includes(v?.kind))fail('AUTH_REQUIRED',401);return {kind:v.kind,id:v.memberId||null};};
 function approvalBoundaryError(error){
  const code=error?.code==='42501'?'APPROVAL_DENIED':['STALE','QA_REQUIRED','APPROVAL_DENIED','BUNDLE_INVALID'].includes(error?.message)?error.message:null;
@@ -14,7 +15,7 @@ export async function project(c,b,p,lock=false){
  if(!row)fail('NOT_FOUND',404);return row;
 }
 export function version(row,input){if(String(row.row_version)!==String(input.row_version))fail('STALE',409);}
-export function owner(c,row){const a=actor(c);if(a.kind!=='operator'&&a.id!==row.owner_member_id)fail('APPROVAL_DENIED',403);return a;}
+export function owner(c,row){return actor(c);}
 export async function context(c,b,p){
  const row=await project(c,b,p),brief=(await c.query('SELECT * FROM visual_briefs WHERE business_id=$1 AND project_id=$2 AND id=$3',[b,p,row.current_brief_id])).rows[0];
  if(!brief)fail('BRIEF_REQUIRED',409);
@@ -27,7 +28,8 @@ export async function detail(c,b,p){
  for(const [key,table] of Object.entries({brands:'visual_brand_profiles',briefs:'visual_briefs',runs:'visual_runs',artifacts:'visual_artifacts',reviews:'visual_reviews',decisions:'visual_decisions',assets:'visual_assets',provider_runs:'visual_provider_runs'}))result[key]=(await c.query(`SELECT * FROM ${table} WHERE business_id=$1 AND project_id=$2 ORDER BY ${table==='visual_runs'?'started_at':'created_at'} DESC,id DESC LIMIT 100`,[b,p])).rows;
  result.artifacts=result.artifacts.map(artifactDto);
  result.jobs=(await c.query('SELECT id,project_id,run_id,revision,stage,state,attempt,row_version,error_class,created_at,updated_at FROM visual_jobs WHERE business_id=$1 AND project_id=$2 ORDER BY created_at DESC LIMIT 20',[b,p])).rows;
- result.can_approve=c.zuriViewer.kind==='operator'||c.zuriViewer.memberId===row.owner_member_id;return result;
+ result.public_outputs=(await c.query('SELECT project_id,artifact_id,decision_id,active,trusted_publication,created_at FROM visual_public_outputs WHERE business_id=$1 AND project_id=$2 ORDER BY created_at DESC',[b,p])).rows;
+ result.can_approve=['operator','member'].includes(c.zuriViewer.kind);return result;
 }
 export async function receipt(c,b,p,operation,input,perform){
  const a=actor(c);if(!uuid(input.idempotency_key))fail('IDEMPOTENCY_REQUIRED');
@@ -108,6 +110,16 @@ export async function approve(c,b,id,input){
   const row=await project(c,b,item.project_id,true);owner(c,row);version(row,input);
   if(item.revision!==row.revision||item.canonical_hash!==input.artifact_hash)fail('STALE',409);
   try{return (await c.query('SELECT * FROM zuri_go.visual_finalize_approval($1::uuid,$2::uuid,$3::uuid,$4::bigint,$5::text,$6::uuid,$7::text,$8::text)',[b,item.project_id,id,input.row_version,input.artifact_hash,input.qa_revision,input.decision,input.reason||null])).rows[0];}catch(error){approvalBoundaryError(error);}
+ });
+}
+export async function publish(c,b,p,input){
+ object(input,['row_version','idempotency_key','artifact_id']);if(!uuid(input.artifact_id))fail('FIELD_INVALID');
+ return receipt(c,b,p,'publish:'+p,input,async()=>{
+  const row=await project(c,b,p,true);version(row,input);actor(c);
+  let output;try{output=(await c.query('SELECT * FROM zuri_go.visual_publish_approved($1::uuid,$2::uuid,$3::uuid)',[b,p,input.artifact_id])).rows[0];}
+  catch(error){if(error?.code==='42501')fail('PUBLICATION_DENIED',403);throw error;}
+  await audit(c,b,'visual_public_outputs',output.artifact_id,null,{project_id:p,artifact_id:output.artifact_id,decision_id:output.decision_id,active:output.active,trusted_publication:output.trusted_publication},'publish');
+  return output;
  });
 }
 export async function strategy(c,b,p,input){

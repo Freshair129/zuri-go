@@ -3,22 +3,24 @@ id: FR-011-008
 title: Content follows its item
 part: FEAT-011-P02
 owner: DOM-TSK
-delivery: implemented
+delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-004]
+  decided_by: [ADR-004, ADR-008]
 ---
 
 # FR-011-008 — Content follows its item
 
-The system SHALL give attachments, history entries, overview task lists, AI-summary input, search results, exports and backups the audience of the task or meeting they come from, and SHALL keep item content out of logs.
+The system SHALL scope attachments, history entries, overview task lists, search results, exports and backups to the configured Business and SHALL NOT filter them by a task or meeting audience. Guests read all non-secret records; active Members have equal CRUD and internal approval rights. Provider input remains subject to separate egress authorization; item content stays out of logs.
+
+> **Supersession:** [ADR-008](../../../architecture/decisions.md), approved 2026-10-05, supersedes inherited audience filtering for attachments, history and derived content. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; earlier implementation evidence is historical.
 
 ## Acceptance criteria
-- AC-011-008-01 — Given a restricted task with an attachment, when a Member outside its audience lists attachments, then it is absent, and a direct request returns 404.
-- AC-011-008-02 — Given the Business Overview, when a Member reads it, then overdue or blocked tasks they cannot see are neither listed nor counted.
-- AC-011-008-03 — Given an AI summary requested by a Member, then its input holds only items that Member may see, and a cached summary is never served to a viewer with a narrower audience.
-- AC-011-008-04 — Given a Member’s backup from the UI, then it holds only what that Member may see; the operator database dump is unchanged and stays private.
+- AC-011-008-01 — Given any in-Business non-secret task with an attachment, when a Guest or active Member lists or downloads it, then it is returned regardless of task audience.
+- AC-011-008-02 — Given the Business Overview, when a Guest or active Member reads it, then all non-secret in-Business tasks are listed and counted.
+- AC-011-008-03 — Given an AI summary request, then it uses only Business-scoped authorized input and any provider egress requires its separate grant; audience metadata does not filter input.
+- AC-011-008-04 — Given a UI backup, then it holds all non-secret records the viewer may read in the Business; the operator database dump remains private.
 - AC-011-008-05 — Given a failed request on a restricted item, then logs hold the error code and IDs only, never titles, text or transcript content.
 
 ## Implementation

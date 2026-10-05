@@ -9,11 +9,13 @@ status: approved
 version: 0.1.0
 relations:
   depends_on: [FEAT-007, FEAT-010, FEAT-011, API-005, API-010, API-017]
-  decided_by: [ADR-006]
+  decided_by: [ADR-006, ADR-008]
 ---
 # FEAT-014 — Visual Marketing Team
 
-A marketing owner creates a structured brief inside Zuri-Go, follows research, concepts, copy and art direction, reviews evidence and QA findings, and makes the final creative decision. Zuri-Go remains the host and source of truth.
+A Member creates a structured brief inside Zuri-Go, follows research, concepts, copy and art direction, reviews evidence and QA findings, and makes an internal creative decision. Zuri-Go remains the host and source of truth.
+
+**Current access amendment — [ADR-008](../../architecture/decisions.md), approved 2026-10-05:** Guests read every non-secret Business record, including Visual briefs, artifacts, reviews and decisions, but cannot mutate or approve them. Every active Member has equal CRUD and internal approval rights regardless of Project owner, audience, team or RACI metadata. Internal approval does not authorize provider egress, external spend, publication or deployment; those gates remain separate. This policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; earlier phase and release evidence below remains historical.
 
 **Approval:** Owner approved Phase A/B in this chat on 2026-10-02. C-3, HIGH risk. C/D implementation may proceed; no production deployment or cloud migration authorization.
 
@@ -70,8 +72,8 @@ Thai actions: อนุมัติ / ขอแก้ไข / ไม่อนุ
 | [FR-014-005](requirements/FR-014-005-providers.md) | Call replaceable bounded providers | implemented |
 | [FR-014-006](requirements/FR-014-006-durable-jobs.md) | Persist and reconcile durable jobs | implemented |
 | [FR-014-007](requirements/FR-014-007-creative-qa.md) | Return structured creative findings | implemented |
-| [FR-014-008](requirements/FR-014-008-human-approval.md) | Authorize attributable human decisions | implemented |
-| [FR-014-009](requirements/FR-014-009-visibility.md) | Enforce viewer scope on all creative records | implemented |
+| [FR-014-008](requirements/FR-014-008-human-approval.md) | Authorize attributable human decisions | declared |
+| [FR-014-009](requirements/FR-014-009-visibility.md) | Enforce Business scope on creative records | declared |
 | [FR-014-010](requirements/FR-014-010-asset-metadata.md) | Store protected asset metadata | implemented |
 | [FR-014-011](requirements/FR-014-011-studio-ui.md) | Show production state inside Marketing | implemented |
 | [FR-014-012](requirements/FR-014-012-variants-contract.md) | Keep variants independent of parent approval | declared |

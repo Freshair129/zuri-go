@@ -22,7 +22,7 @@ import {createWorkspace} from '../../web/src/content/shared/model.mjs';
 const seed=JSON.parse(await readFile(new URL('../../web/src/content/meeting/seed.json',import.meta.url),'utf8'));
 const admin=new pg.Client({connectionString:config().adminUrl});await admin.connect();
 after(async()=>{await admin.end();await pool.end();});
-const newBusiness=async name=>{const id=randomUUID();await transaction(id,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · '+name,id]));return id;};
+const newBusiness=async name=>{const id=randomUUID();await transaction(id,OPERATOR,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[id,'QA ONLY · '+name,id]));return id;};
 const b=await newBusiness('task manager verification'),other=await newBusiness('task manager other business');
 async function owner(sql,params,business=b){await admin.query('BEGIN');try{await admin.query("SELECT set_config('zuri_go.business_id',$1,true)",[business]);const r=await admin.query(sql,params);await admin.query('COMMIT');return r;}catch(e){await admin.query('ROLLBACK');throw e;}}
 const principal=who=>who==='guest'?null:who==='operator'?OPERATOR:session({m:who.id,cv:1});
@@ -89,7 +89,7 @@ test('projects: codes, statuses, dates, owner, archive, page counts, Guest refus
  assert.equal((await as(m0,c=>readTask(c,b,labelled.id,c.zuriViewer))).project_id,p.id,'tasks keep their link');
  const again=await write(m0,(c,v)=>createProject(c,b,{name:'อีกโปรเจกต์'},v));assert.notEqual(again.code,p.code);
 });
-test('contexts: campaign and project together; conflicts and other Businesses refused; hidden project without code (FR-010-002)',async()=>{
+test('contexts: campaign and project together; conflicts and other Businesses refused; former audience metadata does not hide projects (FR-010-002, ADR-008)',async()=>{
  const p=await write(m0,(c,v)=>createProject(c,b,{name:'เปิดตัวสินค้า'},v));
  const t=await write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'ถ่ายรูปสินค้า',campaign_id:campaignId,project_id:p.id},v));
  const onCampaign=(await as(m1,c=>listTasks(c,b,{board:'campaign',campaign_id:campaignId},c.zuriViewer))).tasks,onProject=(await as(m1,c=>listTasks(c,b,{board:'project',project_id:p.id},c.zuriViewer))).tasks;
@@ -100,18 +100,18 @@ test('contexts: campaign and project together; conflicts and other Businesses re
  await assert.rejects(write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'x',campaign_id:otherCampaign.id,content_item_id:item.id},v)),e=>e.code==='CONTEXT_CONFLICT');
  const foreign=await transaction(other,OPERATOR,async c=>(await c.query("INSERT INTO campaigns(business_id,code,name,objective,lifecycle) VALUES($1,'CAM-9001','ต่างธุรกิจ','awareness','draft') RETURNING id",[other])).rows[0].id);
  await assert.rejects(write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'x',campaign_id:foreign},v)),e=>e.code==='CONTEXT_NOT_FOUND');
- // m0 restricts the project to themselves; m1 still reads the task, without the project's code or name (AC-010-002-05).
+ // Former project audience metadata does not hide a same-Business project from another Member.
  const cur=await as(m0,c=>readProject(c,b,p.id,c.zuriViewer));
  await write(m0,(c,v)=>updateProject(c,b,p.id,{row_version:cur.project.row_version,visibility:'restricted'},v));
- const seen=await as(m1,c=>readTask(c,b,t.id,c.zuriViewer));assert.equal(seen.project,null);
- assert.equal((await as(m1,c=>listProjects(c,b,c.zuriViewer))).projects.some(x=>x.id===p.id),false);
- // Changing the team of a team task is a widening: the A and a reason (AC-010-002-06).
+ const seen=await as(m1,c=>readTask(c,b,t.id,c.zuriViewer));assert.deepEqual(seen.project,{id:p.id,code:p.code,name:p.name});
+ assert.equal((await as(m1,c=>listProjects(c,b,c.zuriViewer))).projects.some(x=>x.id===p.id),true);
+ // Any active Member may change Team metadata regardless of RACI assignment.
  const tt=await write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'งานฝ่าย',visibility:'team',team_id:team.id,roles:{R:m0.id,A:m1.id}},v));
  const team2=await transaction(b,OPERATOR,c=>saveTeam(c,b,{kind:'operator'},{name:'ผลิต QA',memberIds:[m0.legacy,m1.legacy]}));
- await assert.rejects(write(m0,(c,v)=>updateTask(c,b,tt.id,{row_version:tt.row_version,team_id:team2.id,visibility_reason:'ย้ายฝ่าย'},v)),e=>e.status===403);
- const moved=await write(m1,(c,v)=>updateTask(c,b,tt.id,{row_version:tt.row_version,team_id:team2.id,visibility_reason:'ย้ายฝ่าย'},v));assert.equal(moved.team_id,team2.id);
+ const moved=await write(m2,(c,v)=>updateTask(c,b,tt.id,{row_version:tt.row_version,team_id:team2.id,visibility_reason:'ย้ายฝ่าย'},v));assert.equal(moved.team_id,team2.id);
+ const movedBack=await write(m0,(c,v)=>updateTask(c,b,tt.id,{row_version:moved.row_version,team_id:team.id,visibility_reason:'ย้ายกลับ'},v));assert.equal(movedBack.team_id,team.id);
 });
-test('boards: mine is R or A; a Guest sees public tasks only and no “mine” (FR-010-005)',async()=>{
+test('boards: mine stays a personalized R or A view; Guest all-board matches every active Member (ADR-008)',async()=>{
  const x=await write(m2,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'ของ m2',roles:{R:m2.id}},v));
  const y=await write(m2,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'m2 เป็น A',roles:{R:m3.id,A:m2.id}},v));
  const z=await write(m2,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'m2 แค่รับทราบ',roles:{R:m3.id,I:[m2.id]}},v));
@@ -119,8 +119,11 @@ test('boards: mine is R or A; a Guest sees public tasks only and no “mine” (
  assert.ok(mine.includes(x.id));assert.ok(mine.includes(y.id));assert.ok(!mine.includes(z.id));
  await assert.rejects(as('guest',c=>listTasks(c,b,{board:'mine'},c.zuriViewer)),e=>e.status===401);
  const pub=await write(m2,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'ประกาศสาธารณะ',visibility:'public'},v));
- const guestAll=(await as('guest',c=>listTasks(c,b,{board:'all'},c.zuriViewer))).tasks;assert.deepEqual(guestAll.map(t=>t.id),[pub.id]);
+ const restricted=await write(m2,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'รายการที่เคยจำกัด',visibility:'restricted',viewer_ids:[m2.id],roles:{R:m2.id}},v));
+ const guestAll=(await as('guest',c=>listTasks(c,b,{board:'all'},c.zuriViewer))).tasks;
  const memberAll=(await as(m1,c=>listTasks(c,b,{board:'all'},c.zuriViewer))).tasks;const state=await as(m1,c=>snapshot(c,b));
+ assert.deepEqual(guestAll.map(t=>t.id).sort(),memberAll.map(t=>t.id).sort(),'Guest and Member share the Business read set');
+ assert.ok(guestAll.some(t=>t.id===restricted.id&&t.visibility==='restricted'),'Guest reads a formerly restricted task');assert.ok(guestAll.some(t=>t.id===pub.id));
  assert.deepEqual(memberAll.map(t=>t.id).sort(),state.tasks.filter(t=>!t.archived_at).map(t=>t.id).sort(),'boards and the snapshot come from the same readable set');
 });
 test('moves and completion are checked on the server (FR-010-006, -007)',async()=>{
@@ -153,18 +156,18 @@ test('campaign details: one transaction, never MoSCoW, follow the task, task fro
  const high=await write(m0,(c,v)=>saveCampaignTask(c,b,campaignId,{idempotency_key:key(),title:'งานด่วน',details:{priority:'High'}},v));
  assert.equal(high.details.priority,'High');assert.equal((await owner('SELECT count(*)::int n FROM zuri_go.weekly_plan_tasks WHERE task_id=$1',[high.id])).rows[0].n,0);
  const plain=await write(m0,(c,v)=>createTask(c,b,{idempotency_key:key(),title:'ไม่มีแคมเปญ'},v));assert.equal(plain.details,null);
- // Details follow the task's audience (AC-010-012-04, NFR-010-001).
+ // Campaign task details follow Business scope, not the task's former audience metadata (ADR-008).
  const hidden=await write(m0,(c,v)=>saveCampaignTask(c,b,campaignId,{idempotency_key:key(),title:'ลับของแคมเปญ',visibility:'restricted',roles:{R:m0.id},details:{gate:'aov'}},v));
  const direct=(who)=>as(who,async c=>(await c.query('SELECT task_id FROM campaign_task_details WHERE business_id=$1',[b])).rows.map(r=>r.task_id));
- assert.ok((await direct(m0)).includes(hidden.id));assert.ok(!(await direct(m1)).includes(hidden.id));assert.equal((await direct('guest')).length,0);
- assert.ok(!(await as(m1,c=>snapshot(c,b))).campaign_task_details.some(d=>d.task_id===hidden.id));
+ for(const viewer of [m0,m1,m2,m3,'guest'])assert.ok((await direct(viewer)).includes(hidden.id),String(viewer)+' reads the same-Business detail');
+ assert.ok((await as('guest',c=>snapshot(c,b))).campaign_task_details.some(d=>d.task_id===hidden.id));
 });
 test('the Workboard is a view of the task records; PUT /workspace keeps the new fields (FR-010-011, -013, -015)',async()=>{
  let read=await as(m1,c=>readLegacy(c,b));const board=read.campaignWorkspace.campaigns.find(x=>x.id===campaignId).tasks;
  const ready=board.find(t=>t.id==='wb-ready');assert.equal(ready.status,'Ready');assert.equal(ready.owner,'Chef');assert.equal(ready.priority,'High');
  const fromApi=(await as(m1,c=>listTasks(c,b,{board:'campaign',campaign_id:campaignId},c.zuriViewer))).tasks;
  assert.equal(board.length,fromApi.length,'one entry per readable task linked to the campaign');
- assert.ok(!board.some(t=>t.title==='ลับของแคมเปญ'),'a hidden task is not projected to m1 (AC-010-015-05)');
+ assert.ok(board.some(t=>t.title==='ลับของแคมเปญ'),'a formerly restricted task remains in the Business Workboard');
  // No R is bound from the owner text, even when a Member has that name (FR-010-008).
  const wb=await workboardRow('wb-ready');assert.equal(wb.owner_label,'Chef');assert.equal((await owner("SELECT count(*)::int n FROM zuri_go.task_roles WHERE task_id=$1 AND role='R'",[wb.id])).rows[0].n,0);
  // An old client saves the campaign: the move lands on the same record, the details and marker stay (AC-010-011-01, -02, AC-010-013-03).
@@ -196,13 +199,12 @@ test('a backup restored into an empty Business becomes task records with details
  const r=(await owner("SELECT t.completion_rule,t.owner_label,d.priority,d.original_status FROM zuri_go.tasks t JOIN zuri_go.campaign_task_details d ON d.task_id=t.id WHERE t.business_id=$1 AND t.legacy_metadata->>'id'='imp-1'",[fresh],fresh)).rows;
  assert.equal(r.length,1);assert.deepEqual(r[0],{completion_rule:'workboard',owner_label:'Chef',priority:'Low',original_status:'Done'});
 });
-test('row-level security on projects and campaign details (NFR-010-001)',async()=>{
+test('row-level security preserves tenant scope and gives Guest/Member the same Business read scope (ADR-008)',async()=>{
  const p=await write(m0,(c,v)=>createProject(c,b,{name:'ลับเฉพาะ',visibility:'restricted',viewer_ids:[m2.id]},v));
  const see=who=>as(who,async c=>(await c.query('SELECT id FROM projects WHERE business_id=$1',[b])).rows.map(r=>r.id));
- assert.ok((await see(m0)).includes(p.id),'owner');assert.ok((await see(m2)).includes(p.id),'listed viewer');
- assert.ok(!(await see(m1)).includes(p.id),'outsider');assert.ok(!(await see(m3)).includes(p.id),'admin reads nothing extra');
- assert.ok(!(await see('guest')).includes(p.id));assert.ok((await see('operator')).includes(p.id));
- assert.equal(await as('guest',async c=>(await c.query('SELECT 1 FROM project_viewers WHERE business_id=$1',[b])).rowCount),0);
+ for(const viewer of [m0,m1,m2,m3,'guest','operator'])assert.ok((await see(viewer)).includes(p.id),String(viewer)+' reads the same-Business project');
+ const links=async who=>as(who,async c=>(await c.query('SELECT member_id FROM project_viewers WHERE business_id=$1 AND project_id=$2',[b,p.id])).rows.map(r=>r.member_id).sort());
+ assert.deepEqual(await links('guest'),await links(m1),'Guest can read preserved audience metadata');
  const role=(await admin.query("SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname='zuri_go_app'")).rows[0];assert.deepEqual(role,{rolsuper:false,rolbypassrls:false});
 });
 test('an Inactive Member takes no new R, A, C or I through the API or the workspace save; a role already held is kept; viewers may be Inactive (WI-12 D2)',async()=>{

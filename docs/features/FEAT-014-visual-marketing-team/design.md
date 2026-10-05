@@ -9,6 +9,10 @@ relations:
 ---
 # SDD-014 — Visual Marketing orchestration
 
+## Current access amendment — ADR-008 (approved 2026-10-05)
+
+ADR-008 supersedes Project-owner, audience and named-member restrictions for internal Visual-record access and approval. Guests may read every non-secret Visual record in the Business but cannot mutate or approve; every active Member has equal CRUD and internal approval rights regardless of Project ownership, audience or RACI. Business scope, actor attribution, secret custody and append-only audit remain; immutable Visual history is retained. Internal creative approval is separate from provider egress, spend, actual external publication and deployment. The existing owner-only approval and trusted-public-projection rules below are historical design/implementation evidence; the new policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap.
+
 ## Components and data
 
 CMP-001 is one domain module in apps/api/visual-marketing/, with registry, workflow, providers and repository files only as needed. UI lives in apps/web/src/content/visual-marketing/. api.mjs is the transport adapter; db.mjs/viewer.mjs remain custody boundaries. No second API or new service. The [data amendment](../../architecture/visual-marketing/data-model.md) is canonical for entities and fields.

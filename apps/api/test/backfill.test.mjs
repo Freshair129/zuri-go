@@ -12,7 +12,7 @@ after(()=>pool.end());
 const run=(b,fn)=>transaction(b,OPERATOR,fn);
 
 test('dry run writes nothing; a run matches it, keeps every row and snapshot, and replays as a no-op (FR-010-016)',async()=>{
- const b=randomUUID();await transaction(b,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'QA ONLY · workboard backfill rehearsal',b]));
+ const b=randomUUID();await transaction(b,OPERATOR,c=>c.query('INSERT INTO businesses(id,name,slug) VALUES($1,$2,$3)',[b,'QA ONLY · workboard backfill rehearsal',b]));
  await run(b,c=>save(c,b,'members',{display_name:'Chef'}));
  const campaign=await run(b,c=>save(c,b,'campaigns',{name:'แคมเปญ backfill'}));
  // Pre-P2 Workboard rows: campaign-legacy, no details, default marker, Workboard JSON in legacy_metadata.

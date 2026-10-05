@@ -1,7 +1,7 @@
 ---
 id: FR-005-001
 title: An anonymous visitor opens the live workspace in Guest mode with no login wall
-delivery: implemented
+delivery: declared
 status: approved
 legacy: []
 relations:
@@ -16,7 +16,7 @@ The system SHALL let an anonymous visitor open the live PostgreSQL workspace of 
 ## Acceptance criteria
 - AC-005-001-01 — Given a visitor with no session, when the site is opened, reloaded or opened afresh, then the Business Overview renders and no sign-in is requested.
 - AC-005-001-02 — Given the same visitor, then the upper-right toolbar shows “Guest mode” and a button “เข้าสู่ระบบเพื่อแก้ไข”.
-- AC-005-001-03 — Given a Guest, then which tasks, projects and meetings the views hold is decided by the Guest rule of [FR-011-007](../../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-007-guest-public-only.md), not by this requirement.
+- AC-005-001-03 — Given a Guest, then all non-secret Business records are readable regardless of former audience metadata, under ADR-008; Guest mutations and approvals remain denied.
 
 ## Implementation
 - `apps/web/src/content/business/TeamAccess.jsx:TeamAccess` — the `zg-team-bar` badge reads “Guest mode” when there is no session and the button reads “เข้าสู่ระบบเพื่อแก้ไข”; the session check on load never blocks the page.
@@ -26,4 +26,4 @@ The system SHALL let an anonymous visitor open the live PostgreSQL workspace of 
 ## Notes
 - Spec: [spec.md](../spec.md) “Behavior” bullet 1, “Verification” item 1.
 - The 0.3.1 text lists “Overview and current tasks” as readable without sign-in; since 2026-10-01 a Guest reads only public tasks and meetings (FR-011-007, [ADR-004](../../../architecture/decisions.md) D3), which is why AC-005-001-03 cites it instead of restating the old sentence.
-- Amended by [FEAT-011](../../FEAT-011-visibility-and-confidential-meetings/feature.md); the original rule “a Guest reads the whole workspace” no longer holds.
+- Supersession: [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) restores Guest reads across all non-secret Business records and supersedes FR-011-007's public-only limit. This contract is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the evidence above records the earlier implementation.

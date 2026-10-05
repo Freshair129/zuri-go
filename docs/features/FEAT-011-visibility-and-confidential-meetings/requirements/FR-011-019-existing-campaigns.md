@@ -7,11 +7,13 @@ delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-005, ADR-004]
+  decided_by: [ADR-005, ADR-004, ADR-008]
   relates_to: [FR-011-012]
 ---
 
 # FR-011-019 — Visibility of campaigns that exist before the change
+
+> **Current access rule — ADR-008 (approved 2026-10-05):** schema 12 changes authorization without converting campaign audience values. Guests read every non-secret existing campaign record in the selected Business, and all active Members have equal CRUD and internal approval rights regardless of audience metadata. The production schema-11 access behavior remains unchanged until separately authorized migration 012 and release. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the audience backfill and criteria below are historical and superseded.
 
 The system SHALL give every campaign that exists when this feature is released the level `business`, without changing any other field and without deleting or rewriting any row.
 
@@ -23,7 +25,7 @@ The system SHALL give every campaign that exists when this feature is released t
 
 ## Implementation
 - Approved 2026-10-01 (ADR-005, gate G2); not built. `ADD COLUMN … DEFAULT 'business'` in a new migration (schema 8; SDD-011 “Data”); the reconciliation query runs before and after on a QA Business first, then on production.
-- Today (0.5.1): production schema is 7; the last migration is `007_tasks_projects.sql`.
+- Historical baseline at the initial FEAT-011 release (2026-10-01): production had reached schema 7 with migration `007_tasks_projects.sql`. Production is now schema 11 after FEAT-015 migration 011; ADR-008 targets migration 012 to schema 12.
 
 ## Notes
 - Q-V2 of [ADR-005](../../../architecture/decisions.md) is the open choice: `business`, or `public` to change nothing for Guests.

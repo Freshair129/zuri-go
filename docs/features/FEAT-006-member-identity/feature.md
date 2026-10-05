@@ -8,12 +8,13 @@ delivery: implemented
 status: proposed
 legacy: [ZGO-AUTH-002]
 relations:
+  decided_by: [ADR-008]
   relates_to: [FEAT-004, FEAT-005, ARCH-002, ARCH-003]
 ---
 
 # FEAT-006 — Member identity (PID and individual sign-in)
 
-Every Member has a stable PID and an individual credential. Writes require a Member session and the audit actor is derived from that session, never from the request. It replaces the shared-team password.
+Every Member has a stable PID and individual credential. Every active Member has identical CRUD and internal approval rights for mutable non-secret Business records, including Member profiles/status and Teams; Guest reads cover every non-secret Business record but remain read-only. The audit actor always comes from the verified session, never the request.
 
 ## Scope
 - PID is immutable and Business-scoped; a display-name change never changes it and it is never reassigned.
@@ -21,9 +22,9 @@ Every Member has a stable PID and an individual credential. Writes require a Mem
 - Provisioning is idempotent; a reset names its target PID and raises the credential version, which invalidates earlier sessions.
 - Inactive or disabled Members cannot sign in or write; the local trusted operator is attributed distinctly and never impersonates a Member.
 - The Member registry (registration, rename, Inactive and re-activation, seed, backup and restore, the local boundary and failed saves) lives here; its requirements came from [FEAT-004](../FEAT-004-meeting-task-manager/feature.md) (origin MT-20, MT-22, MT-23, MT-24), see the requirement index.
-- Who may edit the registry (decided 2026-10-01, [PLAN-002 “Design gaps decided”](../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01) D3; released 2026-10-01 in 0.5.1): adding a Member and changing any status need the Business admin or the local operator; a Member may edit their own details but not their own status, a Business admin included (only the operator changes an admin’s own status); another Member’s record needs the Business admin. The API enforces it on the workspace save and on the per-record route, whatever the screen shows ([FR-006-001](requirements/FR-006-001-register-member.md), [-002](requirements/FR-006-002-rename-keeps-references.md), [-004](requirements/FR-006-004-inactive-history-and-reactivation.md)). On 0.5.0, in production, any signed-in Member can still do all of these.
-- What Guests read of a Member (D16; released 2026-10-01 in 0.5.1): only the ID, PID, display name and status ([FR-011-007](../FEAT-011-visibility-and-confidential-meetings/requirements/FR-011-007-guest-public-only.md) AC-011-007-06). On 0.5.0 Guests still read every profile field.
-- An Inactive Member takes no new R, A, C or I, on the server as well as in the forms, but may still be a named viewer or meeting participant (D2; [FR-006-003](requirements/FR-006-003-inactive-not-offered.md) AC-006-003-05 to -07).
+- Registry access under approved [ADR-008](../../architecture/decisions.md): every active Member can create, read, update and logically retire any Member record, including any status, while UUID/PID references, work and history remain. Credentials, credential versions and operator-controlled identity grants stay outside Member CRUD; the Business-admin flag remains operator-managed. The policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; earlier 0.5.1 restrictions remain release history.
+- Guests read all non-secret Member profile fields, including contact fields. Credentials, session material and operator secrets are never exposed. The earlier 0.5.1 limited Guest projection is historical.
+- An Inactive Member takes no new R, A, C or I, on the server as well as in the forms ([FR-006-003](requirements/FR-006-003-inactive-not-offered.md)); team, RACI, viewer and participant metadata does not grant or remove record access.
 
 ## Ownership
 - Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature.
@@ -41,10 +42,10 @@ Spec map for the sign-in contract: §6 “Acceptance / success / exit criteria�
 
 | ID | Requirement | Delivery |
 |---|---|---|
-| [FR-006-001](requirements/FR-006-001-register-member.md) | Register a Member from a display name alone | implemented |
-| [FR-006-002](requirements/FR-006-002-rename-keeps-references.md) | Renaming a Member keeps every reference | implemented |
+| [FR-006-001](requirements/FR-006-001-register-member.md) | Register a Member from a display name alone | declared |
+| [FR-006-002](requirements/FR-006-002-rename-keeps-references.md) | Renaming a Member keeps every reference | declared |
 | [FR-006-003](requirements/FR-006-003-inactive-not-offered.md) | An Inactive Member is not offered for new assignments | implemented |
-| [FR-006-004](requirements/FR-006-004-inactive-history-and-reactivation.md) | An Inactive Member keeps their history and can be made Active again | implemented |
+| [FR-006-004](requirements/FR-006-004-inactive-history-and-reactivation.md) | Member status and logical retirement preserve identity and history | declared |
 | [FR-006-005](requirements/FR-006-005-seed-once.md) | The weekly seed adds its Members once and never overwrites | implemented |
 | [FR-006-006](requirements/FR-006-006-backup-restore-keeps-members.md) | Export and restore keep Member references and never merge Members by name | building |
 | [FR-006-007](requirements/FR-006-007-registry-needs-no-provider.md) | The Member registry needs no provider and contacts nobody | implemented |
@@ -74,4 +75,5 @@ The delivery values of FR-006-009 to -023 and NFR-006-001 rest on the current co
 - Deployed and promoted to production: [history/zuri-go-member-review](../../history/zuri-go-member-review/verification.md).
 
 ## Notes
+- ADR-008 was approved on 2026-10-05. The feature delivery is `declared` because the new equal-access policy has no runtime implementation; prior release evidence remains historical.
 - Migration `005_member_identity.sql` preserves every Member UUID; see [ARCH-002](../../architecture/ARCH-002-postgresql-data-model.md) (0.4.0 amendment).

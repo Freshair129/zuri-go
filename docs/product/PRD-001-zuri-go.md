@@ -3,7 +3,7 @@ id: PRD-001
 title: Zuri-Go — product requirements (product level)
 status: proposed
 relations:
-  decided_by: [ADR-002, ADR-003, ADR-004]
+  decided_by: [ADR-002, ADR-003, ADR-004, ADR-008]
   relates_to: [BRD-001, FEAT-010, FEAT-011, FEAT-014]
 ---
 
@@ -44,16 +44,18 @@ Every row belongs to exactly one Business, and a session reads the one configure
 
 ## Product-wide rules
 
-1. Production opens in Guest mode, read-only; every write needs an authenticated Member session, enforced by the API independently of the UI ([FEAT-005](../features/FEAT-005-guest-access/feature.md), [FEAT-006](../features/FEAT-006-member-identity/feature.md), [FEAT-007](../features/FEAT-007-single-code-login/feature.md)).
+1. **Approved access policy (ADR-008, 2026-10-05):** Guests may read every non-secret record in the selected Business, including full Member contact records, campaigns, tasks, projects, meetings and their transcripts, attachments, history, and Visual records. Guests remain read-only: every create, update, delete, or internal approval is denied. Every active, logged-in Member has the same read/create/update/delete and internal approval rights for every mutable non-secret Business record, including Member and Team records, regardless of former visibility, owner, team, assignee, participant, named viewer, or RACI assignment. Member identities are retired/deactivated rather than hard-deleted, preserving references and history. The API and database enforce the policy; Member identity comes from the verified session and requests remain inside the selected Business. The production schema 11 still reflects the prior access implementation until a separately approved migration 012 to schema 12 and deployment ([ADR-008](../architecture/decisions.md), [ARCH-002](../architecture/ARCH-002-postgresql-data-model.md)).
 2. The team works on one shared record of the Business: what one Member saves, the others see; a browser keeps only view preferences such as filters ([ARCH-001 §1](../architecture/ARCH-001-baseline-architecture.md)).
-3. No connection string, credential, password hash or session secret is ever exposed to users — not in anything the browser receives, an export or a public document ([AGENTS.md](../../AGENTS.md)); credential records appear in no public endpoint, Member metadata or v2 export ([ARCH-002](../architecture/ARCH-002-postgresql-data-model.md), 0.4.0 amendment).
+3. No credential code/hash, session token/secret, provider key or operator configuration is exposed in Guest or Member data responses, browser content, exports or public documents. These secrets are outside the Business-record access policy; individual login, session-derived actors and operator-controlled credential provisioning remain in force ([AGENTS.md](../../AGENTS.md); [ARCH-002](../architecture/ARCH-002-postgresql-data-model.md)).
 4. User-facing copy is Thai with the existing English technical and product labels; the brand rules and approved assets govern visuals ([DOM-BRN](../domains/brand/README.md), [FEAT-009](../features/FEAT-009-logo-placement/feature.md)).
 5. Plan and scenario figures are labelled as such; actuals and benchmarks are never invented ([FEAT-002 brief](../features/FEAT-002-campaign-mission-control/brief.md)).
-6. Navigation, deployment and repository-layout changes do not reinterpret KPI definitions, formulas, targets, RACI, MoSCoW, Guest policy or Member identity ([FEAT-008 spec](../features/FEAT-008-unified-site/spec.md); [migration record](../migrations/verification.md)).
-7. Content is shown only to its audience, and the API and the database both enforce it ([ADR-004](../architecture/decisions.md), approved 2026-10-01; [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md)). This rule is **in force in production for tasks and meetings since 2026-10-01** (release 0.5.0, [verification](../releases/0.5.0/verification.md)): Guests read public items only, and production tasks are all `business`. Guests still read Member profiles and campaign records, which PLAN-002 Q1 defers, so the narrower interim rule below still applies to those.
+6. Navigation, deployment and repository-layout changes do not reinterpret KPI definitions, formulas, targets, RACI, MoSCoW or Member identity. Record audience, owner, team, assignment and RACI remain business metadata; ADR-008 governs access across features and supersedes older audience-based access rules ([FEAT-008 spec](../features/FEAT-008-unified-site/spec.md); [migration record](../migrations/verification.md); [ADR-008](../architecture/decisions.md)).
+7. Business audit events are readable to Guests and Members and remain append-only. Application writes attribute events to the verified session actor. Business-admin status does not change record permissions; credential provisioning, session/operator secrets, provider egress, spend, publication and deployment keep their separate controls ([ADR-008](../architecture/decisions.md); [ARCH-002 §12](../architecture/ARCH-002-postgresql-data-model.md#approved-adr-008-amendment-guest-read-only-and-shared-member-crud-for-schema-12)).
 8. Emar is a separate local service. Zuri-Go only provides a launcher from its canonical local site; Emar is started separately and has no shared Identity, CRM, Files, Marketing, or campaign data integration under FEAT-013.
 
-## Approved and released in 0.5.0 (2026-10-01)
+## Historical release 0.5.0 behavior (2026-10-01)
+
+The statements in this section record the access model released with 0.5.0 and remain historical release evidence. Approved ADR-008 defines the replacement access policy; until migration 012 to schema 12 and separately approved production deployment, production remains on its schema 11 behavior documented by release 0.5.1.
 
 [ADR-004](../architecture/decisions.md) and [FEAT-011](../features/FEAT-011-visibility-and-confidential-meetings/feature.md), then [ADR-002 and ADR-003](../architecture/decisions.md) and [FEAT-010](../features/FEAT-010-task-manager/feature.md), were approved by the owner on 2026-10-01. [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md) phase P1 (PostgreSQL schema 6, migration `006_visibility.sql`), phase P2 (schema 7, migration `007_tasks_projects.sql`), P3 and the server-side meeting commit were released to production on 2026-10-01 as application 0.5.0: production went from schema 5 to schema 7 and runs the matching code ([verification](../releases/0.5.0/verification.md)). The Business-admin flag was set for the owner's Member after the release; the hosted Member, participant and Business-admin checks and the browser checks are not yet done.
 
@@ -62,7 +64,7 @@ Every row belongs to exactly one Business, and a session reads the one configure
 - **Server-side meeting commit.** The design amendment to [SDD-004](../features/FEAT-004-meeting-task-manager/design.md) (PLAN-002 WI-09) was approved on 2026-10-01, built and released with 0.5.0: the server commits meeting tasks with the meeting's audience, and the whole-workspace save refuses receipts the server did not write.
 - **Product-wide rule 7** above comes from the visibility decision.
 
-The interim rule of ADR-004 D9 (no confidential content in production because Guests read everything) ended for tasks and meetings on 2026-10-01 with the release. It remains for Member profiles and campaign records, which Guests still read: keep HR, accounting, salary and customer-personal content out of them.
+At the 0.5.0 release, the interim rule of ADR-004 D9 (no confidential content in production because Guests read everything) ended for tasks and meetings. It remained for Member profiles and campaign records under that release's Guest policy; ADR-008 supersedes those limits when implemented.
 
 ## Document notes
 
@@ -70,4 +72,4 @@ File paths and baseline infrastructure statements inside older documents describ
 
 ## Approved Visual Marketing slice — Visual Studio
 
-[FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) is approved and its local first slice is implemented in the existing Marketing authored UI. It reads Campaign/Project/Member context, persists creative production and requires human review. R3 migration 010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for R3. Hosted execution remains disabled. Scope and phase acceptance are canonical in the feature.
+[FEAT-014](../features/FEAT-014-visual-marketing-team/feature.md) is approved and its local first slice is implemented in the existing Marketing authored UI. It reads Campaign/Project/Member context, persists creative production and requires human review. R3 migration 010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. That focused QA did not live-inspect production; the current production schema 11 baseline after FEAT-015 migration 011 is recorded in [release 0.5.1](../releases/0.5.1/verification.md). Hosted execution remains disabled. Scope and phase acceptance are canonical in the feature.

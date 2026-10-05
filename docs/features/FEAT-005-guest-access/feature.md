@@ -8,18 +8,21 @@ delivery: implemented
 status: proposed
 legacy: []
 relations:
+  decided_by: [ADR-008]
   relates_to: [ARCH-003]
 ---
 
 # FEAT-005 — Guest read-only access and task evidence
 
-An anonymous visitor reads the live workspace immediately in Guest mode; any create, edit or delete intent asks for sign-in first, and a Guest write attempt is rejected by the API. The same specification covers task evidence attachments: images and files on saved tasks, at most 2 MiB each and 5 active per task — Guests may list and download, a signed-in Member uploads and removes.
+An anonymous visitor reads every non-secret record in the configured Business immediately in Guest mode, while all Guest mutations and approvals are rejected. Every active signed-in Member has the same CRUD and internal approval rights for every mutable non-secret Business record. This approved ADR-008 policy is declared for implementation; existing release evidence below records the earlier runtime behavior.
 
 ## Scope
-- Session bootstrap and business reads are public and limited to the configured Business; Guest mutations return 401 and change nothing.
+- Session bootstrap and reads return all non-secret records in the configured Business; Guest mutations and approvals return 401 and change nothing.
 - A write intent opens the sign-in modal before the action starts; after sign-in the chosen action resumes, cancel leaves state unchanged.
 - Expired sessions fall back to Guest mode; logout keeps the readable workspace visible.
-- Evidence attachments: signature-checked raster previews only, every other file downloads as octet-stream with nosniff and a sandbox CSP; removal is a soft delete; changes are audited without file bytes.
+- Every active Member may create, read, update and remove mutable non-secret records and perform internal approvals, regardless of audience, team, owner or assignment metadata.
+- Evidence attachments are Business-scoped: Guests may list and download every non-secret attachment; active Members may add, update and remove them. Signature-checked raster previews only; every other file downloads as octet-stream with nosniff and a sandbox CSP. Changes are audited without file bytes; audit events remain append-only.
+- Credential/session/provider/operator secrets remain hidden, every request stays in the configured Business, and provider, spend, publication and deployment gates remain separate.
 
 ## Ownership
 - Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: domain feature. Provisional: the evidence attachments are DOM-TSK data (`task_attachments`), which would make this a cross-domain feature under STD-001 R4 — PLAN-001 WI-14 (question 1).
@@ -35,9 +38,9 @@ Written on 2026-10-01 from the approved [spec.md](spec.md) (PLAN-001 WI-06) and 
 
 | ID | Requirement | Delivery |
 |---|---|---|
-| [FR-005-001](requirements/FR-005-001-guest-opens-workspace.md) | An anonymous visitor opens the live workspace in Guest mode with no login wall | implemented |
-| [FR-005-002](requirements/FR-005-002-public-reads-business-scoped.md) | Session, bootstrap and Business reads are public and limited to the configured Business | implemented |
-| [FR-005-003](requirements/FR-005-003-writes-need-member-session.md) | Every write needs a Member session; a Guest write answers 401 and changes nothing | implemented |
+| [FR-005-001](requirements/FR-005-001-guest-opens-workspace.md) | An anonymous visitor opens the live workspace in Guest mode with no login wall | declared |
+| [FR-005-002](requirements/FR-005-002-public-reads-business-scoped.md) | Guest reads are Business-scoped and include every non-secret record | declared |
+| [FR-005-003](requirements/FR-005-003-writes-need-member-session.md) | Mutations need an active Member session; Guests remain read-only | declared |
 | [FR-005-004](requirements/FR-005-004-write-intent-opens-sign-in.md) | A write intent opens the sign-in modal before the action starts | implemented |
 | [FR-005-005](requirements/FR-005-005-action-resumes.md) | After a successful sign-in the chosen action continues | implemented |
 | [FR-005-006](requirements/FR-005-006-readonly-views-stay-available.md) | Navigation, filtering, metric details and read-only views need no sign-in | implemented |
@@ -46,7 +49,7 @@ Written on 2026-10-01 from the approved [spec.md](spec.md) (PLAN-001 WI-06) and 
 | [FR-005-009](requirements/FR-005-009-attachments-on-saved-tasks.md) | Files and images attach to a saved task only, beside the existing evidence text | implemented |
 | [FR-005-010](requirements/FR-005-010-attachment-limits.md) | A file is at most 2 MiB and a task holds at most 5 active files | implemented |
 | [FR-005-011](requirements/FR-005-011-attachment-storage.md) | Files are stored in PostgreSQL with their metadata and hash, scoped to the Business | implemented |
-| [FR-005-012](requirements/FR-005-012-attachment-access-by-role.md) | A Guest lists and downloads evidence files; a Member uploads and removes them | implemented |
+| [FR-005-012](requirements/FR-005-012-attachment-access-by-role.md) | Guests read evidence files; active Members manage them | declared |
 | [FR-005-013](requirements/FR-005-013-safe-preview-and-download.md) | Only signature-checked raster images preview; every other file downloads inert | implemented |
 | [FR-005-014](requirements/FR-005-014-upload-payload-validated.md) | An upload is a bounded JSON and base64 payload that is validated | implemented |
 | [FR-005-015](requirements/FR-005-015-attachment-changes-audited.md) | Attachment changes are explicit saves, audited without bytes; removal is a soft delete | implemented |
@@ -58,6 +61,7 @@ The delivery values rest on the current code, the tests named in each file (run 
 - Verified and promoted to production, including production-browser Guest and file checks: [history/zuri-go-guest-review](../../history/zuri-go-guest-review/verification.md).
 
 ## Notes
-- Amended by [FEAT-006](../FEAT-006-member-identity/feature.md) (shared-team password replaced) and [FEAT-007](../FEAT-007-single-code-login/feature.md) (single code). Guest visibility, the write-intent modal, action resume, file limits and downloads are unchanged.
+- Approved 2026-10-05: [ADR-008](../../architecture/decisions.md) supersedes the prior public-only Guest rule and audience-based Member restrictions. This access policy is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; the delivery evidence above is historical.
+- Amended by [FEAT-006](../FEAT-006-member-identity/feature.md) (shared-team password replaced) and [FEAT-007](../FEAT-007-single-code-login/feature.md) (single code). The write-intent modal, action resume, file limits and safe downloads remain part of the feature.
 - The attachments section is a candidate for its own DOM-TSK feature (PLAN-001 WI-14).
-- Approved 2026-10-01 and released to production the same day with 0.5.0 ([ADR-004](../../architecture/decisions.md), [FEAT-011](../FEAT-011-visibility-and-confidential-meetings/feature.md)): the Guest view narrows to items marked public, and attachments follow the visibility of their task.
+- Historical 0.5.0 release rule: the Guest view narrowed to public items and attachments followed task visibility. ADR-008 supersedes those access restrictions.

@@ -7,11 +7,13 @@ delivery: declared
 status: approved
 relations:
   specified_by: [SDD-011]
-  decided_by: [ADR-005, ADR-004]
+  decided_by: [ADR-005, ADR-004, ADR-008]
   relates_to: [FR-011-004, FR-011-007, FR-011-011]
 ---
 
 # FR-011-013 — Visibility levels of a campaign
+
+> **Current access rule — ADR-008 (approved 2026-10-05):** campaign visibility and viewer fields remain business metadata, not access grants. A Guest reads every non-secret campaign record in the configured Business, and every active Member has equal CRUD and internal approval rights regardless of those fields. This policy is implemented locally as migration 012 targeting schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment; the access rules and acceptance criteria below are historical and superseded.
 
 The system SHALL give every campaign one of the levels `public`, `business`, `team` or `restricted`, with the owner and the listed viewers as the people named on it, and SHALL serve the campaign only to the viewers the level allows: anyone for `public`, signed-in Members for `business`, the team's Members and the named people for `team`, the named people for `restricted`. The local operator reads every level and a Business admin gains no reading by being admin. A new campaign is `business`.
 

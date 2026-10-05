@@ -1,29 +1,32 @@
 ---
 id: NFR-011-002
-title: Row-level security enforces the campaign audiences
+title: Row-level security enforces Business scope
 part: FEAT-011-P04
 delivery: declared
 status: approved
 relations:
-  decided_by: [ADR-005, ADR-004]
+  decided_by: [ADR-005, ADR-004, ADR-008]
   relates_to: [NFR-011-001]
 ---
 
-# NFR-011-002 — Row-level security enforces the campaign audiences
+# NFR-011-002 — Row-level security enforces Business scope
 
-The database SHALL enforce the audiences of FR-011-013, FR-011-014 and FR-011-015 with row-level security on every table that holds campaign records, so that a read path that misses a filter still returns no row outside the viewer's audience.
+The database SHALL enforce the selected Business boundary with row-level security on every table that holds campaign records. Guests may read every non-secret campaign record in that Business; every active authenticated Member has the same record rights regardless of former audience, owner or named viewer. Guest mutations and approval are denied. Secrets stay hidden, actor attribution is session-derived, and audit rows remain append-only.
+
+> **Supersession:** [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) replaces the audience-filtering target below. The migration and checks recorded in the implementation section describe the former schema 10 policy; the new target requires forward migration 012 to schema 12; the earlier schema-10-to-11 QA candidate predates FEAT-015 migration 011 and is not current-candidate evidence; fresh schema-11-to-12 database verification is NOT_RUN after the command runner rejected bootstrap; production remains on schema 11 pending separately authorized migration 012 and deployment.
 
 ## Measurement
-- Given a test that queries `campaigns`, `campaign_viewers`, `campaign_states`, `campaign_channels`, `content_items`, `publications`, `goals`, `goal_series`, `metric_series` and `metric_observations` directly as a Guest and as a Member outside the audience, with the application filter bypassed, then no row outside the audience is returned.
-- Given a Guest, then a direct query of `campaign_states` returns no row at any level, and content items, goals and metric series with no campaign are not returned.
-- Given a direct insert of a content item, goal or metric series that names a campaign the actor cannot read, then the database refuses it.
-- Given a direct query of `change_events` as a Member outside the audience, then no row whose entity type is `campaigns`, `campaign_viewers`, `campaign_visibility`, `content_items`, `publications`, `goals` or `metric_observations` names a record the Member cannot read; after V2b, no `members` row names another Member's contact change.
+- Given direct runtime-role queries for `campaigns`, `campaign_viewers`, `campaign_states`, `campaign_channels`, `content_items`, `publications`, `goals`, `goal_series`, `metric_series` and `metric_observations`, then a Guest and every active Member read all non-secret rows in the selected Business, including campaign ledger and formerly restricted records, and no rows from another Business.
+- Given a Guest, then direct INSERT, UPDATE, DELETE or internal approval attempts are denied without changing row counts or values.
+- Given an active Member, then direct writes to mutable campaign records succeed regardless of former audience or owner, while audit and immutable observation/history rows cannot be updated or deleted.
+- Given a direct query of `change_events`, then Guest and Member read the selected Business audit history, but no caller can change or delete it and actor attribution is derived from the verified session.
+- Given any Guest or Member data query, then credential codes/hashes, session material, provider keys and operator configuration are not returned.
 - Given the runtime role, then it stays non-superuser and NOBYPASSRLS; given the local operator viewer, then every row of the local database is visible, as today.
-- Given the migration, then a test creates the policies and queries each table once, so a policy that refers back to itself fails.
+- Given migration 012 to schema 12, then it preserves existing campaign rows and history, and isolated schema-11 QA proves the policies cover each table without recursive RLS references.
 
 ## Implementation
-- Approved 2026-10-01 (ADR-005, gate G2); not built. Layers L0 (membership), L1 (`campaigns`), L2 (attached records, ledger), L3 (derived records) and the history policy in SDD-011 “Row-level security”; the test extends `apps/api/test/visibility-db.test.mjs`.
+- Former campaign-audience design approved 2026-10-01 (ADR-005, gate G2); the schema 10 behavior is already released. The earlier ADR-008 candidate used migration 011 before FEAT-015 allocated that version and passed schema-10-to-11 QA; migration 012 now targets schema 12. Fresh schema-11-to-12 replay and database regressions are NOT_RUN after the command runner rejected bootstrap; the test extends `apps/api/test/visibility-db.test.mjs` with direct RLS policy checks.
 
 ## Notes
 - Extends [NFR-011-001](NFR-011-001-row-level-security.md) to campaign records. An NFR carries a measurement, not AC IDs (STD-002 R1).
-- Contact fields of Members are outside this requirement: a policy cannot withhold one column, so [FR-011-020](FR-011-020-member-contact-visibility.md) is enforced in the application.
+- The former audience filters, campaign contact-field restrictions and Guest ledger withholding remain historical evidence only. Current policy exposes non-secret Business record fields to Guests; credential/session/provider/operator secrets are excluded under ADR-008.

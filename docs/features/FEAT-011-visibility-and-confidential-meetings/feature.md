@@ -22,7 +22,7 @@ status: approved
 legacy: []
 relations:
   depends_on: [FEAT-006]
-  decided_by: [ADR-004]
+  decided_by: [ADR-004, ADR-008]
   relates_to: [FEAT-002, FEAT-005, FEAT-010, ADR-005]
 ---
 
@@ -32,16 +32,18 @@ relations:
 
 > **Approved by the owner on 2026-10-01 (PLAN-003 node V1, gate G2), not built:** the same levels for campaign records and Member contact details, which Guests and Members still read whole (PLAN-002 Q1). Declared by [ADR-005](../../architecture/decisions.md); requirements FR-011-013…020 and NFR-011-002…003 below; designed in the last section of [SDD-011](design.md#proposed-visibility-of-campaign-records-and-member-profiles-v1-2026-10-01). Everything above this note is unchanged and describes release 0.5.1.
 
-Every department can use the workspace without exposing its work. Tasks, projects and meetings carry a visibility level — public, business, team or restricted — which the API and row-level security both enforce. Guests see only public items; confidential meetings are seen only by their participants, and their transcripts stay on the recording machine unless someone chooses to upload them.
+> **Current access contract — [ADR-008](../../architecture/decisions.md), approved 2026-10-05.** A Guest reads every non-secret record in the configured Business and cannot mutate or approve it. Every active Member has equal CRUD and internal approval rights for every mutable non-secret Business record, regardless of audience, team, owner, participant, assignee or RACI metadata. Keep those fields and labels as business metadata; they do not grant or filter access. Audit events are readable and append-only. The Business boundary, secret custody and separate provider/spend/publication/deployment gates remain. This contract is implemented in local source, but final-candidate database verification is NOT_RUN after the command runner rejected bootstrap; the release evidence below documents earlier behavior.
+
+Every department can use the workspace within one Business. Audience, team, owner, participant and RACI values remain record metadata; they no longer filter Guest reads or active-Member CRUD. Guests can read all non-secret records, including linked and inherited content, while remaining read-only. Confidential-meeting transcript custody continues to govern provider transfer, separately from record access.
 
 ## Scope
-- Teams (ฝ่าย) and team membership, managed by a Business admin ([ADR-004](../../architecture/decisions.md) D7).
-- Visibility levels and named viewers on tasks, projects and meetings; tasks inherit a confidential meeting’s audience (D1–D2).
-- The Guest view is limited to public items on every read path (D3).
-- Transcript segments, evidence quotes, attachments, history, the overview, AI-summary input, search, exports and backups follow each item’s visibility (D4).
+- Teams (ฝ่าย) and team membership; every active Member has the same record rights, while Business-admin capability changes remain operator-managed.
+- Visibility levels, named viewers and RACI on tasks, projects and meetings remain metadata and do not grant or restrict access.
+- Guests read all non-secret Business records on every read path and cannot mutate or approve them.
+- Transcript segments, evidence quotes, attachments, history, overview, search, exports and backups follow Business scope and secret exclusions, not item visibility metadata; external provider input remains separately gated.
 - Transcripts of confidential meetings stay on the recording machine by default (D5).
-- Enforcement in both the API and row-level security; the trusted local operator is unchanged (D6).
-- Widening visibility needs the task’s A or the meeting’s organizer and a reason, and is audited (D8).
+- API and row-level security enforce the Business boundary on reads and writes; the trusted local operator remains separately attributed.
+- Any active Member may change mutable audience metadata; those changes are audited and do not change access.
 
 ## Ownership
 - Feature owner: [DOM-IAM](../../domains/identity-access/README.md) — Identity & access. Type: cross-domain feature.
@@ -55,23 +57,27 @@ Every department can use the workspace without exposing its work. Tasks, project
 | [FEAT-011-P04](parts/P04-campaign-records.md) | [DOM-CAM](../../domains/campaign/README.md) | Visibility of campaign records (approved 2026-10-01, not built) |
 
 ## Requirement index
+**Supersession note — ADR-008 (approved 2026-10-05):** Its Guest/Member access rule supersedes former per-record authorization in FR-011-001…009, FR-011-011, FR-011-013…020 and NFR-011-001…002 wherever visibility level, team, participant, named viewer, owner, organizer, Business-admin or RACI affected reads or writes, including linked and inherited records/content. Keep those fields as business metadata; they no longer grant or filter access. DELETE follows each record family's existing archive, deactivate, cancel or retract lifecycle; add reversible tombstone/archive only for mutable Task, Meeting or week-plan records without one. Preserve foreign keys, work, append-only audit and immutable measurement/Visual history; no hard-delete or purge is in scope. Earlier release and implementation evidence in the linked requirements is historical. Source implementation is present locally as migration 012 targeting schema 12; fresh schema-11-to-12 replay and database regression verification are NOT_RUN after the command runner rejected bootstrap. Production remains on schema 11 pending separately authorized migration 012 and deployment. Business isolation, secrets, participant-only transcript custody transfer, and separate external-action gates remain.
+
+The requirements below retain their stable IDs and implementation evidence. Delivery values for the revised access rules are `declared`.
+
 Approved by the owner on 2026-10-01; each file holds the requirement and its acceptance criteria. The design [SDD-011](design.md), this feature and [ADR-004](../../architecture/decisions.md) were approved the same day.
 
 | ID | Requirement | Part | Delivery |
 |---|---|---|---|
-| [FR-011-001](requirements/FR-011-001-teams.md) | Teams and team membership | FEAT-011-P01 | implemented |
-| [FR-011-002](requirements/FR-011-002-business-admin.md) | Business admin capability | FEAT-011-P01 | implemented |
+| [FR-011-001](requirements/FR-011-001-teams.md) | Teams and team membership | FEAT-011-P01 | declared |
+| [FR-011-002](requirements/FR-011-002-business-admin.md) | Business admin capability | FEAT-011-P01 | declared |
 | [FR-011-003](requirements/FR-011-003-viewer-identity.md) | Viewer identity on every read | FEAT-011-P01 | implemented |
-| [FR-011-004](requirements/FR-011-004-task-project-visibility.md) | Visibility of tasks and projects | FEAT-011-P02 | implemented |
-| [FR-011-005](requirements/FR-011-005-named-viewers.md) | Named viewers of a task | FEAT-011-P02 | implemented |
-| [FR-011-006](requirements/FR-011-006-meeting-visibility.md) | Visibility and participants of meetings | FEAT-011-P03 | implemented |
-| [FR-011-007](requirements/FR-011-007-guest-public-only.md) | Guests read public items only | FEAT-011-P01 | implemented |
-| [FR-011-008](requirements/FR-011-008-content-follows-item.md) | Content follows its item | FEAT-011-P02 | implemented |
-| [FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) | Tasks from a confidential meeting | FEAT-011-P02 | implemented |
+| [FR-011-004](requirements/FR-011-004-task-project-visibility.md) | Task and Project audience metadata | FEAT-011-P02 | declared |
+| [FR-011-005](requirements/FR-011-005-named-viewers.md) | RACI and named-viewer metadata | FEAT-011-P02 | declared |
+| [FR-011-006](requirements/FR-011-006-meeting-visibility.md) | Meeting audience and participants | FEAT-011-P03 | declared |
+| [FR-011-007](requirements/FR-011-007-guest-public-only.md) | Guest reads all non-secret Business records | FEAT-011-P01 | declared |
+| [FR-011-008](requirements/FR-011-008-content-follows-item.md) | Linked content follows Business scope | FEAT-011-P02 | declared |
+| [FR-011-009](requirements/FR-011-009-confidential-meeting-tasks.md) | Tasks from a confidential meeting | FEAT-011-P02 | declared |
 | [FR-011-010](requirements/FR-011-010-transcript-custody.md) | Custody of confidential transcripts | FEAT-011-P03 | implemented |
-| [FR-011-011](requirements/FR-011-011-widening-visibility.md) | Widening the visibility of a task or project | FEAT-011-P02 | implemented |
+| [FR-011-011](requirements/FR-011-011-widening-visibility.md) | Changing audience metadata | FEAT-011-P02 | declared |
 | [FR-011-012](requirements/FR-011-012-existing-data.md) | Visibility of data that exists before the change | FEAT-011-P02 | implemented |
-| [NFR-011-001](requirements/NFR-011-001-row-level-security.md) | Row-level security enforces the same audiences | FEAT-011-P01 | implemented |
+| [NFR-011-001](requirements/NFR-011-001-row-level-security.md) | Row-level security enforces Business scope | FEAT-011-P01 | declared |
 
 Approved by the owner on 2026-10-01 with ADR-005's questions answered as recommended ([ADR-005](../../architecture/decisions.md); nothing built yet):
 
@@ -79,7 +85,7 @@ Approved by the owner on 2026-10-01 with ADR-005's questions answered as recomme
 |---|---|---|---|
 | [FR-011-013](requirements/FR-011-013-campaign-levels.md) | Visibility levels of a campaign | FEAT-011-P04 | declared |
 | [FR-011-014](requirements/FR-011-014-attached-records-follow-campaign.md) | Records attached to a campaign follow it | FEAT-011-P04 | declared |
-| [FR-011-015](requirements/FR-011-015-guest-public-campaign.md) | What a Guest reads of a public campaign | FEAT-011-P04 | declared |
+| [FR-011-015](requirements/FR-011-015-guest-public-campaign.md) | Guest reads all non-secret campaign records | FEAT-011-P04 | declared |
 | [FR-011-016](requirements/FR-011-016-changing-campaign-level.md) | Changing the level of a campaign | FEAT-011-P04 | declared |
 | [FR-011-017](requirements/FR-011-017-campaign-tasks-meetings.md) | Tasks and meetings of a campaign | FEAT-011-P04 | declared |
 | [FR-011-018](requirements/FR-011-018-overview-brief-exports.md) | Overview, brief, exports and backups follow campaign records | FEAT-011-P04 | declared |

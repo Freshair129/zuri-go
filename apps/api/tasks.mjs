@@ -44,14 +44,14 @@ export const ruleTask=t=>({title:t.title,status:t.status,blocker:t.blocker,respo
 
 // Everything a viewer may see of the tasks; a project the viewer cannot read is served without its code and name (AC-010-002-05).
 export async function loadTasks(c,b,viewer=viewerOf(c)){
-  const rows=readable(viewer,(await c.query('SELECT * FROM tasks WHERE business_id=$1 AND archived_at IS NULL',[b])).rows,await taskNames(c,b));
+  const rows=readable(viewer,(await c.query('SELECT * FROM tasks WHERE business_id=$1',[b])).rows,await taskNames(c,b));
   const roles=await rolesOf(c,b),viewers=new Map();for(const v of (await c.query('SELECT task_id,member_id FROM task_viewers WHERE business_id=$1',[b])).rows){if(!viewers.has(v.task_id))viewers.set(v.task_id,[]);viewers.get(v.task_id).push(v.member_id);}
   const projects=new Map(readable(viewer,(await c.query('SELECT id,code,name,visibility,team_id,owner_member_id FROM projects WHERE business_id=$1',[b])).rows,await projectNames(c,b)).map(p=>[p.id,p]));
   const details=new Map((await c.query('SELECT * FROM campaign_task_details WHERE business_id=$1',[b])).rows.map(d=>[d.task_id,d]));
   return rows.map(r=>present(r,roles.get(r.id)||noRoles(),(viewers.get(r.id)||[]).sort(),projects.get(r.project_id)||null,details.get(r.id)||null));
 }
 function present(r,roles,viewerIds,project,details){
-  const t={id:r.id,code:r.code,title:r.title,row_version:Number(r.row_version),source_kind:r.source_kind,visibility:r.visibility,roles,viewer_ids:viewerIds,created_at:r.created_at,updated_at:r.updated_at};
+  const t={id:r.id,code:r.code,title:r.title,row_version:Number(r.row_version),source_kind:r.source_kind,visibility:r.visibility,archived_at:r.archived_at||null,roles,viewer_ids:viewerIds,created_at:r.created_at,updated_at:r.updated_at};
   for(const k of [...TEXT,...DATES,...CONTEXTS,'status','status_confirmed','acceptance_proposed','project_label','owner_label','completion_rule'])t[k]=r[k]??null;
   // Until the backfill (P4), a Workboard task already Done counts as completed under the Workboard rule (AC-010-007-03).
   if(r.source_kind==='campaign-legacy'&&!details&&r.status==='done'&&r.completion_rule==='standard')t.completion_rule='workboard';
@@ -164,4 +164,14 @@ export async function updateTask(c,b,id,input,viewer=viewerOf(c),{campaign=false
   if(changed)await audit(c,b,'task_visibility',id,{visibility:before.visibility,team_id:before.team_id},{visibility:after.visibility,team_id:after.team_id,reason:data.visibility_reason?.trim()||null});
   await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
   const task=await readTask(c,b,id,viewer);await audit(c,b,'tasks',id,before,task);return task;
+}
+
+export async function archiveTask(c,b,id,viewer=viewerOf(c)){
+  if(viewer.kind==='guest')fail('กรุณาเข้าสู่ระบบด้วย รหัสระบุตัวตน',401);
+  const before=await readTask(c,b,id,viewer);
+  if(before.archived_at)return before;
+  const row=(await c.query('UPDATE tasks SET archived_at=now() WHERE business_id=$1 AND id=$2 RETURNING id',[b,id])).rows[0];
+  if(!row)fail('ไม่พบงาน',404);
+  await c.query('UPDATE businesses SET domain_revision=domain_revision+1 WHERE id=$1',[b]);
+  const after=await readTask(c,b,id,viewer);await audit(c,b,'tasks',id,before,after,'archive');return after;
 }

@@ -67,22 +67,21 @@ test('commitBatch with an audience gives every created task that audience; witho
   const made=s.tasks.find(t=>t.id===ids[0]);assert.equal(made.visibility,'restricted');assert.deepEqual(made.viewerIds,people);
   const empty=meetingFixture();assert.throws(()=>commitBatch(empty.s,'batch-1',empty.choices,null,{audience:{visibility:'restricted',viewerIds:[]}}),/ไม่มีผู้เข้าร่วม/);assert.equal(empty.s.receipts.length,0);
 });
-test('link never changes the audience of a task; update needs a restricted task named only by participants (AUDIENCE_WIDER)',()=>{
+test('link preserves audience metadata; a meeting commit can update any Business task without changing that metadata (ADR-008)',()=>{
   const people=fresh().members.slice(0,3).map(m=>m.id),audience=people=>({visibility:'restricted',viewerIds:people});
   const link=meetingFixture(),target=structuredClone(link.s.tasks[0]);
   commitBatch(link.s,'batch-1',[{...link.choices[0],mode:'link',taskId:target.id,taskVersion:target.version}],null,{audience:audience(link.s.members.slice(0,3).map(m=>m.id))});
   const linked=link.s.tasks[0];assert.equal(linked.visibility,target.visibility);assert.deepEqual(linked.viewerIds,target.viewerIds);assert.equal(linked.sourceRefs.length,1);
   const wide=meetingFixture(),old=wide.s.tasks[0];
-  assert.throws(()=>commitBatch(wide.s,'batch-1',[{...wide.choices[0],mode:'update',taskId:old.id,taskVersion:old.version}],null,{audience:audience(wide.s.members.slice(0,3).map(m=>m.id))}),e=>e.code==='AUDIENCE_WIDER');
-  assert.equal(wide.s.receipts.length,0);assert.equal(wide.s.tasks[0].title,old.title,'a refused update changes nothing');
-  const narrow=meetingFixture(),ids=narrow.s.members.slice(0,3).map(m=>m.id);
-  saveTask(narrow.s,{id:narrow.s.tasks[0].id,responsibleId:ids[0],accountableId:ids[1],consultedIds:[],informedIds:[],visibility:'restricted',viewerIds:[ids[2]]});
-  const restricted=narrow.s.tasks[0];
-  commitBatch(narrow.s,'batch-1',[{...narrow.choices[0],mode:'update',taskId:restricted.id,taskVersion:restricted.version,title:'ปรับจากประชุม'}],null,{audience:audience(ids)});
-  assert.equal(narrow.s.tasks[0].title,'ปรับจากประชุม');assert.equal(narrow.s.tasks[0].visibility,'restricted');assert.deepEqual(narrow.s.tasks[0].viewerIds,[ids[2]]);
-  const outside=meetingFixture(),some=outside.s.members.slice(0,2).map(m=>m.id);
-  saveTask(outside.s,{id:outside.s.tasks[0].id,responsibleId:outside.s.members[3].id,visibility:'restricted',viewerIds:[some[0]]});
-  const named=outside.s.tasks[0];assert.throws(()=>commitBatch(outside.s,'batch-1',[{...outside.choices[0],mode:'update',taskId:named.id,taskVersion:named.version}],null,{audience:audience(some)}),e=>e.code==='AUDIENCE_WIDER','a named R outside the participants widens it');
+  const broadId=commitBatch(wide.s,'batch-1',[{...wide.choices[0],mode:'update',taskId:old.id,taskVersion:old.version,title:'ปรับงานธุรกิจ'}],null,{audience:audience(wide.s.members.slice(0,3).map(m=>m.id))});
+  assert.equal(wide.s.receipts.length,1);assert.equal(broadId[0],old.id);assert.equal(wide.s.tasks[0].title,'ปรับงานธุรกิจ');
+  const outside=meetingFixture(),some=outside.s.members.slice(0,2).map(m=>m.id),former=[outside.s.members[3].id];
+  saveTask(outside.s,{id:outside.s.tasks[0].id,responsibleId:former[0],visibility:'restricted',viewerIds:[some[0]]});
+  const named=outside.s.tasks[0],oldViewers=[...named.viewerIds];
+  const updated=commitBatch(outside.s,'batch-1',[{...outside.choices[0],mode:'update',taskId:named.id,taskVersion:named.version,title:'ปรับงานที่เคยจำกัด',responsibleId:outside.s.members[2].id}],null,{audience:audience(some)});
+  assert.equal(updated[0],named.id);const changed=outside.s.tasks.find(t=>t.id===named.id);
+  assert.equal(changed.title,'ปรับงานที่เคยจำกัด');assert.equal(changed.responsibleId,outside.s.members[2].id);
+  assert.equal(changed.visibility,'restricted');assert.deepEqual(changed.viewerIds,oldViewers,'the stored audience metadata is preserved');
 });
 test('a stub review commits only when the caller allows it (the server), on its spans',()=>{
   const {s,choices}=meetingFixture();for(const r of s.reviews){r.segments=[];r.withheld=true;}

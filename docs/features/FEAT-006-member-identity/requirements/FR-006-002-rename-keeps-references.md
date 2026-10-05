@@ -1,9 +1,10 @@
 ---
 id: FR-006-002
 title: Renaming a Member keeps every reference
-delivery: implemented
+delivery: declared
 status: approved
 relations:
+  decided_by: [ADR-008]
   relates_to: [FEAT-004, SDD-004]
 ---
 
@@ -15,7 +16,7 @@ The system SHALL let a Member’s display name and details change without changi
 - AC-006-002-01 — Given a Member who is R of a task, when the display name is changed, then the task’s R is the same Member and shows the new name.
 - AC-006-002-02 — Given a renamed Member, then the Member’s ID and PID are unchanged.
 - AC-006-002-03 — Given two Members with the same display name, then they stay two Members, each task keeps the Member it was given, and the form says “มีชื่อเหมือนกันในทะเบียน กรุณาตรวจทีม/ตำแหน่งเพื่อแยกคน ระบบจะเก็บเป็นคนละ Member”.
-- AC-006-002-04 — Given a signed-in Member who is not the Business admin, when they change the details of their own record (display name, nickname, team, position, email, phone, notes), then it is saved; when they change any field of another Member’s record, then the API answers 403 “เฉพาะ Business admin แก้ทะเบียนสมาชิกของคนอื่นหรือเพิ่มสมาชิกได้” and nothing changes; a save that holds no change to any record succeeds. The Business admin and the local operator may change any record ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D3). The same rule holds on the workspace save and on the per-record route.
+- AC-006-002-04 — Given any active signed-in Member, when they change any mutable non-secret field of any Member record (display name, nickname, team, position, email, phone, notes or status), then it is saved within the configured Business; UUID and PID remain unchanged, and credential, credential-version and Business-admin fields cannot be changed through Member CRUD. The same rule holds on the workspace save and per-record route.
 
 ## Implementation
 - `apps/web/src/content/meeting/model.mjs:saveMember` — an existing Member is updated in place under the same `id`; tasks hold `responsibleId`, `accountableId`, `consultedIds` and `informedIds` as Member IDs; `memberName` resolves the name at display time.
@@ -26,7 +27,8 @@ The system SHALL let a Member’s display name and details change without changi
 - Checked 2026-10-01 by the author of this file: `node --test apps/web/src/content/meeting/model.test.mjs` passed (36 tests). The PostgreSQL test was read, not run; no browser check was run for this file.
 
 ## Notes
+- Supersession: [ADR-008](../../../architecture/decisions.md) (approved 2026-10-05) replaces the own-record/admin-only edit matrix with equal active-Member rights. Stable UUID/PID identity and operator-only secret/privileged fields remain.
 - Origin: FEAT-004 MT-22 (rename keeps the task reference).
 - Editing a Member never exposes or resets a sign-in code ([FEAT-006 spec](../spec.md) §1 assumption 4).
-- Decided 2026-10-01 ([PLAN-002 “Design gaps decided”](../../../governance/plans/PLAN-002-task-and-meeting-domains.md#design-gaps-decided-2026-10-01), D3): a Member edits their own record; another Member’s record needs the Business admin or the local operator. Before this, any signed-in Member could change any record.
+- Historical 0.5.1 restriction: another Member's record required Business-admin/operator authority. ADR-008 supersedes that rule; prior implementation evidence remains historical.
 - Sign-in by a single code is unaffected by a rename: the code selects the Member, not the name ([FEAT-007](../../FEAT-007-single-code-login/feature.md)).

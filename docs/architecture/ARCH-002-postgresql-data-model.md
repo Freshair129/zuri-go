@@ -6,7 +6,7 @@ version: 0.2.0
 date: 2026-09-30
 legacy: [ZGO-DATA-001]
 relations:
-  decided_by: [ADR-002, ADR-003, ADR-004]
+  decided_by: [ADR-002, ADR-003, ADR-004, ADR-008]
   relates_to: [FEAT-001, ARCH-001, FEAT-005, FEAT-006, FEAT-010, FEAT-011, FEAT-014]
 legacy_status: implemented-local-verified
 complexity: C-3
@@ -15,7 +15,13 @@ risk: HIGH
 
 # Zuri-Go — PostgreSQL data model
 
-อ้างอิง [Overview contract](../features/FEAT-001-business-overview/spec.md) และ [Architecture](ARCH-001-baseline-architecture.md) นี่คือ physical schema design สำหรับ review ยังไม่มี executable DDL/migration และยังไม่ได้สร้างฐานข้อมูลจริง
+อ้างอิง [Overview contract](../features/FEAT-001-business-overview/spec.md) และ [Architecture](ARCH-001-baseline-architecture.md) เอกสารนี้เริ่มจาก physical schema design และบันทึก amendments ที่นำไปใช้ภายหลัง; executable DDL และ migrations อยู่ใน `apps/api/migrations/`. Production and the restored native Local use schema 11 following FEAT-015 migration 011 ([production evidence](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05), [Local evidence](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05)); sections schema 6/7 below remain design and rollout evidence from their original dates.
+
+## Current approved access target
+
+[ADR-008](decisions.md) was approved on 2026-10-05. It supersedes the audience-based access rules in the schema 6/7 descriptions below as the target policy: Guests read every non-secret Business record but cannot mutate or internally approve; every active authenticated Member has the same full CRUD and internal approval rights over mutable non-secret Business records, including Member and Team records, regardless of former visibility, owner, team, assignee, participant or RACI assignment. Business audit events are readable by both classes and append-only. Business scope, session-derived actor identity and secret custody remain enforced; external provider, spend, publication and deployment actions retain independent gates. Member identities are deactivated/retired rather than hard-deleted so FKs, audit and work history remain intact.
+
+Production and the restored native Local are currently schema 11; the former Docker database is unavailable. The deployed application 0.5.1 keeps its prior access behavior until the approved target is implemented in forward migration 012 to schema 12 and separately authorized for production migration and deployment. Approval of the policy does not itself authorize those operations. The schema 6/7 sections retain the previous design and rollout evidence; they do not define the schema 12 target.
 
 ## 1. กติกาข้อมูลร่วม
 
@@ -331,6 +337,8 @@ Migration `005_member_identity.sql` preserves all existing UUID PKs and relation
 
 Migration `006_visibility.sql` (schema 6) was applied to the local PostgreSQL on 2026-10-01 (after `npm run backup`) and to **production on 2026-10-01** with release 0.5.0, after a production backup and with the owner's authorization: production went from schema 5 to schema 7 (006 and 007 together) and every table that existed before kept its row count ([verification](../releases/0.5.0/verification.md); [RB-001](../operations/RB-001-runbook.md#visibility-and-teams-feat-011-schema-6); [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md)). Decided by [ADR-004](decisions.md) and designed in [SDD-011](../features/FEAT-011-visibility-and-confidential-meetings/design.md) (both approved 2026-10-01). The migration is additive: existing tasks and meetings become `visibility='business'` and meetings `transcript_custody='cloud'`; no existing column, PK or FK changes. There is no down-migration.
 
+The audience restrictions below record the schema 6/7 access design and the behavior retained by the current schema 11 application release. ADR-008 supersedes them as the approved target; the deployed rules remain until migration 012 to schema 12 and release.
+
 **New tables.** Each has forced Business RLS (`business_scope`, as in `001_core.sql`) and composite Business FKs.
 
 | Table | Key and columns |
@@ -366,7 +374,9 @@ The runtime role is granted DELETE on `team_members`, `task_viewers` and `meetin
 
 ## Schema 7 amendment: tasks, projects and campaign task details (FEAT-010 phase P2) — live locally and in production since 2026-10-01
 
-Migration `007_tasks_projects.sql` (schema 7) was applied to the local PostgreSQL on 2026-10-01 (after `npm run backup`) and to **production on 2026-10-01** together with 006 and their code (release 0.5.0; [verification](../releases/0.5.0/verification.md); [RB-001](../operations/RB-001-runbook.md#task-manager-feat-010-schema-7); [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md)). Production schema is now 7. Decided by [ADR-002 and ADR-003](decisions.md) and designed in [SDD-010](../features/FEAT-010-task-manager/design.md) (all approved 2026-10-01). The migration is additive (NFR-010-002): no `DROP`, `TRUNCATE`, `DELETE` or `UPDATE` of existing rows and no type change. Existing tasks get `project_id` NULL, `owner_label` NULL and `completion_rule` `standard`. There is no down-migration. The move of existing campaign Workboard tasks into these tables is a separate operator tool, not part of the migration.
+Migration `007_tasks_projects.sql` (schema 7) was applied to the local PostgreSQL on 2026-10-01 (after `npm run backup`) and to **production on 2026-10-01** together with 006 and their code (release 0.5.0; [verification](../releases/0.5.0/verification.md); [RB-001](../operations/RB-001-runbook.md#task-manager-feat-010-schema-7); [PLAN-002](../governance/plans/PLAN-002-task-and-meeting-domains.md)). That release brought production to schema 7; later migrations 008–010 brought it to schema 10, as recorded by [release 0.5.1](../releases/0.5.1/verification.md). Decided by [ADR-002 and ADR-003](decisions.md) and designed in [SDD-010](../features/FEAT-010-task-manager/design.md) (all approved 2026-10-01). The migration is additive (NFR-010-002): no `DROP`, `TRUNCATE`, `DELETE` or `UPDATE` of existing rows and no type change. Existing tasks get `project_id` NULL, `owner_label` NULL and `completion_rule` `standard`. There is no down-migration. The move of existing campaign Workboard tasks into these tables is a separate operator tool, not part of the migration.
+
+The project audience rules below are part of the former schema 7 policy. They remain a description of deployed behavior until ADR-008 is implemented through migration 012 to schema 12; the target keeps audience fields for provenance but does not use them to authorize Business-record reads or writes.
 
 **New tables.** Each has forced Business RLS (`business_scope`, as in `001_core.sql`) and composite Business FKs.
 
@@ -404,8 +414,20 @@ The schema 6 sentence that the migration defines no policy for projects describe
 
 ## Approved Visual Marketing amendment
 
-[Visual Marketing data model](visual-marketing/data-model.md) is the canonical amendment for approved FEAT-014 / ADR-006. R3 additive migrations 008–010 and focused checks passed in isolated QA at source schema 10; fresh independent VerifyGate and whole-PR ReviewGate remain pending. The last-recorded user/cloud baseline remains schema 7 and was not live-inspected or migrated for R3.
+[Visual Marketing data model](visual-marketing/data-model.md) is the canonical amendment for approved FEAT-014 / ADR-006. R3 additive migrations 008–010 and focused checks passed in isolated QA at source schema 10. R2's independent VerifyGate and ReviewGate passed within their bounded operational scope; a later whole-PR L2 review returned REWORK with five findings, as recorded in the [execution DAG](../features/FEAT-014-visual-marketing-team/execution-dag.md). At that time schema 7 was the last-recorded user/cloud baseline and was not live-inspected or migrated for R3. Production and restored Local were subsequently advanced to schema 11 by migration 011; see the approved marketing report ledger amendment below and its [verification record](../features/FEAT-015-marketing-report-exchange/verification.md).
 
 ## Approved marketing report ledger amendment — Production and Local applied
 
 [FEAT-015 P2](../features/FEAT-015-marketing-report-exchange/p2-freeze-outbox.md) is the canonical physical schema/lock/grant chapter approved on 2026-10-05. Migration file `011_marketing_report_ledger.sql` adds four DOM-CAM/SRV-002 private tables, reviewed association registry, append-only preparation/report/QUEUED records and atomic finalizers. The entire grant/revoke batch is one transaction so runtime never receives intermediate write rights; native two-connection visibility/interruption checks pass. Marketing audit SELECT is operator-only. Freeze leaves source tables/Business revision unchanged. Native PostgreSQL 18.6 acceptance passes. Production migration 011 applied on 2026-10-05 after a verified full snapshot backup; schema 11, 47 unchanged existing table hashes/counts, four empty private ledger tables, ACL/RLS/functions/triggers all verified ([evidence](../features/FEAT-015-marketing-report-exchange/verification.md#production-migration-011--2026-10-05)). Local is also schema 11 after the separately authorized restore into a new native database ([Local evidence](../features/FEAT-015-marketing-report-exchange/verification.md#local-production-backup-restore--2026-10-05)); all 47 source table hashes/counts and 12 actual runtime write denials passed. New credentials were created only for the new Local database roles; restored Member hashes and Production credentials are unchanged. No parent association or deployment changed.
+## Approved ADR-008 amendment: Guest read-only and shared Member CRUD for schema 12
+
+ADR-008 was approved by the owner on 2026-10-05. It changes the target authorization model across Business record families while retaining the existing Business data boundary and identity/session model.
+
+- **Guest reads:** a Guest may read every non-secret record in the selected Business, including full Member profiles and contact fields, campaigns, tasks, projects, meetings, transcripts, revisions, attachments, metrics, Visual records, and audit events. Former `public`, `business`, `team` and `restricted` values do not filter these reads. Every Guest create, update, delete or internal approval is denied without changing data.
+- **Member access:** every active Member with a verified individual login has identical full read/create/update/delete and internal approval rights for every mutable non-secret record in that Business, including Member and Team records and data formerly restricted by visibility, owner, team, assignee, participant, named-viewer or RACI assignment. Business-admin status does not add or remove Business-record permission. Member identity records are retired/deactivated, not hard-deleted, preserving foreign keys, audit and work history.
+- **Scope and actor:** every API and RLS read/write remains constrained to the selected Business. The actor comes from the verified session; caller-supplied Member IDs cannot select or replace the actor. Active-member and credential-version checks, origin protections and rate limits remain.
+- **Audit and secrets:** Business audit events are readable to Guests and Members but remain append-only. The application appends events with session-derived attribution; users cannot update or delete the history. Credential codes/hashes, session tokens/secrets, provider keys and operator configuration stay outside Guest and Member data responses. Credential provisioning and privileged operator capability remain under their separate operator flow.
+- **External actions:** record CRUD and internal approval do not authorize provider egress, spend, publication or deployment. Existing external-action and trusted-publication gates remain separate.
+- **Migration boundary:** production and the restored native Local are schema 11 after FEAT-015 migration 011. Implement the target with a forward migration 012 to schema 12, preserving existing business rows and audit events; verify against isolated schema-11 QA. Fresh replay and database regression evidence for this current candidate are NOT_RUN after the command runner rejected bootstrap. ADR-008 approval does not authorize a production migration or deployment. Each production action requires separate approval after implementation and QA; do not reset or reimport a Business.
+
+The old audience, owner, team and RACI columns remain unchanged as provenance/business metadata; they no longer grant or withhold record access under the schema 12 target. Until migration 012 and release, the production application behavior remains as recorded in [release 0.5.1](../releases/0.5.1/verification.md). Transcript cloud transfer remains a separate custody/consent gate: only a meeting participant may upload an explicitly reasoned, non-empty set of withheld revisions; shared CRUD or an internal approval does not grant that transfer authority.
