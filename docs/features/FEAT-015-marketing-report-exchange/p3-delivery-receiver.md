@@ -2,7 +2,7 @@
 title: P3 delivery and parent receiver — review proposal
 status: approved
 superseded_by: null
-version: 0.3.0
+version: 0.4.0
 date: 2026-10-05
 source_document: SDD-015
 complexity: C-3
@@ -10,6 +10,8 @@ risk: HIGH
 ---
 
 # P3 — ส่งรายงาน Marketing และรับหลักฐานตอบกลับ
+
+Physical follow-up: [sender physical design](p3-physical-delivery.md) v0.1.0 เป็น DRAFT สำหรับ review คู่กับ parent `ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.1.0 กำหนด delivery/attempt/receipt, finalizer และ lease โดยรักษา migration 011; parent เสนอ Business machine gate ที่ปิดเป็นค่าเริ่มต้น การเพิ่มลิงก์นี้ไม่ใช่ approval ของ schema/physical decisions ใหม่ ไม่มี application coding หรือ native QA ผลผ่านในขั้นนี้
 
 **APPROVED / P3-A PARTIAL.** เจ้าของอนุมัติ P3 v0.1.0 เมื่อ 2026-10-05 ให้ดำเนินการตามลำดับและ gate ที่ระบุ บทนี้เป็นส่วนของ [SDD-015](design.md) ภายใต้ FEAT-015 ไม่ใช่ service หรือ SoT ใหม่ ฝั่ง Zuri-AI มี approved receiver contract และออก planned canonical records แล้ว; physical append-only design และ native test bindings ยังต้อง review ก่อน application coding Approval และ issued records ไม่ใช่ผล QA หรือ runtime acceptance
 
@@ -74,7 +76,7 @@ Source Local กับ hosted เป็นคนละ deployment/binding แม
 | Parent Identity | reviewed report-only credential และ exact binding; provision/revoke โดยผู้มีอำนาจ | ไม่สร้าง Person/OWNER; ไม่ใช้ local Member PID เป็น parent actor |
 | Parent Marketing | private external evidence record ที่ผูก immutable envelope/hash กับ durable receipt; existing audit ใน transaction เดียว; scoped authorized reads | native Initiative/Plan/version/review/decision, PM handoffs และ Commerce verified totals |
 
-Physical tables/models, migrations, API IDs และ finalizer signatures ยังไม่ allocate ใน draft นี้ ต้องตรวจ main ล่าสุดและ approved parent records ก่อน implement Go records ต้องมี Business/operator RLS, direct-write restrictions และ atomic grant reconciliation; runtime ห้ามแก้ state/receipt ผ่าน SQL กว้าง ๆ
+Physical tables/models และ finalizer boundaries เสนอใน [physical chapter](p3-physical-delivery.md); schema/migrations, API/TC IDs และ executable signatures ยังไม่ implement/allocate ต้องอนุมัติ proposal และตรวจ main ล่าสุดก่อน coding Go records ต้องมี Business/operator RLS, direct-write restrictions และ atomic grant reconciliation; runtime ห้ามแก้ state/receipt ผ่าน SQL กว้าง ๆ
 
 Parent ต้องมี unique authenticated binding + reportId ที่ persistence layer ไม่ใช้ check-then-insert อย่างเดียว Same bytes/hash คืน receipt เดิมหลัง re-authorize; different bytes เป็น conflict และ rollback evidence/receipt/audit ทั้งชุด
 
@@ -116,6 +118,8 @@ Parent ต้องมี unique authenticated binding + reportId ที่ pers
 Exit ของ slice: parent records approved, P2 QA HTTP และ P3 required cases ผ่าน, docs/traceability/current source ตรงกัน และ review ผ่าน ไม่มี real-target rollout จากผล QA นี้
 
 ## Version diff
+
+0.3.0 → 0.4.0: เพิ่ม navigation ไป physical proposal ที่ยัง DRAFT และแยก approved behavior ออกจาก physical/code/native-test gate; ไม่เปลี่ยน local IDs, wire bytes, migration 011 หรือ runtime
 
 0.2.0 → 0.3.0: บันทึก parent tooling approval และ reviewed canonical issuance; ชี้ qualified parent IDs โดยไม่ alias local IDs คง physical design/QA/application gates และไม่เปลี่ยน schema/runtime
 

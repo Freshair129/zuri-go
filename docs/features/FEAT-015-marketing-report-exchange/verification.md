@@ -2,11 +2,29 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.2.0
+version: 1.3.0
 date: 2026-10-05
 ---
 
 # Verification — FEAT-015
+
+## Final parent main collision gate — 2026-10-05
+
+Latest parent-main integration is **BLOCKED**, despite the earlier successful `3506129f` composition below. Final remote check fetched `077796622233bf9f35905f7eac226f0963760dcb` (PR #632), issuing FR-278 for an executive dashboard, while the report branch issued that key for its machine credential. Parent RCA `marketing-report-branch-id-collision.md` records both rows/ledger digests and branch-local allocation evidence. Parent DRAFT `ZURI-GO-REPORT-MAIN-RECONCILIATION.md` proposes preserving main identities and old branch evidence, then a fresh coordinated record migration before coding. No conflicting merge/renumber/alias was attempted; this section supersedes any reading of the earlier tests as qualification of the latest main. Go main `89b525aa` remains an ancestor of this branch; no new Go integration is needed.
+
+## P3 integrated main and physical proposals — 2026-10-05
+
+The owner approved integrating current main and preparing physical receiver/sender design. Parent task branch merged upstream `3506129ffc1feb93773d2110901e248609f80f7c` without conflicts as `fcb7ade3a022029cf47530643edc74fab2e49420`; active parent checkout/runtime stayed in place. This is branch integration, not merging PR #630. Go remote main needed no additional integration. Parent provenance/issuance records were not rebased or rewritten.
+
+| Integrated check | Result / limit |
+|---|---|
+| Parent migration / source snapshot-verifier / upstream PM guard | PASS — 73/73, 32/32 serialized, 23/23 respectively; source/governance fixtures only |
+| Regenerated parent graph/views/corpus/full governance | PASS — serial generation/corpus check and full govern exit 0, 543 records/751 pins/96 views with baseline debt; composed planned/retired projection 9/9 PASS |
+| Go documentation validation/views | PASS — 0 errors / 166 baseline warnings; 11 views / 0 drift; diff checks clean |
+| Physical independent design review | PASS for owner-review readiness — parent blob `8da2f63af23919ec8f26a0537885d6dda778893d`, Go blob `5a85e532f5ab9e96ee5eceab50bc26db860b5796`; lazy initialization, backup custody and lease/age/error findings resolved. New policy/backup/first-claim clock decisions still need owner approval; no runtime acceptance |
+| Application / native receiver-sender QA / new migration | NOT_RUN — no code/schema or actual database operation |
+
+New [Go physical chapter](p3-physical-delivery.md) v0.1.0 and parent `docs/change-requests/marketing/ZURI-GO-REPORT-PHYSICAL-DESIGN.md` v0.1.0 are DRAFT for owner review. Go proposes fenced explicit delivery; parent proposes a current Business machine-ingest gate with default denial because no native Business-wide growth switch exists in inspected source. Complete wire/delivery physical approval remains OPEN. Version diff 1.2.0 → 1.3.0 adds this evidence/proposal status; P3 0.3.0 → 0.4.0 adds navigation. Package stays 0.5.1 and Local/Production stay schema 11; no live association, credential, transfer or deployment changed.
 
 ## P3 parent authored records — 2026-10-05
 
@@ -27,7 +45,7 @@ The sanctioned writer issued `ZAI:FR-278`, `ZAI:FR-279`, `ZAI:FR-280` and `ZAI:S
 
 No Go code, new applied schema, live binding/credential, real report transfer, deployment or merge occurred in this slice. Go package remains 0.5.1 and Local/Production schema remains 11 from the separately authorized operations below. Draft parent [PR #630](https://github.com/Freshair129/zuri.ai/pull/630) and Go [PR #10](https://github.com/Freshair129/zuri-go/pull/10) remain the publication surfaces.
 
-Final parent remote main advanced to `3506129f` through PM workflow documentation/guard PR #631. Read-only recheck found no collision with these four IDs and no registry/schema/Marketing/Identity changes in that range. Parent branch qualification above is not an integrated-main result; integration/retesting before merge remains NOT_RUN.
+At record-issuance closeout, parent remote main advanced to `3506129f` through PM workflow documentation/guard PR #631. Read-only recheck found no collision with these four IDs and no registry/schema/Marketing/Identity changes in that range. Integration/retesting was then NOT_RUN; the later integrated-main section above supersedes that limitation with actual scoped results.
 
 Version diff 1.1.0 → 1.2.0: records separate tooling approval, governed parent issuance, preservation, executed tests and remaining physical/runtime gates. P3 chapter 0.2.0 → 0.3.0 reconciles those parent record references; no local requirement IDs or application behavior change.
 
