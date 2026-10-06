@@ -2,11 +2,39 @@
 title: Marketing report exchange verification and acceptance plan
 status: approved
 superseded_by: null
-version: 1.8.0
+version: 1.10.0
 date: 2026-10-06
 ---
 
 # Verification — FEAT-015
+
+## Windows reinstall / deferred pilot handoff — 2026-10-06
+
+Owner confirmed that the actual existing parent database is on another currently inaccessible machine. The owner requested documents committed/pushed to GitHub for resuming database migration and Docker deployment after Windows reinstall. [Local pilot v0.3.0](p3-local-pilot.md#windows-recovery-handoff--owner-decision-2026-10-06) records this decision and links the parent recovery guide, the single owner of restore/Docker instructions. No new database substitutes for that old data; no automated resume is configured.
+
+Parent merged source was inspected: Compose sets NODE_ENV=production, the normal runtime requires PostgreSQL, and marketingReportDatabase() explicitly returns null for PostgreSQL. The receiver reports REPORT_RECEIVER_UNAVAILABLE without its qualified client. Thus Docker application readiness is separate from PostgreSQL Marketing receiver qualification, which remains disabled/unqualified. No provider/schema/runtime guard was changed. Existing SQLite native paired QA remains historical qualification for that engine only.
+
+Current operation results: old-machine backup/restore, Windows installation, parent migration/Docker deployment, parent binding/credential and actual report send are **NOT_RUN**. Pilot execution is **DEFERRED** pending owner's preserved data/config and concrete resume target. Actual source-reader/preview checks below remain the latest read-only Go evidence; they must be refreshed after recovery and before preparing a real report. Documentation publication checks/results are recorded in the publishing PR; no application tests are claimed for a documentation-only handoff.
+
+Version diff 1.9.0 → 1.10.0: records the owner-requested recovery handoff and exact source-backed Docker/receiver engine boundary. Package 0.5.1 → 0.5.1; Go Local/Production schema 12 → 12; no actual database/runtime/send operation.
+
+## Local pilot target discovery — 2026-10-06
+
+Owner approved [Local pilot workflow](p3-local-pilot.md) and chose the existing Zuri-AI database. Source repository supplied by owner is `Freshair129/zuri.ai`; GitHub main checked as `fd9ca7c606fbe0fd69d35467802f56916675fd7a`, primary checkout remains clean at `07779662`. No checkout/runtime or parent database was changed.
+
+| Check | Result / limit |
+|---|---|
+| Actual Go target/schema | PASS — persistent 127.0.0.1:55412/zuri_go; migration ledger exactly 001–012 through separate READ ONLY operator catalog inspection. |
+| Actual restricted source read | PASS — configured Business, existing operator viewer, restricted nonsuperuser/non-BYPASSRLS runtime, REPEATABLE READ READ ONLY. Two readable non-archived campaigns; actual source-reader/preview functions pass for both, complete freeze source revision tuples. No grant/membership change. |
+| Proposed window/semantics | Candidate 2026-09-28 → 2026-10-05 / Asia/Bangkok / asOf 2026-10-05T00:00:00+07:00; not owner-selected or timezone-attested. Both HELD, measurements UNKNOWN/null. No real API-024 HTTP check in this turn. |
+| Custody baseline | PASS — associations, preparations, reports, outbox, deliveries, attempts and receipts each zero rows for the configured Go Business. No preparation/freeze/send performed. |
+| Parent target location | PARTIAL — enumerated primary checkout including ignored files has example env only, no actual .env/.env.local or SQLite file. Relevant local Server/API/ngrok listener ports absent. Remote Desktop Commander lists the other device offline; no remote filesystem/DB inspection performed. |
+| GitHub deployment discovery | No homepage or deployments records on supplied repository; this does not prove absence of runtime elsewhere. Repository URL is source identity only. Parent docs distinguish SQLite development and PostgreSQL-only production; actual engine remains unknown. |
+| Parent readiness/binding/credential/real send | NOT_RUN — existing target location, engine, HTTPS origin, Business/initiative and campaign/window mapping unresolved. Do not replace the owner's existing database choice with new seed/QA data. |
+
+Private read-only receipt, source revisions and sanitized previews stay under `.local/p3-local-pilot-20261006/`; helper/config remain ignored. Initial private helper checks caught a wrong export name, the expected runtime denial of operator migration-ledger access and an asOf sampled after the transaction capture time. The final helper uses the actual export, separate read-only catalog access and a fixed earlier candidate asOf; no application source or permission was changed to obtain PASS. These are inspector corrections, not application defects or real HTTP acceptance.
+
+Version diff 1.8.0 → 1.9.0: records approved pilot target discovery, truthful source preview acceptance and pending existing-parent location. Application 0.5.1 → 0.5.1; Go schema 12 → 12; Production and parent runtime/database untouched. Feature remains building.
 
 ## Zuri-Go production code rollout — 2026-10-06
 
